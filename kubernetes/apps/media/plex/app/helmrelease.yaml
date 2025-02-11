@@ -1,0 +1,147 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: &app plex
+spec:
+  interval: 30m
+  timeout: 15m
+  chart:
+    spec:
+      chart: app-template
+      version: 3.7.0
+      sourceRef:
+        kind: HelmRepository
+        name: bjw-s
+        namespace: flux-system
+  install:
+    createNamespace: true
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  dependsOn:
+    - name: rook-ceph-cluster
+      namespace: rook-ceph
+    - name: volsync
+      namespace: volsync-system
+    - name: nvidia-device-plugin
+      namespace: kube-system
+  values:
+    controllers:
+      plex:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: ghcr.io/onedr0p/plex
+              tag: 1.41.3.9314-a0bfb8370@sha256:cbefe5f2f44d0519fd72985ed4005b7b55a7eb9dcbdcc3b4d6bb7055730db565
+            env:
+              TZ: "Europe/Paris"
+              ALLOWED_NETWORKS: "10.0.0.0/8,172.16.0.0/16,192.168.0.0/16,127.0.0.0/8"
+              SECURE_CONNECTIONS: "1" #1: Preferred, 0: Required
+              PLEX_ADVERTISE_URL: "http://10.10.98.170:32400,https://plex.oxygn.dev:443"
+              PLEX_NO_AUTH_NETWORKS: "10.10.20.0/24"
+              # required for HW acceleration
+              NVIDIA_VISIBLE_DEVICES: "all"
+              NVIDIA_DRIVER_CAPABILITIES: "all"
+              HARDWARE_DEVICE_PATH: "/dev/nvidia0"
+              TRANSCODER_TEMP_DIRECTORY: "/tmp" # /transocde
+            envFrom:
+              - secretRef:
+                  name: plex-secret
+            resources:
+              requests:
+                cpu: 50m
+                memory: 512Mi
+                # nvidia.com/gpu: 1
+              limits:
+                nvidia.com/gpu: 1
+                memory: 4G
+        pod:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: nvidia.com/gpu.present
+                        operator: In
+                        values:
+                          - "true"
+          nodeSelector:
+            nvidia.com/gpu.present: "true"
+          runtimeClassName: nvidia
+          securityContext:
+            runAsUser: 568
+            runAsGroup: 568
+            fsGroup: 568
+            fsGroupChangePolicy: OnRootMismatch
+            supplementalGroups: [44, 105, 10000]
+    service:
+      app:
+        controller: plex
+        type: LoadBalancer
+        annotations:
+          io.cilium/lb-ipam-ips: "10.10.98.170"
+        ports:
+          http:
+            port: &port 32400
+    ingress:
+      app:
+        enabled: true
+        className: external
+        annotations:
+          nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+        hosts:
+          - host: "plex.oxygn.dev"
+            paths:
+              - path: /
+                service:
+                  identifier: app
+                  port: http
+    persistence:
+      config:
+        existingClaim: plex
+        # TODO: If setting up Plex for the first time, you'll want to add the globalMounts section
+        # globalMounts:
+        #   - path: /config/Library/Application Support/Plex Media Server
+      # Separate PVC for cache to avoid backing up cache files
+
+      cache:
+        existingClaim: plex-cache
+        globalMounts:
+          - path: /config/Library/Application Support/Plex Media Server/Cache
+
+      tmp:
+        type: emptyDir
+
+      transcode:
+        type: emptyDir
+
+      media:
+        type: nfs
+        server: funkstation.internal
+        path: /volume2/Media
+        globalMounts:
+          - path: /media
+            readOnly: true
+
+      pictures:
+        type: nfs
+        server: funkstation.internal
+        path: /volume2/Pictures
+        globalMounts:
+          - path: /pictures
+            readOnly: true
+
+      videos:
+        type: nfs
+        server: funkstation.internal
+        path: /volume2/Videos
+        globalMounts:
+          - path: /videos
+            readOnly: true

@@ -1,0 +1,37 @@
+---
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+version: '3'
+
+set: [pipefail]
+shopt: [globstar]
+
+vars:
+  KUBERNETES_DIR: '{{.ROOT_DIR}}/kubernetes'
+
+dotenv: ['{{.KUBERNETES_DIR}}/bootstrap/.cluster.env']
+
+env:
+  KUBERNETES_DIR: '{{.KUBERNETES_DIR}}'
+  KUBECONFIG: '{{.KUBERNETES_DIR}}/kubeconfig'
+  MINIJINJA_CONFIG_FILE: '{{.ROOT_DIR}}/.minijinja.toml'
+  SOPS_AGE_KEY_FILE: '{{.ROOT_DIR}}/age.key'
+  TALOSCONFIG: '{{.KUBERNETES_DIR}}/talosconfig'
+
+includes:
+  bootstrap: .taskfiles/bootstrap
+  kubernetes: .taskfiles/kubernetes
+  talos: .taskfiles/talos
+  volsync: .taskfiles/volsync
+  workstation: .taskfiles/workstation
+
+tasks:
+
+  default:
+    cmd: task --list
+    silent: true
+
+  # Ref: https://github.com/go-task/task/issues/608
+  noop:
+    internal: true
+    silent: true
+    cmd: noop() { :; }
