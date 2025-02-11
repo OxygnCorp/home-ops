@@ -1,0 +1,85 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: &app komga
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: app-template
+      version: 3.7.0
+      sourceRef:
+        kind: HelmRepository
+        name: bjw-s
+        namespace: flux-system
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      strategy: rollback
+      retries: 3
+  dependsOn:
+    - name: rook-ceph-cluster
+      namespace: rook-ceph
+    - name: volsync
+      namespace: volsync-system
+  values:
+    controllers:
+      komga:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: gotson/komga
+              tag: "1.19.1@sha256:8d8dfdae3e3d9defce99b4fbbb658561787f240c03efc057275b76c0f3d932ab"
+            env:
+              TZ: Europe/Paris
+              SERVER_PORT: &port 80
+              KOMGA_CONFIGDIR: /config
+              LOGGING_FILE_NAME: /dev/stdout
+            resources:
+              requests:
+                cpu: 15m
+                memory: 256Mi
+              limits:
+                memory: 2Gi
+    service:
+      app:
+        controller: *app
+        ports:
+          http:
+            port: *port
+    ingress:
+      app:
+        className: internal
+        hosts:
+          - host: "komga.oxygn.dev"
+            paths:
+              - path: /
+                service:
+                  identifier: app
+                  port: http
+    persistence:
+      config:
+        existingClaim: *app
+
+      media:
+        type: nfs
+        server: funkstation.internal
+        path: /volume2/Media/Comics
+        globalMounts:
+          - path: /media/comics
+            readOnly: true
+
+      books:
+        type: nfs
+        server: funkstation.internal
+        path: /volume2/Media/Books/readarr
+        globalMounts:
+          - path: /media/books
+            readOnly: true

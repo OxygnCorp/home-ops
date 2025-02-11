@@ -1,0 +1,9 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+kind: Kustomization
+namespace: actions-runner-system
+components:
+  - ../../flux/components/common
+resources:
+  - ./actions-runner-controller/ks.yaml
+

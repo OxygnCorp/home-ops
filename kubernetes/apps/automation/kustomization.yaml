@@ -1,0 +1,10 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+kind: Kustomization
+namespace: automation
+components:
+  - ../../flux/components/common
+resources:
+  - ./home-assistant/ks.yaml
+  - ./mosquitto/ks.yaml
+  - ./teslamate/ks.yaml
