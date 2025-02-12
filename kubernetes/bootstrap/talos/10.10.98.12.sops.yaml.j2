@@ -7,9 +7,7 @@ machine:
   ca:
     crt: ENC[AES256_GCM,data:vEmBVSOXs6iKuNe4xojRmwkzCUV45W/Od5nn5gi8xhjNzDEPGG+6qGQcTraCY6nOzF3eRQyhXO5EnzqLcp0z0cQWc7hiwR14h54Ziou9qdx1bqncpK/BJfJsgblJV4rEiD7ORHLkjdf2OiIEyySv/d8pW5JluCgR+5ytGdb+7GF9FQW4BKa19KQhyiGH8uhgI4VEMy7+yZcAP8ZAiwI+Whk/efyPQhprlamzuVHe8mBjjDGU7h2FdEqyjAg0VN8KMeYpzrgvjJHv3mNQwpGgNuStWu3KckaY1gw+Bmmwc2AK0DLDBu94gbsLk/jYhzDAcv0mFxMBHhIitL2ju1If5BSaKSWU6TNiv3Lv36gyF6hLthLROcUjKoS5A/j/R8V5C+biTS+CVGPBufBmjIg5ClZzJzVUcul+cyeOx1pdJebHdzdiBep+0lX0ve6T/T5vTToVyUNx16DxgZH7kXAnXOSob8HFlqkkgIIh6okWQEH78gn1Als7leEJXrnXjARSjxwhYtuoU+H5F0/vwPboTJK5Ha+XbI9TXOchxt/DEm30Y91A70y+7fkjWc8mqUcx0TMOe5PopIP+fYFOlvMxpsUBITI3/oPr38YiNJNwfydca/FuCliMURCUcuD1+HO8PjbNQt9fNYN/hxpoZGiMVOEhawF1IQXeE6r4z0PZGrvAxd+uqliYERJJwtbxcpZR72BZxxaghXuzxmD6XSYfSc0hDDIeSd9JtHv2HEBV2YMWMKlqC27fTMKkvTXfekQmYttJerUpminyadEl++y9szATCS2r/twa+KnHSAsIyL2oiDli03yL3LPXRiTX94n7MCFZBi1iqmFdPFVWd4uj8rvB2BucN3r43RLCGRsoxsCSjFBK,iv:r2kiSUl5MQCmHIk833Tzm6P2KkFhLPm2d0w2awbiKYs=,tag:2RrU7ECukTzv3NubnccL7A==,type:str]
     key: ENC[AES256_GCM,data:vctc1265hdDgGaxXN8kPnj5jHMwHeYlNqH6GsuVCJbhNnjgbueeSepZ6WkFSGZZQPRiuSHd8fhkFDphvGEEbElj8bQOLiZAq5ws0vP9Bnaa6SZUppRZBx24gkRcuzPJzcE97+ftAeYDlxZ7MHTSkTjHAZoYa2yBkA9HiybOEKvOPHOQr4smMs30PzzaDrSGx2bEqyGnfBhFW0XxZXuioohQcMft48LXJaHEOi7tCqPfcDUAE,iv:PixukpATtN+gMjsPRRS2gq9TfGHmJTDoYIWi7SvRsXo=,tag:5SAJnAH3bLsuIWS1JAqqug==,type:str]
-  certSANs:
-    - 127.0.0.1
-    - 10.10.98.254
+  certSANs: ["127.0.0.1", "10.10.98.254"]
   kubelet:
     image: ghcr.io/siderolabs/kubelet:{{ ENV.KUBERNETES_VERSION }}
     extraArgs:
@@ -53,7 +51,7 @@ machine:
       - mitigations=off
       # Less security, faster puter
       - security=none
-    image: factory.talos.dev/installer/1351a99a1f8094938fc1af4c4d9c9ff2f46661fd74e737ddcbfcc12a7d12fc2f:{{ ENV.TALOS_VERSION }}
+    image: factory.talos.dev/installer/990731763242a6b3cf735e49d0f550ce4068b4d0e7f4dfbb49a31799b698877e:{{ ENV.TALOS_VERSION }}
     wipe: false
   files:
     # Spegel
