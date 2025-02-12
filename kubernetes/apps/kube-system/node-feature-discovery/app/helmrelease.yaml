@@ -45,11 +45,5 @@ spec:
             - "0302"
             deviceLabelFields:
             - vendor
-      tolerations:
-        - key: CriticalAddonsOnly
-          operator: Exists
-        - key: node-role.kubernetes.io/control-plane
-          operator: Exists
-          effect: NoSchedule
     prometheus:
       enable: true
