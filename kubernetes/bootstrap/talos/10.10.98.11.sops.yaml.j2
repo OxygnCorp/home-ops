@@ -9,6 +9,8 @@ machine:
     key: ENC[AES256_GCM,data:mPcE4MQ34CEM0Egx4XVGIUxW2vryQVceev4HK+joYlKPzR9vXHX+aXJE7/f/hsfZQ0Om3VWWCIai0ftzWERh2dfYF8HQYLvMsMRwRwjDxjMQKpayI7zcNTyng0335YI5S2RGbtn2WFvYH7DXvhvYUflumrW7A5kwuOJScnDbBseqFgB2pitqqBvFtpLpLBnslciqaRNXMXN/Y29CGSlpuqs4z3GBT0f/U+2rlARvJU1i/sPh,iv:0q/orVrRsFipuB3WNFfQ7P9lgAw5JgnEMNJzlspFXvw=,tag:jIzVZ8gZDHs7aZncSptBwA==,type:str]
   kubelet:
     image: ghcr.io/siderolabs/kubelet:{{ ENV.KUBERNETES_VERSION }}
+    extraArgs:
+      rotate-server-certificates: "false"
     extraMounts:
       - destination: /var/openebs/local
         type: bind
