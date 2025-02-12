@@ -11,11 +11,14 @@ spec:
       app.kubernetes.io/name: *app
   components:
     - ../../../../flux/components/gatus/guarded
+    - ../../../../flux/components/volsync
   dependsOn:
     - name: onepassword-store
       namespace: external-secrets
     - name: cloudnative-pg-cluster
       namespace: database
+    - name: volsync
+      namespace: volsync-system
   interval: 30m
   path: ./kubernetes/apps/nzb/radarr/app
   postBuild:
