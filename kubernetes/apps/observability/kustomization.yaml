@@ -8,10 +8,9 @@ components:
 resources:
   - ./gatus/ks.yaml
   - ./grafana/ks.yaml
-  - ./kube-prometheus-stack/ks.yaml
   - ./kromgo/ks.yaml
+  - ./kube-prometheus-stack/ks.yaml
   - ./loki/ks.yaml
-  - ./prometheus-operator-crds/ks.yaml
   - ./promtail/ks.yaml
   - ./pve-exporter/ks.yaml
   - ./silence-operator/ks.yaml
