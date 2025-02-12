@@ -75,58 +75,49 @@ spec:
               key: node-role.kubernetes.io/control-plane
       removeOSDsIfOutAndSafeToRemove: false
       storage:
-        useAllNodes: false
+        useAllNodes: true
         useAllDevices: false
-        # deviceFilter: nvme0n1
+        devices:
+          - name: /dev/nvme0n1
         config:
           osdsPerDevice: "1"
-        nodes:
-          - name: k8s-main-w01
-            devices:
-            - name: "nvme0n1"
-          - name: k8s-main-w02
-            devices:
-            - name: "nvme0n1"
-          - name: k8s-main-w03
-            devices:
-            - name: "nvme0n1"
-      resources:
-        mgr:
-          requests:
-            cpu: "100m"
-            memory: "512Mi"
-          limits:
-            memory: "1Gi"
-        mon:
-          requests:
-            cpu: "100m"
-            memory: "512Mi"
-          limits:
-            memory: "1Gi"
-        osd:
-          requests:
-            cpu: "100m"
-            memory: "2Gi"
-          limits:
-            memory: "4Gi"
-        mgr-sidecar:
-          requests:
-            cpu: "250m"
-            memory: "40Mi"
-          limits:
-            memory: "100Mi"
-        crashcollector:
-          requests:
-            cpu: "15m"
-            memory: "60Mi"
-          limits:
-            memory: "60Mi"
-        logcollector:
-          requests:
-            cpu: "15m"
-            memory: "60Mi"
-          limits:
-            memory: "60Mi"
+      # resources:
+      #   mgr:
+      #     requests:
+      #       cpu: "100m"
+      #       memory: "512Mi"
+      #     limits:
+      #       memory: "1Gi"
+      #   mon:
+      #     requests:
+      #       cpu: "100m"
+      #       memory: "512Mi"
+      #     limits:
+      #       memory: "1Gi"
+      #   osd:
+      #     requests:
+      #       cpu: "100m"
+      #       memory: "2Gi"
+      #     limits:
+      #       memory: "4Gi"
+      #   mgr-sidecar:
+      #     requests:
+      #       cpu: "250m"
+      #       memory: "40Mi"
+      #     limits:
+      #       memory: "100Mi"
+      #   crashcollector:
+      #     requests:
+      #       cpu: "15m"
+      #       memory: "60Mi"
+      #     limits:
+      #       memory: "60Mi"
+      #   logcollector:
+      #     requests:
+      #       cpu: "15m"
+      #       memory: "60Mi"
+      #     limits:
+      #       memory: "60Mi"
     cephBlockPools:
       - name: ceph-blockpool
         spec:
@@ -144,7 +135,7 @@ spec:
           mountOptions: ["discard"]
           parameters:
             imageFormat: "2"
-            imageFeatures: layering
+            imageFeatures: layering,fast-diff,object-map,deep-flatten,exclusive-lock
             csi.storage.k8s.io/provisioner-secret-name: rook-csi-rbd-provisioner
             csi.storage.k8s.io/provisioner-secret-namespace: "{{ .Release.Namespace }}"
             csi.storage.k8s.io/controller-expand-secret-name: rook-csi-rbd-provisioner

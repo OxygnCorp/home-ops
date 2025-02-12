@@ -24,6 +24,9 @@ spec:
     disableOpenAPIValidation: true
     remediation:
       retries: 3
+  dependsOn:
+    - name: nvidia-device-plugin
+      namespace: kube-system
   values:
     operator:
       defaultRuntime: "containerd"
