@@ -14,19 +14,17 @@ repositories:
   - name: jetstack
     url: https://charts.jetstack.io
 
+hooks:
+  - events: ['prepare']
+    command: '{{ requiredEnv "KUBERNETES_DIR" }}/bootstrap/apps/resources/prepare.sh'
+    showlogs: true
+
 releases:
   - name: cilium
     namespace: kube-system
     chart: cilium/cilium
     version: 1.17.0
     values: ['{{ requiredEnv "KUBERNETES_DIR" }}/apps/kube-system/cilium/app/helm-values.yaml']
-    hooks:
-      - events: ['presync']
-        command: bash
-        args: ['{{ requiredEnv "KUBERNETES_DIR" }}/bootstrap/apps/scripts/cilium-presync.sh']
-      - events: ['postsync']
-        command: bash
-        args: ['{{ requiredEnv "KUBERNETES_DIR" }}/bootstrap/apps/scripts/cilium-postsync.sh']
 
   - name: coredns
     namespace: kube-system
@@ -49,24 +47,17 @@ releases:
     values: ['{{ requiredEnv "KUBERNETES_DIR" }}/apps/external-secrets/external-secrets/app/helm-values.yaml']
     needs: ['cert-manager/cert-manager']
 
-  - name: wipe-rook
-    namespace: kube-system
-    chart: oci://ghcr.io/bjw-s/helm/app-template
-    version: 3.7.0
-    values: ['{{ requiredEnv "KUBERNETES_DIR" }}/bootstrap/apps/templates/wipe-rook.yaml.gotmpl']
-    needs: ['external-secrets/external-secrets']
-
   - name: flux-operator
     namespace: flux-system
     chart: oci://ghcr.io/controlplaneio-fluxcd/charts/flux-operator
     version: 0.13.0
     values: ['{{ requiredEnv "KUBERNETES_DIR" }}/apps/flux-system/flux-operator/app/helm-values.yaml']
-    needs: ['kube-system/wipe-rook']
+    needs: ['external-secrets/external-secrets']
 
   - name: flux-instance
     namespace: flux-system
     chart: oci://ghcr.io/controlplaneio-fluxcd/charts/flux-instance
     version: 0.13.0
-    wait: false
     values: ['{{ requiredEnv "KUBERNETES_DIR" }}/apps/flux-system/flux-operator/instance/helm-values.yaml']
     needs: ['flux-system/flux-operator']
+    wait: false
