@@ -68,11 +68,6 @@ spec:
         provider: host
         connections:
           requireMsgr2: true
-      placement:
-        all:
-          tolerations:
-            - effect: NoSchedule
-              key: node-role.kubernetes.io/control-plane
       removeOSDsIfOutAndSafeToRemove: false
       storage:
         useAllNodes: true
