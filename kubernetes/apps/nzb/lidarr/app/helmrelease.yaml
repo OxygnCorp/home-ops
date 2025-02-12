@@ -108,7 +108,7 @@ spec:
 
     persistence:
       config:
-        existingClaim: lidarr-config
+        existingClaim: lidarr
 
       tmp:
         type: emptyDir

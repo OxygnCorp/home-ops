@@ -107,7 +107,7 @@ spec:
                   port: http
     persistence:
       config:
-        existingClaim: readarr-config
+        existingClaim: readarr
 
       tmp:
         type: emptyDir
