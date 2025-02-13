@@ -36,14 +36,14 @@ releases:
   - name: cert-manager
     namespace: cert-manager
     chart: jetstack/cert-manager
-    version: v1.17.0
+    version: v1.17.1
     values: ['{{ requiredEnv "KUBERNETES_DIR" }}/apps/cert-manager/cert-manager/app/helm-values.yaml']
     needs: ['kube-system/coredns']
 
   - name: external-secrets
     namespace: external-secrets
     chart: oci://ghcr.io/external-secrets/charts/external-secrets
-    version: 0.14.1
+    version: 0.14.2
     values: ['{{ requiredEnv "KUBERNETES_DIR" }}/apps/external-secrets/external-secrets/app/helm-values.yaml']
     needs: ['cert-manager/cert-manager']
 
