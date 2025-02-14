@@ -25,8 +25,6 @@ spec:
   dependsOn:
     - name: rook-ceph-cluster
       namespace: rook-ceph
-    - name: volsync
-      namespace: volsync-system
   values:
     controllers:
       home-assistant:
@@ -52,7 +50,7 @@ spec:
               requests:
                 cpu: 10m
               limits:
-                memory: 1Gi
+                memory: 2Gi
           code-server:
             image:
               repository: ghcr.io/coder/code-server
@@ -64,6 +62,11 @@ spec:
               "--port", "12321",
               "/config"
             ]
+            resources:
+              requests:
+                cpu: 10m
+              limits:
+                memory: 512Mi
             env:
               TZ: "Europe/Paris"
     defaultPodOptions:
@@ -73,7 +76,6 @@ spec:
         runAsGroup: 1000
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
-        seccompProfile: { type: RuntimeDefault }
     service:
       app:
         controller: home-assistant
