@@ -87,7 +87,7 @@ spec:
             primary: true
             port: 8123
           code-server:
-            port: 8080
+            port: 12321
     ingress:
       app:
         className: external
