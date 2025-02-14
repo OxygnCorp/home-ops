@@ -108,6 +108,11 @@ spec:
       config:
         existingClaim: readarr
 
+      cache:
+        existingClaim: readarr-cache
+        globalMounts:
+          - path: /config/MediaCover
+
       tmp:
         type: emptyDir
 

@@ -109,6 +109,11 @@ spec:
       config:
         existingClaim: lidarr
 
+      cache:
+        existingClaim: lidarr-cache
+        globalMounts:
+          - path: /config/MediaCover
+
       tmp:
         type: emptyDir
 

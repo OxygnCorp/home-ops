@@ -107,6 +107,11 @@ spec:
       config:
         existingClaim: radarr
 
+      cache:
+        existingClaim: radarr-cache
+        globalMounts:
+          - path: /config/MediaCover
+
       tmp:
         type: emptyDir
 
