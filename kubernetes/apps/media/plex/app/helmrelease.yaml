@@ -26,10 +26,8 @@ spec:
   dependsOn:
     - name: rook-ceph-cluster
       namespace: rook-ceph
-    - name: volsync
-      namespace: volsync-system
-    # - name: nvidia-device-plugin
-    #   namespace: kube-system
+    - name: nvidia-device-plugin
+      namespace: kube-system
   values:
     controllers:
       plex:
@@ -47,10 +45,10 @@ spec:
               PLEX_ADVERTISE_URL: "http://10.10.98.170:32400,https://plex.oxygn.dev:443"
               PLEX_NO_AUTH_NETWORKS: "10.10.20.0/24"
               # required for HW acceleration
-              # NVIDIA_VISIBLE_DEVICES: "all"
-              # NVIDIA_DRIVER_CAPABILITIES: "all"
-              # HARDWARE_DEVICE_PATH: "/dev/nvidia0"
-              # TRANSCODER_TEMP_DIRECTORY: "/tmp" # /transocde
+              NVIDIA_VISIBLE_DEVICES: "all"
+              NVIDIA_DRIVER_CAPABILITIES: "all"
+              HARDWARE_DEVICE_PATH: "/dev/nvidia0"
+              TRANSCODER_TEMP_DIRECTORY: "/tmp" # /transocde
             envFrom:
               - secretRef:
                   name: plex-secret
@@ -60,27 +58,27 @@ spec:
                 memory: 512Mi
                 # nvidia.com/gpu: 1
               limits:
-                # nvidia.com/gpu: 1
+                nvidia.com/gpu: 1
                 memory: 4G
         pod:
-          # affinity:
-          #   nodeAffinity:
-          #     requiredDuringSchedulingIgnoredDuringExecution:
-          #       nodeSelectorTerms:
-          #         - matchExpressions:
-          #             - key: nvidia.com/gpu.present
-          #               operator: In
-          #               values:
-          #                 - "true"
-          # nodeSelector:
-          #   nvidia.com/gpu.present: "true"
-          # runtimeClassName: nvidia
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: nvidia.com/gpu.present
+                        operator: In
+                        values:
+                          - "true"
+          nodeSelector:
+            nvidia.com/gpu.present: "true"
+          runtimeClassName: nvidia
           securityContext:
-            runAsUser: 568
-            runAsGroup: 568
-            fsGroup: 568
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
             fsGroupChangePolicy: OnRootMismatch
-            supplementalGroups: [44, 105, 10000]
+            supplementalGroups: [44, 105]
     service:
       app:
         controller: plex
