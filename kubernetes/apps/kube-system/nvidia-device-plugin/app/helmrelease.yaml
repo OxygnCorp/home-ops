@@ -27,10 +27,6 @@ spec:
     - name: node-feature-discovery
       namespace: kube-system
   values:
-    gfd:
-      enabled: true
-    nfd:
-      enabled: false
     runtimeClassName: nvidia
     config:
       map:
