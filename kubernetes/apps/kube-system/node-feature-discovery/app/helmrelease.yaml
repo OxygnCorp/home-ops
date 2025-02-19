@@ -22,22 +22,14 @@ spec:
     cleanupOnFail: true
     crds: CreateReplace
     remediation:
+      strategy: rollback
       retries: 3
   values:
     master:
-      config:
-        extraLabelNs:
-          - nvidia.com
+      replicaCount: 1
     worker:
       config:
         core:
-          sources: ["custom", "pci", "usb", "system"]
-        sources:
-          usb:
-            deviceClassWhitelist: ["02", "03", "0e", "ef", "fe", "ff"]
-            deviceLabelFields: ["class", "vendor", "device"]
-          pci:
-            deviceClassWhitelist: ["02", "0200", "0207", "0300", "0302"]
-            deviceLabelFields: ["vendor"]
+          labelSources: ["pci", "system", "usb"]
     prometheus:
       enable: true
