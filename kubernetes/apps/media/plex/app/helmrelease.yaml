@@ -26,6 +26,8 @@ spec:
   dependsOn:
     - name: rook-ceph-cluster
       namespace: rook-ceph
+    - name: intel-device-plugin-gpu
+      namespace: kube-system
     # - name: nvidia-device-plugin
     #   namespace: kube-system
   values:
@@ -52,15 +54,46 @@ spec:
             envFrom:
               - secretRef:
                   name: plex-secret
+            probes:
+              liveness: &probes
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /identity
+                    port: 32400
+                  initialDelaySeconds: 0
+                  periodSeconds: 10
+                  timeoutSeconds: 1
+                  failureThreshold: 3
+              readiness: *probes
+              startup:
+                enabled: true
+                spec:
+                  failureThreshold: 30
+                  periodSeconds: 10
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities: { drop: ["ALL"] }
             resources:
               requests:
-                cpu: 50m
-                memory: 512Mi
-                # nvidia.com/gpu: 1
+                cpu: 100m
               limits:
-                # nvidia.com/gpu: 1
-                memory: 4G
-        pod:
+                gpu.intel.com/i915: 1
+                memory: 4Gi
+    defaultPodOptions:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        supplementalGroups: [44]
+      nodeSelector:
+        intel.feature.node.kubernetes.io/gpu: "true"
+
+        # pod:
         #   affinity:
         #     nodeAffinity:
         #       requiredDuringSchedulingIgnoredDuringExecution:
@@ -73,12 +106,12 @@ spec:
         #   nodeSelector:
         #     nvidia.com/gpu.present: "true"
         #   runtimeClassName: nvidia
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-            fsGroup: 1000
-            fsGroupChangePolicy: OnRootMismatch
-            supplementalGroups: [44, 105]
+        #   securityContext:
+        #     runAsUser: 1000
+        #     runAsGroup: 1000
+        #     fsGroup: 1000
+        #     fsGroupChangePolicy: OnRootMismatch
+        #     supplementalGroups: [44, 105]
     service:
       app:
         controller: plex
@@ -94,6 +127,12 @@ spec:
         className: external
         annotations:
           nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+          nginx.ingress.kubernetes.io/server-snippet: |
+            location ~ ^/library/streams {
+              proxy_set_header        Range "";
+              proxy_pass              http://plex.media.svc.cluster.local:32400;
+              proxy_http_version      1.1;
+            }
         hosts:
           - host: "plex.oxygn.dev"
             paths:
@@ -108,18 +147,18 @@ spec:
         # globalMounts:
         #   - path: /config/Library/Application Support/Plex Media Server
       # Separate PVC for cache to avoid backing up cache files
-
       cache:
         existingClaim: plex-cache
         globalMounts:
           - path: /config/Library/Application Support/Plex Media Server/Cache
-
+      config-logs:
+        type: emptyDir
+        globalMounts:
+          - path: /config/Library/Application Support/Plex Media Server/Logs
       tmp:
         type: emptyDir
-
       transcode:
         type: emptyDir
-
       media:
         type: nfs
         server: funkstation.internal
@@ -127,7 +166,6 @@ spec:
         globalMounts:
           - path: /media
             readOnly: true
-
       pictures:
         type: nfs
         server: funkstation.internal
@@ -135,7 +173,6 @@ spec:
         globalMounts:
           - path: /pictures
             readOnly: true
-
       videos:
         type: nfs
         server: funkstation.internal
