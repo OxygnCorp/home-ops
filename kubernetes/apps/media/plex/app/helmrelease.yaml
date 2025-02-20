@@ -50,7 +50,7 @@ spec:
               # NVIDIA_VISIBLE_DEVICES: "all"
               # NVIDIA_DRIVER_CAPABILITIES: "all"
               # HARDWARE_DEVICE_PATH: "/dev/nvidia0"
-              TRANSCODER_TEMP_DIRECTORY: "/tmp" # /transocde
+              TRANSCODER_TEMP_DIRECTORY: "/transcode"
             envFrom:
               - secretRef:
                   name: plex-secret
@@ -127,12 +127,6 @@ spec:
         className: external
         annotations:
           nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
-          nginx.ingress.kubernetes.io/server-snippet: |
-            location ~ ^/library/streams {
-              proxy_set_header        Range "";
-              proxy_pass              http://plex.media.svc.cluster.local:32400;
-              proxy_http_version      1.1;
-            }
         hosts:
           - host: "plex.oxygn.dev"
             paths:
