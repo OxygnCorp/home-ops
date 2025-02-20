@@ -42,15 +42,15 @@ spec:
               tag: 1.41.4.9463-630c9f557@sha256:1d7589538a85a48ed3c14703b33ae8bacda7ca7db5307c68e8bc1b8ae6e888de
             env:
               TZ: "Europe/Paris"
-              ALLOWED_NETWORKS: "10.0.0.0/8,172.16.0.0/16,192.168.0.0/16,127.0.0.0/8"
-              SECURE_CONNECTIONS: "1" #1: Preferred, 0: Required
+              # ALLOWED_NETWORKS: "10.0.0.0/8,172.16.0.0/16,192.168.0.0/16,127.0.0.0/8"
+              # SECURE_CONNECTIONS: "1" #1: Preferred, 0: Required
               PLEX_ADVERTISE_URL: "http://10.10.98.170:32400,https://plex.oxygn.dev:443"
               PLEX_NO_AUTH_NETWORKS: "10.10.20.0/24"
               # required for HW acceleration
               NVIDIA_VISIBLE_DEVICES: "all"
               NVIDIA_DRIVER_CAPABILITIES: "all"
               # HARDWARE_DEVICE_PATH: "/dev/nvidia0"
-              TRANSCODER_TEMP_DIRECTORY: "/transcode"
+              # TRANSCODER_TEMP_DIRECTORY: "/transcode"
             envFrom:
               - secretRef:
                   name: plex-secret
