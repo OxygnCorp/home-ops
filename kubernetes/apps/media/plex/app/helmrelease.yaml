@@ -49,7 +49,7 @@ spec:
               # required for HW acceleration
               NVIDIA_VISIBLE_DEVICES: "all"
               NVIDIA_DRIVER_CAPABILITIES: "all"
-              HARDWARE_DEVICE_PATH: "/dev/nvidia0"
+              # HARDWARE_DEVICE_PATH: "/dev/nvidia0"
               TRANSCODER_TEMP_DIRECTORY: "/transcode"
             envFrom:
               - secretRef:
@@ -93,6 +93,15 @@ spec:
         supplementalGroups: [44]
       # nodeSelector:
       #   intel.feature.node.kubernetes.io/gpu: "true"
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: nvidia.com/gpu.present
+                    operator: In
+                    values:
+                      - "true"
       nodeSelector:
         nvidia.com/gpu.present: "true"
       runtimeClassName: nvidia
@@ -134,7 +143,7 @@ spec:
           nginx.ingress.kubernetes.io/server-snippet: |
             location ~ ^/library/streams {
               proxy_set_header        Range "";
-              proxy_pass              http://plex.default.svc.cluster.local:32400;
+              proxy_pass              http://plex.media.svc.cluster.local:32400;
               proxy_http_version      1.1;
             }
         hosts:
