@@ -20,10 +20,10 @@ experimental = true
 
 [tools]
 # Runtimes
-node = "22.13.0"
+node = "22.14.0"
 python = "3.13.2"
-uv = "0.5.21"
-go = "1.23.5"
+uv = "0.6.3"
+go = "1.24.0"
 
 # Mise
 "slsa-verifier" = "2.7.0"
