@@ -3,7 +3,7 @@
 kind: Kustomization
 namespace: actions-runner-system
 components:
-  - ../../flux/components/common
+  - ../../components/common
 resources:
   - ./actions-runner-controller/ks.yaml
 
