@@ -3,7 +3,7 @@
 kind: Kustomization
 namespace: flux-system
 components:
-  - ../../flux/components/common
+  - ../../components/common
 resources:
   - ./flux-operator/ks.yaml
   - ./weave-gitops/ks.yaml
