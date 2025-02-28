@@ -55,7 +55,7 @@
   "yaml.schemas": {
     "kubernetes": "./kubernetes/**/*.yaml"
   },
-  "python.defaultInterpreterPath": "/home/nea0d/.local/share/mise/installs/python/3.13.1/bin/python",
+  "python.defaultInterpreterPath": "/home/nea0d/.local/share/mise/installs/python/3.13.2/bin/python",
   "debug.javascript.defaultRuntimeExecutable": {
     "pwa-node": "/home/nea0d/.local/share/mise/shims/node"
   }
