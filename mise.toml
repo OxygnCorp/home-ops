@@ -32,6 +32,9 @@ go = "1.24.1"
 "1password" = "2.30.3"
 "1password-cli" = "2.30.3"
 
+# S3
+"aqua:aws/aws-cli" = "2.24.23"
+
 # Secret Encryption Stuff
 "aqua:getsops/sops" = "3.9.4"
 "aqua:FiloSottile/age" = "1.2.1"

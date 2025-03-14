@@ -5,27 +5,13 @@ kind: HelmRelease
 metadata:
   name: &app mealie
 spec:
-  interval: 30m
-  chart:
-    spec:
-      chart: app-template
-      version: 3.7.3
-      sourceRef:
-        kind: HelmRepository
-        name: bjw-s
-        namespace: flux-system
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: app-template
   values:
     controllers:
       mealie:
-        # initContainers:
-        #   init-db:
-        #     image:
-        #       repository: ghcr.io/onedr0p/postgres-init
-        #       tag: 16
-        #       pullPolicy: IfNotPresent
-        #     envFrom: &envFrom
-        #       - secretRef:
-        #           name: mealie-secret
         containers:
           app:
             image:
@@ -47,25 +33,18 @@ spec:
               SMTP_AUTH_STRATEGY: none
               SMTP_FROM_EMAIL: mealie@oxygn.dev
               TOKEN_TIME: 720
-              # Database Settings
-              # DB_ENGINE: postgres
-            # envFrom:
-            #   - secretRef:
-            #       name: mealie-secret
             resources:
               requests:
                 cpu: 10m
                 memory: 256M
               limits:
                 memory: 512M
-
     service:
       app:
         controller: mealie
         ports:
           http:
             port: 9000
-
     ingress:
       mealie:
         enabled: true
@@ -77,7 +56,6 @@ spec:
                 service:
                   identifier: app
                   port: http
-
     persistence:
       api-data:
         enabled: true
