@@ -113,6 +113,32 @@ function wait_for_nodes() {
     done
 }
 
+# CRDs to be applied before the helmfile charts are installed
+function apply_crds() {
+    log debug "Applying CRDs"
+
+    local -r crds=(
+        # renovate: datasource=github-releases depName=kubernetes-sigs/gateway-api
+        https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/experimental-install.yaml
+        # renovate: datasource=github-releases depName=prometheus-operator/prometheus-operator
+        https://github.com/prometheus-operator/prometheus-operator/releases/download/v0.81.0/stripped-down-crds.yaml
+        # renovate: datasource=github-releases depName=kubernetes-sigs/external-dns
+        https://raw.githubusercontent.com/kubernetes-sigs/external-dns/refs/tags/v0.16.1/docs/sources/crd/crd-manifest.yaml
+    )
+
+    for crd in "${crds[@]}"; do
+        if kubectl diff --filename "${crd}" &>/dev/null; then
+            log info "CRDs are up-to-date" "crd=${crd}"
+            continue
+        fi
+        if kubectl apply --server-side --filename "${crd}" &>/dev/null; then
+            log info "CRDs applied" "crd=${crd}"
+        else
+            log error "Failed to apply CRDs" "crd=${crd}"
+        fi
+    done
+}
+
 # Resources to be applied before the helmfile charts are installed
 function apply_resources() {
     log debug "Applying resources"
@@ -140,7 +166,7 @@ function wipe_rook_disks() {
     log debug "Wiping Rook disks"
 
     # Skip disk wipe if Rook is detected running in the cluster
-    # TODO: Is there a better way to detect Rook / OSDs?
+    # NOTE: Is there a better way to detect Rook / OSDs?
     if kubectl --namespace rook-ceph get kustomization rook-ceph &>/dev/null; then
         log warn "Rook is detected running in the cluster, skipping disk wipe"
         return
@@ -194,7 +220,7 @@ function main() {
     check_env KUBECONFIG KUBERNETES_VERSION ROOK_DISK TALOS_VERSION
     check_cli helmfile jq kubectl kustomize minijinja-cli op talosctl yq
 
-    if ! op user get --me &>/dev/null; then
+    if ! op whoami --format=json &>/dev/null; then
         log error "Failed to authenticate with 1Password CLI"
     fi
 
@@ -206,6 +232,7 @@ function main() {
     # Apply resources and Helm releases
     wait_for_nodes
     wipe_rook_disks
+    apply_crds
     apply_resources
     apply_helm_releases
 
