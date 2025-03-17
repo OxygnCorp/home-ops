@@ -9,6 +9,31 @@ metadata:
 apiVersion: v1
 kind: Secret
 metadata:
+  name: onepassword-secret
+  namespace: external-secrets
+stringData:
+  1password-credentials.json: op://home-ops/1password/OP_CREDENTIALS_JSON
+  token: op://home-ops/1password/OP_CONNECT_TOKEN
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: sops-age
+  namespace: flux-system
+stringData:
+  age.agekey: op://home-ops/sops/SOPS_PRIVATE_KEY
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: cloudflare-tunnel-id-secret
+  namespace: network
+stringData:
+  CLOUDFLARE_TUNNEL_ID: op://kubernetes/cloudflare/CLOUDFLARE_TUNNEL_ID
+---
+apiVersion: v1
+kind: Secret
+metadata:
   name: oxygn-dev-tls
   namespace: cert-manager
   annotations:
@@ -26,20 +51,3 @@ type: kubernetes.io/tls
 data:
   tls.crt: op://home-ops/oxygn-dev-tls/tls.crt
   tls.key: op://home-ops/oxygn-dev-tls/tls.key
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: onepassword-secret
-  namespace: external-secrets
-stringData:
-  1password-credentials.json: op://home-ops/1password/OP_CREDENTIALS_JSON
-  token: op://home-ops/1password/OP_CONNECT_TOKEN
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: sops-age
-  namespace: flux-system
-stringData:
-  age.agekey: op://home-ops/sops/SOPS_PRIVATE_KEY
