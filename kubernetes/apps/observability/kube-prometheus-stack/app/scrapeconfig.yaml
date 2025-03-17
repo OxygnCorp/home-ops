@@ -7,8 +7,8 @@ metadata:
 spec:
   staticConfigs:
     - targets:
-      - 10.10.0.50  # Proxmox VE node.
-      - 10.10.0.51  # Proxmox VE node.
+      - pve.internal:8006  # Proxmox VE node.
+      - pve2.internal:8006  # Proxmox VE node.
   metricsPath: /pve
   params:
     module: ["default"]

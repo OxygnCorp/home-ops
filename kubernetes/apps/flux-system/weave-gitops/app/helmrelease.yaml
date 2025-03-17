@@ -27,14 +27,6 @@ spec:
       create: true
       createSecret: false
       username: admin
-    ingress:
-      enabled: true
-      className: internal
-      hosts:
-        - host: "gitops.oxygn.dev"
-          paths:
-            - path: /
-              pathType: Prefix
     networkPolicy:
       create: false
     metrics:

@@ -53,17 +53,18 @@ spec:
         ports:
           http:
             port: &port 4000
-    ingress:
+    route:
       app:
-        enabled: true
-        className: internal
-        hosts:
-          - host: "teslamate.oxygn.dev"
-            paths:
-              - path: /
-                service:
-                  name: teslamate
-                  port: *port
+        hostnames:
+          - teslamate.oxygn.dev
+        parentRefs:
+          - name: internal
+            namespace: kube-system
+            sectionName: https
+        rules:
+          - backendRefs:
+              - name: *app
+                port: *port
     resources:
       requests:
         cpu: 25m
