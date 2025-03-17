@@ -77,28 +77,34 @@ spec:
         ports:
           http:
             primary: true
-            port: 8123
+            port: &port 8123
           code-server:
             port: 12321
-    ingress:
+    route:
       app:
-        className: external
-        hosts:
-          - host: "hass.oxygn.dev"
-            paths:
-              - path: /
-                service:
-                  identifier: app
-                  port: http
-      code-server:
-        className: internal
-        hosts:
-          - host: "hass-code.oxygn.dev"
-            paths:
-              - path: /
-                service:
-                  identifier: app
-                  port: code-server
+        hostnames:
+          - hass.oxygn.dev
+        parentRefs:
+          - name: internal
+            namespace: kube-system
+            sectionName: https
+        rules:
+          - matches:
+              - path:
+                  type: PathPrefix
+                  value: /code/
+            filters:
+              - type: URLRewrite
+                urlRewrite:
+                  path:
+                    type: ReplacePrefixMatch
+                    replacePrefixMatch: /
+            backendRefs:
+              - name: home-assistant
+                port: 12321
+          - backendRefs:
+              - name: home-assistant
+                port: 8123
     persistence:
       config:
         existingClaim: home-assistant

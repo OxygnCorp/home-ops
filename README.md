@@ -48,10 +48,9 @@ My cluster is [talos](https://talos.dev/) overtop VMs provisioned in a 2-nodes P
 - [actions-runner-controller](https://github.com/actions/actions-runner-controller): self-hosted Github runners
 - [cert-manager](https://cert-manager.io/docs/): creates SSL certificates for services in my cluster
 - [cilium](https://github.com/cilium/cilium): internal Kubernetes networking plugin
-- [cloudflared](https://github.com/cloudflare/cloudflared): Enables Cloudflare secure access to certain ingresses.
-- [external-dns](https://github.com/kubernetes-sigs/external-dns): automatically syncs DNS records from my cluster ingresses to a DNS provider
+- [cloudflared](https://github.com/cloudflare/cloudflared): Enables Cloudflare secure access to certain routes.
+- [external-dns](https://github.com/kubernetes-sigs/external-dns): automatically syncs DNS records from my cluster routes to a DNS provider
 - [external-secrets](https://github.com/external-secrets/external-secrets): Managed Kubernetes secrets using [Bitwarden Secrets Manager](https://bitwarden.com/products/secrets-manager/).
-- [ingress-nginx](https://github.com/kubernetes/ingress-nginx/): ingress controller for Kubernetes using NGINX as a reverse proxy and load balancer
 - [rook](https://github.com/rook/rook): distributed block storage for persistent storage
 - [sops](https://toolkit.fluxcd.io/guides/mozilla-sops/): managed secrets for Kubernetes, Ansible, and Terraform which are committed to Git
 - [spegel](https://github.com/spegel-org/spegel): Stateless cluster local OCI registry mirror.
@@ -101,7 +100,7 @@ graph TD;
 
 ## 🌐 DNS
 
-In my cluster there are two instances of [ExternalDNS](https://github.com/kubernetes-sigs/external-dns) running. One for syncing private DNS records to my `UDM Pro` using [ExternalDNS webhook provider for UniFi](https://github.com/kashalls/external-dns-unifi-webhook), while another instance syncs public DNS to `Cloudflare`. This setup is managed by creating ingresses with two specific classes: `internal` for private DNS and `external` for public DNS. The `external-dns` instances then syncs the DNS records to their respective platforms accordingly.
+In my cluster there are two instances of [ExternalDNS](https://github.com/kubernetes-sigs/external-dns) running. One for syncing private DNS records to my `UDM Pro` using [ExternalDNS webhook provider for UniFi](https://github.com/kashalls/external-dns-unifi-webhook), while another instance syncs public DNS to `Cloudflare`. This setup is managed by creating routes with two specific classes: `internal` for private DNS and `external` for public DNS. The `external-dns` instances then syncs the DNS records to their respective platforms accordingly.
 
 ---
 

@@ -50,18 +50,18 @@ spec:
         ports:
           http:
             port: 80
-    ingress:
+    route:
       app:
-        enabled: true
-        className: internal
-        hosts:
-          - host: "pgadmin.oxygn.dev"
-            paths:
-              - path: /
-                pathType: Prefix
-                service:
-                  identifier: app
-                  port: http
+        hostnames:
+          - pgadmin.oxygn.dev
+        parentRefs:
+          - name: internal
+            namespace: kube-system
+            sectionName: https
+        rules:
+          - backendRefs:
+              - name: *app
+                port: *port
     persistence:
       config:
         existingClaim: pgadmin

@@ -24,7 +24,7 @@ spec:
               PGID: 1000
               DEFAULT_EMAIL: "postmaster@oxygn.dev"
               ALLOW_SIGNUP: false
-              API_PORT: 9000
+              API_PORT: &port 9000
               AUTO_BACKUP_ENABLED: false
               BASE_URL: https://mealie.oxygn.dev
               SMTP_HOST: smtp-relay.kube-system.svc.cluster.local.
@@ -44,18 +44,18 @@ spec:
         controller: mealie
         ports:
           http:
-            port: 9000
-    ingress:
-      mealie:
-        enabled: true
-        className: external
-        hosts:
-          - host: "mealie.oxygn.dev"
-            paths:
-              - path: /
-                service:
-                  identifier: app
-                  port: http
+            port: *port
+    route:
+      app:
+        hostnames: ["{{ .Release.Name }}.oxygn.dev"]
+        parentRefs:
+          - name: external
+            namespace: kube-system
+            sectionName: https
+        rules:
+          - backendRefs:
+              - name: *app
+                port: *port
     persistence:
       api-data:
         enabled: true

@@ -58,20 +58,18 @@ spec:
         annotations:
           io.cilium/lb-ipam-ips: 10.10.98.173
         externalTrafficPolicy: Cluster
-    ingress:
+    route:
       app:
-        enabled: true
-        className: internal
-        hosts:
-          - host: &host "calibre.oxygn.dev"
-            paths:
-              - path: /
-                service:
-                  identifier: app
-                  port: http
-        tls:
-          - hosts:
-              - *host
+        hostnames:
+          - calibre.oxygn.dev
+        parentRefs:
+          - name: internal
+            namespace: kube-system
+            sectionName: https
+        rules:
+          - backendRefs:
+              - name: *app
+                port: 8081
     persistence:
       config:
         enabled: true

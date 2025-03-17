@@ -43,15 +43,6 @@ spec:
       - name: OLLAMA_DEBUG
         value: "1"
 
-    ingress:
-      enabled: true
-      className: internal
-      hosts:
-        - host: ollama.oxygn.dev
-          paths:
-            - path: /
-              pathType: Prefix
-
     persistentVolume:
       enabled: true
       existingClaim: ollama

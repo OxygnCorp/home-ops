@@ -71,22 +71,22 @@ spec:
         type: emptyDir
         globalMounts:
           - path: /usr/share/tessdata
-
     service:
       stirling-pdf:
         controller: stirling-pdf
         ports:
           http:
-            port: 8080
-
-    ingress:
+            port: &port 8080
+    route:
       app:
-        enabled: true
-        className: internal
-        hosts:
-          - host: pdf.oxygn.dev
-            paths:
-              - path: /
-                service:
-                  identifier: stirling-pdf
-                  port: http
+        hostnames:
+          - "{{ .Release.Name }}.oxygn.dev"
+          - pdf.oxygn.dev
+        parentRefs:
+          - name: internal
+            namespace: kube-system
+            sectionName: https
+        rules:
+          - backendRefs:
+              - name: *app
+                port: *port
