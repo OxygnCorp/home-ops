@@ -124,7 +124,7 @@ spec:
         controller: plex
         type: LoadBalancer
         annotations:
-          io.cilium/lb-ipam-ips: 10.10.98.170, , ::ffff:10.10.98.170
+          io.cilium/lb-ipam-ips: 10.10.98.170
         ports:
           http:
             port: &port 32400
