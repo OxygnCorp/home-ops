@@ -12,6 +12,7 @@ SCRIPTS_DIR = '{{config_root}}/scripts'
 TALOS_DIR = '{{config_root}}/talos'
 # Included file paths
 _.file = [
+  "{{config_root}}/onepassword.env",
   "{{config_root}}/kubernetes/apps/system-upgrade/versions.env"
 ]
 
@@ -45,7 +46,7 @@ go = "1.24.1"
 "pipx:flux-local" = "7.0.0"
 
 # Kubectl + Plugins
-"aqua:kubernetes/kubectl" = "1.32.2"
+"aqua:kubernetes/kubectl" = "1.32.3"
 "aqua:kubecolor" = "0.0.25"
 "aqua:yannh/kubeconform" = "0.6.7"
 
