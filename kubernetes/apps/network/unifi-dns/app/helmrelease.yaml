@@ -35,6 +35,7 @@ spec:
       retries: 3
   values:
     fullnameOverride: *app
+    logLevel: &logLevel debug
     image: # TODO: Remove this block when new chart version is released
       repository: registry.k8s.io/external-dns/external-dns
       tag: v0.16.1
@@ -52,6 +53,8 @@ spec:
               secretKeyRef:
                 name: &secret unifi-dns-secret
                 key: UNIFI_API_KEY
+          - name: LOG_LEVEL
+            value: *logLevel
         livenessProbe:
           httpGet:
             path: /healthz
