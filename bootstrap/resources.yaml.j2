@@ -1,4 +1,4 @@
-{% for namespace in ["cert-manager", "external-secrets", "flux-system"] %}
+{% for namespace in ["external-secrets", "flux-system", "network"] %}
 ---
 apiVersion: v1
 kind: Namespace
@@ -35,7 +35,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: oxygn-dev-tls
-  namespace: cert-manager
+  namespace: kube-system
   annotations:
     cert-manager.io/alt-names: '*.oxygn.dev,oxygn.dev'
     cert-manager.io/certificate-name: oxygn-dev
