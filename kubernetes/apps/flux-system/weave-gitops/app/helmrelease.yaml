@@ -27,6 +27,8 @@ spec:
       create: true
       createSecret: false
       username: admin
+    image:
+      tag: "v0.39.0-rc.2" #TODO : remove when chart will be updated
     networkPolicy:
       create: false
     metrics:
