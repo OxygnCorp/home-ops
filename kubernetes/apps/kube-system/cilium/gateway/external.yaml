@@ -6,6 +6,8 @@ metadata:
   name: external
   annotations:
     external-dns.alpha.kubernetes.io/target: &hostname external.oxygn.dev
+  labels:
+    gateway: external
 spec:
   gatewayClassName: cilium
   addresses:
@@ -21,7 +23,7 @@ spec:
       hostname: "*.oxygn.dev"
       allowedRoutes:
         namespaces:
-          from: Same
+          from: All
     - name: https
       protocol: HTTPS
       port: 443
