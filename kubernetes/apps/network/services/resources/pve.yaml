@@ -9,9 +9,9 @@ metadata:
     app.kubernetes.io/instance: *app
 spec:
   ports:
-    - name: http
+    - name: https
       protocol: TCP
-      port: 80
+      port: 443
       targetPort: 8006
 ---
 apiVersion: discovery.k8s.io/v1
@@ -25,12 +25,8 @@ addressType: IPv4
 endpoints:
   - addresses:
       - "10.10.0.50"
-    conditions:
-      ready: true
 ports:
-  - name: http
-    appProtocol: http
-    protocol: TCP
+  - name: https
     port: 8006
 ---
 # yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/gateway.networking.k8s.io/httproute_v1.json
@@ -48,7 +44,7 @@ spec:
     - backendRefs:
         - name: pve
           namespace: network
-          port: 80
+          port: 443
       matches:
         - path:
             type: PathPrefix
