@@ -66,6 +66,7 @@ go = "1.24.1"
 "go:github.com/minio/mc" = "RELEASE.2024-10-08T09-37-26Z"
 "aqua:cert-manager/cmctl" = "2.1.1"
 "aqua:cloudflare/cloudflared" = "2025.2.0"
+"asdf:carnei-ro/asdf-cilium-cli" = "0.18.2"
 
 # Linters
 "pipx:yamllint" = "1.35.1"
