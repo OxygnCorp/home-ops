@@ -26,6 +26,7 @@ enableIPv4BIGTCP: true
 endpointRoutes:
   enabled: true
 envoy:
+  enabled: true
   rollOutPods: true
 gatewayAPI:
   enabled: true
@@ -43,6 +44,7 @@ kubeProxyReplacementHealthzBindAddr: 0.0.0.0:10256
 l2announcements:
   enabled: true
 loadBalancer:
+  acceleration: best-effort
   algorithm: maglev
   mode: dsr
 localRedirectPolicy: true
