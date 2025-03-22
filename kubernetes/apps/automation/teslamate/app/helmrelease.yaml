@@ -17,9 +17,6 @@ spec:
     cleanupOnFail: true
     remediation:
       retries: 3
-  dependsOn:
-    - name: mosquitto
-      namespace: automation
   values:
     controllers:
       teslamate:
@@ -42,7 +39,7 @@ spec:
             env:
               TZ: Europe/Paris
               DISABLE_MQTT: "false"
-              MQTT_HOST: "mosquitto.automation.svc.cluster.local."
+              MQTT_HOST: mqtt://emqx-listeners.default.svc.cluster.local:1883
             envFrom:
               - secretRef:
                   name: teslamate-secret
