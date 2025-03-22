@@ -10,7 +10,7 @@ spec:
     mediaType: application/vnd.cncf.helm.chart.content.v1.tar+gzip
     operation: copy
   ref:
-    tag: 1.15.2
+    tag: 1.16.0
   url: oci://ghcr.io/home-operations/charts-mirror/external-dns
   verify:
     provider: cosign
@@ -26,19 +26,18 @@ spec:
     kind: OCIRepository
     name: unifi-dns
   install:
+    disableSchemaValidation: true # Ref: https://github.com/kubernetes-sigs/external-dns/issues/5206
     remediation:
       retries: 3
   upgrade:
     cleanupOnFail: true
+    disableSchemaValidation: true # Ref: https://github.com/kubernetes-sigs/external-dns/issues/5206
     remediation:
       strategy: rollback
       retries: 3
   values:
     fullnameOverride: *app
-    logLevel: &logLevel debug
-    image: # TODO: Remove this block when new chart version is released
-      repository: registry.k8s.io/external-dns/external-dns
-      tag: v0.16.1
+    # logLevel: &logLevel debug
     provider:
       name: webhook
       webhook:
@@ -53,8 +52,8 @@ spec:
               secretKeyRef:
                 name: &secret unifi-dns-secret
                 key: UNIFI_API_KEY
-          - name: LOG_LEVEL
-            value: *logLevel
+          # - name: LOG_LEVEL
+          #   value: *logLevel
         livenessProbe:
           httpGet:
             path: /healthz
