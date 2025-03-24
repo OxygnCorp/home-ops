@@ -31,4 +31,4 @@ spec:
   metricsPath: /minio/v2/metrics/cluster
   scheme: HTTP
   staticConfigs:
-    - targets: ['minio.network:9000']
+    - targets: ['funkstation.internal:9000']
