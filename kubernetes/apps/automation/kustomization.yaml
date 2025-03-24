@@ -7,5 +7,4 @@ components:
 resources:
   - ./emqx/ks.yaml
   - ./home-assistant/ks.yaml
-  # - ./mosquitto/ks.yaml
   - ./teslamate/ks.yaml
