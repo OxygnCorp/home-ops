@@ -50,22 +50,10 @@ spec:
               resources:
                 requests:
                   storage: 1Gi
-    kubeApiServer:
-      enabled: true
-      serviceMonitor:
-        metricRelabelings:
-          # Drop high cardinality labels
-          - action: drop
-            sourceLabels: ["__name__"]
-            regex: (apiserver|etcd|rest_client)_request(|_sli|_slo)_duration_seconds_bucket
-          - action: drop
-            sourceLabels: ["__name__"]
-            regex: (apiserver_response_sizes_bucket|apiserver_watch_events_sizes_bucket)
     kubeEtcd:
-      enabled: false
-      # service:
-      #   selector:
-      #     component: kube-apiserver # etcd runs on control plane nodes
+      service:
+        selector:
+          component: kube-apiserver # etcd runs on control plane nodes
     kubeProxy:
       enabled: false
     prometheus:
