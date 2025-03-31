@@ -50,6 +50,8 @@ spec:
               resources:
                 requests:
                   storage: 1Gi
+    kubeApiServer:
+      enabled: false
     kubeEtcd:
       service:
         selector:
