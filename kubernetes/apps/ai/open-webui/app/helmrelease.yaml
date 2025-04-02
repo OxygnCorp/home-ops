@@ -21,7 +21,7 @@ spec:
     keepHistory: false
   values:
     controllers:
-      openweb-ui:
+      open-webui:
         annotations:
           reloader.stakater.com/auto: "true"
 
