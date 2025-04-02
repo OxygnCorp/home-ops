@@ -1,43 +1,65 @@
 ---
-# yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
+# yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/helm.toolkit.fluxcd.io/helmrelease_v2beta2.json
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
   name: &app open-webui
 spec:
   interval: 30m
-  timeout: 15m
-  chart:
-    spec:
-      chart: open-webui
-      version: 6.0.0
-      sourceRef:
-        kind: HelmRepository
-        name: open-webui
-        namespace: flux-system
+  chartRef:
+    kind: OCIRepository
+    name: app-template
+  maxHistory: 2
   install:
-    createNamespace: true
     remediation:
-      retries: 3
+      retries: -1
   upgrade:
     cleanupOnFail: true
     remediation:
       retries: 3
+  uninstall:
+    keepHistory: false
   values:
-    strategy:
-      type: RollingUpdate
-      rollingUpdate:
-        maxSurge: 0
-        maxUnavailable: 1
+    controllers:
+      openweb-ui:
+        annotations:
+          reloader.stakater.com/auto: "true"
 
-    ollama:
-      # -- Automatically install Ollama Helm chart from https://otwld.github.io/ollama-helm/. Use [Helm Values](https://github.com/otwld/ollama-helm/#helm-values) to configure
-      enabled: false
+        containers:
+          app:
+            image:
+              repository: ghcr.io/open-webui/open-webui
+              tag: 0.6@sha256:a02d2892a53b89218074b903394485328bea49456e34de72bc3f17b68f04d64e
+            env:
+              OLLAMA_API_BASE_URL: http://ollama.ai.svc.cluster.local:11434/api
+            resources:
+              requests:
+                cpu: 200m
+              limits:
+                memory: 2Gi
 
-    # -- A list of Ollama API endpoints. These can be added in lieu of automatically installing the Ollama Helm chart, or in addition to it.
-    ollamaUrls: ["http://ollama.ai.svc.cluster.local.:11434"]
+    service:
+      app:
+        controller: *app
+        ports:
+          http:
+            port: &port 8080
+
+    route:
+      app:
+        hostnames:
+          - "{{ .Release.Name }}.oxygn.dev"
+        parentRefs:
+          - name: internal
+            namespace: kube-system
+            sectionName: https
+        rules:
+          - backendRefs:
+              - name: *app
+                port: *port
 
     persistence:
-      enabled: true
-      existingClaim: "open-webui"
-
+      config:
+        existingClaim: *app
+        globalMounts:
+          - path: /app/backend/data
