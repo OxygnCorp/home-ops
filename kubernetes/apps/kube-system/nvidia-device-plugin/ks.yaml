@@ -9,6 +9,9 @@ spec:
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
+  dependsOn:
+    - name: node-feature-discovery
+      namespace: *namespace
   interval: 30m
   path: ./kubernetes/apps/kube-system/nvidia-device-plugin/app
   prune: true
