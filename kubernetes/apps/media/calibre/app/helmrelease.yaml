@@ -9,18 +9,13 @@ spec:
   chartRef:
     kind: OCIRepository
     name: app-template
-  maxHistory: 2
   install:
-    createNamespace: true
     remediation:
-      retries: 3
+      retries: -1
   upgrade:
     cleanupOnFail: true
     remediation:
-      strategy: rollback
       retries: 3
-  uninstall:
-    keepHistory: false
   values:
     controllers:
       calibre:
