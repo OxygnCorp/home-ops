@@ -33,6 +33,8 @@ spec:
               UP_UNIFI_DEFAULT_SAVE_SITES: true
               UP_UNIFI_DEFAULT_SAVE_DPI: true
               UP_INFLUXDB_DISABLE: true
+              UP_UNIFI_DYNAMIC: true
+              UP_POLLER_DEBUG: true
             envFrom:
               - secretRef:
                   name: unifi-poller-secret
