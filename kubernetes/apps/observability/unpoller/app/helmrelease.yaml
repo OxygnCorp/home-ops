@@ -29,6 +29,8 @@ spec:
             env:
               TZ: "Europe/Paris"
               UP_UNIFI_DEFAULT_ROLE: home-ops
+              UP_UNIFI_DEFAULT_URL: https://10.10.0.1
+              UP_PROMETHEUS_HTTP_LISTEN: 0.0.0.0:80
               UP_UNIFI_DEFAULT_VERIFY_SSL: false
               UP_UNIFI_DEFAULT_SAVE_SITES: true
               UP_UNIFI_DEFAULT_SAVE_DPI: true
