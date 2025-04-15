@@ -33,7 +33,7 @@ spec:
       retries: 3
   values:
     githubConfigUrl: https://github.com/OxygnCorp/home-ops
-    githubConfigSecret: &secret actions-runner-controller-secret
+    githubConfigSecret: home-ops-runner-secret
     minRunners: 1
     maxRunners: 3
     containerMode:
@@ -43,7 +43,7 @@ spec:
         storageClassName: openebs-hostpath
         resources:
           requests:
-            storage: 25Gi
+            storage: 20Gi
     controllerServiceAccount:
       name: actions-runner-controller
       namespace: actions-runner-system
