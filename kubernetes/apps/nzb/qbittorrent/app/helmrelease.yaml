@@ -40,21 +40,25 @@ spec:
             restartPolicy: Always
 
           gluetun:
+            dependsOn:
+              - coredns
             image:
               repository: ghcr.io/qdm12/gluetun
               tag: v3.40.0
             env:
+              DNS_ADDRESS: "127.0.0.2"
               VPN_SERVICE_PROVIDER: "privado"
               SERVER_COUNTRIES: "Netherlands,Switzerland"
               # SERVER_HOSTNAMES: "zrh-005.vpn.privado.io,zrh-006.vpn.privado.io,zrh-007.vpn.privado.io,zrh-008.vpn.privado.io"
               FIREWALL_INPUT_PORTS: &port 80
               FIREWALL_DEBUG: "on"
-              FIREWALL_OUTBOUND_SUBNETS: "10.97.0.0/16,10.10.98.0/24" # Allow access to k8s subnets
+              FIREWALL_OUTBOUND_SUBNETS: "10.96.0.0/12,10.10.98.0/24" # Allow access to k8s subnets
               LOG_LEVEL: "debug"
-              DOT: "on"
+              DOT: "off"
             envFrom:
               - secretRef:
                   name: qbittorrent-vpn-secret
+            restartPolicy: Always
             resources:
               limits:
                 squat.ai/tun: "1"
