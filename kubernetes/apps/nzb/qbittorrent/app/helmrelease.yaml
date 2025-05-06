@@ -47,7 +47,7 @@ spec:
               VPN_SERVICE_PROVIDER: "privado"
               SERVER_COUNTRIES: "Netherlands,Switzerland"
               # SERVER_HOSTNAMES: "zrh-005.vpn.privado.io,zrh-006.vpn.privado.io,zrh-007.vpn.privado.io,zrh-008.vpn.privado.io"
-              FIREWALL_INPUT_PORTS: *port
+              FIREWALL_INPUT_PORTS: &port 80
               FIREWALL_DEBUG: "on"
               FIREWALL_OUTBOUND_SUBNETS: "10.97.0.0/16,10.10.98.0/24" # Allow access to k8s subnets
               LOG_LEVEL: "debug"
@@ -71,7 +71,7 @@ spec:
               tag: 5.1.0@sha256:3e7c969139da1eaf8d3ccdebd473eefb4e2550d610b88f5a3c866bc34662d89a
             env:
               UMASK: "022"
-              QBT_WEBUI_PORT: &port 80
+              QBT_WEBUI_PORT: *port
               QBT_TORRENTING_PORT: &bittorrentPort 50163
               QBT_Application__MemoryWorkingSetLimit:
                 valueFrom:
