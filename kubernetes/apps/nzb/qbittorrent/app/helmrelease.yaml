@@ -19,13 +19,51 @@ spec:
   values:
     controllers:
       qbittorrent:
+        type: statefulset
+
         annotations:
-          configmap.reloader.stakater.com/reload: qbittorrent-scripts,qbittorrent-dnsdist
           secret.reloader.stakater.com/reload: qbittorrent-vpn-secret
+
         pod:
           securityContext:
             fsGroup: 568
             fsGroupChangePolicy: "OnRootMismatch"
+
+        initContainers:
+          coredns:
+            image:
+              repository: mirror.gcr.io/coredns/coredns
+              tag: 1.12.1
+            args:
+              - -conf
+              - /etc/coredns/Corefile
+            restartPolicy: Always
+
+          gluetun:
+            image:
+              repository: ghcr.io/qdm12/gluetun
+              tag: v3.40.0
+            env:
+              VPN_SERVICE_PROVIDER: "privado"
+              SERVER_COUNTRIES: "Netherlands,Switzerland"
+              # SERVER_HOSTNAMES: "zrh-005.vpn.privado.io,zrh-006.vpn.privado.io,zrh-007.vpn.privado.io,zrh-008.vpn.privado.io"
+              FIREWALL_INPUT_PORTS: *port
+              FIREWALL_DEBUG: "on"
+              FIREWALL_OUTBOUND_SUBNETS: "10.97.0.0/16,10.10.98.0/24" # Allow access to k8s subnets
+              LOG_LEVEL: "debug"
+              DOT: "on"
+            envFrom:
+              - secretRef:
+                  name: qbittorrent-vpn-secret
+            resources:
+              limits:
+                squat.ai/tun: "1"
+            securityContext:
+              capabilities:
+                add:
+                  - NET_ADMIN
+              allowPrivilegeEscalation: false
+
         containers:
           app:
             image:
@@ -89,38 +127,6 @@ spec:
                 memory: 25Mi
               limits:
                 memory: 50Mi
-
-          # dnsdist:
-          #   image:
-          #     repository: docker.io/powerdns/dnsdist-19
-          #     tag: 1.9.6
-
-          gluetun:
-            image:
-              repository: ghcr.io/qdm12/gluetun
-              tag: v3.40.0
-            env:
-              VPN_SERVICE_PROVIDER: "privado"
-              SERVER_COUNTRIES: "Netherlands,Switzerland"
-              # SERVER_HOSTNAMES: "zrh-005.vpn.privado.io,zrh-006.vpn.privado.io,zrh-007.vpn.privado.io,zrh-008.vpn.privado.io"
-              FIREWALL_INPUT_PORTS: *port
-              FIREWALL_DEBUG: "on"
-              FIREWALL_OUTBOUND_SUBNETS: "10.97.0.0/16,10.10.98.0/24" # Allow access to k8s subnets
-              LOG_LEVEL: "debug"
-              DOT: "on"
-            envFrom:
-              - secretRef:
-                  name: qbittorrent-vpn-secret
-            resources:
-              limits:
-                squat.ai/tun: "1"
-            securityContext:
-              capabilities:
-                add:
-                  - NET_ADMIN
-                  # - NET_RAW
-                  # - MKNOD
-              allowPrivilegeEscalation: false
 
           port-forward:
             image:
@@ -190,14 +196,14 @@ spec:
             port-forward:
               - path: /config
 
-      dnsdist:
+      coredns:
         type: configMap
-        name: qbittorrent-dnsdist
+        name: qbittorrent-coredns
         advancedMounts:
           qbittorrent:
-            dnsdist:
-              - path: /etc/dnsdist/dnsdist.conf
-                subPath: dnsdist.conf
+            coredns:
+              - path: /etc/coredns/Corefile
+                subPath: Corefile
                 readOnly: true
 
       media:
