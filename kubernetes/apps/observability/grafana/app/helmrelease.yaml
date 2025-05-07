@@ -137,9 +137,6 @@ spec:
           revision: 6
           datasource:
             - { name: DS_PROMETHEUS, value: Prometheus }
-        dragonfly:
-          url: https://raw.githubusercontent.com/dragonflydb/dragonfly/main/tools/local/monitoring/grafana/provisioning/dashboards/dashboard.json
-          datasource: Prometheus
         emqx:
           # renovate: depName="EMQX"
           gnetId: 17446
@@ -209,13 +206,6 @@ spec:
         node-feature-discovery:
           url: https://raw.githubusercontent.com/kubernetes-sigs/node-feature-discovery/master/examples/grafana-dashboard.json
           datasource: Prometheus
-        volsync:
-          # renovate: depName="VolSync Dashboard"
-          gnetId: 21356
-          revision: 3
-          datasource:
-            - { name: DS_PROMETHEUS, value: Prometheus }
-            - { name: VAR_REPLICATIONDESTNAME, value: .*-dst }
         proxmox-ve:
           # renovate: depName="Proxmox via Prometheus"
           gnetId: 10347
@@ -312,9 +302,6 @@ spec:
         teslamate-custom-dc-charging-curves:
           url: https://raw.githubusercontent.com/jheredianet/Teslamate-CustomGrafanaDashboards/main/dashboards/DCChargingCurvesByCarrier.json
           datasource: TeslaMate
-        teslamate-custom-db-dashboard-info:
-          url: https://raw.githubusercontent.com/jheredianet/Teslamate-CustomGrafanaDashboards/refs/heads/main/dashboards/DatabaseDashboadInfo.json
-          datasource: TeslaMate
         teslamate-custom-incomplete-date:
           url: https://raw.githubusercontent.com/jheredianet/Teslamate-CustomGrafanaDashboards/main/dashboards/IncompleteData.json
           datasource: TeslaMate
@@ -360,6 +347,13 @@ spec:
           gnetId: 11312
           revision: 9
           datasource: Prometheus
+        volsync:
+          # renovate: depName="VolSync Dashboard"
+          gnetId: 21356
+          revision: 3
+          datasource:
+            - { name: DS_PROMETHEUS, value: Prometheus }
+            - { name: VAR_REPLICATIONDESTNAME, value: .*-dst }
     sidecar:
       image:
         registry: ghcr.io
