@@ -10,7 +10,7 @@ spec:
     mediaType: application/vnd.cncf.helm.chart.content.v1.tar+gzip
     operation: copy
   ref:
-    tag: 8.15.0
+    tag: 9.0.0
   url: oci://ghcr.io/grafana/helm-charts/grafana
 ---
 # yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
@@ -158,6 +158,15 @@ spec:
               path: /var/lib/grafana/dashboards/tesla
     dashboards:
       data:
+        dragonfly:
+          url: https://raw.githubusercontent.com/dragonflydb/dragonfly/refs/heads/main/tools/local/monitoring/grafana/provisioning/dashboards/dragonfly.json
+          datasource: Prometheus
+        emqx:
+          # renovate: depName="EMQX"
+          gnetId: 17446
+          revision: 2
+          datasource:
+            - { name: DS_PROMETHEUS, value: Prometheus }
       kubernetes:
         kubernetes-api-server:
           # renovate: depName="Kubernetes / System / API Server"
@@ -412,13 +421,6 @@ spec:
         teslamate-custom-tracking-drives:
           url: https://raw.githubusercontent.com/jheredianet/Teslamate-CustomGrafanaDashboards/main/dashboards/TrackingDrives.json
           datasource: TeslaMate
-      default:
-        emqx:
-          # renovate: depName="EMQX"
-          gnetId: 17446
-          revision: 2
-          datasource:
-            - { name: DS_PROMETHEUS, value: Prometheus }
     sidecar:
       image:
         registry: ghcr.io
