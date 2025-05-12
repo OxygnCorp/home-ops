@@ -1,8 +1,16 @@
 machine:
+  type: controlplane
   network:
     hostname: k8s-2
   install:
-    image: factory.talos.dev/installer/da2a92dc19840ef28f38840c4ab976256d91746d437515108fdcf61be65b33a9:{{ ENV.TALOS_VERSION }}
+    # extensions :
+    # - siderolabs/qemu-guest-agent
+    # - siderolabs/i915
+    # - siderolabs/intel-ucode
+    # - siderolabs/mei
+    # - siderolabs/nvidia-container-toolkit-lts
+    # - siderolabs/nonfree-kmod-nvidia-lts
+    image: factory.talos.dev/installer/5793512901017d8f106f53662283ab68a8a9987398bae1624e307c3aee67405d:{{ ENV.TALOS_VERSION }}
     extraKernelArgs:
       - i915.enable_guc=3                   # Meteor Lake CPU / iGPU
       - sysctl.kernel.kexec_load_disabled=1 # Meteor Lake CPU / iGPU
@@ -21,3 +29,5 @@ machine:
       - name: nvidia_modeset
   nodeLabels:
     intel.feature.node.kubernetes.io/gpu: "true"
+
+
