@@ -1,5 +1,8 @@
 machine:
+  type: controlplane
   network:
     hostname: k8s-0
   install:
+    # extensions :
+    # - siderolabs/qemu-guest-agent
     image: factory.talos.dev/installer/ce4c980550dd2ab1b17bbf2b08801c7eb59418eafe8f279833297925d67c7515:{{ ENV.TALOS_VERSION }}
