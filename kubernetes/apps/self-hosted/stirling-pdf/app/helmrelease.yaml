@@ -71,7 +71,7 @@ spec:
         globalMounts:
           - path: /usr/share/tessdata
     service:
-      stirling-pdf:
+      app:
         controller: stirling-pdf
         ports:
           http:
