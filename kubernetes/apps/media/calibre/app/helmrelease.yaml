@@ -1,9 +1,9 @@
 ---
-# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: &app calibre
+  name: calibre
 spec:
   interval: 1h
   chartRef:
@@ -36,13 +36,13 @@ spec:
                 memory: 512M
     service:
       app:
-        controller: *app
+        controller: calibre
         ports:
           http:
             port: 8080
       webserver:
         enabled: true
-        controller: *app
+        controller: calibre
         ports:
           webserver:
             enabled: true
@@ -63,12 +63,12 @@ spec:
             sectionName: https
         rules:
           - backendRefs:
-              - name: *app
+              - identifier: app
                 port: 8081
     persistence:
       config:
         enabled: true
-        existingClaim: *app
+        existingClaim: calibre
         globalMounts:
           - path: /config
 
