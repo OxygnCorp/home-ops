@@ -41,7 +41,7 @@ go = "1.24.3"
 "aqua:FiloSottile/age" = "1.2.1"
 
 # Flux Stuff
-"aqua:fluxcd/flux2" = "2.5.0"
+"aqua:fluxcd/flux2" = "2.5.1"
 "aqua:flux-iac/tofu-controller/tfctl" = "0.15.1"
 "pipx:flux-local" = "7.0.0"
 
