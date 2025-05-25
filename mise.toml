@@ -69,6 +69,6 @@ go = "1.24.3"
 "asdf:carnei-ro/asdf-cilium-cli" = "0.18.2"
 
 # Linters
-"pipx:yamllint" = "1.35.1"
+"pipx:yamllint" = "1.37.1"
 "aqua:mikefarah/yq" = "4.45.1"
 "aqua:jqlang/jq" = "1.7.1"
