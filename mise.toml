@@ -70,5 +70,5 @@ go = "1.24.3"
 
 # Linters
 "pipx:yamllint" = "1.35.1"
-"aqua:mikefarah/yq" = "4.45.1"
+"aqua:mikefarah/yq" = "4.45.4"
 "aqua:jqlang/jq" = "1.7.1"
