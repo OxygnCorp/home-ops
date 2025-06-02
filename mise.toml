@@ -60,7 +60,7 @@ go = "1.24.3"
 
 # Talos Stuff
 "aqua:siderolabs/talos" = "1.10.3"
-"aqua:budimanjojo/talhelper" = "3.0.26"
+"aqua:budimanjojo/talhelper" = "3.0.28"
 
 # Misc Tools
 "aqua:go-task/task" = "3.43.3"
