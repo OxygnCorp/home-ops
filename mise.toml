@@ -59,7 +59,7 @@ go = "1.24.4"
 "aqua:stern/stern" = "1.32.0"
 
 # Talos Stuff
-"aqua:siderolabs/talos" = "1.10.3"
+"aqua:siderolabs/talos" = "1.10.4"
 "aqua:budimanjojo/talhelper" = "3.0.28"
 
 # Misc Tools
