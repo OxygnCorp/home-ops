@@ -31,20 +31,6 @@ spec:
 apiVersion: monitoring.giantswarm.io/v1alpha1
 kind: Silence
 metadata:
-  name: nas-memory-high-utilization
-spec:
-  matchers:
-    - name: alertname
-      value: NodeMemoryHighUtilization
-      isRegex: false
-    - name: instance
-      value: expanse.internal:9100
-      isRegex: false
----
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/monitoring.giantswarm.io/silence_v1alpha1.json
-apiVersion: monitoring.giantswarm.io/v1alpha1
-kind: Silence
-metadata:
   name: keda-hpa-maxed-out
 spec:
   matchers:
