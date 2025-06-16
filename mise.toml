@@ -28,7 +28,7 @@ go = "1.24.4"
 
 # Mise
 "slsa-verifier" = "2.7.0"
-"aqua:sigstore/cosign" = "2.5.0"
+"aqua:sigstore/cosign" = "2.5.1"
 
 # 1Password
 "1password" = "2.30.3"
