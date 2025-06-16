@@ -63,9 +63,7 @@ spec:
               limits:
                 squat.ai/tun: "1"
             securityContext:
-              capabilities:
-                add:
-                  - NET_ADMIN
+              capabilities: { add: ["NET_ADMIN"] }
               allowPrivilegeEscalation: false
 
         containers:
@@ -90,15 +88,23 @@ spec:
               QBT_Preferences__WebUI__AlternativeUIEnabled: true
               QBT_Preferences__WebUI__RootFolder: /add-ons/VueTorrent
             probes:
-              liveness:
+              liveness: &probes
                 enabled: true
-              readiness:
-                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /api/v2/app/version
+                    port: *port
+                  initialDelaySeconds: 0
+                  periodSeconds: 10
+                  timeoutSeconds: 1
+                  failureThreshold: 3
+              readiness: *probes
               startup:
                 enabled: true
                 spec:
                   failureThreshold: 30
-                  periodSeconds: 5
+                  periodSeconds: 10
             resources:
               requests:
                 cpu: 49m
@@ -111,9 +117,7 @@ spec:
               runAsNonRoot: true
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
-              capabilities:
-                drop:
-                  - ALL
+              capabilities: { drop: ["ALL"] }
 
           vuetorrent:
             dependsOn: app
@@ -150,9 +154,7 @@ spec:
               runAsNonRoot: true
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
-              capabilities:
-                drop:
-                  - ALL
+              capabilities: { drop: ["ALL"] }
     service:
       app:
         controller: qbittorrent
