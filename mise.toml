@@ -44,7 +44,7 @@ go = "1.24.5"
 # Flux Stuff
 "aqua:fluxcd/flux2" = "2.6.4"
 "aqua:flux-iac/tofu-controller/tfctl" = "0.15.1"
-"pipx:flux-local" = "7.7.0"
+"pipx:flux-local" = "7.7.1"
 
 # Kubectl + Plugins
 "aqua:kubernetes/kubectl" = "1.32.3"
