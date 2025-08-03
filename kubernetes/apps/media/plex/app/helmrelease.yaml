@@ -28,15 +28,13 @@ spec:
               tag: 1.41.9.9961@sha256:6c86319bb3275135f5da5aec71b45e48305669ecbceee0f88d335bebf0d0f218
             env:
               TZ: "Europe/Paris"
-              # ALLOWED_NETWORKS: "10.0.0.0/8,172.16.0.0/16,192.168.0.0/16,127.0.0.0/8"
-              # SECURE_CONNECTIONS: "1" #1: Preferred, 0: Required
               PLEX_ADVERTISE_URL: "http://10.10.98.170:32400,https://plex.oxygn.dev:443"
               PLEX_NO_AUTH_NETWORKS: "10.10.20.0/24"
               # required for HW acceleration
               NVIDIA_VISIBLE_DEVICES: "all"
               NVIDIA_DRIVER_CAPABILITIES: "all"
-              # HARDWARE_DEVICE_PATH: "/dev/nvidia0"
-              # TRANSCODER_TEMP_DIRECTORY: "/transcode"
+              HARDWARE_DEVICE_PATH: "/dev/nvidia0"
+              TRANSCODER_TEMP_DIRECTORY: "/transcode"
             envFrom:
               - secretRef:
                   name: plex-secret
@@ -47,7 +45,7 @@ spec:
                 spec:
                   httpGet:
                     path: /identity
-                    port: 32400
+                    port: &port 32400
                   initialDelaySeconds: 0
                   periodSeconds: 10
                   timeoutSeconds: 1
@@ -66,7 +64,6 @@ spec:
               requests:
                 cpu: 100m
               limits:
-                # gpu.intel.com/i915: 1
                 nvidia.com/gpu: 1
                 memory: 4Gi
     defaultPodOptions:
@@ -76,9 +73,6 @@ spec:
         runAsGroup: 1000
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
-        supplementalGroups: [44]
-      # nodeSelector:
-      #   intel.feature.node.kubernetes.io/gpu: "true"
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -92,25 +86,6 @@ spec:
         nvidia.com/gpu.present: "true"
       runtimeClassName: nvidia
 
-        # pod:
-        #   affinity:
-        #     nodeAffinity:
-        #       requiredDuringSchedulingIgnoredDuringExecution:
-        #         nodeSelectorTerms:
-        #           - matchExpressions:
-        #               - key: nvidia.com/gpu.present
-        #                 operator: In
-        #                 values:
-        #                   - "true"
-        #   nodeSelector:
-        #     nvidia.com/gpu.present: "true"
-        #   runtimeClassName: nvidia
-        #   securityContext:
-        #     runAsUser: 1000
-        #     runAsGroup: 1000
-        #     fsGroup: 1000
-        #     fsGroupChangePolicy: OnRootMismatch
-        #     supplementalGroups: [44, 105]
     service:
       app:
         controller: plex
@@ -119,7 +94,7 @@ spec:
           io.cilium/lb-ipam-ips: 10.10.98.170
         ports:
           http:
-            port: &port 32400
+            port: *port
     route:
       app:
         hostnames:
@@ -154,14 +129,17 @@ spec:
         existingClaim: plex-cache
         globalMounts:
           - path: /config/Library/Application Support/Plex Media Server/Cache
-      config-logs:
+      tmpfs:
         type: emptyDir
-        globalMounts:
-          - path: /config/Library/Application Support/Plex Media Server/Logs
-      tmp:
-        type: emptyDir
-      transcode:
-        type: emptyDir
+        advancedMounts:
+          plex:
+            app:
+              - path: /config/Library/Application Support/Plex Media Server/Logs
+                subPath: logs
+              - path: /transcode
+                subPath: transcode
+              - path: /tmp
+                subPath: tmp
       media:
         type: nfs
         server: funkstation.internal
