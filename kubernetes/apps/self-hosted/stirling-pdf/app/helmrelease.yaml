@@ -44,7 +44,9 @@ spec:
                   failureThreshold: 90
                   periodSeconds: 5
             securityContext:
+              allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
+              capabilities: { drop: ["ALL"] }
         pod:
           securityContext:
             runAsNonRoot: true
@@ -52,24 +54,6 @@ spec:
             runAsGroup: 1000
             fsGroup: 1000
             fsGroupChangePolicy: OnRootMismatch
-
-    persistence:
-      config:
-        enabled: true
-        existingClaim: stirling-pdf
-        globalMounts:
-          - path: /configs
-      logs:
-        enabled: true
-        type: emptyDir
-      tmp:
-        enabled: true
-        type: emptyDir
-      tessdata:
-        enabled: true
-        type: emptyDir
-        globalMounts:
-          - path: /usr/share/tessdata
     service:
       app:
         controller: stirling-pdf
@@ -89,3 +73,23 @@ spec:
           - backendRefs:
               - identifier: app
                 port: *port
+
+    persistence:
+      config:
+        enabled: true
+        existingClaim: stirling-pdf
+        globalMounts:
+          - path: /configs
+      tmpfs:
+        type: emptyDir
+        advancedMounts:
+          stirling-pdf:
+            app:
+              - path: /logs
+                subPath: logs
+              - path: /pipeline
+                subPath: pipeline
+              - path: /usr/share/tessdata
+                subPath: tessdata
+              - path: /tmp
+                subPath: tmp
