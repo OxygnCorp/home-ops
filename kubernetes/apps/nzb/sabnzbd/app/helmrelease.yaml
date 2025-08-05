@@ -63,7 +63,7 @@ spec:
                 cpu: 50m
                 memory: 512M
               limits:
-                memory: 4Gi
+                memory: 8Gi
     defaultPodOptions:
       securityContext:
         runAsUser: 568
@@ -95,13 +95,13 @@ spec:
       config:
         existingClaim: sabnzbd
 
-      logs:
+      tmpfs:
         type: emptyDir
         globalMounts:
           - path: /config/logs
-
-      tmp:
-        type: emptyDir
+            subPath: logs
+          - path: /tmp
+            subPath: tmp
 
       media:
         type: nfs
