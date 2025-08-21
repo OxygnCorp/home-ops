@@ -65,7 +65,7 @@ go = "1.25.0"
 "aqua:go-task/task" = "3.44.1"
 "go:github.com/minio/mc" = "RELEASE.2024-10-08T09-37-26Z"
 "aqua:cert-manager/cmctl" = "2.3.0"
-"aqua:cloudflare/cloudflared" = "2025.8.0"
+"aqua:cloudflare/cloudflared" = "2025.8.1"
 "asdf:carnei-ro/asdf-cilium-cli" = "0.18.2"
 
 # Linters
