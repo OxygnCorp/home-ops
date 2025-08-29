@@ -21,9 +21,9 @@ experimental = true
 
 [tools]
 # Runtimes
-node = "22.18.0"
+node = "22.19.0"
 python = "3.13.7"
-uv = "0.8.13"
+uv = "0.8.14"
 go = "1.25.0"
 
 # Mise
@@ -35,7 +35,7 @@ go = "1.25.0"
 "1password-cli" = "2.30.3"
 
 # S3
-"aqua:aws/aws-cli" = "2.28.17"
+"aqua:aws/aws-cli" = "2.28.20"
 
 # Secret Encryption Stuff
 "aqua:getsops/sops" = "3.10.2"
@@ -59,7 +59,7 @@ go = "1.25.0"
 
 # Talos Stuff
 "aqua:siderolabs/talos" = "1.10.7"
-"aqua:budimanjojo/talhelper" = "3.0.32"
+"aqua:budimanjojo/talhelper" = "3.0.33"
 
 # Misc Tools
 "aqua:go-task/task" = "3.44.1"
