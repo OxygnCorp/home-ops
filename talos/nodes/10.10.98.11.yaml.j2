@@ -4,5 +4,9 @@ machine:
     hostname: k8s-1
   install:
     # extensions :
+    # - siderolabs/i915
+    # - siderolabs/intel-ucode
+    # - siderolabs/mei
     # - siderolabs/qemu-guest-agent
-    image: factory.talos.dev/installer/ce4c980550dd2ab1b17bbf2b08801c7eb59418eafe8f279833297925d67c7515:{{ ENV.TALOS_VERSION }}
+    # - siderolabs/util-linux-tools
+    image: factory.talos.dev/installer/f8555fe8ea62d71d16fda2fabbd2e6fdc03ba5b168704b723e53ec551d3e7f30:{{ ENV.TALOS_VERSION }}
