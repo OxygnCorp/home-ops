@@ -24,7 +24,7 @@ experimental = true
 node = "22.19.0"
 python = "3.13.7"
 uv = "0.8.14"
-go = "1.25.0"
+go = "1.25.1"
 
 # Mise
 "slsa-verifier" = "2.7.0"
