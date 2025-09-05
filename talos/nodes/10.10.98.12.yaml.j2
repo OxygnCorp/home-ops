@@ -2,6 +2,9 @@ machine:
   type: controlplane
   network:
     hostname: k8s-2
+  nodeLabels:
+    topology.kubernetes.io/zone: m
+    intel.feature.node.kubernetes.io/gpu: "true"
   install:
     # extensions :
     # - siderolabs/i915
@@ -28,7 +31,3 @@ machine:
       - name: nvidia_uvm
       - name: nvidia_drm
       - name: nvidia_modeset
-  nodeLabels:
-    intel.feature.node.kubernetes.io/gpu: "true"
-
-

@@ -2,6 +2,8 @@ machine:
   type: controlplane
   network:
     hostname: k8s-1
+  nodeLabels:
+    topology.kubernetes.io/zone: m
   install:
     # extensions :
     # - siderolabs/i915
