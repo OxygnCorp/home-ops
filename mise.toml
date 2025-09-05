@@ -4,6 +4,7 @@ KUBECONFIG = '{{config_root}}/kubeconfig'
 MINIJINJA_CONFIG_FILE = '{{config_root}}/.minijinja.toml'
 SOPS_AGE_KEY_FILE = '{{config_root}}/age.key'
 TALOSCONFIG = '{{config_root}}/talosconfig'
+JUST_UNSTABLE = "1"
 # Directory paths
 ROOT_DIR = '{{config_root}}'
 BOOTSTRAP_DIR = '{{config_root}}/bootstrap'
@@ -25,14 +26,15 @@ node = "22.19.0"
 python = "3.13.7"
 uv = "0.8.14"
 go = "1.25.0"
+gum = "0.16.2"
 
 # Mise
 "slsa-verifier" = "2.7.0"
 "aqua:sigstore/cosign" = "2.5.3"
 
 # 1Password
-"1password" = "2.30.3"
-"1password-cli" = "2.30.3"
+"1password" = "2.31.1"
+"1password-cli" = "2.31.1"
 
 # S3
 "aqua:aws/aws-cli" = "2.28.21"
@@ -63,6 +65,7 @@ go = "1.25.0"
 
 # Misc Tools
 "aqua:go-task/task" = "3.44.1"
+"aqua:casey/just" = "1.42.4"
 "go:github.com/minio/mc" = "RELEASE.2024-10-08T09-37-26Z"
 "aqua:cert-manager/cmctl" = "2.3.0"
 "aqua:cloudflare/cloudflared" = "2025.8.1"
