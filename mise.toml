@@ -46,7 +46,7 @@ gum = "0.16.2"
 # Flux Stuff
 "aqua:fluxcd/flux2" = "2.6.4"
 "aqua:flux-iac/tofu-controller/tfctl" = "0.15.1"
-"pipx:flux-local" = "7.9.0"
+"pipx:flux-local" = "7.10.0"
 
 # Kubectl + Plugins
 "aqua:kubernetes/kubectl" = "1.32.3"
