@@ -1,3 +1,4 @@
+---
 endpoints:
   - name: "${APP}"
     group: guarded
@@ -7,9 +8,9 @@ endpoints:
       hide-hostname: true
       hide-url: true
     dns:
-      query-name: "${GATUS_SUBDOMAIN:-${APP}}.oxygn.dev"
+      query-name: "${GATUS_SUBDOMAIN:=${APP}}.oxygn.dev"
       query-type: A
     conditions:
-      - "len([BODY]) == 0"
+      - len([BODY]) == 0
     alerts:
       - type: discord
