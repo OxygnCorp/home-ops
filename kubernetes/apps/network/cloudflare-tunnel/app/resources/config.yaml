@@ -4,7 +4,7 @@ originRequest:
 
 ingress:
   - hostname: oxygn.dev
-    service: &svc https://cilium-gateway-external.kube-system.svc.cluster.local
+    service: &svc https://envoy-network-external.network.svc.cluster.local
   - hostname: "*.oxygn.dev"
     service: *svc
   - service: http_status:404
