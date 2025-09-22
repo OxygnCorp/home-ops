@@ -10,4 +10,6 @@ spec:
     name: letsencrypt-production
     kind: ClusterIssuer
   commonName: oxygn.dev
-  dnsNames: ["oxygn.dev", "*.oxygn.dev"]
+  dnsNames:
+    - "oxygn.dev"
+    - "*.oxygn.dev"

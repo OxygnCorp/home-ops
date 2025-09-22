@@ -43,8 +43,8 @@ spec:
           enabled: true
           hostnames: ["alertmanager.oxygn.dev"]
           parentRefs:
-            - name: internal
-              namespace: kube-system
+            - name: envoy-internal
+              namespace: network
               sectionName: https
       alertmanagerSpec:
         useExistingSecret: true
@@ -71,8 +71,8 @@ spec:
           enabled: true
           hostnames: ["prometheus.oxygn.dev"]
           parentRefs:
-            - name: internal
-              namespace: kube-system
+            - name: envoy-internal
+              namespace: network
               sectionName: https
       prometheusSpec:
         image:
