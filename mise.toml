@@ -40,7 +40,7 @@ gum = "0.16.2"
 "aqua:aws/aws-cli" = "2.31.0"
 
 # Secret Encryption Stuff
-"aqua:getsops/sops" = "3.10.2"
+"aqua:getsops/sops" = "3.11.0"
 "aqua:FiloSottile/age" = "1.2.1"
 
 # Flux Stuff
