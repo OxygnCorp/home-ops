@@ -59,8 +59,6 @@ spec:
                   timeoutSeconds: 1
                   failureThreshold: 3
               readiness: *probes
-              startup:
-                enabled: false
             securityContext:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
@@ -71,58 +69,13 @@ spec:
                 memory: 256M
               limits:
                 memory: 1Gi
-      # sonarr:
-      #   annotations:
-      #     reloader.stakater.com/auto: "true"
-      #   containers:
-      #     app:
-      #       image:
-      #         repository: ghcr.io/onedr0p/sonarr-develop
-      #         tag: 4.0.11.2815@sha256:ac6fdfaa7056044d6131f6dbeec93542585ca3b9c76f4ebd3362864c70547e6b
-      #       env:
-      #         SONARR__APP__INSTANCENAME: Sonarr
-      #         SONARR__APP__THEME: dark
-      #         SONARR__AUTH__METHOD: External
-      #         SONARR__AUTH__REQUIRED: DisabledForLocalAddresses
-      #         SONARR__LOG__DBENABLED: "False"
-      #         SONARR__LOG__LEVEL: info
-      #         SONARR__SERVER__PORT: &port 80
-      #         SONARR__UPDATE__BRANCH: develop
-      #         TZ: "Europe/Paris"
-      #       envFrom:
-      #         - secretRef:
-      #             name: sonarr-secret
-      #       probes:
-      #         liveness: &probes
-      #           enabled: true
-      #           custom: true
-      #           spec:
-      #             httpGet:
-      #               path: /ping
-      #               port: *port
-      #             initialDelaySeconds: 0
-      #             periodSeconds: 10
-      #             timeoutSeconds: 1
-      #             failureThreshold: 3
-      #         readiness: *probes
-      #       securityContext:
-      #         allowPrivilegeEscalation: false
-      #         readOnlyRootFilesystem: true
-      #         capabilities: { drop: ["ALL"] }
-      #       resources:
-      #         requests:
-      #           cpu: 10m
-      #           memory: 256M
-      #         limits:
-      #           memory: 1Gi
-        pod:
-          securityContext:
-            runAsNonRoot: true
-            runAsUser: 1000
-            runAsGroup: 1000
-            fsGroup: 1000
-            fsGroupChangePolicy: OnRootMismatch
-            seccompProfile: { type: RuntimeDefault }
+    defaultPodOptions:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
     service:
       app:
         ports:
@@ -139,18 +92,15 @@ spec:
     persistence:
       config:
         existingClaim: sonarr
-
       cache:
         existingClaim: sonarr-cache
         globalMounts:
           - path: /config/MediaCover
-
-      tmp:
-        type: emptyDir
-
       media:
         type: nfs
         server: funkstation.internal
         path: /volume2/Media
         globalMounts:
           - path: /media
+      tmp:
+        type: emptyDir
