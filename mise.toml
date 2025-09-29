@@ -61,7 +61,7 @@ gum = "0.16.2"
 
 # Talos Stuff
 "aqua:siderolabs/talos" = "1.11.2"
-"aqua:budimanjojo/talhelper" = "3.0.35"
+"aqua:budimanjojo/talhelper" = "3.0.36"
 
 # Misc Tools
 "aqua:casey/just" = "1.42.4"
