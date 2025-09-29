@@ -125,7 +125,6 @@ spec:
             seccompProfile: { type: RuntimeDefault }
     service:
       app:
-        controller: sonarr
         ports:
           http:
             port: *port
@@ -137,10 +136,6 @@ spec:
           - name: envoy-internal
             namespace: network
             sectionName: https
-        rules:
-          - backendRefs:
-              - identifier: app
-                port: *port
     persistence:
       config:
         existingClaim: sonarr
