@@ -44,7 +44,7 @@ gum = "0.16.2"
 "aqua:FiloSottile/age" = "1.2.1"
 
 # Flux Stuff
-"aqua:fluxcd/flux2" = "2.7.0"
+"aqua:fluxcd/flux2" = "2.7.1"
 "aqua:flux-iac/tofu-controller/tfctl" = "0.15.1"
 "pipx:flux-local" = "7.10.1"
 
