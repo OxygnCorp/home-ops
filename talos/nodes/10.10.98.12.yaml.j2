@@ -7,14 +7,15 @@ machine:
     intel.feature.node.kubernetes.io/gpu: "true"
   install:
     # extensions :
-    # - siderolabs/i915
-    # - siderolabs/intel-ucode
-    # - siderolabs/mei
-    # - siderolabs/nvidia-container-toolkit-lts
-    # - siderolabs/nonfree-kmod-nvidia-lts
-    # - siderolabs/qemu-guest-agent
-    # - siderolabs/util-linux-tools
-    image: factory.talos.dev/installer/e5fd836e1ef7383e984337c99b174299d47651325e4bdbdb23ed63b448765132:{{ ENV.TALOS_VERSION }}
+    # - siderolabs/i915  # Intel iGPU
+    # - siderolabs/intel-ucode  # Intel iGPU
+    # - siderolabs/mei  # Intel iGPU
+    # - siderolabs/qemu-guest-agent # Proxmox
+    # - siderolabs/nfsrahead # NFS Performance
+    # - siderolabs/nvidia-container-toolkit-lts # Nvidia GPU
+    # - siderolabs/nonfree-kmod-nvidia-lts # Nvidia GPU
+    # - siderolabs/util-linux-tools # Tools
+    image: factory.talos.dev/installer/58c48e6c3f8344a6217baf7cef7018922d98c25d5dff76272f6303c3c34a398d:{{ ENV.TALOS_VERSION }}
     extraKernelArgs:
       - i915.enable_guc=3                   # Meteor Lake CPU / iGPU
       - sysctl.kernel.kexec_load_disabled=1 # Meteor Lake CPU / iGPU
