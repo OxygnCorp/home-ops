@@ -7,9 +7,10 @@ machine:
     topology.kubernetes.io/zone: m
   install:
     # extensions :
-    # - siderolabs/i915
-    # - siderolabs/intel-ucode
-    # - siderolabs/mei
-    # - siderolabs/qemu-guest-agent
-    # - siderolabs/util-linux-tools
+    # - siderolabs/i915  # Intel iGPU
+    # - siderolabs/intel-ucode  # Intel iGPU
+    # - siderolabs/mei  # Intel iGPU
+    # - siderolabs/qemu-guest-agent # Proxmox
+    # - siderolabs/nfsrahead # NFS Performance
+    # - siderolabs/util-linux-tools # Tools
     image: factory.talos.dev/installer/f8555fe8ea62d71d16fda2fabbd2e6fdc03ba5b168704b723e53ec551d3e7f30:{{ ENV.TALOS_VERSION }}
