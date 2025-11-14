@@ -84,9 +84,24 @@ machine:
         - 10.10.98.0/24
   network:
     interfaces:
-      - deviceSelector:
-          hardwareAddr: bc:24:11:ab:b8:*
+      - interface: bond0
+        bond:
+          deviceSelectors:
+            - driver: e1000e
+              hardwareAddr: bc:24:11:ab:b8:*
+          mode: active-backup
         dhcp: true
+        vlans:
+          - # IOT
+            vlanId: 130
+            dhcp: false
+            # addresses:
+            #   - 10.10.30.24/24
+          - # VPN
+            vlanId: 170
+            dhcp: false
+            # addresses:
+            #   - 10.10.70.24/24
         vip:
           ip: 10.10.98.254
   nodeLabels:
