@@ -42,7 +42,7 @@ spec:
               - coredns
             image:
               repository: ghcr.io/qdm12/gluetun
-              tag: v3.40.1
+              tag: v3.40.2
             env:
               DNS_ADDRESS: "127.0.0.2"
               VPN_SERVICE_PROVIDER: "privado"
