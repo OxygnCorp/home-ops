@@ -19,7 +19,7 @@ spec:
               tag: 25.4.0@sha256:7afaa93e1992f86a033a310eb0f012f1e4c6bd406caa608146df951e85298ff1
             env:
               NZBGET__PORT: &port 80
-              TZ: America/New_York
+              TZ: Europ/Paris
             probes:
               liveness: &probes
                 enabled: true
@@ -48,7 +48,7 @@ spec:
           [{
             "name": "vpn",
             "namespace": "kube-system",
-            "ips": ["192.168.90.11/24"],
+            "ips": ["10.10.70.11/24"],
             "mac": "a6:3e:4f:09:e4:9c"
           }]
       securityContext:
@@ -65,7 +65,7 @@ spec:
     route:
       app:
         hostnames:
-          - "{{ .Release.Name }}.turbo.ac"
+          - "{{ .Release.Name }}.oxygn.dev"
         parentRefs:
           - name: envoy-internal
             namespace: network
@@ -74,10 +74,9 @@ spec:
         existingClaim: "{{ .Release.Name }}"
       media:
         type: nfs
-        server: expanse.internal
-        path: /mnt/eros/Media
+        server: funkstation.internal
+        path: /volume2/Media
         globalMounts:
-          - path: /media/Downloads/nzbget
-            subPath: Downloads/nzbget
+          - path: /media
       tmp:
         type: emptyDir

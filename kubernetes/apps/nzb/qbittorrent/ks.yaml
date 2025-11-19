@@ -22,6 +22,8 @@ spec:
       namespace: volsync-system
     - name: keda
       namespace: observability
+    - name: multus-networks
+      namespace: kube-system
   interval: 30m
   path: ./kubernetes/apps/nzb/qbittorrent/app
   postBuild:
