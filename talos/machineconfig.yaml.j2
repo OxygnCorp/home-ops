@@ -84,12 +84,11 @@ machine:
         - 10.10.98.0/24
   network:
     interfaces:
-      - interface: eth0
+      - interface: bond0
         bond:
           deviceSelectors:
-            - driver: e1000e
+            - driver: virtio_net
               hardwareAddr: bc:24:11:ab:b8:*
-          mode: active-backup
         dhcp: true
         vlans:
           - # IOT
