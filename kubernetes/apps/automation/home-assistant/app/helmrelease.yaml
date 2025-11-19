@@ -61,6 +61,14 @@ spec:
             env:
               TZ: "Europe/Paris"
     defaultPodOptions:
+      annotations:
+        k8s.v1.cni.cncf.io/networks: |-
+          [{
+            "name": "iot",
+            "namespace": "kube-system",
+            "ips": ["10.10.30.10/24"],
+            "mac": "c6:07:27:af:fb:53"
+          }]
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000
@@ -71,22 +79,23 @@ spec:
       app:
         controller: home-assistant
         type: LoadBalancer
-        annotations:
-          lbipam.cilium.io/ips: "10.10.98.171"
         ports:
           http:
             primary: true
-            port: &port 8123
+            appProtocol: kubernetes.io/ws
+            port: 8123
           code-server:
             port: 12321
     route:
       app:
+        annotations:
+          gatus.home-operations.com/endpoint: |-
+            conditions: ["[STATUS] == 200"]
         hostnames:
           - hass.oxygn.dev
         parentRefs:
           - name: envoy-internal
             namespace: network
-            sectionName: https
         rules:
           - matches:
               - path:
