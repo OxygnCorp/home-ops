@@ -12,7 +12,7 @@ spec:
       "plugins": [
         {
           "type": "macvlan",
-          "master": "eth0.130",
+          "master": "bond0.130",
           "mode": "bridge",
           "ipam": {
             "type": "static",

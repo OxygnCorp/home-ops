@@ -37,7 +37,7 @@ spec:
       exclusive: false
     dashboards:
       enabled: true
-    devices: eth+
+    devices: bond+
     enableIPv4BIGTCP: false
     endpointRoutes:
       enabled: true
