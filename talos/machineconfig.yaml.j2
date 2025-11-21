@@ -6,6 +6,10 @@ machine:
     {% if ENV.IS_CONTROLLER %}
     key: op://home-ops/talos/MACHINE_CA_KEY
     {% endif %}
+  certSANs:
+  - 127.0.0.1
+  - 10.10.98.254
+  - k8s.internal
   features:
     apidCheckExtKeyUsage: true
     diskQuotaSupport: true
@@ -78,7 +82,7 @@ machine:
     image: ghcr.io/siderolabs/kubelet:v1.34.2
     nodeIP:
       validSubnets:
-        - 10.10.10.0/24
+        - 10.10.98.0/24
   network:
     interfaces:
       - interface: bond0
@@ -94,6 +98,8 @@ machine:
           - # VPN
             vlanId: 170
             dhcp: false
+        vip:
+          ip: 10.10.98.254
   nodeLabels:
     intel.feature.node.kubernetes.io/gpu: "true"
     topology.kubernetes.io/region: main
@@ -125,7 +131,7 @@ cluster:
     {% endif %}
   clusterName: main
   controlPlane:
-    endpoint: https://k8s.internal:6443
+    endpoint: https://10.10.98.254:6443
   discovery:
     enabled: true
     registries:
@@ -156,6 +162,8 @@ cluster:
       rules:
         - level: Metadata
     certSANs:
+      - 127.0.0.1
+      - 10.10.98.254
       - k8s.internal
     disablePodSecurityPolicy: true
     extraArgs:
@@ -171,7 +179,7 @@ cluster:
     disabled: true
   etcd:
     advertisedSubnets:
-      - 10.10.10.0/24
+      - 10.10.98.0/24
     ca:
       crt: op://home-ops/talos/CLUSTER_ETCD_CA_CRT
       key: op://home-ops/talos/CLUSTER_ETCD_CA_KEY
