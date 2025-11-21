@@ -6,9 +6,6 @@ machine:
     {% if ENV.IS_CONTROLLER %}
     key: op://home-ops/talos/MACHINE_CA_KEY
     {% endif %}
-  certSANs:
-    - 127.0.0.1
-    - 10.10.98.254
   features:
     apidCheckExtKeyUsage: true
     diskQuotaSupport: true
@@ -37,6 +34,7 @@ machine:
         [plugins."io.containerd.cri.v1.images"]
           discard_unpacked_layers = false
         [plugins."io.containerd.cri.v1.runtime"]
+          cdi_spec_dirs = ["/var/cdi/static", "/var/cdi/dynamic"]
           device_ownership_from_security_context = true
     - op: overwrite
       path: /etc/nfsmount.conf
@@ -61,7 +59,6 @@ machine:
       - mitigations=off                     # Less security, faster puter
       - security=none                       # Less security, faster puter
       - talos.auditd.disabled=1             # Less security, faster puter
-    image: factory.talos.dev/metal-installer/05b4a47a70bc97786ed83d200567dcc8a13f731b164537ba59d5397d668851fa:v1.11.5
     wipe: false
   kernel:
     modules:
@@ -81,7 +78,7 @@ machine:
     image: ghcr.io/siderolabs/kubelet:v1.34.2
     nodeIP:
       validSubnets:
-        - 10.10.98.0/24
+        - 10.10.10.0/24
   network:
     interfaces:
       - interface: bond0
@@ -94,15 +91,9 @@ machine:
           - # IOT
             vlanId: 130
             dhcp: false
-            # addresses:
-            #   - 10.10.30.24/24
           - # VPN
             vlanId: 170
             dhcp: false
-            # addresses:
-            #   - 10.10.70.24/24
-        vip:
-          ip: 10.10.98.254
   nodeLabels:
     intel.feature.node.kubernetes.io/gpu: "true"
     topology.kubernetes.io/region: main
@@ -134,16 +125,23 @@ cluster:
     {% endif %}
   clusterName: main
   controlPlane:
-    endpoint: https://10.10.98.254:6443
+    endpoint: https://k8s.internal:6443
+  discovery:
+    enabled: true
+    registries:
+      kubernetes:
+        disabled: true
+      service:
+        disabled: false
   id: op://home-ops/talos/CLUSTER_ID
   network:
     cni:
       name: none
     dnsDomain: cluster.local
     podSubnets:
-      - 10.97.0.0/16
+      - 10.42.0.0/16
     serviceSubnets:
-      - 10.96.0.0/16
+      - 10.43.0.0/16
   secret: op://home-ops/talos/CLUSTER_SECRET
   token: op://home-ops/talos/CLUSTER_TOKEN
   {% if ENV.IS_CONTROLLER %}
@@ -158,8 +156,7 @@ cluster:
       rules:
         - level: Metadata
     certSANs:
-      - 127.0.0.1
-      - 10.10.98.254
+      - k8s.internal
     disablePodSecurityPolicy: true
     extraArgs:
       enable-aggregator-routing: "true"
@@ -174,7 +171,7 @@ cluster:
     disabled: true
   etcd:
     advertisedSubnets:
-      - 10.10.98.0/24
+      - 10.10.10.0/24
     ca:
       crt: op://home-ops/talos/CLUSTER_ETCD_CA_CRT
       key: op://home-ops/talos/CLUSTER_ETCD_CA_KEY
