@@ -1,7 +1,7 @@
 ---
 machine:
   network:
-    hostname: k8s-0
+    hostname: k8s-1
   nodeLabels:
     topology.kubernetes.io/zone: m
   type: controlplane
@@ -13,4 +13,4 @@ machine:
     # - siderolabs/qemu-guest-agent # Proxmox
     # - siderolabs/nfsrahead # NFS Performance
     # - siderolabs/util-linux-tools # Tools
-    image: factory.talos.dev/installer/3f79e53cb76ea172832b11bf3cf7aa761f2a2883e9a1cb5be80500f9a5bf6983:{{ ENV.TALOS_VERSION }}
+    image: factory.talos.dev/nocloud-installer/3f79e53cb76ea172832b11bf3cf7aa761f2a2883e9a1cb5be80500f9a5bf6983:{{ ENV.TALOS_VERSION }}

@@ -16,7 +16,7 @@ machine:
     # - siderolabs/nvidia-container-toolkit-lts # Nvidia GPU
     # - siderolabs/nonfree-kmod-nvidia-lts # Nvidia GPU
     # - siderolabs/util-linux-tools # Tools
-    image: factory.talos.dev/installer/58c48e6c3f8344a6217baf7cef7018922d98c25d5dff76272f6303c3c34a398d:{{ ENV.TALOS_VERSION }}
+    image: factory.talos.dev/nocloud-installer/58c48e6c3f8344a6217baf7cef7018922d98c25d5dff76272f6303c3c34a398d:{{ ENV.TALOS_VERSION }}
     extraKernelArgs:
       - i915.enable_guc=3                   # Meteor Lake CPU / iGPU
       - sysctl.kernel.kexec_load_disabled=1 # Meteor Lake CPU / iGPU
