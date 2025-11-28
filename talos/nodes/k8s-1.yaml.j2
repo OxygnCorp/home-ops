@@ -1,0 +1,19 @@
+---
+machine:
+  network:
+    hostname: k8s-1
+    interfaces:
+      - # k8s-1
+        deviceSelector:
+          driver: virtio-net
+          hardwareAddr: BC:24:11:65:38:D1
+        dhcp: false
+        addresses:
+          - 169.254.255.21/24
+        mtu: 9000
+        routes:
+          - network: 169.254.255.1/24
+            metric: 2048
+  nodeLabels:
+    topology.kubernetes.io/zone: m
+  type: controlplane

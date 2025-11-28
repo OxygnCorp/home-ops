@@ -6,10 +6,6 @@ machine:
     {% if ENV.IS_CONTROLLER %}
     key: op://home-ops/talos/MACHINE_CA_KEY
     {% endif %}
-  certSANs:
-  - 127.0.0.1
-  - 10.10.98.254
-  - k8s.internal
   features:
     apidCheckExtKeyUsage: true
     diskQuotaSupport: true
@@ -51,18 +47,7 @@ machine:
         noatime=True
   install:
     disk: /dev/sda
-    extraKernelArgs:
-      - -init_on_alloc                      # Less security, faster puter
-      - -init_on_free                       # Less security, faster puter
-      - -selinux                            # Less security, faster puter
-      - apparmor=0                          # Less security, faster puter
-      - init_on_alloc=0                     # Less security, faster puter
-      - init_on_free=0                      # Less security, faster puter
-      - intel_iommu=on                      # PCI Passthrough
-      - iommu=pt                            # PCI Passthrough
-      - mitigations=off                     # Less security, faster puter
-      - security=none                       # Less security, faster puter
-      - talos.auditd.disabled=1             # Less security, faster puter
+    image: factory.talos.dev/installer/3f79e53cb76ea172832b11bf3cf7aa761f2a2883e9a1cb5be80500f9a5bf6983:v1.11.5
     wipe: false
   kernel:
     modules:
@@ -82,7 +67,7 @@ machine:
     image: ghcr.io/siderolabs/kubelet:v1.34.2
     nodeIP:
       validSubnets:
-        - 10.10.98.0/24
+        - 10.10.10.0/24
   network:
     interfaces:
       - interface: bond0
@@ -98,8 +83,6 @@ machine:
           - # VPN
             vlanId: 170
             dhcp: false
-        vip:
-          ip: 10.10.98.254
   nodeLabels:
     intel.feature.node.kubernetes.io/gpu: "true"
     topology.kubernetes.io/region: main
@@ -131,7 +114,7 @@ cluster:
     {% endif %}
   clusterName: main
   controlPlane:
-    endpoint: https://10.10.98.254:6443
+    endpoint: https://k8s.internal:6443
   discovery:
     enabled: true
     registries:
@@ -162,8 +145,6 @@ cluster:
       rules:
         - level: Metadata
     certSANs:
-      - 127.0.0.1
-      - 10.10.98.254
       - k8s.internal
     disablePodSecurityPolicy: true
     extraArgs:
@@ -179,7 +160,7 @@ cluster:
     disabled: true
   etcd:
     advertisedSubnets:
-      - 10.10.98.0/24
+      - 10.10.10.0/24
     ca:
       crt: op://home-ops/talos/CLUSTER_ETCD_CA_CRT
       key: op://home-ops/talos/CLUSTER_ETCD_CA_KEY
