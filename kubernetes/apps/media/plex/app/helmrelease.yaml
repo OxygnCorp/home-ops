@@ -31,9 +31,9 @@ spec:
               PLEX_ADVERTISE_URL: "http://10.10.98.170:32400,https://plex.oxygn.dev:443,http://plex.media.svc.cluster.local:32400"
               PLEX_NO_AUTH_NETWORKS: "10.10.20.0/24"
               # required for HW acceleration
-              NVIDIA_VISIBLE_DEVICES: "all"
-              NVIDIA_DRIVER_CAPABILITIES: "all"
-              HARDWARE_DEVICE_PATH: "/dev/nvidia0"
+              # NVIDIA_VISIBLE_DEVICES: "all"
+              # NVIDIA_DRIVER_CAPABILITIES: "all"
+              # HARDWARE_DEVICE_PATH: "/dev/nvidia0"
               TRANSCODER_TEMP_DIRECTORY: "/transcode"
             envFrom:
               - secretRef:
@@ -64,7 +64,7 @@ spec:
               requests:
                 cpu: 100m
               limits:
-                nvidia.com/gpu: 1
+                # nvidia.com/gpu: 1
                 memory: 4Gi
     defaultPodOptions:
       securityContext:
@@ -73,18 +73,18 @@ spec:
         runAsGroup: 1000
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-              - matchExpressions:
-                  - key: nvidia.com/gpu.present
-                    operator: In
-                    values:
-                      - "true"
-      nodeSelector:
-        nvidia.com/gpu.present: "true"
-      runtimeClassName: nvidia
+      # affinity:
+      #   nodeAffinity:
+      #     requiredDuringSchedulingIgnoredDuringExecution:
+      #       nodeSelectorTerms:
+      #         - matchExpressions:
+      #             - key: nvidia.com/gpu.present
+      #               operator: In
+      #               values:
+      #                 - "true"
+      # nodeSelector:
+      #   nvidia.com/gpu.present: "true"
+      # runtimeClassName: nvidia
 
     service:
       app:
@@ -92,7 +92,7 @@ spec:
         type: LoadBalancer
         annotations:
           lbipam.cilium.io/ips: 10.10.98.170
-          externalTrafficPolicy: Cluster
+          externalTrafficPolicy: Local
         ports:
           http:
             port: *port

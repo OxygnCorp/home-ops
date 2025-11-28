@@ -50,7 +50,7 @@ spec:
           gatus.home-operations.com/endpoint: |-
             group: services
           lbipam.cilium.io/ips: 10.10.98.163
-        externalTrafficPolicy: Cluster
+        externalTrafficPolicy: Local
         ports:
           mqtt:
             port: 1883
