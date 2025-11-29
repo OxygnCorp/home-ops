@@ -43,17 +43,15 @@ spec:
                 spec:
                   failureThreshold: 90
                   periodSeconds: 5
-            securityContext:
-              allowPrivilegeEscalation: false
-              readOnlyRootFilesystem: true
-              capabilities: { drop: ["ALL"] }
-        pod:
-          securityContext:
-            runAsNonRoot: true
-            runAsUser: 1000
-            runAsGroup: 1000
-            fsGroup: 1000
-            fsGroupChangePolicy: OnRootMismatch
+        #     securityContext:
+        #       readOnlyRootFilesystem: true
+        # pod:
+        #   securityContext:
+        #     runAsNonRoot: true
+        #     runAsUser: 1000
+        #     runAsGroup: 1000
+        #     fsGroup: 1000
+        #     fsGroupChangePolicy: OnRootMismatch
     service:
       app:
         controller: stirling-pdf
@@ -68,7 +66,6 @@ spec:
         parentRefs:
           - name: envoy-internal
             namespace: network
-            sectionName: https
         rules:
           - backendRefs:
               - identifier: app
