@@ -13,6 +13,10 @@ machine:
             metric: 2048
           - network: 169.254.255.22/32
             metric: 2048
+      - interface: eth2
+        dhcp: false
+      - interface: eth3
+        dhcp: false
   nodeLabels:
     topology.kubernetes.io/zone: m
   type: controlplane
