@@ -76,13 +76,6 @@ machine:
             - driver: virtio_net
               hardwareAddr: bc:24:11:ab:b8:*
         dhcp: true
-        vlans:
-          - # IOT
-            vlanId: 130
-            dhcp: false
-          - # VPN
-            vlanId: 170
-            dhcp: false
   nodeLabels:
     intel.feature.node.kubernetes.io/gpu: "true"
     topology.kubernetes.io/region: main
