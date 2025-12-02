@@ -2,7 +2,22 @@
 machine:
   network:
     hostname: k8s-2
+    nameservers:
+      - 10.10.10.1
     interfaces:
+      - interface: eth0
+        dhcp: false
+        vlans:
+          - vlanId: 110
+            addresses:
+              - "10.10.10.12/24"
+            routes:
+              - network: 0.0.0.0/0
+                gateway: 10.10.10.1
+          - vlanId: 130
+            dhcp: false
+          - vlanId: 170
+            dhcp: false
       - interface: eth1
         dhcp: false
         mtu: 65520
@@ -13,10 +28,6 @@ machine:
             metric: 2048
           - network: 169.254.255.21/32
             metric: 2048
-      - interface: eth2
-        dhcp: false
-      - interface: eth3
-        dhcp: false
   nodeLabels:
     topology.kubernetes.io/zone: m
   type: controlplane
