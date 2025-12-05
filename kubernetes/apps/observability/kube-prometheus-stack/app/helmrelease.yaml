@@ -15,7 +15,6 @@ spec:
     alertmanager:
       route:
         main:
-          enabled: true
           hostnames: ["alertmanager.oxygn.dev"]
           parentRefs:
             - name: envoy-internal
