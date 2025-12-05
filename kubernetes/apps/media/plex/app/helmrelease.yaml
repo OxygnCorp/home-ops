@@ -5,17 +5,10 @@ kind: HelmRelease
 metadata:
   name: plex
 spec:
-  interval: 1h
   chartRef:
     kind: OCIRepository
     name: plex
-  install:
-    remediation:
-      retries: -1
-  upgrade:
-    cleanupOnFail: true
-    remediation:
-      retries: 3
+  interval: 1h
   values:
     controllers:
       plex:
@@ -34,10 +27,6 @@ spec:
               # NVIDIA_VISIBLE_DEVICES: "all"
               # NVIDIA_DRIVER_CAPABILITIES: "all"
               # HARDWARE_DEVICE_PATH: "/dev/nvidia0"
-              TRANSCODER_TEMP_DIRECTORY: "/transcode"
-            envFrom:
-              - secretRef:
-                  name: plex-secret
             probes:
               liveness: &probes
                 enabled: true
@@ -88,7 +77,6 @@ spec:
 
     service:
       app:
-        controller: plex
         type: LoadBalancer
         annotations:
           lbipam.cilium.io/ips: 10.10.98.170
@@ -98,6 +86,9 @@ spec:
             port: *port
     route:
       app:
+        annotations:
+          gatus.home-operations.com/endpoint: |-
+            conditions: ["[STATUS] == 401"]
         hostnames:
           - "{{ .Release.Name }}.oxygn.dev"
         parentRefs:
@@ -105,7 +96,8 @@ spec:
             namespace: network
             sectionName: https
         rules:
-          - backendRefs:
+          - # Ref: https://forums.plex.tv/t/external-srt-subtitles-are-not-working-w-reverse-proxy/886540
+            backendRefs:
               - identifier: app
                 port: *port
             filters:
@@ -121,26 +113,9 @@ spec:
                 port: *port
     persistence:
       config:
-        existingClaim: plex
-        # TODO: If setting up Plex for the first time, you'll want to add the globalMounts section
-        # globalMounts:
-        #   - path: /config/Library/Application Support/Plex Media Server
-      # Separate PVC for cache to avoid backing up cache files
-      cache:
-        existingClaim: plex-cache
-        globalMounts:
-          - path: /config/Library/Application Support/Plex Media Server/Cache
-      tmpfs:
+        existingClaim: "{{ .Release.Name }}"
+      tmp:
         type: emptyDir
-        advancedMounts:
-          plex:
-            app:
-              - path: /config/Library/Application Support/Plex Media Server/Logs
-                subPath: logs
-              - path: /transcode
-                subPath: transcode
-              - path: /tmp
-                subPath: tmp
       media:
         type: nfs
         server: funkstation.internal
