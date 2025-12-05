@@ -8,7 +8,6 @@ spec:
   staticConfigs:
     - targets:
       - pve.internal:8006  # Proxmox VE node.
-      - pve2.internal:8006  # Proxmox VE node.
   metricsPath: /pve
   params:
     module: ["default"]
@@ -21,14 +20,3 @@ spec:
       targetLabel: instance
     - targetLabel: __address__
       replacement: pve-exporter.observability:9221  # PVE exporter.
----
-# yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/monitoring.coreos.com/scrapeconfig_v1alpha1.json
-apiVersion: monitoring.coreos.com/v1alpha1
-kind: ScrapeConfig
-metadata:
-  name: minio
-spec:
-  metricsPath: /minio/v2/metrics/cluster
-  scheme: HTTP
-  staticConfigs:
-    - targets: ['funkstation.internal:9000']

@@ -10,19 +10,7 @@ spec:
   chartRef:
     kind: OCIRepository
     name: kube-prometheus-stack
-  install:
-    remediation:
-      retries: -1
-  upgrade:
-    cleanupOnFail: true
-    remediation:
-      retries: 3
   values:
-    crds:
-      enabled: true
-      upgradeJob:
-        enabled: true
-        forceConflicts: true
     cleanPrometheusOperatorObjectNames: true
     alertmanager:
       route:
@@ -59,7 +47,9 @@ spec:
           parentRefs:
             - name: envoy-internal
               namespace: network
-        prometheusSpec:
+      prometheusSpec:
+        externalUrl: https://prometheus.oxygn.dev
+        version: v2.55.1 # override 'unsupported Prometheus version' error
         image:
           registry: docker.io
           repository: prompp/prompp
@@ -90,33 +80,16 @@ spec:
                   storage: 25Gi
     prometheus-node-exporter:
       fullnameOverride: node-exporter
-      prometheus:
-        monitor:
-          enabled: true
-          relabelings:
-            - action: replace
-              regex: (.*)
-              replacement: $1
-              sourceLabels: ["__meta_kubernetes_pod_node_name"]
-              targetLabel: kubernetes_node
     kube-state-metrics:
       fullnameOverride: kube-state-metrics
-      metricLabelsAllowlist:
-        - pods=[*]
-        - deployments=[*]
-        - persistentvolumeclaims=[*]
-      prometheus:
-        monitor:
-          enabled: true
-          relabelings:
-            - action: replace
-              regex: (.*)
-              replacement: $1
-              sourceLabels: ["__meta_kubernetes_pod_node_name"]
-              targetLabel: kubernetes_node
     grafana:
       enabled: false
       forceDeployDashboards: true
+      operator:
+        dashboardsConfigMapRefEnabled: true
+        folder: observability
+        matchLabels:
+          grafana.internal/instance: grafana
     additionalPrometheusRulesMap:
       dockerhub-rules:
         groups:
@@ -124,7 +97,7 @@ spec:
             rules:
               - alert: DockerhubRateLimitRisk
                 annotations:
-                  summary: Kubernetes cluster Dockerhub rate limit risk
+                  summary: There are {{ $value }} containers pulling from Dockerhub. This may lead to rate limiting.
                 expr: count(time() - container_last_seen{image=~"(docker.io).*",container!=""} < 30) > 100
                 labels:
                   severity: critical
