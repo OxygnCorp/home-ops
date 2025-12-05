@@ -3,7 +3,9 @@
 kind: Kustomization
 namespace: actions-runner-system
 components:
-  - ../../components/common
+  - ../../components/alerts
+
 resources:
+  - ./namespace.yaml
   - ./actions-runner-controller/ks.yaml
 
