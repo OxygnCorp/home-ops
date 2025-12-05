@@ -32,8 +32,7 @@ spec:
           parentRefs:
             - name: envoy-internal
               namespace: network
-              sectionName: https
-      alertmanagerSpec:
+        alertmanagerSpec:
         useExistingSecret: true
         configSecret: alertmanager-secret
         externalUrl: https://alertmanager.oxygn.dev
@@ -60,8 +59,7 @@ spec:
           parentRefs:
             - name: envoy-internal
               namespace: network
-              sectionName: https
-      prometheusSpec:
+        prometheusSpec:
         image:
           registry: docker.io
           repository: prompp/prompp
