@@ -15,21 +15,22 @@ spec:
     alertmanager:
       route:
         main:
+          enabled: true
           hostnames: ["alertmanager.oxygn.dev"]
           parentRefs:
             - name: envoy-internal
               namespace: network
         alertmanagerSpec:
-        useExistingSecret: true
-        configSecret: alertmanager-secret
-        externalUrl: https://alertmanager.oxygn.dev
-        storage:
-          volumeClaimTemplate:
-            spec:
-              storageClassName: ceph-block
-              resources:
-                requests:
-                  storage: 1Gi
+          useExistingSecret: true
+          configSecret: alertmanager-secret
+          externalUrl: https://alertmanager.oxygn.dev
+          storage:
+            volumeClaimTemplate:
+              spec:
+                storageClassName: ceph-block
+                resources:
+                  requests:
+                    storage: 1Gi
     kubeApiServer:
       enabled: true
     kubeEtcd:
