@@ -64,7 +64,7 @@ gum = "0.16.2"
 "aqua:budimanjojo/talhelper" = "3.0.41"
 
 # Misc Tools
-"aqua:casey/just" = "1.44.1"
+"aqua:casey/just" = "1.45.0"
 "go:github.com/minio/mc" = "RELEASE.2024-10-08T09-37-26Z"
 "aqua:cert-manager/cmctl" = "2.4.0"
 "aqua:cloudflare/cloudflared" = "2025.11.1"
