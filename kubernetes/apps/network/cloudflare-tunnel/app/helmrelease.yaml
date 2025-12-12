@@ -5,17 +5,10 @@ kind: HelmRelease
 metadata:
   name: cloudflare-tunnel
 spec:
-  interval: 1h
   chartRef:
     kind: OCIRepository
     name: cloudflare-tunnel
-  install:
-    remediation:
-      retries: -1
-  upgrade:
-    cleanupOnFail: true
-    remediation:
-      retries: 3
+  interval: 1h
   values:
     controllers:
       cloudflare-tunnel:
@@ -31,12 +24,11 @@ spec:
             env:
               NO_AUTOUPDATE: true
               TUNNEL_METRICS: 0.0.0.0:8080
-              TUNNEL_ORIGIN_ENABLE_HTTP2: true
-              # TUNNEL_POST_QUANTUM: true
-              TUNNEL_TRANSPORT_PROTOCOL: http2 # quic
+              TUNNEL_POST_QUANTUM: true # disable when using http2
+              TUNNEL_TRANSPORT_PROTOCOL: quic # http2
             envFrom:
               - secretRef:
-                  name: cloudflare-tunnel-secret
+                  name: "{{ .Release.Name }}-secret"
             args:
               - tunnel
               - run
@@ -81,12 +73,9 @@ spec:
         data:
           config.yaml: |-
             ingress:
-              - hostname: oxygn.dev
-                originRequest:
-                  originServerName: oxygn.dev
-                service: https://envoy-external.{{ .Release.Namespace }}.svc.cluster.local:443
               - hostname: "*.oxygn.dev"
                 originRequest:
+                  http2Origin: true
                   originServerName: external.oxygn.dev
                 service: https://envoy-external.{{ .Release.Namespace }}.svc.cluster.local:443
               - service: http_status:404
