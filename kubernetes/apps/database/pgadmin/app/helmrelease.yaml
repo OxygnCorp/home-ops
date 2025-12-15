@@ -5,34 +5,20 @@ kind: HelmRelease
 metadata:
   name: pgadmin
 spec:
-  interval: 1h
   chartRef:
     kind: OCIRepository
     name: pgadmin
-  install:
-    remediation:
-      retries: -1
-  upgrade:
-    cleanupOnFail: true
-    remediation:
-      retries: 3
+  interval: 1h
   values:
     controllers:
       pgadmin:
+        strategy: Recreate
         annotations:
           reloader.stakater.com/auto: "true"
-        initContainers:
-          volume-permissions:
-            image:
-              repository: dpage/pgadmin4
-              tag: "9.11@sha256:50700ac17936d0227f9e3e4bb086a91efb67064debc4b4737c35545bf1564088"
-            command: ["/bin/chown", "-R", "5050:5050", "/var/lib/pgadmin"]
-            securityContext:
-              runAsUser: 0
         containers:
           app:
             image:
-              repository: docker.io/dpage/pgadmin4
+              repository: mirror.gcr.io/dpage/pgadmin4
               tag: "9.11@sha256:50700ac17936d0227f9e3e4bb086a91efb67064debc4b4737c35545bf1564088"
             envFrom:
               - secretRef:
@@ -40,29 +26,32 @@ spec:
             resources:
               requests:
                 cpu: 15m
-                memory: 164M
+                memory: 200M
               limits:
-                memory: 236M
+                memory: 300M
+        pod:
+          securityContext:
+            runAsUser: 5050 # ${APP_UID}
+            runAsGroup: 5050 # ${APP_GID}
+            fsGroup: 5050 # ${APP_GID}
+            fsGroupChangePolicy: OnRootMismatch
+
     service:
       app:
         controller: pgadmin
         ports:
           http:
-            port: &port 80
+            port: 80
     route:
       app:
         hostnames:
-          - pgadmin.oxygn.dev
+          - "{{ .Release.Name }}.oxygn.dev"
         parentRefs:
           - name: envoy-internal
             namespace: network
-        rules:
-          - backendRefs:
-              - identifier: app
-                port: *port
     persistence:
       config:
-        existingClaim: pgadmin
+        existingClaim: "{{ .Release.Name }}"
         globalMounts:
           - path: /var/lib/pgadmin
       server-json:
@@ -72,10 +61,3 @@ spec:
         globalMounts:
           - path: /pgadmin4/servers.json
             subPath: servers.json
-      # local-config:
-      #   enabled: true
-      #   type: secret
-      #   name: pgadmin-local-config-secret
-      #   globalMounts:
-      #     - path: /pgadmin4/config_local.py
-      #       subPath: config_local.py
