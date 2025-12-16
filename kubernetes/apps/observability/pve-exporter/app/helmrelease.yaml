@@ -23,7 +23,7 @@ spec:
           app:
             image:
               repository: prompve/prometheus-pve-exporter
-              tag: 3.6.0
+              tag: 3.7.0
             envFrom:
               - secretRef:
                   name: pve-exporter-secret
