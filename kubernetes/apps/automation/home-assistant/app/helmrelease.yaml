@@ -35,24 +35,38 @@ spec:
                 cpu: 10m
               limits:
                 memory: 2Gi
+      code-server:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
           code-server:
             image:
               repository: ghcr.io/coder/code-server
               tag: 4.107.0@sha256:4b622c4cd1b0f559fec0df67fcf09042d63e9ce84c575102066afd9511695627
-            args: [
-              "--auth", "none",
-              "--user-data-dir", "/config/.vscode",
-              "--extensions-dir", "/config/.vscode",
-              "--port", "12321",
-              "/config"
-            ]
+            args:
+              - --auth
+              - none
+              - --disable-telemetry
+              - --disable-update-check
+              - --user-data-dir
+              - /mnt/code-server
+              - --extensions-dir
+              - /mnt/code-server
+              - --port
+              - "12321"
+              - /config
+            env:
+              HASS_SERVER: https://hass.oxygn.dev
+              HASS_TOKEN:
+                secretKeyRef:
+                  name: home-assistant-secret
+                  key: HASS_VSCODE_TOKEN
             resources:
               requests:
-                cpu: 10m
+                cpu: 100m
+                memory: 1Gi
               limits:
-                memory: 512Mi
-            env:
-              TZ: "Europe/Paris"
+                memory: 2Gi
     defaultPodOptions:
       annotations:
         k8s.v1.cni.cncf.io/networks: |-
@@ -71,12 +85,14 @@ spec:
     service:
       app:
         controller: home-assistant
-        type: LoadBalancer
         ports:
           http:
-            primary: true
-            appProtocol: kubernetes.io/ws
+            appProtocol: kubernetes.io/wss
             port: 8123
+        primary: true
+      code-server:
+        controller: code-server
+        ports:
           code-server:
             port: 12321
     route:
@@ -91,27 +107,30 @@ spec:
           - name: envoy-internal
             namespace: network
         rules:
-          - matches:
-              - path:
-                  type: PathPrefix
-                  value: /code/
-            filters:
-              - type: URLRewrite
-                urlRewrite:
-                  path:
-                    type: ReplacePrefixMatch
-                    replacePrefixMatch: /
-            backendRefs:
-              - identifier: app
-                port: 12321
           - backendRefs:
               - identifier: app
                 port: 8123
+      code-server:
+        hostnames:
+          - hass-code.oxygn.dev
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
+        rules:
+          - backendRefs:
+              - identifier: code-server
+                port: 12321
     persistence:
       config:
         existingClaim: home-assistant
         globalMounts:
           - path: /config
+            subPath: config
+        advancedMounts:
+          code-server:
+            code-server:
+              - path: /mnt/code-server
+                subPath: code-server
       config-cache:
         existingClaim: home-assistant-cache
         globalMounts:
