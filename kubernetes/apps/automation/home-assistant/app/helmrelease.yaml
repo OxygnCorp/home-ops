@@ -111,12 +111,6 @@ spec:
         existingClaim: home-assistant
         globalMounts:
           - path: /config
-            subPath: config
-        advancedMounts:
-          code-server:
-            code-server:
-              - path: /mnt/code-server
-                subPath: code-server
       config-cache:
         existingClaim: home-assistant-cache
         globalMounts:
