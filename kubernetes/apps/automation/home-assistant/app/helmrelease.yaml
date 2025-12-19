@@ -35,38 +35,29 @@ spec:
                 cpu: 10m
               limits:
                 memory: 2Gi
-      code-server:
-        annotations:
-          reloader.stakater.com/auto: "true"
-        containers:
-          code-server:
+          codeserver:
             image:
               repository: ghcr.io/coder/code-server
               tag: 4.107.0@sha256:4b622c4cd1b0f559fec0df67fcf09042d63e9ce84c575102066afd9511695627
-            args:
-              - --auth
-              - none
-              - --disable-telemetry
-              - --disable-update-check
-              - --user-data-dir
-              - /mnt/code-server
-              - --extensions-dir
-              - /mnt/code-server
-              - --port
-              - "12321"
-              - /config
             env:
-              HASS_SERVER: https://hass.oxygn.dev
-              HASS_TOKEN:
-                secretKeyRef:
-                  name: home-assistant-secret
-                  key: HASS_VSCODE_TOKEN
+              TZ: America/Edmonton
+            args:
+              [
+                "--auth",
+                "none",
+                "--user-data-dir",
+                "/config/.vscode",
+                "--extensions-dir",
+                "/config/.vscode",
+                "--port",
+                "12321",
+                "/config",
+              ]
             resources:
               requests:
-                cpu: 100m
-                memory: 1Gi
+                cpu: 10m
               limits:
-                memory: 2Gi
+                memory: 1Gi
     defaultPodOptions:
       annotations:
         k8s.v1.cni.cncf.io/networks: |-
@@ -76,6 +67,7 @@ spec:
             "ips": ["10.10.30.10/24"],
             "mac": "c6:07:27:af:fb:53"
           }]
+      hostUsers: false
       securityContext:
         runAsNonRoot: true
         runAsUser: 1024
@@ -84,42 +76,36 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
     service:
       app:
-        controller: home-assistant
+        annotations:
+          lbipam.cilium.io/ips: 10.10.98.180
         ports:
           http:
-            appProtocol: kubernetes.io/wss
-            port: 8123
-        primary: true
-      code-server:
-        controller: code-server
-        ports:
-          code-server:
-            port: 12321
+            port: &port 8123
+            primary: true
+          codeserver:
+            port: &codeserverPort 12321
     route:
       app:
-        annotations:
-          gatus.home-operations.com/endpoint: |-
-            conditions: ["[STATUS] == 200"]
         hostnames:
           - "{{ .Release.Name }}.oxygn.dev"
-          - hass.oxygn.dev
+          - "hass.oxygn.dev"
         parentRefs:
-          - name: envoy-internal
+          - name: envoy-external
             namespace: network
         rules:
           - backendRefs:
-              - identifier: app
-                port: 8123
-      code-server:
+              - name: "{{ .Release.Name }}"
+                port: *port
+      codeserver:
         hostnames:
-          - hass-code.oxygn.dev
+          - "hass-code.oxygn.dev"
         parentRefs:
           - name: envoy-internal
             namespace: network
         rules:
           - backendRefs:
-              - identifier: code-server
-                port: 12321
+              - name: "{{ .Release.Name }}"
+                port: *codeserverPort
     persistence:
       config:
         existingClaim: home-assistant
