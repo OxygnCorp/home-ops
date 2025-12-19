@@ -5,17 +5,10 @@ kind: HelmRelease
 metadata:
   name: home-assistant
 spec:
-  interval: 1h
   chartRef:
     kind: OCIRepository
     name: home-assistant
-  install:
-    remediation:
-      retries: -1
-  upgrade:
-    cleanupOnFail: true
-    remediation:
-      retries: 3
+  interval: 1h
   values:
     controllers:
       home-assistant:
@@ -122,15 +115,5 @@ spec:
         existingClaim: home-assistant-cache
         globalMounts:
           - path: /config/.venv
-      config-logs:
-        type: emptyDir
-        globalMounts:
-          - path: /config/logs
-      config-tts:
-        type: emptyDir
-        globalMounts:
-          - path: /config/tts
       tmp:
         type: emptyDir
-        globalMounts:
-          - path: /tmp
