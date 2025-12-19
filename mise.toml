@@ -37,7 +37,7 @@ gum = "0.16.2"
 "1password-cli" = "2.31.1"
 
 # S3
-"aqua:aws/aws-cli" = "2.32.20"
+"aqua:aws/aws-cli" = "2.32.21"
 
 # Secret Encryption Stuff
 "aqua:getsops/sops" = "3.11.0"
