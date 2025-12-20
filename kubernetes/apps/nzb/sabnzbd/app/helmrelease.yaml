@@ -74,12 +74,11 @@ spec:
       #       "mac": "a6:3e:4f:0a:e1:4a"
       #     }]
       securityContext:
-        runAsUser: 568
-        runAsGroup: 568
+        runAsUser: 1024
+        runAsGroup: 100
         runAsNonRoot: true
-        fsGroup: 568
+        fsGroup: 100
         fsGroupChangePolicy: OnRootMismatch
-        supplementalGroups: [10000]
         seccompProfile: { type: RuntimeDefault }
     service:
       app:

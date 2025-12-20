@@ -33,8 +33,8 @@ spec:
               repository: ghcr.io/advplyr/audiobookshelf
               tag: 2.31.0@sha256:e23adb24848d99d19cd1e251aee4e1e12ed4f5effc8ccb21754b062b6a06cf66
             env:
-              AUDIOBOOKSHELF_UID: 1000
-              AUDIOBOOKSHELF_GID: 1000
+              AUDIOBOOKSHELF_UID: 1024
+              AUDIOBOOKSHELF_GID: 100
               CONFIG_PATH: /config
               METADATA_PATH: /config/metadata
             probes:
