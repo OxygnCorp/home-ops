@@ -27,8 +27,8 @@ spec:
               pullPolicy: IfNotPresent
             env:
               TZ: "Europe/Paris"
-              PUID: 1000
-              PGID: 1000
+              PUID: 1024
+              PGID: 100
               DEFAULT_EMAIL: "postmaster@oxygn.dev"
               ALLOW_SIGNUP: false
               API_PORT: &port 9000

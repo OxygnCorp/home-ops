@@ -29,8 +29,8 @@ spec:
                   name: pve-exporter-secret
         pod:
           securityContext:
-            runAsUser: 568
-            runAsGroup: 568
+            runAsUser: 1024
+            runAsGroup: 100
     service:
       app:
         controller: pve-exporter
