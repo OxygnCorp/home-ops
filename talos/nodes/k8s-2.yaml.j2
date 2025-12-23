@@ -1,7 +1,6 @@
 ---
 machine:
   network:
-    hostname: k8s-2
     interfaces:
       - interface: eth1
         dhcp: false
@@ -20,3 +19,7 @@ machine:
   nodeLabels:
     topology.kubernetes.io/zone: m
   type: controlplane
+---
+apiVersion: v1alpha1
+kind: HostnameConfig
+hostname: k8s-2
