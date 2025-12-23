@@ -1,25 +1,68 @@
 ---
 machine:
-  network:
-    interfaces:
-      - interface: eth1
-        dhcp: false
-        mtu: 9000
-        addresses:
-          - 169.254.255.22/32
-        routes:
-          - network: 169.254.255.20/32
-            metric: 2048
-          - network: 169.254.255.21/32
-            metric: 2048
-      - interface: eth2
-        dhcp: false
-      - interface: eth3
-        dhcp: false
+  type: controlplane
   nodeLabels:
     topology.kubernetes.io/zone: m
-  type: controlplane
 ---
 apiVersion: v1alpha1
 kind: HostnameConfig
 hostname: k8s-2
+---
+apiVersion: v1alpha1
+kind: LinkAliasConfig
+name: net0 #servers vlan
+selector:
+  match: mac(link.permanent_addr) == "bc:24:11:ab:b8:a2"
+---
+apiVersion: v1alpha1
+kind: BondConfig
+name: bond0
+links: [net0]
+bondMode: active-backup
+mtu: 9000
+up: true
+---
+apiVersion: v1alpha1
+kind: DHCPv4Config
+name: bond0
+---
+apiVersion: v1alpha1
+kind: LinkAliasConfig
+name: net1 #ceph bridge
+selector:
+  match: mac(link.permanent_addr) == "bc:24:11:65:38:d2"
+---
+apiVersion: v1alpha1
+kind: LinkConfig
+name: net1
+addresses:
+  - address: 169.254.255.22/32 # k8s-2
+mtu: 65520
+routes:
+  - destination: 169.254.255.20/32 # k8s-0
+    metric: 2048
+  - destination: 169.254.255.21/32 # k8s-1
+    metric: 2048
+up: true
+---
+apiVersion: v1alpha1
+kind: LinkAliasConfig
+name: net2 #iot vlan
+selector:
+  match: mac(link.permanent_addr) == "bc:24:11:03:b1:b2"
+---
+apiVersion: v1alpha1
+kind: LinkConfig
+name: net2 #iot vlan
+mtu: 9000
+---
+apiVersion: v1alpha1
+kind: LinkAliasConfig
+name: net3 #vpn vlan
+selector:
+  match: mac(link.permanent_addr) == "bc:24:11:76:75:c2"
+---
+apiVersion: v1alpha1
+kind: LinkConfig
+name: net3
+mtu: 9000
