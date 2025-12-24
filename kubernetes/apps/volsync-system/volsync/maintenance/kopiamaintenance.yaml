@@ -11,3 +11,7 @@ spec:
     schedule: 0 */8 * * *
   repository:
     repository: volsync-maintenance-secret
+  podSecurityContext:
+    runAsUser: 1024
+    fsGroup: 100
+    runAsNonRoot: true
