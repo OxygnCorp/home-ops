@@ -16,7 +16,7 @@ spec:
   postBuild:
     substitute:
       APP: plex
-      VOLSYNC_CAPACITY: 25Gi
+      VOLSYNC_CAPACITY: 30Gi
   prune: true
   sourceRef:
     kind: GitRepository
