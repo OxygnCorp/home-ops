@@ -97,11 +97,7 @@ spec:
                 port: *port
     persistence:
       config:
-        existingClaim: lidarr
-      cache:
-        existingClaim: lidarr-cache
-        globalMounts:
-          - path: /config/MediaCover
+        existingClaim: "{{ .Release.Name }}"
       tmp:
         type: emptyDir
       media:
