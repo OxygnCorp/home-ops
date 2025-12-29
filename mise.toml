@@ -24,7 +24,7 @@ experimental = true
 # Runtimes
 node = "24.12.0"
 python = "3.14.2"
-uv = "0.9.18"
+uv = "0.9.20"
 go = "1.25.5"
 gum = "0.16.2"
 
