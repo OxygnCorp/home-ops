@@ -25,6 +25,7 @@ spec:
       runAsUser: ${VOLSYNC_PUID:=1024}
       runAsGroup: ${VOLSYNC_PGID:=100}
       fsGroup: ${VOLSYNC_PGID:=100}
+      fsGroupChangePolicy: OnRootMismatch
     repository: ${APP}-volsync-secret
     sourceIdentity:
       sourceName: ${APP}
