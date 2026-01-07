@@ -31,18 +31,22 @@ spec:
               TZ: Europe/Paris
               DOCKER_ENABLE_SECURITY: "false"
               SECURITY_ENABLE_LOGIN: "false"
-              INSTALL_BOOK_AND_ADVANCED_HTML_OPS: "true"
+              INSTALL_BOOK_AND_ADVANCED_HTML_OPS: "false"
+              SYSTEM_DEFAULTLOCALE: "fr-FR"
+              SYSTEM_ENABLEURLTOPDF: false
             probes:
-              liveness: &probe
+              liveness:
                 enabled: true
-                type: HTTP
-                path: /api/v1/info/status
-              readiness: *probe
+              readiness:
+                enabled: true
               startup:
-                <<: *probe
-                spec:
-                  failureThreshold: 90
-                  periodSeconds: 5
+                enabled: true
+            resources:
+              requests:
+                cpu: 100m
+                memory: 256M
+              limits:
+                memory: 1Gi
         #     securityContext:
         #       readOnlyRootFilesystem: true
         # pod:
@@ -57,7 +61,7 @@ spec:
         controller: stirling-pdf
         ports:
           http:
-            port: &port 8080
+            port: 8080
     route:
       app:
         hostnames:
@@ -66,11 +70,6 @@ spec:
         parentRefs:
           - name: envoy-internal
             namespace: network
-        rules:
-          - backendRefs:
-              - identifier: app
-                port: *port
-
     persistence:
       config:
         enabled: true
