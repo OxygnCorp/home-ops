@@ -3,12 +3,8 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: &app stirling-pdf
-  namespace: &namespace self-hosted
+  name: stirling-pdf
 spec:
-  commonMetadata:
-    labels:
-      app.kubernetes.io/name: *app
   components:
     - ../../../../components/volsync
   dependsOn:
@@ -16,11 +12,11 @@ spec:
       namespace: rook-ceph
     - name: volsync
       namespace: volsync-system
-  interval: 30m
+  interval: 1h
   path: ./kubernetes/apps/self-hosted/stirling-pdf/app
   postBuild:
     substitute:
-      APP: *app
+      APP: stirling-pdf
       GATUS_SUBDOMAIN: pdf
       VOLSYNC_CAPACITY: 5Gi
   prune: true
@@ -28,6 +24,5 @@ spec:
     kind: GitRepository
     name: flux-system
     namespace: flux-system
-  targetNamespace: *namespace
-  timeout: 5m
+  targetNamespace: self-hosted
   wait: false
