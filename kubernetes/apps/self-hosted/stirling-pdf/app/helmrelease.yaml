@@ -5,17 +5,10 @@ kind: HelmRelease
 metadata:
   name: stirling-pdf
 spec:
-  interval: 1h
   chartRef:
     kind: OCIRepository
     name: stirling-pdf
-  install:
-    remediation:
-      retries: -1
-  upgrade:
-    cleanupOnFail: true
-    remediation:
-      retries: 3
+  interval: 1h
   values:
     controllers:
       stirling-pdf:
@@ -30,35 +23,40 @@ spec:
             env:
               TZ: Europe/Paris
               DOCKER_ENABLE_SECURITY: "false"
-              SECURITY_ENABLE_LOGIN: "false"
+              SECURITY_ENABLELOGIN: "false"
               INSTALL_BOOK_AND_ADVANCED_HTML_OPS: "false"
-              SYSTEM_DEFAULTLOCALE: "fr-FR"
+              LANGS: "fr-FR"
+              SYSTEM_DEFAULTLOCALE: fr-FR
               SYSTEM_ENABLEURLTOPDF: false
-              PUID: 1024
-              PGID: 100
-              UMASK: 022
+              # PUID: 1024
+              # PGID: 100
+              # UMASK: 022
             probes:
-              liveness:
+              liveness: &probe
                 enabled: true
-              readiness:
-                enabled: true
+                type: HTTP
+                path: /api/v1/info/status
+              readiness: *probe
               startup:
-                enabled: true
+                <<: *probe
+                spec:
+                  failureThreshold: 90
+                  periodSeconds: 5
             resources:
               requests:
                 cpu: 100m
                 memory: 256M
               limits:
                 memory: 1Gi
-            securityContext:
-              readOnlyRootFilesystem: true
-        pod:
-          securityContext:
-            runAsNonRoot: true
-            runAsUser: 1024
-            runAsGroup: 100
-            fsGroup: 100
-            fsGroupChangePolicy: OnRootMismatch
+            # securityContext:
+            #   readOnlyRootFilesystem: true
+        # pod:
+        #   securityContext:
+        #     # runAsNonRoot: true
+        #     runAsUser: 1024
+        #     runAsGroup: 100
+        #     fsGroup: 100
+        #     fsGroupChangePolicy: OnRootMismatch
     service:
       app:
         controller: stirling-pdf
