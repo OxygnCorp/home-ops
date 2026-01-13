@@ -34,6 +34,9 @@ spec:
               INSTALL_BOOK_AND_ADVANCED_HTML_OPS: "false"
               SYSTEM_DEFAULTLOCALE: "fr-FR"
               SYSTEM_ENABLEURLTOPDF: false
+              PUID: 1024
+              PGID: 100
+              UMASK: 022
             probes:
               liveness:
                 enabled: true
@@ -47,15 +50,15 @@ spec:
                 memory: 256M
               limits:
                 memory: 1Gi
-        #     securityContext:
-        #       readOnlyRootFilesystem: true
-        # pod:
-        #   securityContext:
-        #     runAsNonRoot: true
-        #     runAsUser: 1024
-        #     runAsGroup: 100
-        #     fsGroup: 100
-        #     fsGroupChangePolicy: OnRootMismatch
+            securityContext:
+              readOnlyRootFilesystem: true
+        pod:
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1024
+            runAsGroup: 100
+            fsGroup: 100
+            fsGroupChangePolicy: OnRootMismatch
     service:
       app:
         controller: stirling-pdf
