@@ -8,6 +8,7 @@ components:
 
 resources:
   - ./namespace.yaml
+  - ./agregarr/ks.yaml
   - ./audiobookshelf/ks.yaml
   - ./seerr/ks.yaml
   - ./komga/ks.yaml
