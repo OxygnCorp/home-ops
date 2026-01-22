@@ -5,7 +5,7 @@ kind: ObjectStore
 metadata:
   name: postgres
 spec:
-  retentionPolicy: 30d
+  retentionPolicy: 15d
   instanceSidecarConfiguration:
     resources:
       limits:
@@ -17,6 +17,8 @@ spec:
   configuration:
     destinationPath: s3://postgres-backup-v1/
     endpointURL: https://d1403fac4607ccda8f0f9d8153b6c03f.eu.r2.cloudflarestorage.com
+    historyTags:
+      keepHistory: "true"
     s3Credentials:
       accessKeyId:
           name: cloudnative-pg-secret
@@ -25,6 +27,7 @@ spec:
           name: cloudnative-pg-secret
           key: CLOUDFLARE_R2_SECRET_ACCESS_KEY
     wal:
-      compression: zstd
+      compression: bzip2
+      maxParallel: 8
     data:
-      compression: gzip
+      compression: bzip2
