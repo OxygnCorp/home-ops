@@ -10,4 +10,5 @@ resources:
   - ./namespace.yaml
   - ./convertx/ks.yaml
   - ./mealie/ks.yaml
+  - ./omni-tools/ks.yaml
   - ./stirling-pdf/ks.yaml
