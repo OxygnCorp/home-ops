@@ -1,0 +1,78 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: convertx
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: convertx
+  interval: 1h
+  values:
+    controllers:
+      convertx:
+        pod:
+          securityContext:
+            runAsUser: 1024
+            runAsGroup: 100
+            fsGroup: 100
+            fsGroupChangePolicy: OnRootMismatch
+        # strategy: RollingUpdate
+        containers:
+          app:
+            image:
+              repository: ghcr.io/c4illin/convertx
+              tag: v0.17.0
+            env:
+              TZ: "Europe/Paris"
+              ACCOUNT_REGISTRATION: false
+              HTTP_ALLOWED: false
+              ALLOW_UNAUTHENTICATED: true
+              AUTO_DELETE_EVERY_N_HOURS: 1
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities: { drop: ["ALL"] }
+            probes:
+              liveness: &probes
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /
+                    port: &port 3000
+                  initialDelaySeconds: 0
+                  periodSeconds: 10
+                  timeoutSeconds: 1
+                  failureThreshold: 3
+              readiness: *probes
+    service:
+      app:
+        controller: convertx
+        ports:
+          http:
+            port: *port
+    route:
+      app:
+        hostnames:
+          - "{{ .Release.Name }}.oxygn.dev"
+          - convert.oxygn.dev
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
+    persistence:
+      config:
+        enabled: true
+        existingClaim: convertx
+        globalMounts:
+          - path: /app/data
+      tmpfs:
+        type: emptyDir
+        advancedMounts:
+          stirling-pdf:
+            app:
+              - path: /logs
+                subPath: logs
+              - path: /tmp
+                subPath: tmp

@@ -8,5 +8,6 @@ components:
 
 resources:
   - ./namespace.yaml
+  - ./convertx/ks.yaml
   - ./mealie/ks.yaml
   - ./stirling-pdf/ks.yaml
