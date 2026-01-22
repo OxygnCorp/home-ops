@@ -17,8 +17,6 @@ spec:
   configuration:
     destinationPath: s3://postgres-backup-v1/
     endpointURL: https://d1403fac4607ccda8f0f9d8153b6c03f.eu.r2.cloudflarestorage.com
-    historyTags:
-      keepHistory: "true"
     s3Credentials:
       accessKeyId:
           name: cloudnative-pg-secret
