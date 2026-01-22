@@ -1,0 +1,76 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: omni-tools
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: omni-tools
+  interval: 1h
+  values:
+    controllers:
+      omni-tools:
+        replicas: 1
+        strategy: RollingUpdate
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: docker.io/iib0011/omni-tools
+              tag: 0.6
+            env:
+              TZ: Europe/Paris
+            resources:
+              requests:
+                cpu: 100m
+                memory: 128Mi
+              limits:
+                memory: 512Mi
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop: ["ALL"]
+    defaultPodOptions:
+      securityContext:
+        runAsUser: 1024
+        runAsGroup: 100
+        runAsNonRoot: true
+        fsGroup: 100
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+    service:
+      app:
+        controller: omni-tools
+        ports:
+          http:
+            port: 80
+    route:
+      app:
+        hostnames:
+          - "{{ .Release.Name }}.oxygn.dev"
+          - tools.oxygn.dev
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
+    persistence:
+      nginx-cache:
+        enabled: true
+        type: emptyDir
+        globalMounts:
+          - path: /var/cache/nginx
+      nginx-run:
+        enabled: true
+        type: emptyDir
+        globalMounts:
+          - path: /var/run
+      tmpfs:
+        type: emptyDir
+        advancedMounts:
+          omni-tools:
+            app:
+              - path: /tmp
+                subPath: tmp
