@@ -70,7 +70,7 @@ spec:
       tmpfs:
         type: emptyDir
         advancedMounts:
-          stirling-pdf:
+          convertx:
             app:
               - path: /logs
                 subPath: logs
