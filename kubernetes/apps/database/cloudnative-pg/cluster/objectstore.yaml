@@ -5,7 +5,7 @@ kind: ObjectStore
 metadata:
   name: postgres
 spec:
-  retentionPolicy: 30d
+  retentionPolicy: 15d
   # instanceSidecarConfiguration:
   #   resources:
   #     limits:
