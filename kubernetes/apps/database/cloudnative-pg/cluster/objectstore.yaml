@@ -6,14 +6,14 @@ metadata:
   name: postgres
 spec:
   retentionPolicy: 15d
-  instanceSidecarConfiguration:
-    resources:
-      limits:
-        memory: 512Mi
-        cpu: 1
-      requests:
-        memory: 128Mi
-        cpu: 10m
+  # instanceSidecarConfiguration:
+  #   resources:
+  #     limits:
+  #       memory: 512Mi
+  #       cpu: 1
+  #     requests:
+  #       memory: 128Mi
+  #       cpu: 10m
   configuration:
     destinationPath: s3://postgres-backup-v1/
     endpointURL: https://d1403fac4607ccda8f0f9d8153b6c03f.eu.r2.cloudflarestorage.com
