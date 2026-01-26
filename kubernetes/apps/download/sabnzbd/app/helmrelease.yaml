@@ -28,7 +28,7 @@ spec:
                 sabnzbd.download.svc,
                 sabnzbd.download.svc.cluster,
                 sabnzbd.download.svc.cluster.local,
-                sabnzbd2.oxygn.dev
+                sabnzbd.oxygn.dev
             envFrom:
               - secretRef:
                   name: "{{ .Release.Name }}-secret"
