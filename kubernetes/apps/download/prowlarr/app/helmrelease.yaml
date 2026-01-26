@@ -77,7 +77,7 @@ spec:
             port: *port
     route:
       app:
-        hostnames: ["{{ .Release.Name }}2.oxygn.dev"]
+        hostnames: ["{{ .Release.Name }}.oxygn.dev"]
         parentRefs:
           - name: envoy-internal
             namespace: network

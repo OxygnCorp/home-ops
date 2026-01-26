@@ -78,7 +78,7 @@ spec:
     route:
       app:
         hostnames:
-          - "{{ .Release.Name }}2.oxygn.dev"
+          - "{{ .Release.Name }}.oxygn.dev"
         parentRefs:
           - name: envoy-internal
             namespace: network
