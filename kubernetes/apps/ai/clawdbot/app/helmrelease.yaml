@@ -19,14 +19,6 @@ spec:
             image:
               repository: ghcr.io/oxygncorp/clawdbot
               tag: latest
-            args:
-              - node
-              - dist/index.js
-              - gateway
-              - --port
-              - "3000"
-              - --bind
-              - lan
             env:
               NODE_ENV: production
               CLAWDBOT_STATE_DIR: /data
