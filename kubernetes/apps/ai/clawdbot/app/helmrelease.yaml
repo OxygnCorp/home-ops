@@ -19,9 +19,10 @@ spec:
             image:
               repository: ghcr.io/oxygncorp/clawdbot
               tag: latest
+              pullPolicy: Always
             env:
               NODE_ENV: production
-              CLAWDBOT_STATE_DIR: /data
+              CLAWDBOT_STATE_DIR: /home/node/.clawdbot
               TZ: Europe/Paris
             envFrom:
               - secretRef:
@@ -65,8 +66,8 @@ spec:
     defaultPodOptions:
       securityContext:
         runAsNonRoot: true
-        runAsUser: 1024
-        runAsGroup: 100
+        runAsUser: 1000
+        runAsGroup: 1000
         fsGroup: 100
         fsGroupChangePolicy: OnRootMismatch
     service:
@@ -85,7 +86,8 @@ spec:
       data:
         existingClaim: "{{ .Release.Name }}"
         globalMounts:
-          - path: /data
+          - path: /home/node/.clawdbot
+            subPath: data
       workspace:
         existingClaim: "{{ .Release.Name }}"
         globalMounts:
