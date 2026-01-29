@@ -19,8 +19,8 @@ spec:
           # Excludes regenerable metadata (~7GB) to speed up backups
           kopiaignore:
             image:
-              repository: ghcr.io/home-operations/alpine
-              tag: 3.21.3@sha256:bf9f7e405036f7d9c42a26da7bd0c2bd535faec8cbc1bfba6b0db33590e4ff28
+              repository: mirror.gcr.io/alpine
+              tag: latest
             command: ["/bin/sh", "-c"]
             args:
               - cp /kopiaignore/.kopiaignore /config/.kopiaignore
