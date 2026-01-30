@@ -11,7 +11,7 @@ spec:
   interval: 1h
   values:
     controllers:
-      openclaw:
+      clawdbot:
         annotations:
           reloader.stakater.com/auto: "true"
         containers:
