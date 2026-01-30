@@ -11,18 +11,73 @@ spec:
   interval: 1h
   values:
     controllers:
-      clawdbot:
+      openclaw:
         annotations:
           reloader.stakater.com/auto: "true"
         containers:
           app:
             image:
-              repository: ghcr.io/oxygncorp/clawdbot
-              tag: latest
-              pullPolicy: Always
+              repository: ghcr.io/openclaw/openclaw
+              tag: 2026.1.29-amd64
+              pullPolicy: IfNotPresent
+            command:
+              - /bin/sh
+              - -c
+              - |
+                set -e
+                mkdir -p /home/node/.local/bin /home/node/.local/go
+
+                # Install gh CLI if not present on PVC
+                if [ ! -f /home/node/.local/bin/gh ]; then
+                  echo "Installing gh CLI..."
+                  cd /tmp
+                  curl -fsSL https://github.com/cli/cli/releases/download/v2.61.0/gh_2.61.0_linux_amd64.tar.gz -o gh.tar.gz
+                  tar xzf gh.tar.gz
+                  cp gh_2.61.0_linux_amd64/bin/gh /home/node/.local/bin/
+                  rm -rf gh.tar.gz gh_2.61.0_linux_amd64
+                fi
+
+                # Install Go if not present on PVC
+                if [ ! -f /home/node/.local/go/bin/go ]; then
+                  echo "Installing Go..."
+                  cd /tmp
+                  curl -fsSL https://go.dev/dl/go1.23.5.linux-amd64.tar.gz -o go.tar.gz
+                  tar xzf go.tar.gz
+                  mv go /home/node/.local/
+                  rm -rf go.tar.gz
+                fi
+
+                # Install Homebrew if not present on PVC
+                if [ ! -f /home/node/.local/homebrew/bin/brew ]; then
+                  echo "Installing Homebrew..."
+                  export HOMEBREW_PREFIX=/home/node/.local/homebrew
+                  export HOMEBREW_CELLAR=/home/node/.local/homebrew/Cellar
+                  export HOMEBREW_REPOSITORY=/home/node/.local/homebrew
+                  mkdir -p $HOMEBREW_PREFIX
+                  cd /tmp
+                  git clone --depth 1 https://github.com/Homebrew/brew $HOMEBREW_PREFIX
+                fi
+
+                # Set up symlink and PATH
+                ln -sf /app/openclaw.mjs /home/node/.local/bin/openclaw
+                export PATH="/home/node/.local/bin:/home/node/.local/go/bin:/home/node/.local/homebrew/bin:$PATH"
+                export GOPATH=/home/node/go
+                export HOMEBREW_PREFIX=/home/node/.local/homebrew
+                export HOMEBREW_CELLAR=/home/node/.local/homebrew/Cellar
+                export HOMEBREW_REPOSITORY=/home/node/.local/homebrew
+
+                exec node dist/index.js gateway --bind lan --port 18789 --allow-unconfigured
             env:
+              HOME: /home/node
+              TERM: xterm-256color
+              PATH: /home/node/.local/bin:/home/node/.local/go/bin:/home/node/.local/homebrew/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+              GOPATH: /home/node/go
+              HOMEBREW_PREFIX: /home/node/.local/homebrew
+              HOMEBREW_CELLAR: /home/node/.local/homebrew/Cellar
+              HOMEBREW_REPOSITORY: /home/node/.local/homebrew
               NODE_ENV: production
-              CLAWDBOT_STATE_DIR: /home/node/.clawdbot
+              OPENCLAW_CONFIG_DIR: /home/node/.openclaw
+              OPENCLAW_WORKSPACE_DIR: /home/node/.openclaw/workspace
               TZ: Europe/Paris
             envFrom:
               - secretRef:
@@ -34,7 +89,7 @@ spec:
                 spec:
                   httpGet:
                     path: /health
-                    port: &port 3000
+                    port: &port 18789
                   periodSeconds: 30
                   timeoutSeconds: 5
                   failureThreshold: 5
@@ -64,6 +119,7 @@ spec:
               limits:
                 memory: 2Gi
     defaultPodOptions:
+      shareProcessNamespace: true
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000
@@ -71,28 +127,22 @@ spec:
         fsGroup: 100
         fsGroupChangePolicy: OnRootMismatch
     service:
-      app:
+      gateway:
         ports:
           http:
             port: *port
     route:
-      app:
+      gateway:
         hostnames:
           - "{{ .Release.Name }}.oxygn.dev"
         parentRefs:
           - name: envoy-internal
             namespace: network
     persistence:
-      data:
+      config:
         existingClaim: "{{ .Release.Name }}"
         globalMounts:
-          - path: /home/node/.clawdbot
-            subPath: data
-      workspace:
-        existingClaim: "{{ .Release.Name }}"
-        globalMounts:
-          - path: /home/node/clawd
-            subPath: workspace
+          - path: /home/node/.openclaw
       documents:
         type: nfs
         server: funkstation.internal
@@ -101,3 +151,55 @@ spec:
           - path: /documents
       tmp:
         type: emptyDir
+    rbac:
+      roles:
+        openclaw-read-all:
+          type: ClusterRole
+          rules:
+            - apiGroups: [""]
+              resources: ["pods", "nodes", "services", "namespaces", "configmaps", "persistentvolumes", "persistentvolumeclaims", "endpoints", "resourcequotas", "limitranges", "serviceaccounts"]
+              verbs: ["get", "list", "watch"]
+            - apiGroups: ["apps"]
+              resources: ["deployments", "daemonsets", "statefulsets", "replicasets"]
+              verbs: ["get", "list", "watch"]
+            - apiGroups: ["batch"]
+              resources: ["jobs", "cronjobs"]
+              verbs: ["get", "list", "watch"]
+            - apiGroups: ["networking.k8s.io"]
+              resources: ["ingresses", "networkpolicies"]
+              verbs: ["get", "list", "watch"]
+            - apiGroups: ["storage.k8s.io"]
+              resources: ["storageclasses"]
+              verbs: ["get", "list", "watch"]
+            - apiGroups: ["rbac.authorization.k8s.io"]
+              resources: ["roles", "rolebindings", "clusterroles", "clusterrolebindings"]
+              verbs: ["get", "list", "watch"]
+            - apiGroups: ["metrics.k8s.io"]
+              resources: ["nodes", "pods"]
+              verbs: ["get", "list", "watch"]
+        openclaw-write-restricted:
+          type: Role
+          rules:
+            - apiGroups: [""]
+              resources: ["pods"]
+              verbs: ["delete"]
+            - apiGroups: ["apps"]
+              resources: ["deployments"]
+              verbs: ["patch", "update"]
+      bindings:
+        openclaw-read-all:
+          type: ClusterRoleBinding
+          roleRef:
+            identifier: openclaw-read-all
+          subjects:
+            - identifier: openclaw
+              serviceAccount: openclaw
+        openclaw-write-restricted:
+          type: RoleBinding
+          roleRef:
+            identifier: openclaw-write-restricted
+          subjects:
+            - identifier: openclaw
+              serviceAccount: openclaw
+    serviceAccount:
+      openclaw: {}
