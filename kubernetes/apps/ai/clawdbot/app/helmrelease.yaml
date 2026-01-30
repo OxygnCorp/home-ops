@@ -153,7 +153,7 @@ spec:
         type: emptyDir
     rbac:
       roles:
-        openclaw-read-all:
+        clawdbot-read-all:
           type: ClusterRole
           rules:
             - apiGroups: [""]
@@ -177,7 +177,7 @@ spec:
             - apiGroups: ["metrics.k8s.io"]
               resources: ["nodes", "pods"]
               verbs: ["get", "list", "watch"]
-        openclaw-write-restricted:
+        clawdbot-write-restricted:
           type: Role
           rules:
             - apiGroups: [""]
@@ -187,19 +187,19 @@ spec:
               resources: ["deployments"]
               verbs: ["patch", "update"]
       bindings:
-        openclaw-read-all:
+        clawdbot-read-all:
           type: ClusterRoleBinding
           roleRef:
-            identifier: openclaw-read-all
+            identifier: clawdbot-read-all
           subjects:
-            - identifier: openclaw
-              serviceAccount: openclaw
-        openclaw-write-restricted:
+            - identifier: clawdbot
+              serviceAccount: clawdbot
+        clawdbot-write-restricted:
           type: RoleBinding
           roleRef:
-            identifier: openclaw-write-restricted
+            identifier: clawdbot-write-restricted
           subjects:
-            - identifier: openclaw
-              serviceAccount: openclaw
+            - identifier: clawdbot
+              serviceAccount: clawdbot
     serviceAccount:
-      openclaw: {}
+      clawdbot: {}
