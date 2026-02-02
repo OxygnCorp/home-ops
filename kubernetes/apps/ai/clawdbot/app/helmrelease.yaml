@@ -187,17 +187,14 @@ spec:
           type: ClusterRole
           rules:
             - apiGroups: [""]
-              resources: ["nodes", "services", "namespaces", "configmaps", "persistentvolumes", "persistentvolumeclaims", "endpoints", "resourcequotas", "limitranges", "serviceaccounts"]
+              resources: ["pods", "nodes", "services", "namespaces", "configmaps", "persistentvolumes", "persistentvolumeclaims", "endpoints", "resourcequotas", "limitranges", "serviceaccounts", "events"]  # Added events
               verbs: ["get", "list", "watch"]
             - apiGroups: [""]
-              resources: ["pods"]
-              verbs: ["get", "list", "watch", "delete"]
+              resources: ["pods/log"]
+              verbs: ["get", "list"]
             - apiGroups: ["apps"]
-              resources: ["daemonsets", "statefulsets", "replicasets"]
+              resources: ["deployments", "daemonsets", "statefulsets", "replicasets"]
               verbs: ["get", "list", "watch"]
-            - apiGroups: ["apps"]
-              resources: ["deployments"]
-              verbs: ["get", "list", "watch", "patch", "update"]
             - apiGroups: ["batch"]
               resources: ["jobs", "cronjobs"]
               verbs: ["get", "list", "watch"]
@@ -213,11 +210,14 @@ spec:
             - apiGroups: ["metrics.k8s.io"]
               resources: ["nodes", "pods"]
               verbs: ["get", "list", "watch"]
+            - apiGroups: ["helm.toolkit.fluxcd.io"]
+              resources: ["helmreleases"]
+              verbs: ["get", "list", "watch"]
             - apiGroups: ["kustomize.toolkit.fluxcd.io"]
               resources: ["kustomizations"]
               verbs: ["get", "list", "watch"]
-            - apiGroups: ["helm.toolkit.fluxcd.io"]
-              resources: ["helmreleases"]
+            - apiGroups: ["external-secrets.io"]
+              resources: ["externalsecrets"]
               verbs: ["get", "list", "watch"]
         clawdbot-write-restricted:
           type: Role
