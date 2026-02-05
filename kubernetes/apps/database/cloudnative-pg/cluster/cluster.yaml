@@ -38,7 +38,7 @@ spec:
     # initdb: {}
     # use this to recover a net-new cluster from a backup
     recovery:
-      source: postgres-v21
+      source: postgres
 
   plugins:
     - name: barman-cloud.cloudnative-pg.io
@@ -49,12 +49,12 @@ spec:
 
   # Note: externalClusters is needed when recovering from an existing cnpg cluster
   externalClusters:
-    - name: postgres-v21
+    - name: postgres
       plugin:
         name: barman-cloud.cloudnative-pg.io
         parameters:
           barmanObjectName: postgres
-          serverName: postgres-v21
+          serverName: postgres
 
   # backup:
   #   retentionPolicy: 30d
