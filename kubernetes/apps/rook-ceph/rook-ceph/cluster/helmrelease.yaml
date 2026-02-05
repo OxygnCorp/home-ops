@@ -71,7 +71,7 @@ spec:
         useAllNodes: true
         useAllDevices: false
         devices:
-          - name: /dev/nvme0n1
+          - name: /dev/sdb
         config:
           osdsPerDevice: "1"
     cephBlockPools:
