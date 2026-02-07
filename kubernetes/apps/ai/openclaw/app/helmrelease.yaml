@@ -1,0 +1,412 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: openclaw
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: openclaw
+  interval: 1h
+  values:
+    controllers:
+      openclaw:
+        replicas: 1
+        strategy: Recreate
+        annotations:
+          reloader.stakater.com/auto: "true"
+
+        initContainers:
+          # Init container handles config setup with merge/overwrite modes.
+          # Uses OpenClaw image for Node.js runtime (required for merge mode).
+          # Runs as root to chown files to app user (UID 1000).
+          init-config:
+            image:
+              repository: ghcr.io/openclaw/openclaw
+              tag: "2026.2.3"
+            command:
+              - sh
+              - -c
+              - |
+                log() { echo "[$(date -Iseconds)] [init-config] $*"; }
+
+                log "Starting config initialization"
+                mkdir -p /home/node/.openclaw
+                CONFIG_MODE="${CONFIG_MODE:-merge}"
+
+                if [ "$CONFIG_MODE" = "merge" ] && [ -f /home/node/.openclaw/openclaw.json ]; then
+                  log "Mode: merge - merging Helm config with existing config"
+                  node -e "
+                    const fs = require('fs');
+                    const existing = JSON.parse(fs.readFileSync('/home/node/.openclaw/openclaw.json', 'utf8'));
+                    const helm = JSON.parse(fs.readFileSync('/config/openclaw.json', 'utf8'));
+                    const deepMerge = (target, source) => {
+                      for (const key of Object.keys(source)) {
+                        if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+                          target[key] = target[key] || {};
+                          deepMerge(target[key], source[key]);
+                        } else {
+                          target[key] = source[key];
+                        }
+                      }
+                      return target;
+                    };
+                    const merged = deepMerge(existing, helm);
+                    fs.writeFileSync('/home/node/.openclaw/openclaw.json', JSON.stringify(merged, null, 2));
+                  "
+                  log "Config merged successfully"
+                else
+                  log "Mode: overwrite - copying Helm config (fresh install or overwrite mode)"
+                  cp /config/openclaw.json /home/node/.openclaw/openclaw.json
+                fi
+                chown -R 1000:1000 /home/node/.openclaw
+                log "Config initialization complete"
+            env:
+              - name: CONFIG_MODE
+                value: "merge"
+            securityContext:
+              runAsUser: 0
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                  - ALL
+                add:
+                  - CHOWN
+                  - DAC_OVERRIDE
+                  - FOWNER
+
+          # Install ClawHub skills and runtime dependencies (idempotent)
+          # Skills are installed from https://clawhub.com
+          init-skills:
+            image:
+              repository: node
+              tag: "22"
+            command:
+              - sh
+              - -c
+              - |
+                log() { echo "[$(date -Iseconds)] [init-skills] $*"; }
+
+                # ============================================================
+                # Runtime Dependencies
+                # ============================================================
+                # Some skills require additional runtimes (Python, Go, etc.)
+                # Install them here so they persist across pod restarts.
+                #
+                set -e
+                mkdir -p /home/node/.local/bin /home/node/.local/go
+
+                log "Starting tool installation..."
+
+                # Install Go if not present on PVC
+                if [ ! -f /home/node/.local/go/bin/go ]; then
+                  log "Installing Go..."
+                  cd /tmp
+                  curl -fsSL https://go.dev/dl/go1.23.5.linux-amd64.tar.gz -o go.tar.gz
+                  tar xzf go.tar.gz
+                  mv go /home/node/.local/
+                  rm -rf go.tar.gz
+                fi
+
+                # Install Homebrew if not present on PVC
+                if [ ! -f /home/node/.local/homebrew/bin/brew ]; then
+                  log "Installing Homebrew..."
+                  export HOMEBREW_PREFIX=/home/node/.local/homebrew
+                  export HOMEBREW_CELLAR=/home/node/.local/homebrew/Cellar
+                  export HOMEBREW_REPOSITORY=/home/node/.local/homebrew
+                  mkdir -p $HOMEBREW_PREFIX
+                  cd /tmp
+                  git clone --depth 1 https://github.com/Homebrew/brew $HOMEBREW_PREFIX
+                fi
+
+                # Check if pip is available (either standalone or via python3 -m pip)
+                set +e  # Don't fail on pip errors
+                if command -v pip3 >/dev/null 2>&1 || command -v pip >/dev/null 2>&1 || python3 -m pip --version >/dev/null 2>&1; then
+                  log "pip is available"
+                else
+                  log "Installing pip..."
+                  cd /tmp
+                  curl -fsSL https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+                  python3 get-pip.py --user --no-warn-script-location --break-system-packages || \
+                  python3 get-pip.py --user --no-warn-script-location || \
+                  log "pip install skipped (use python3 -m pip instead)"
+                  rm -f get-pip.py
+                fi
+                set -e  # Re-enable error checking
+
+                # Install uv (Python package manager) for Python skills
+                if [ ! -f /home/node/.local/bin/uv ]; then
+                  log "Installing uv..."
+                  curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/home/node/.local/bin sh
+                fi
+
+                log "Tool installation complete"
+
+                log "Starting skills initialization"
+
+                # ============================================================
+                # Skill Installation
+                # ============================================================
+                # Install skills from ClawHub (https://clawhub.com)
+                # Add skill slugs to the list below to install them declaratively.
+                cd /home/node/.openclaw/workspace
+                mkdir -p skills
+                for skill in weather github todoist obsidian summarize; do
+                  if [ -n "$skill" ] && [ ! -d "skills/${skill##*/}" ]; then
+                    log "Installing skill: $skill"
+                    npx -y clawhub install "$skill" --no-input || true
+                  else
+                    log "Skill already installed: $skill"
+                  fi
+                done
+                log "Skills initialization complete"
+            securityContext:
+              runAsUser: 1000
+              runAsGroup: 1000
+              runAsNonRoot: true
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                  - ALL
+
+        containers:
+          app:
+            image:
+              repository: ghcr.io/openclaw/openclaw
+              tag: 2026.2.6@sha256:4efc318a6570e4aac66d8ce0ab94c9a577c2f5d4afe914aa73e9678f82799e26
+            command:
+              - /bin/sh
+              - -c
+              - |
+                # Set up openclaw CLI symlink
+                ln -sf /app/openclaw.mjs /home/node/.local/bin/openclaw
+
+                # Configure npm to install locally
+                npm config set prefix '~/.npm'
+
+                # Start gateway
+                exec node /app/dist/index.js gateway --bind lan --port 18789
+            env:
+              HOME: &homepath /home/node
+              TERM: xterm-256color
+              PATH: /home/node/.local/bin:/home/node/.local/go/bin:/home/node/.local/homebrew/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+              GOPATH: /home/node/go
+              HOMEBREW_PREFIX: /home/node/.local/homebrew
+              HOMEBREW_CELLAR: /home/node/.local/homebrew/Cellar
+              HOMEBREW_REPOSITORY: /home/node/.local/homebrew
+              UV_INSTALL_DIR: /home/node/.local/bin
+              NODE_ENV: production
+              OPENCLAW_CONFIG_DIR: /home/node/.openclaw
+              OPENCLAW_WORKSPACE_DIR: /home/node/.openclaw/workspace
+              TZ: Europe/Paris
+            envFrom:
+              - secretRef:
+                  name: "{{ .Release.Name }}-secret"
+            probes:
+              liveness:
+                enabled: true
+                type: TCP
+                spec:
+                  tcpSocket:
+                    port: &port 18789
+                  initialDelaySeconds: 30
+                  periodSeconds: 30
+                  timeoutSeconds: 5
+                  failureThreshold: 3
+              readiness:
+                enabled: true
+                type: TCP
+                spec:
+                  tcpSocket:
+                    port: *port
+                  initialDelaySeconds: 10
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 3
+              startup:
+                enabled: true
+                type: TCP
+                spec:
+                  tcpSocket:
+                    port: *port
+                  initialDelaySeconds: 5
+                  periodSeconds: 5
+                  timeoutSeconds: 5
+                  failureThreshold: 30
+            securityContext:
+              runAsUser: 1000
+              runAsGroup: 1000
+              runAsNonRoot: true
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                  - ALL
+            resources:
+              requests:
+                cpu: 100m
+                memory: 512Mi
+              limits:
+                memory: 2Gi
+
+          # -- Chromium sidecar for browser automation (CDP on port 9222)
+          chromium:
+            image:
+              # -- Chromium image repository
+              repository: zenika/alpine-chrome
+              # -- Chromium image tag
+              tag: "124"
+            command:
+              - chromium-browser
+            args:
+              - --headless
+              - --disable-gpu
+              - --no-sandbox
+              - --disable-dev-shm-usage
+              - --remote-debugging-address=0.0.0.0
+              - --remote-debugging-port=9222
+            securityContext:
+              runAsUser: 1000
+              runAsGroup: 1000
+              runAsNonRoot: true
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                  - ALL
+            resources:
+              requests:
+                cpu: 100m
+                memory: 256Mi
+              limits:
+                cpu: 1000m
+                memory: 1Gi
+            probes:
+              readiness:
+                enabled: true
+                type: TCP
+                spec:
+                  tcpSocket:
+                    port: 9222
+                  initialDelaySeconds: 5
+                  periodSeconds: 10
+
+    defaultPodOptions:
+      shareProcessNamespace: true
+      securityContext:
+        fsGroup: 100
+        fsGroupChangePolicy: OnRootMismatch
+
+    service:
+      main:
+        ipFamilyPolicy: SingleStack
+        ipFamilies:
+          - IPv4
+        ports:
+          http:
+            port: *port
+    route:
+      main:
+        hostnames:
+          - "{{ .Release.Name }}.oxygn.dev"
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
+    persistence:
+      config:
+        existingClaim: "{{ .Release.Name }}"
+        globalMounts:
+          - path: *homepath
+      openclaw-config:
+        type: secret
+        name: "{{ .Release.Name }}-config"
+        globalMounts:
+          - path: /home/node/.openclaw/openclaw.json
+            subPath: openclaw.json
+      documents:
+        type: nfs
+        server: funkstation.internal
+        path: /volume2/Documents
+        globalMounts:
+          - path: /documents
+      hooks-scripts:
+        type: configMap
+        name: openclaw-hooks-scripts
+        globalMounts:
+          - readOnly: true
+            path: /home/node/.openclaw/workspace/github-webhook-transform.js
+            subPath: github-webhook-transform.js
+          - readOnly: true
+            path: /home/node/.openclaw/workspace/github-app-token-manager.js
+            subPath: github-app-token-manager.js
+          - readOnly: true
+            path: /home/node/.openclaw/workspace/grumpy-sysadmin-agent.js
+            subPath: grumpy-sysadmin-agent.js
+          - readOnly: true
+            path: /home/node/.openclaw/workspace/.clignore
+            subPath: .clignore
+      tmp:
+        type: emptyDir
+    rbac:
+      roles:
+        openclaw-read-all:
+          type: ClusterRole
+          rules:
+            - apiGroups: [""]
+              resources: ["pods", "nodes", "services", "namespaces", "configmaps", "persistentvolumes", "persistentvolumeclaims", "endpoints", "resourcequotas", "limitranges", "serviceaccounts", "events"]  # Added events
+              verbs: ["get", "list", "watch"]
+            - apiGroups: [""]
+              resources: ["pods/log"]
+              verbs: ["get", "list"]
+            - apiGroups: ["apps"]
+              resources: ["deployments", "daemonsets", "statefulsets", "replicasets"]
+              verbs: ["get", "list", "watch"]
+            - apiGroups: ["batch"]
+              resources: ["jobs", "cronjobs"]
+              verbs: ["get", "list", "watch"]
+            - apiGroups: ["networking.k8s.io"]
+              resources: ["ingresses", "networkpolicies"]
+              verbs: ["get", "list", "watch"]
+            - apiGroups: ["storage.k8s.io"]
+              resources: ["storageclasses"]
+              verbs: ["get", "list", "watch"]
+            - apiGroups: ["rbac.authorization.k8s.io"]
+              resources: ["roles", "rolebindings", "clusterroles", "clusterrolebindings"]
+              verbs: ["get", "list", "watch"]
+            - apiGroups: ["metrics.k8s.io"]
+              resources: ["nodes", "pods"]
+              verbs: ["get", "list", "watch"]
+            - apiGroups: ["helm.toolkit.fluxcd.io"]
+              resources: ["helmreleases"]
+              verbs: ["get", "list", "watch"]
+            - apiGroups: ["kustomize.toolkit.fluxcd.io"]
+              resources: ["kustomizations"]
+              verbs: ["get", "list", "watch"]
+            - apiGroups: ["external-secrets.io"]
+              resources: ["externalsecrets"]
+              verbs: ["get", "list", "watch"]
+        openclaw-write-restricted:
+          type: Role
+          rules:
+            - apiGroups: [""]
+              resources: ["pods"]
+              verbs: ["delete"]
+            - apiGroups: ["apps"]
+              resources: ["deployments"]
+              verbs: ["patch", "update"]
+      bindings:
+        openclaw-read-all:
+          type: ClusterRoleBinding
+          roleRef:
+            identifier: openclaw-read-all
+          subjects:
+            - identifier: openclaw
+              serviceAccount: openclaw
+        openclaw-write-restricted:
+          type: RoleBinding
+          roleRef:
+            identifier: openclaw-write-restricted
+          subjects:
+            - identifier: openclaw
+              serviceAccount: openclaw
+    serviceAccount:
+      openclaw: {}
