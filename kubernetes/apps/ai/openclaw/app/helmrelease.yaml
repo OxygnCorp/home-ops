@@ -24,7 +24,7 @@ spec:
           init-config:
             image:
               repository: ghcr.io/openclaw/openclaw
-              tag: "2026.2.3"
+              tag: "2026.2.6"
             command:
               - sh
               - -c
