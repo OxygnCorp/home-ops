@@ -320,7 +320,7 @@ spec:
         type: secret
         name: "{{ .Release.Name }}-config"
         globalMounts:
-          - path: /home/node/.openclaw/openclaw.json
+          - path: /config/openclaw.json
             subPath: openclaw.json
       documents:
         type: nfs
