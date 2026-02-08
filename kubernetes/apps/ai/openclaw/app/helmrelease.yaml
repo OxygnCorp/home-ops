@@ -38,12 +38,15 @@ spec:
                 # Check if existing config file has valid JSON content
                 EXISTING_VALID=false
                 if [ -f /home/node/.openclaw/openclaw.json ] && [ -s /home/node/.openclaw/openclaw.json ]; then
+                  log "Found existing config file"
                   if node -e "const fs = require('fs'); JSON.parse(fs.readFileSync('/home/node/.openclaw/openclaw.json', 'utf8'));" 2>/dev/null; then
                     EXISTING_VALID=true
                     log "Existing config is valid JSON"
                   else
                     log "Existing config file is invalid or empty, will overwrite"
                   fi
+                else
+                  log "No existing config file found, will create new one"
                 fi
 
                 if [ "$CONFIG_MODE" = "merge" ] && [ "$EXISTING_VALID" = "true" ]; then
