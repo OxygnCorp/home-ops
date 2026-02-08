@@ -1,0 +1,68 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/generators.external-secrets.io/githubaccesstoken_v1alpha1.json
+apiVersion: generators.external-secrets.io/v1alpha1
+kind: GithubAccessToken
+metadata:
+  name: mushu-bot-auth-token
+spec:
+  appID: "1140279"
+  installID: "60837150"
+  auth:
+    privateKey:
+      secretRef:
+        name: mushu-bot-pem
+        key: private_key_pem
+---
+# yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/external-secrets.io/externalsecret_v1.json
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: &name mushu-bot-auth-token
+spec:
+  target:
+    name: *name
+    template:
+      type: Opaque
+      engineVersion: v2
+      data:
+        GITHUB_COM_TOKEN: "{{ .token }}"
+        GITHUB_COM_USER: b3h5Z24tYWRtaW4=
+        RENOVATE_TOKEN: "{{ .token }}"
+  dataFrom:
+    - sourceRef:
+        generatorRef:
+          apiVersion: generators.external-secrets.io/v1alpha1
+          kind: GithubAccessToken
+          name: mushu-bot-auth-token
+---
+# yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/renovate-operator.mogenius.com/renovatejob_v1alpha1.json
+apiVersion: renovate-operator.mogenius.com/v1alpha1
+kind: RenovateJob
+metadata:
+  name: oxygncorp
+  namespace: renovate
+spec:
+  discoveryFilter: OxygnCorp/*
+  extraEnv:
+    - name: LOG_LEVEL
+      value: debug
+    - name: RENOVATE_ALLOWED_COMMANDS
+      value: '["pnpm run bundle"]'
+    - name: RENOVATE_ENDPOINT
+      value: https://api.github.com/
+    - name: RENOVATE_PLATFORM
+      value: github
+    - name: RENOVATE_PLATFORM_COMMIT
+      value: "true"
+  image: ghcr.io/renovatebot/renovate:43.0.2
+  parallelism: 5
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  schedule: 0 * * * *
+  secretRef: mushu-bot-auth-token
+  webhook:
+    enabled: true
+    authentication:
+      enabled: false
