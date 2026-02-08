@@ -348,6 +348,7 @@ spec:
       main:
         hostnames:
           - "{{ .Release.Name }}.oxygn.dev"
+          - "claw.oxygn.dev"
         parentRefs:
           - name: envoy-internal
             namespace: network
