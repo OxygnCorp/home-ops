@@ -12,3 +12,4 @@ resources:
   - ./mealie/ks.yaml
   - ./omni-tools/ks.yaml
   - ./stirling-pdf/ks.yaml
+  - ./webhook/ks.yaml
