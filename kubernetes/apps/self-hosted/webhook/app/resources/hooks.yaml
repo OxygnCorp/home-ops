@@ -4,7 +4,7 @@
   pass-arguments-to-command:
     - # job name
       source: string
-      name: oxygn
+      name: oxygncorp
     - # namespace
       source: string
       name: renovate
@@ -115,11 +115,11 @@
 - id: github-openclaw-notifications
   execute-command: /config/github-pr-notifications.sh
   include-stdin: true
-  # pass-environment-to-command:
-  #   - name: GITHUB_WEBHOOK_SECRET
-  #     source: secret
-  #     name: webhook
-  #     key: GITHUB_WEBHOOK_SECRET
+  pass-environment-to-command:
+    - name: GITHUB_WEBHOOK_SECRET
+      source: secret
+      name: webhook
+      key: GITHUB_WEBHOOK_SECRET
   pass-arguments-to-command:
     - # event type
       source: header
