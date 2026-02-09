@@ -158,7 +158,7 @@
           parameter:
             source: header
             name: x-hub-signature
-      - # Trigger only for the joryirving repo owner
+      - # Trigger only for the oxygn repo owner
         match:
           type: value
           value: oxygn-admin
@@ -215,7 +215,7 @@
                   parameter:
                     source: payload
                     name: review.state
-          - # Trigger on issue comment events that mention @miso-assistant
+          - # Trigger on issue comment events that mention @claw-assistant
             and:
               - match:
                   type: value
