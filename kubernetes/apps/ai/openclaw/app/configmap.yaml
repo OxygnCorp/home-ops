@@ -176,8 +176,9 @@ data:
 
     class GitHubAppTokenManager {
       constructor() {
-        this.appId = process.env.GITHUB_APP_ID;
-        this.installationId = process.env.GITHUB_APP_INSTALLATION_ID;
+        // Convert App ID to number (required by GitHub JWT)
+        this.appId = parseInt(process.env.GITHUB_APP_ID, 10);
+        this.installationId = parseInt(process.env.GITHUB_APP_INSTALLATION_ID, 10);
 
         // Handle different private key formats
         let rawKey = process.env.GITHUB_APP_PRIVATE_KEY;
@@ -297,6 +298,21 @@ data:
         try {
           const jwtToken = this.generateJWT();
 
+          // Verify JWT can be decoded locally
+          try {
+            const decoded = jwt.decode(jwtToken, { complete: true });
+            console.log('JWT decoded locally:', {
+              header: decoded.header,
+              payload: decoded.payload
+            });
+          } catch (decodeError) {
+            console.error('Failed to decode JWT locally:', decodeError.message);
+            throw new Error('Generated JWT is invalid: ' + decodeError.message);
+          }
+
+          console.log('Requesting installation token from GitHub API...');
+          console.log('App ID:', this.appId, 'Installation ID:', this.installationId);
+
           const response = await fetch('https://api.github.com/app/installations/' + this.installationId + '/access_tokens', {
             method: 'POST',
             headers: {
@@ -306,8 +322,18 @@ data:
             }
           });
 
+          console.log('GitHub API response status:', response.status);
+
           if (!response.ok) {
-            throw new Error('Failed to get installation token: ' + response.status + ' - ' + await response.text());
+            const errorText = await response.text();
+            console.error('GitHub API error response:', errorText);
+            console.error('Request details:', {
+              appId: this.appId,
+              installationId: this.installationId,
+              jwtLength: jwtToken.length,
+              jwtPreview: jwtToken.substring(0, 50) + '...'
+            });
+            throw new Error('Failed to get installation token: ' + response.status + ' - ' + errorText);
           }
 
           const data = await response.json();
