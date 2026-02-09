@@ -51,8 +51,8 @@ response=$(curl -s -w "\n%{http_code}" -X POST "$OPENCLAW_WEBHOOK_URL" \
 http_code=$(echo "$response" | tail -n1)
 response_body=$(echo "$response" | head -n-1)
 
-if [ "$http_code" -eq 200 ]; then
-  echo "✅ Successfully sent GitHub payload to OpenClaw" >&2
+if [ "$http_code" -eq 200 ] || [ "$http_code" -eq 202 ]; then
+  echo "✅ Successfully sent GitHub payload to OpenClaw (HTTP $http_code)" >&2
   echo "$response_body"
 else
   echo "❌ Failed to send notification to OpenClaw, HTTP Code: $http_code" >&2
