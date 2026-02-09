@@ -184,6 +184,20 @@
                   parameter:
                     source: payload
                     name: action
+          - # Trigger on pull request REOPENED events (reopened closed PRs)
+            and:
+              - match:
+                  type: value
+                  value: pull_request
+                  parameter:
+                    source: header
+                    name: x-github-event
+              - match:
+                  type: value
+                  value: reopened
+                  parameter:
+                    source: payload
+                    name: action
           - # Trigger on pull request SYNCHRONIZE events (new commits pushed to existing PRs)
             and:
               - match:
