@@ -232,7 +232,7 @@
                   parameter:
                     source: payload
                     name: review.state
-          - # Trigger on issue comment events that mention @claw-assistant
+          - # Trigger on issue comment events that mention @claw-oxygn
             and:
               - match:
                   type: value
@@ -242,7 +242,7 @@
                     name: x-github-event
               - match:
                   type: regexp
-                  pattern: "@claw-assistant"
+                  pattern: "@claw-oxygn"
                   parameter:
                     source: payload
                     name: comment.body
