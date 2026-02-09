@@ -182,17 +182,49 @@ data:
         // Handle different private key formats
         let rawKey = process.env.GITHUB_APP_PRIVATE_KEY;
         if (rawKey) {
-          // Replace literal \n with actual newlines
+          console.log('Processing GitHub App private key...');
+
+          // Trim whitespace
+          rawKey = rawKey.trim();
+
+          // Check if key is base64 encoded (doesn't start with -----)
+          if (!rawKey.startsWith('-----BEGIN')) {
+            console.log('Key appears to be base64 encoded, decoding...');
+            try {
+              rawKey = Buffer.from(rawKey, 'base64').toString('utf-8');
+              console.log('Successfully decoded base64 key');
+            } catch (error) {
+              console.warn('Failed to decode as base64, treating as regular string');
+            }
+          }
+
+          // Replace literal \n with actual newlines (handles JSON-escaped strings)
           rawKey = rawKey.replace(/\\n/g, '\n');
+
           // Ensure proper PEM format with newlines
           if (!rawKey.includes('\n') && rawKey.includes('-----BEGIN')) {
-            // Single line key - add newlines after headers
+            console.log('Converting single-line key to multiline format');
+            // Single line key - add newlines after headers and before footers
             rawKey = rawKey
               .replace(/-----BEGIN RSA PRIVATE KEY-----/g, '-----BEGIN RSA PRIVATE KEY-----\n')
               .replace(/-----END RSA PRIVATE KEY-----/g, '\n-----END RSA PRIVATE KEY-----')
               .replace(/-----BEGIN PRIVATE KEY-----/g, '-----BEGIN PRIVATE KEY-----\n')
               .replace(/-----END PRIVATE KEY-----/g, '\n-----END PRIVATE KEY-----');
           }
+
+          // Ensure the key ends with a newline (required for proper PEM format)
+          if (!rawKey.endsWith('\n')) {
+            rawKey = rawKey + '\n';
+          }
+
+          console.log('Private key format:', {
+            length: rawKey.length,
+            hasNewlines: rawKey.includes('\n'),
+            startsWithBegin: rawKey.startsWith('-----BEGIN'),
+            endsWithEnd: rawKey.trim().endsWith('-----END RSA PRIVATE KEY-----') || rawKey.trim().endsWith('-----END PRIVATE KEY-----'),
+            firstLine: rawKey.split('\n')[0],
+            lastLine: rawKey.trim().split('\n').pop()
+          });
         }
         this.privateKey = rawKey;
 
@@ -203,6 +235,11 @@ data:
         this.initializationPromise = null;
 
         if (!this.appId || !this.installationId || !this.privateKey) {
+          console.error('Missing GitHub App environment variables:', {
+            hasAppId: !!this.appId,
+            hasInstallationId: !!this.installationId,
+            hasPrivateKey: !!this.privateKey
+          });
           throw new Error('Missing required GitHub App environment variables');
         }
 
@@ -210,6 +247,8 @@ data:
         if (!this.privateKey.includes('-----BEGIN') || !this.privateKey.includes('-----END')) {
           throw new Error('GitHub App private key is not in valid PEM format');
         }
+
+        console.log('GitHub App Token Manager initialized successfully');
       }
 
       async initialize() {
@@ -241,7 +280,17 @@ data:
           iss: this.appId
         };
 
-        return jwt.sign(payload, this.privateKey, { algorithm: 'RS256' });
+        console.log('Generating JWT with payload:', payload);
+
+        try {
+          const token = jwt.sign(payload, this.privateKey, { algorithm: 'RS256' });
+          console.log('JWT generated successfully, length:', token.length);
+          return token;
+        } catch (error) {
+          console.error('Error signing JWT:', error.message);
+          console.error('Private key preview (first 50 chars):', this.privateKey.substring(0, 50));
+          throw error;
+        }
       }
 
       async generateToken() {
