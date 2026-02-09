@@ -148,6 +148,9 @@
     - # PR Body
       source: payload
       name: pull_request.body
+    - # Openclaw webhook URL
+      source: string
+      name: http://openclaw.ai:18789/webhooks/github
   trigger-rule:
     and:
       - # Validate the webhook secret
