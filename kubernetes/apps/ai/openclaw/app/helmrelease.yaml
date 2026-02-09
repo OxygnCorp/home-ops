@@ -191,7 +191,7 @@ spec:
                 # Install npm packages required by hook scripts in ConfigMap
                 cd /home/node/.openclaw/workspace
                 log "Installing npm dependencies for hook scripts..."
-                npm install --no-save jsonwebtoken || log "Failed to install jsonwebtoken"
+                npm install --no-save jsonwebtoken || log "Failed to install npm packages"
                 log "NPM dependencies installation complete"
 
                 # ============================================================
