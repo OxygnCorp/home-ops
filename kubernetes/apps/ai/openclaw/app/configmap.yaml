@@ -92,15 +92,48 @@ data:
 
             console.log('PR review completed:', reviewResult);
 
+            // Format Discord message based on result
+            let discordMessage;
+            if (reviewResult.success) {
+              const emoji = reviewResult.mergeRecommendation === 'APPROVE' ? '✅' :
+                           reviewResult.mergeRecommendation === 'CHANGES_NEEDED' ? '⚠️' :
+                           reviewResult.mergeRecommendation === 'BLOCK' ? '🚫' : '❓';
+
+              const actionText = reviewResult.action === 'updated' ? 'Updated' : 'Posted';
+
+              discordMessage = emoji + ' PR Review ' + actionText + ' for #' + reviewResult.prNumber + '\n\n';
+              discordMessage += reviewResult.prTitle + ' by @' + reviewResult.prAuthor + '\n';
+              discordMessage += 'Repo: ' + reviewResult.repo + '\n';
+              discordMessage += 'URL: ' + reviewResult.prUrl + '\n\n';
+              discordMessage += 'Review Status: ' + reviewResult.mergeRecommendation + '\n\n';
+
+              if (reviewResult.mergeRecommendation === 'APPROVE') {
+                discordMessage += '✅ This PR looks good and can be merged!\n';
+                discordMessage += 'To merge: gh pr merge ' + reviewResult.prNumber + ' --repo ' + reviewResult.repo + ' --squash';
+              } else if (reviewResult.mergeRecommendation === 'CHANGES_NEEDED') {
+                discordMessage += '⚠️ Some issues need to be addressed before merging.\n';
+                discordMessage += 'Please review the comments and make necessary changes.';
+              } else if (reviewResult.mergeRecommendation === 'BLOCK') {
+                discordMessage += '🚫 Critical issues found - DO NOT MERGE!\n';
+                discordMessage += 'Security or major problems detected that must be fixed first.';
+              } else {
+                discordMessage += 'Review completed, check GitHub for details.';
+              }
+
+              discordMessage += '\n\nFull grumpy sysadmin review has been posted on the GitHub PR.';
+            } else {
+              discordMessage = '❌ Error reviewing PR #' + reviewResult.prNumber + '\n\n';
+              discordMessage += reviewResult.error + '\n\n';
+              discordMessage += 'Repo: ' + reviewResult.repo;
+            }
+
             return {
-              message: 'Grumpy sysadmin review completed for PR #' + prInfo.pr_number,
-              channel: "last"
+              message: discordMessage
             };
           } catch (error) {
             console.error('Error during PR review:', error.message);
             return {
-              message: 'Error during PR review: ' + error.message,
-              channel: "last"
+              message: '❌ Error during PR review\n\n' + error.message
             };
           }
         }
@@ -108,15 +141,13 @@ data:
           console.log('PR #' + prInfo.pr_number + ' ' + action + ': ' + prInfo.title);
 
           return {
-            message: 'Pull request #' + prInfo.repo + '/' + prInfo.pr_number + ' was ' + action,
-            channel: "last"
+            message: 'Pull request #' + prInfo.repo + '/' + prInfo.pr_number + ' was ' + action
           };
         }
         else {
           // For other PR actions
           return {
-            message: 'Received pull request event for PR #' + prInfo.pr_number + ': ' + action,
-            channel: "last"
+            message: 'Received pull request event for PR #' + prInfo.pr_number + ': ' + action
           };
         }
       }
@@ -147,14 +178,47 @@ data:
                   }}
                 );
 
+                // Format Discord message based on result
+                let discordMessage;
+                if (reviewResult.success) {
+                  const emoji = reviewResult.mergeRecommendation === 'APPROVE' ? '✅' :
+                               reviewResult.mergeRecommendation === 'CHANGES_NEEDED' ? '⚠️' :
+                               reviewResult.mergeRecommendation === 'BLOCK' ? '🚫' : '❓';
+
+                  const actionText = reviewResult.action === 'updated' ? 'Updated' : 'Posted';
+
+                  discordMessage = emoji + ' PR Review ' + actionText + ' for #' + reviewResult.prNumber + '\n\n';
+                  discordMessage += reviewResult.prTitle + ' by @' + reviewResult.prAuthor + '\n';
+                  discordMessage += 'Repo: ' + reviewResult.repo + '\n';
+                  discordMessage += 'URL: ' + reviewResult.prUrl + '\n\n';
+                  discordMessage += 'Review Status: ' + reviewResult.mergeRecommendation + '\n\n';
+
+                  if (reviewResult.mergeRecommendation === 'APPROVE') {
+                    discordMessage += '✅ This PR looks good and can be merged!\n';
+                    discordMessage += 'To merge: gh pr merge ' + reviewResult.prNumber + ' --repo ' + reviewResult.repo + ' --squash';
+                  } else if (reviewResult.mergeRecommendation === 'CHANGES_NEEDED') {
+                    discordMessage += '⚠️ Some issues need to be addressed before merging.\n';
+                    discordMessage += 'Please review the comments and make necessary changes.';
+                  } else if (reviewResult.mergeRecommendation === 'BLOCK') {
+                    discordMessage += '🚫 Critical issues found - DO NOT MERGE!\n';
+                    discordMessage += 'Security or major problems detected that must be fixed first.';
+                  } else {
+                    discordMessage += 'Review completed, check GitHub for details.';
+                  }
+
+                  discordMessage += '\n\nFull grumpy sysadmin review has been posted on the GitHub PR.';
+                } else {
+                  discordMessage = '❌ Error reviewing PR #' + reviewResult.prNumber + '\n\n';
+                  discordMessage += reviewResult.error + '\n\n';
+                  discordMessage += 'Repo: ' + reviewResult.repo;
+                }
+
                 return {
-                  message: 'Grumpy sysadmin review completed for PR #' + nestedPrNumber,
-                  channel: "last"
+                  message: discordMessage
                 };
               } catch (error) {
                 return {
-                  message: 'Error during PR review: ' + error.message,
-                  channel: "last"
+                  message: '❌ Error during PR review\n\n' + error.message
                 };
               }
             }
@@ -162,8 +226,7 @@ data:
         }
 
         return {
-          message: 'Received webhook event with action: ' + action,
-          channel: "last"
+          message: 'Received webhook event with action: ' + action
         };
       }
     }
@@ -488,7 +551,9 @@ data:
         const files = filesResponse.ok ? await filesResponse.json() : [];
 
         // Perform grumpy sysadmin review
-        const reviewComment = await generateGrumpyReview(prDetails, files);
+        const reviewResult = await generateGrumpyReview(prDetails, files);
+        const reviewComment = reviewResult.reviewComment || reviewResult;  // Handle both object and string returns
+        const mergeRecommendation = reviewResult.mergeRecommendation || 'UNKNOWN';
 
         // First, check if we've already commented on this PR to avoid duplicate comments
         const existingCommentsResponse = await fetch(`https://api.github.com/repos/$${repo}/issues/$${prNumber}/comments`, {
@@ -565,11 +630,27 @@ data:
           throw new Error(`Failed to post/update review comment: $${commentResponse.status} - $${await commentResponse.text()}`);
         }
 
-        return `Grumpy Sysadmin Agent: Successfully $${wasUpdated ? 'updated' : 'posted'} review to PR #$${prNumber} in $${repo}`;
+        // Return detailed result for Discord notification
+        return {
+          success: true,
+          action: wasUpdated ? 'updated' : 'posted',
+          repo,
+          prNumber,
+          prUrl: prDetails.html_url,
+          prTitle: prDetails.title,
+          prAuthor: prDetails.user.login,
+          reviewComment,
+          mergeRecommendation
+        };
 
       } catch (error) {
         console.error('Error in PR review process:', error.message);
-        return `Error posting PR review: $${error.message}`;
+        return {
+          success: false,
+          error: error.message,
+          repo,
+          prNumber
+        };
       }
     }
 
@@ -577,7 +658,7 @@ data:
      * Generate a grumpy sysadmin-style review based on PR details using AI
      * @param {Object} prDetails - The PR details from GitHub API
      * @param {Array} files - Array of files changed in the PR
-     * @returns {string} The AI-generated review comment with grumpy personality
+     * @returns {Object} Object containing review comment and merge recommendation
      */
     async function generateGrumpyReview(prDetails, files) {
       const { title, user, created_at, body, html_url, number: prNumber } = prDetails;
@@ -630,7 +711,12 @@ data:
     - Shows your grumpy personality throughout with varied expressions of frustration
     - Varies your conclusion based on what you find in the code (not repetitive boilerplate)
 
-    Make the review feel personalized and specific to the actual code changes. Don't use repetitive sign-off phrases. Instead, end with something that reflects what you found in the code review.`;
+    Make the review feel personalized and specific to the actual code changes. Don't use repetitive sign-off phrases. Instead, end with something that reflects what you found in the code review.
+
+    IMPORTANT: At the very end of your review, on a new line, add EXACTLY one of these merge recommendations:
+    - "MERGE_RECOMMENDATION: APPROVE" - if the code is acceptable and can be merged (even with minor suggestions)
+    - "MERGE_RECOMMENDATION: CHANGES_NEEDED" - if there are significant issues that must be fixed before merging
+    - "MERGE_RECOMMENDATION: BLOCK" - if there are critical security issues or major problems that absolutely prevent merging`;
 
       try {
         // Send to OpenClaw's AI via HTTP endpoint (OpenAI-compatible)
@@ -665,10 +751,19 @@ data:
         console.log('OpenClaw API response received successfully');
 
         // Extract the review from OpenAI-compatible response format
-        const aiReview = aiData.choices?.[0]?.message?.content || aiData.response || 'AI review generation completed';
+        let aiReview = aiData.choices?.[0]?.message?.content || aiData.response || 'AI review generation completed';
+
+        // Extract merge recommendation from the review
+        let mergeRecommendation = 'UNKNOWN';
+        const recommendationMatch = aiReview.match(/MERGE_RECOMMENDATION:\s*(APPROVE|CHANGES_NEEDED|BLOCK)/);
+        if (recommendationMatch) {
+          mergeRecommendation = recommendationMatch[1];
+          // Remove the recommendation line from the review comment
+          aiReview = aiReview.replace(/\n*MERGE_RECOMMENDATION:.*$/m, '').trim();
+        }
 
         // Format with consistent grumpy personality
-        return `## ⚠️ Grumpy Sysadmin Review for PR #$${prNumber}
+        const reviewComment = `## ⚠️ Grumpy Sysadmin Review for PR #$${prNumber}
 
     $${aiReview}
 
@@ -676,6 +771,8 @@ data:
     *This review was automatically generated by the Grumpy Sysadmin Agent.*
     *Sent from my terminal while monitoring production at 3 AM on a Sunday.*
     `;
+
+        return { reviewComment, mergeRecommendation };
       } catch (error) {
         console.error('AI review generation failed:', error.message);
 
@@ -686,6 +783,7 @@ data:
 
     /**
      * Fallback function with strong grumpy personality that focuses on code analysis
+     * @returns {Object} Object containing reviewComment and mergeRecommendation
      */
     function generateGrumpyReviewFallbackWithCodeAnalysis(prDetails, files) {
       const { title, user, created_at, body, html_url, number: prNumber } = prDetails;
@@ -775,7 +873,15 @@ data:
     *Sent from my terminal while monitoring production at 3 AM on a Sunday.*
     `;
 
-      return review;
+      // Determine merge recommendation based on issues found
+      let mergeRecommendation = 'APPROVE';
+      if (securityIssues.length > 0) {
+        mergeRecommendation = 'BLOCK';  // Security issues always block
+      } else if (codeQualityIssues.length > 2 || performanceIssues.length > 1) {
+        mergeRecommendation = 'CHANGES_NEEDED';  // Multiple quality/performance issues need attention
+      }
+
+      return { reviewComment: review, mergeRecommendation };
     }
 
     /**
