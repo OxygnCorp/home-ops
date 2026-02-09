@@ -217,6 +217,7 @@ spec:
               capabilities:
                 drop:
                   - ALL
+
         containers:
           app:
             image:
@@ -282,6 +283,9 @@ spec:
                   timeoutSeconds: 5
                   failureThreshold: 30
             securityContext:
+              runAsUser: 1000
+              runAsGroup: 1000
+              runAsNonRoot: true
               allowPrivilegeEscalation: false
               capabilities:
                 drop:
@@ -315,6 +319,9 @@ spec:
             env:
               TZ: *tz
             securityContext:
+              runAsUser: 1000
+              runAsGroup: 1000
+              runAsNonRoot: true
               allowPrivilegeEscalation: false
               capabilities:
                 drop:
@@ -361,9 +368,6 @@ spec:
     defaultPodOptions:
       shareProcessNamespace: true
       securityContext:
-        runAsNonRoot: true
-        runAsUser: 1000
-        runAsGroup: 100
         fsGroup: 100
         fsGroupChangePolicy: OnRootMismatch
 
