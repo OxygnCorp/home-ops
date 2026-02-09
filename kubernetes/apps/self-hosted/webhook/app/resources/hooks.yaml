@@ -116,10 +116,9 @@
   execute-command: /config/github-pr-notifications.sh
   include-stdin: true
   pass-environment-to-command:
-    - name: GITHUB_WEBHOOK_SECRET
-      source: secret
-      name: webhook
-      key: OPENCLAW_GITHUB_WEBHOOK_SECRET
+    - source: string
+      envname: GITHUB_WEBHOOK_SECRET
+      name: OPENCLAW_GITHUB_WEBHOOK_SECRET
   pass-arguments-to-command:
     - # event type
       source: header
