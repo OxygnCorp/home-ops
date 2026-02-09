@@ -500,10 +500,13 @@ data:
         });
 
         let commentResponse;
+        let botComment = null;
+        let wasUpdated = false;
+
         if (existingCommentsResponse.ok) {
           const existingComments = await existingCommentsResponse.json();
           // Look for a previous comment from this bot
-          const botComment = existingComments.find(comment =>
+          botComment = existingComments.find(comment =>
             comment.user.type === 'Bot' &&
             comment.body.includes('Grumpy Sysadmin Agent') &&
             comment.body.includes('automatically generated')
@@ -523,6 +526,7 @@ data:
                 body: reviewComment
               })
             });
+            wasUpdated = true;
             console.log(`Successfully updated existing review comment #$${botComment.id} for PR #$${prNumber}`);
           } else {
             // Create a new comment as before
@@ -561,7 +565,7 @@ data:
           throw new Error(`Failed to post/update review comment: $${commentResponse.status} - $${await commentResponse.text()}`);
         }
 
-        return `Grumpy Sysadmin Agent: Successfully $${botComment ? 'updated' : 'posted'} review to PR #$${prNumber} in $${repo}`;
+        return `Grumpy Sysadmin Agent: Successfully $${wasUpdated ? 'updated' : 'posted'} review to PR #$${prNumber} in $${repo}`;
 
       } catch (error) {
         console.error('Error in PR review process:', error.message);
@@ -629,21 +633,22 @@ data:
     Make the review feel personalized and specific to the actual code changes. Don't use repetitive sign-off phrases. Instead, end with something that reflects what you found in the code review.`;
 
       try {
-        // Send to OpenClaw's AI interface
-        const aiResponse = await fetch('http://localhost:3000/chat', {
+        // Send to OpenClaw's AI interface (gateway runs on port 18789)
+        const aiResponse = await fetch('http://localhost:18789/api/chat', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer $${process.env.CLAWDBOT_GATEWAY_TOKEN}`
+            'Authorization': `Bearer $${process.env.OPENCLAW_GATEWAY_TOKEN}`
           },
           body: JSON.stringify({
             message: aiPrompt,
-            thinking: 'high',
-            model: 'gemini' // or whatever model you prefer for personality
+            stream: false
           })
         });
 
         if (!aiResponse.ok) {
+          const errorText = await aiResponse.text();
+          console.error(`AI service responded with status: $${aiResponse.status}, body: $${errorText}`);
           throw new Error(`AI service responded with status: $${aiResponse.status}`);
         }
 
