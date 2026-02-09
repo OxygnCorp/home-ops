@@ -141,7 +141,7 @@
       name: pull_request.title
     - # PR User
       source: payload
-      name: repository.user.login
+      name: pull_request.user.login
     - # PR URL
       source: payload
       name: pull_request.html_url
