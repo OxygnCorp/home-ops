@@ -82,7 +82,7 @@ data:
 
         console.log('Processing PR #' + prInfo.pr_number + ' in ' + prInfo.repo + ' with action: ' + action);
 
-        if (action === 'opened' || action === 'synchronize') {
+        if (action === 'opened' || action === 'reopened' || action === 'synchronize') {
           try {
             // Execute the PR review directly instead of spawning an agent
             const reviewResult = await processPRReview(
@@ -132,7 +132,7 @@ data:
           const nestedPrNumber = nestedEvent.pull_request?.number || null;
 
           if (nestedRepo !== 'unknown/unknown' && nestedPrNumber) {
-            if (nestedAction === 'opened' || nestedAction === 'synchronize') {
+            if (nestedAction === 'opened' || nestedAction === 'reopened' || nestedAction === 'synchronize') {
               try {
                 const reviewResult = await processPRReview(
                   { repo: nestedRepo, pr_number: nestedPrNumber },
