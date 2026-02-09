@@ -10,6 +10,7 @@ PR_TITLE=${6:-}
 PR_USER=${7:-}
 PR_URL=${8:-}
 PR_BODY=${9:-}
+OPENCLAW_WEBHOOK_URL=${10:-}
 
 echo "$(date): Received GitHub event: $EVENT_TYPE action: $ACTION_TYPE for $REPOSITORY_NAME issue/PR: $PR_NUMBER" >&2
 
@@ -39,7 +40,7 @@ PAYLOAD_JSON=$(jq -n \
   }')
 
 # Send to OpenClaw
-response=$(curl -s -w "\n%{http_code}" -X POST http://openclaw.llm:18789/webhooks/github \
+response=$(curl -s -w "\n%{http_code}" -X POST "$OPENCLAW_WEBHOOK_URL" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $GITHUB_WEBHOOK_SECRET" \
   -H "User-Agent: GitHub-Hookshot/test" \
