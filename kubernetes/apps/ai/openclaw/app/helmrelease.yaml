@@ -186,11 +186,19 @@ spec:
                 log "Starting skills initialization"
 
                 # ============================================================
+                # NPM Dependencies for Hook Scripts
+                # ============================================================
+                # Install npm packages required by hook scripts in ConfigMap
+                cd /home/node/.openclaw/workspace
+                log "Installing npm dependencies for hook scripts..."
+                npm install --no-save jsonwebtoken || log "Failed to install jsonwebtoken"
+                log "NPM dependencies installation complete"
+
+                # ============================================================
                 # Skill Installation
                 # ============================================================
                 # Install skills from ClawHub (https://clawhub.com)
                 # Add skill slugs to the list below to install them declaratively.
-                cd /home/node/.openclaw/workspace
                 mkdir -p skills
                 for skill in weather github todoist obsidian summarize; do
                   if [ -n "$skill" ] && [ ! -d "skills/${skill##*/}" ]; then
