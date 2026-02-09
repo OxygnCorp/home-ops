@@ -358,7 +358,7 @@ spec:
                 "/home/node/.vscode",
                 "--port",
                 "12321",
-                "/config",
+                "/home/node/.openclaw",
               ]
             resources:
               requests:
