@@ -27,7 +27,7 @@
       - # Trigger only for the oxygn repo owner
         match:
           type: value
-          value: oxygn-admin
+          value: OxygnCorp
           parameter:
             source: payload
             name: repository.owner.login
@@ -161,7 +161,7 @@
       - # Trigger only for the oxygn repo owner
         match:
           type: value
-          value: oxygn-admin
+          value: OxygnCorp
           parameter:
             source: payload
             name: repository.owner.login
