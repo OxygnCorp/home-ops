@@ -178,7 +178,23 @@ data:
       constructor() {
         this.appId = process.env.GITHUB_APP_ID;
         this.installationId = process.env.GITHUB_APP_INSTALLATION_ID;
-        this.privateKey = process.env.GITHUB_APP_PRIVATE_KEY?.replace(/\\n/g, '\n');
+
+        // Handle different private key formats
+        let rawKey = process.env.GITHUB_APP_PRIVATE_KEY;
+        if (rawKey) {
+          // Replace literal \n with actual newlines
+          rawKey = rawKey.replace(/\\n/g, '\n');
+          // Ensure proper PEM format with newlines
+          if (!rawKey.includes('\n') && rawKey.includes('-----BEGIN')) {
+            // Single line key - add newlines after headers
+            rawKey = rawKey
+              .replace(/-----BEGIN RSA PRIVATE KEY-----/g, '-----BEGIN RSA PRIVATE KEY-----\n')
+              .replace(/-----END RSA PRIVATE KEY-----/g, '\n-----END RSA PRIVATE KEY-----')
+              .replace(/-----BEGIN PRIVATE KEY-----/g, '-----BEGIN PRIVATE KEY-----\n')
+              .replace(/-----END PRIVATE KEY-----/g, '\n-----END PRIVATE KEY-----');
+          }
+        }
+        this.privateKey = rawKey;
 
         this.currentToken = null;
         this.tokenExpiration = null;
@@ -188,6 +204,11 @@ data:
 
         if (!this.appId || !this.installationId || !this.privateKey) {
           throw new Error('Missing required GitHub App environment variables');
+        }
+
+        // Validate private key format
+        if (!this.privateKey.includes('-----BEGIN') || !this.privateKey.includes('-----END')) {
+          throw new Error('GitHub App private key is not in valid PEM format');
         }
       }
 
