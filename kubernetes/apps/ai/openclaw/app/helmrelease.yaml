@@ -15,7 +15,7 @@ spec:
         replicas: 1
         strategy: Recreate
         annotations:
-          reloader.stakater.com/auto: "true"
+          secret.reloader.stakater.com/reload: "openclaw"
 
         initContainers:
           # Init container handles config setup with merge/overwrite modes.
