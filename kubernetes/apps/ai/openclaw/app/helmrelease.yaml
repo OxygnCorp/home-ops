@@ -189,7 +189,7 @@ spec:
                 set +e  # Don't fail on brew errors
                 if [ ! -f /home/node/.local/bin/zsh ]; then
                   log "Installing zsh..."
-                  brew install zsh
+                  /home/node/.local/homebrew/bin/brew install zsh
                 fi
                 set -e # Re-enable error checking
 
