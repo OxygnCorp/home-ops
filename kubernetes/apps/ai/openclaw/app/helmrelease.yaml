@@ -158,6 +158,7 @@ spec:
                   export HOMEBREW_PREFIX=/home/node/.local/homebrew
                   export HOMEBREW_CELLAR=/home/node/.local/homebrew/Cellar
                   export HOMEBREW_REPOSITORY=/home/node/.local/homebrew
+                  export PATH=/home/node/.local/bin:/home/node/.local/go/bin:/home/node/.local/homebrew/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
                   mkdir -p $HOMEBREW_PREFIX
                   cd /tmp
                   git clone --depth 1 https://github.com/Homebrew/brew $HOMEBREW_PREFIX
@@ -185,11 +186,12 @@ spec:
                 fi
 
                 # Install zsh if not present on PVC
+                set +e  # Don't fail on brew errors
                 if [ ! -f /home/node/.local/bin/zsh ]; then
                   log "Installing zsh..."
                   brew install zsh
-
                 fi
+                set -e # Re-enable error checking
 
                 log "Tool installation complete"
 
