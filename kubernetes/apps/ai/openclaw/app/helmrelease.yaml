@@ -187,7 +187,7 @@ spec:
 
                 # Install zsh if not present on PVC
                 set +e  # Don't fail on brew errors
-                if [ ! -f /home/node/.local/bin/zsh ]; then
+                if [ ! -f /home/node/.local/homebrew/bin/zsh ]; then
                   log "Installing zsh..."
                   /home/node/.local/homebrew/bin/brew install zsh
                 fi
