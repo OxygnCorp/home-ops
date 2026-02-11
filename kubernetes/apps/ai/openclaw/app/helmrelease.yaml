@@ -102,6 +102,9 @@ spec:
                 fi
                 chown -R 1000:1000 /home/node/.openclaw
                 log "Config initialization complete"
+
+                log "Changing default shell to zsh for better interactive experience"
+                usermod -s /home/node/.local/homebrew/bin/zsh node || log "Failed to change default shell, zsh may not be installed yet"
             env:
               - name: CONFIG_MODE
                 value: "merge"
@@ -179,6 +182,13 @@ spec:
                 if [ ! -f /home/node/.local/bin/uv ]; then
                   log "Installing uv..."
                   curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/home/node/.local/bin sh
+                fi
+
+                # Install zsh if not present on PVC
+                if [ ! -f /home/node/.local/bin/zsh ]; then
+                  log "Installing zsh..."
+                  brew install zsh
+
                 fi
 
                 log "Tool installation complete"
