@@ -354,29 +354,6 @@ spec:
                     port: 9222
                   initialDelaySeconds: 5
                   periodSeconds: 10
-          codeserver:
-            image:
-              repository: ghcr.io/coder/code-server
-              tag: 4.109.2@sha256:1b84cd817fe8eb1159323ae9d2f29b3c70c6ccd44958d651a94900cf7f0ff9c4
-            env:
-              TZ: *tz
-            args:
-              [
-                "--auth",
-                "none",
-                "--user-data-dir",
-                "/home/node/.vscode",
-                "--extensions-dir",
-                "/home/node/.vscode",
-                "--port",
-                "12321",
-                "/home/node/.openclaw",
-              ]
-            resources:
-              requests:
-                cpu: 10m
-              limits:
-                memory: 1Gi
     defaultPodOptions:
       shareProcessNamespace: true
       securityContext:
@@ -391,8 +368,6 @@ spec:
         ports:
           http:
             port: *port
-          codeserver:
-            port: &codeserverPort 12321
     route:
       main:
         hostnames:
@@ -405,17 +380,6 @@ spec:
           - backendRefs:
               - name: "{{ .Release.Name }}"
                 port: *port
-      codeserver:
-        hostnames:
-          - "openclaw-code.oxygn.dev"
-          - "claw-code.oxygn.dev"
-        parentRefs:
-          - name: envoy-internal
-            namespace: network
-        rules:
-          - backendRefs:
-              - name: "{{ .Release.Name }}"
-                port: *codeserverPort
     persistence:
       config:
         existingClaim: "{{ .Release.Name }}"
