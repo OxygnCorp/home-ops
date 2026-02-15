@@ -448,7 +448,7 @@ spec:
         name: openclaw-hooks-scripts
         globalMounts:
           - readOnly: true
-            path: /home/node/.openclaw/workspace/hooks
+            path: /home/node/.openclaw/hooks/transforms
       tmp:
         type: emptyDir
     rbac:
