@@ -142,6 +142,16 @@ spec:
 
                 log "Starting tool installation..."
 
+                # Install gh CLI if not present on PVC
+                if [ ! -f /home/node/.local/bin/gh ]; then
+                  echo "Installing gh CLI..."
+                  cd /tmp
+                  curl -fsSL https://github.com/cli/cli/releases/download/v2.86.0/gh_2.86.0_linux_amd64.tar.gz -o gh.tar.gz
+                  tar xzf gh.tar.gz
+                  cp gh_2.86.0_linux_amd64/bin/gh /home/node/.local/bin/
+                  rm -rf gh.tar.gz gh_2.86.0_linux_amd64
+                fi
+
                 # Install Go if not present on PVC
                 if [ ! -f /home/node/.local/go/bin/go ]; then
                   log "Installing Go..."
@@ -354,6 +364,29 @@ spec:
                     port: 9222
                   initialDelaySeconds: 5
                   periodSeconds: 10
+          codeserver:
+            image:
+              repository: ghcr.io/coder/code-server
+              tag: 4.108.2@sha256:31ad23cda720476e7eb3371a9b02fd7a5738843f6ef43beef97e9edf1960fc47
+            env:
+              TZ: *tz
+            args:
+              [
+                "--auth",
+                "none",
+                "--user-data-dir",
+                "/home/node/.vscode",
+                "--extensions-dir",
+                "/home/node/.vscode",
+                "--port",
+                "12321",
+                "/home/node/.openclaw",
+              ]
+            resources:
+              requests:
+                cpu: 10m
+              limits:
+                memory: 1Gi
     defaultPodOptions:
       shareProcessNamespace: true
       securityContext:
@@ -368,6 +401,8 @@ spec:
         ports:
           http:
             port: *port
+          codeserver:
+            port: &codeserverPort 12321
     route:
       main:
         hostnames:
@@ -380,6 +415,17 @@ spec:
           - backendRefs:
               - name: "{{ .Release.Name }}"
                 port: *port
+      codeserver:
+        hostnames:
+          - "openclaw-code.oxygn.dev"
+          - "claw-code.oxygn.dev"
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
+        rules:
+          - backendRefs:
+              - name: "{{ .Release.Name }}"
+                port: *codeserverPort
     persistence:
       config:
         existingClaim: "{{ .Release.Name }}"
