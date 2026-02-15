@@ -15,109 +15,109 @@ spec:
         replicas: 1
         strategy: Recreate
         annotations:
-          secret.reloader.stakater.com/reload: "openclaw-secret"
+          secret.reloader.stakater.com/reload: "openclaw-secret, openclaw-config"
 
         initContainers:
-          # Init container handles config setup with merge/overwrite modes.
-          # Uses OpenClaw image for Node.js runtime (required for merge mode).
-          # Runs as root to chown files to app user (UID 1000).
-          init-config:
-            image:
-              repository: ghcr.io/openclaw/openclaw
-              tag: "2026.2.12"
-            command:
-              - sh
-              - -c
-              - |
-                log() { echo "[$(date -Iseconds)] [init-config] $*"; }
+          # # Init container handles config setup with merge/overwrite modes.
+          # # Uses OpenClaw image for Node.js runtime (required for merge mode).
+          # # Runs as root to chown files to app user (UID 1000).
+          # init-config:
+          #   image:
+          #     repository: ghcr.io/openclaw/openclaw
+          #     tag: "2026.2.12"
+          #   command:
+          #     - sh
+          #     - -c
+          #     - |
+          #       log() { echo "[$(date -Iseconds)] [init-config] $*"; }
 
-                log "Starting config initialization"
-                mkdir -p /home/node/.openclaw
-                CONFIG_MODE="${CONFIG_MODE:-merge}"
+          #       log "Starting config initialization"
+          #       mkdir -p /home/node/.openclaw
+          #       CONFIG_MODE="${CONFIG_MODE:-merge}"
 
-                # Check if existing config file has valid JSON content
-                EXISTING_VALID=false
-                if [ -f /home/node/.openclaw/openclaw.json ] && [ -s /home/node/.openclaw/openclaw.json ]; then
-                  log "Found existing config file"
-                  if node -e "const fs = require('fs'); JSON.parse(fs.readFileSync('/home/node/.openclaw/openclaw.json', 'utf8'));" 2>/dev/null; then
-                    EXISTING_VALID=true
-                    log "Existing config is valid JSON"
-                  else
-                    log "Existing config file is invalid or empty, will overwrite"
-                  fi
-                else
-                  log "No existing config file found, will create new one"
-                fi
+          #       # Check if existing config file has valid JSON content
+          #       EXISTING_VALID=false
+          #       if [ -f /home/node/.openclaw/openclaw.json ] && [ -s /home/node/.openclaw/openclaw.json ]; then
+          #         log "Found existing config file"
+          #         if node -e "const fs = require('fs'); JSON.parse(fs.readFileSync('/home/node/.openclaw/openclaw.json', 'utf8'));" 2>/dev/null; then
+          #           EXISTING_VALID=true
+          #           log "Existing config is valid JSON"
+          #         else
+          #           log "Existing config file is invalid or empty, will overwrite"
+          #         fi
+          #       else
+          #         log "No existing config file found, will create new one"
+          #       fi
 
-                if [ "$CONFIG_MODE" = "merge" ] && [ "$EXISTING_VALID" = "true" ]; then
-                  log "Mode: merge - merging Helm config with existing config"
-                  node -e "
-                    const fs = require('fs');
-                    try {
-                      // Read and validate existing config
-                      const existingContent = fs.readFileSync('/home/node/.openclaw/openclaw.json', 'utf8').trim();
-                      if (!existingContent) {
-                        console.error('Existing config file is empty');
-                        process.exit(1);
-                      }
-                      const existing = JSON.parse(existingContent);
+          #       if [ "$CONFIG_MODE" = "merge" ] && [ "$EXISTING_VALID" = "true" ]; then
+          #         log "Mode: merge - merging Helm config with existing config"
+          #         node -e "
+          #           const fs = require('fs');
+          #           try {
+          #             // Read and validate existing config
+          #             const existingContent = fs.readFileSync('/home/node/.openclaw/openclaw.json', 'utf8').trim();
+          #             if (!existingContent) {
+          #               console.error('Existing config file is empty');
+          #               process.exit(1);
+          #             }
+          #             const existing = JSON.parse(existingContent);
 
-                      // Read and validate helm config
-                      if (!fs.existsSync('/config/openclaw.json')) {
-                        console.error('Helm config file does not exist at /config/openclaw.json');
-                        process.exit(1);
-                      }
-                      const helmContent = fs.readFileSync('/config/openclaw.json', 'utf8').trim();
-                      if (!helmContent) {
-                        console.error('Helm config file is empty');
-                        process.exit(1);
-                      }
-                      const helm = JSON.parse(helmContent);
+          #             // Read and validate helm config
+          #             if (!fs.existsSync('/config/openclaw.json')) {
+          #               console.error('Helm config file does not exist at /config/openclaw.json');
+          #               process.exit(1);
+          #             }
+          #             const helmContent = fs.readFileSync('/config/openclaw.json', 'utf8').trim();
+          #             if (!helmContent) {
+          #               console.error('Helm config file is empty');
+          #               process.exit(1);
+          #             }
+          #             const helm = JSON.parse(helmContent);
 
-                      const deepMerge = (target, source) => {
-                        for (const key of Object.keys(source)) {
-                          if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
-                            target[key] = target[key] || {};
-                            deepMerge(target[key], source[key]);
-                          } else {
-                            target[key] = source[key];
-                          }
-                        }
-                        return target;
-                      };
-                      const merged = deepMerge(existing, helm);
-                      fs.writeFileSync('/home/node/.openclaw/openclaw.json', JSON.stringify(merged, null, 2));
-                    } catch (error) {
-                      console.error('Error during config merge:', error.message);
-                      process.exit(1);
-                    }
-                  " || {
-                    log "Config merge failed, falling back to overwrite mode"
-                    cp /config/openclaw.json /home/node/.openclaw/openclaw.json
-                  }
-                  log "Config merged successfully"
-                else
-                  log "Mode: overwrite - copying Helm config (fresh install or overwrite mode)"
-                  cp /config/openclaw.json /home/node/.openclaw/openclaw.json
-                fi
-                chown -R 1000:1000 /home/node/.openclaw
-                log "Config initialization complete"
+          #             const deepMerge = (target, source) => {
+          #               for (const key of Object.keys(source)) {
+          #                 if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+          #                   target[key] = target[key] || {};
+          #                   deepMerge(target[key], source[key]);
+          #                 } else {
+          #                   target[key] = source[key];
+          #                 }
+          #               }
+          #               return target;
+          #             };
+          #             const merged = deepMerge(existing, helm);
+          #             fs.writeFileSync('/home/node/.openclaw/openclaw.json', JSON.stringify(merged, null, 2));
+          #           } catch (error) {
+          #             console.error('Error during config merge:', error.message);
+          #             process.exit(1);
+          #           }
+          #         " || {
+          #           log "Config merge failed, falling back to overwrite mode"
+          #           cp /config/openclaw.json /home/node/.openclaw/openclaw.json
+          #         }
+          #         log "Config merged successfully"
+          #       else
+          #         log "Mode: overwrite - copying Helm config (fresh install or overwrite mode)"
+          #         cp /config/openclaw.json /home/node/.openclaw/openclaw.json
+          #       fi
+          #       chown -R 1000:1000 /home/node/.openclaw
+          #       log "Config initialization complete"
 
-                log "Changing default shell to zsh for better interactive experience"
-                usermod -s /home/node/.local/homebrew/bin/zsh node || log "Failed to change default shell, zsh may not be installed yet"
-            env:
-              - name: CONFIG_MODE
-                value: "merge"
-            securityContext:
-              runAsUser: 0
-              allowPrivilegeEscalation: false
-              capabilities:
-                drop:
-                  - ALL
-                add:
-                  - CHOWN
-                  - DAC_OVERRIDE
-                  - FOWNER
+          #       log "Changing default shell to zsh for better interactive experience"
+          #       usermod -s /home/node/.local/homebrew/bin/zsh node || log "Failed to change default shell, zsh may not be installed yet"
+          #   env:
+          #     - name: CONFIG_MODE
+          #       value: "merge"
+          #   securityContext:
+          #     runAsUser: 0
+          #     allowPrivilegeEscalation: false
+          #     capabilities:
+          #       drop:
+          #         - ALL
+          #       add:
+          #         - CHOWN
+          #         - DAC_OVERRIDE
+          #         - FOWNER
 
           # Install ClawHub skills and runtime dependencies (idempotent)
           # Skills are installed from https://clawhub.com
@@ -435,9 +435,8 @@ spec:
         type: secret
         name: "{{ .Release.Name }}-config"
         globalMounts:
-          - path: /config/openclaw.json
+          - path: /home/node/.openclaw/openclaw.json
             subPath: openclaw.json
-            readOnly: true
       documents:
         type: nfs
         server: funkstation.internal
