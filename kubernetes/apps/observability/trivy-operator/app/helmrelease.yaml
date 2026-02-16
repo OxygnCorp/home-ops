@@ -14,24 +14,13 @@ spec:
         kind: HelmRepository
         name: aquasecurity
         namespace: flux-system
-  install:
-    remediation:
-      retries: 3
-  upgrade:
-    cleanupOnFail: true
-    remediation:
-      strategy: rollback
-      retries: 3
   values:
     # Trivy Operator configuration
     trivy:
       ignoreUnfixed: true
       severity: CRITICAL,HIGH,MEDIUM
       
-    # Resource scanning configuration  
-    compliance:
-      failEntriesLimit: 10
-      
+    # Vulnerability reports scanner
     vulnerabilityReports:
       scanner: Trivy
       
@@ -65,11 +54,12 @@ spec:
       infraAssessmentScannerEnabled: true
       exposedSecretScannerEnabled: true
       
-    # Compliance reports
+    # Compliance reports - single definition
     compliance:
-      cron: "0 1 * * *"  # Run at 1 AM daily
+      failEntriesLimit: 10
+      cron: "0 1 * * *"
       
-    # Node affinity (optional - adjust if needed)
+    # Node affinity
     nodeSelector:
       kubernetes.io/os: linux
       
