@@ -1,0 +1,61 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: trivy-operator
+spec:
+  interval: 30m
+  chartRef:
+    kind: OCIRepository
+    name: trivy-operator
+  values:
+    # Trivy Operator configuration
+    trivy:
+      ignoreUnfixed: true
+      severity: CRITICAL,HIGH,MEDIUM
+      
+    # Vulnerability reports scanner
+    vulnerabilityReports:
+      scanner: Trivy
+      
+    # Service Monitor for Prometheus integration
+    serviceMonitor:
+      enabled: true
+      
+    # Resource limits
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        memory: 512Mi
+        
+    # Scan job settings
+    scanJobsConcurrentLimit: 3
+    scanJobsRetryDelay: 30s
+    
+    # Storage
+    trivyOperator:
+      scanJobTimeout: 5m
+      scanJobTTL: 24h
+      
+    # Reporting
+    operator:
+      metricsVulnIdEnabled: true
+      vulnerabilityScannerEnabled: true
+      configAuditScannerEnabled: true
+      rbacAssessmentScannerEnabled: true
+      infraAssessmentScannerEnabled: true
+      exposedSecretScannerEnabled: true
+      
+    # Compliance reports
+    compliance:
+      failEntriesLimit: 10
+      cron: "0 1 * * *"
+      
+    # Node affinity
+    nodeSelector:
+      kubernetes.io/os: linux
+      
+    tolerations: []
