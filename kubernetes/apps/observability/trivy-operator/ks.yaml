@@ -3,20 +3,14 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: &app trivy-operator
-  namespace: observability
+  name: trivy-operator
 spec:
-  targetNamespace: observability
-  commonMetadata:
-    labels:
-      app.kubernetes.io/name: *app
-  interval: 10m
+  interval: 1h
   path: ./kubernetes/apps/observability/trivy-operator/app
   prune: true
   sourceRef:
     kind: GitRepository
-    name: home-ops
+    name: flux-system
     namespace: flux-system
+  targetNamespace: observability
   wait: false
-  dependsOn:
-    - name: kube-prometheus-stack

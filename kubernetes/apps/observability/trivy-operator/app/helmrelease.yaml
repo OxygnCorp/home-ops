@@ -5,7 +5,7 @@ kind: HelmRelease
 metadata:
   name: trivy-operator
 spec:
-  interval: 30m
+  interval: 1h
   chartRef:
     kind: OCIRepository
     name: trivy-operator
@@ -14,15 +14,15 @@ spec:
     trivy:
       ignoreUnfixed: true
       severity: CRITICAL,HIGH,MEDIUM
-      
+
     # Vulnerability reports scanner
     vulnerabilityReports:
       scanner: Trivy
-      
+
     # Service Monitor for Prometheus integration
     serviceMonitor:
       enabled: true
-      
+
     # Resource limits
     resources:
       requests:
@@ -30,16 +30,16 @@ spec:
         memory: 128Mi
       limits:
         memory: 512Mi
-        
+
     # Scan job settings
     scanJobsConcurrentLimit: 3
     scanJobsRetryDelay: 30s
-    
+
     # Storage
     trivyOperator:
       scanJobTimeout: 5m
       scanJobTTL: 24h
-      
+
     # Reporting
     operator:
       metricsVulnIdEnabled: true
@@ -48,14 +48,8 @@ spec:
       rbacAssessmentScannerEnabled: true
       infraAssessmentScannerEnabled: true
       exposedSecretScannerEnabled: true
-      
+
     # Compliance reports
     compliance:
       failEntriesLimit: 10
       cron: "0 1 * * *"
-      
-    # Node affinity
-    nodeSelector:
-      kubernetes.io/os: linux
-      
-    tolerations: []
