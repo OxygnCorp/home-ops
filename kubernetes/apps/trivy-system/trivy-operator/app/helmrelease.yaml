@@ -1,0 +1,97 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: trivy-operator
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: trivy-operator
+  values:
+    excludeNamespaces: "kube-system,flux-system,cert-manager,volsync-system"
+    operator:
+      replicas: 1
+      scanJobsConcurrentLimit: 3
+      scanJobTTL: 300s
+      scanJobTimeout: 20m
+      builtInTrivyServer: true
+      vulnerabilityScannerScanOnlyCurrentRevisions: true
+      configAuditScannerScanOnlyCurrentRevisions: true
+      metricsVulnIdEnabled: true
+      vulnerabilityScannerEnabled: true
+      configAuditScannerEnabled: true
+      rbacAssessmentScannerEnabled: true
+      infraAssessmentScannerEnabled: true
+      exposedSecretScannerEnabled: true
+      annotations:
+        reloader.stakater.com/auto: "true"
+    trivy:
+      slow: true # flag is to use less CPU/memory for scanning though it takes more time than normal scanning
+      ignoreUnfixed: true
+      mode: ClientServer
+      severity: MEDIUM,HIGH,CRITICAL
+      storageClassEnabled: false # ephemeral storage
+      resources:
+        requests:
+          cpu: 10m
+          memory: 100Mi
+        limits:
+          memory: 100Mi
+
+    trivyOperator:
+      excludeImages: "quay.io/backube/*"
+      skipResourceByLabels: "app.kubernetes.io/created-by=volsync"
+      resources:
+        requests:
+          cpu: 15m
+          memory: 512Mi
+        limits:
+          memory: 1500Mi
+
+    # https://github.com/aquasecurity/trivy-operator/issues/2566
+    # Configure node collector for Talos Linux (only mount writable /var paths)
+    nodeCollector:
+      useNodeSelector: false
+      volumeMounts:
+        - mountPath: /var/lib/etcd
+          name: var-lib-etcd
+          readOnly: true
+        - mountPath: /var/lib/kubelet
+          name: var-lib-kubelet
+          readOnly: true
+        - mountPath: /var/lib/kube-scheduler
+          name: var-lib-kube-scheduler
+          readOnly: true
+        - mountPath: /var/lib/kube-controller-manager
+          name: var-lib-kube-controller-manager
+          readOnly: true
+      volumes:
+        - name: var-lib-etcd
+          hostPath:
+            path: /var/lib/etcd
+        - name: var-lib-kubelet
+          hostPath:
+            path: /var/lib/kubelet
+        - name: var-lib-kube-scheduler
+          hostPath:
+            path: /var/lib/kube-scheduler
+        - name: var-lib-kube-controller-manager
+          hostPath:
+            path: /var/lib/kube-controller-manager
+    serviceMonitor:
+      enabled: true
+
+    # Vulnerability reports scanner
+    vulnerabilityReports:
+      scanner: Trivy
+
+    # Scan job settings
+    scanJobsConcurrentLimit: 3
+    scanJobsRetryDelay: 30s
+
+    # Compliance reports
+    compliance:
+      failEntriesLimit: 10
+      cron: "0 1 * * *"
