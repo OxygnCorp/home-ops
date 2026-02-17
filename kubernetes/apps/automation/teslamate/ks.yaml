@@ -1,14 +1,13 @@
 ---
-# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/kustomization-kustomize-v1.json
+# yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: &app teslamate
-  namespace: &namespace automation
+  name: teslamate
 spec:
   commonMetadata:
     labels:
-      app.kubernetes.io/name: *app
+      app.kubernetes.io/name: teslamate
   dependsOn:
     - name: cloudnative-pg-cluster
       namespace: database
@@ -16,16 +15,15 @@ spec:
       namespace: external-secrets
     - name: mosquitto
       namespace: automation
-  interval: 30m
+  interval: 1h
   path: ./kubernetes/apps/automation/teslamate/app
   postBuild:
     substitute:
-      APP: *app
+      APP: teslamate
   prune: true
   sourceRef:
     kind: GitRepository
     name: flux-system
     namespace: flux-system
-  targetNamespace: *namespace
-  timeout: 5m
+  targetNamespace: automation
   wait: false

@@ -124,7 +124,7 @@ spec:
           init-skills:
             image:
               repository: node
-              tag: "24"
+              tag: "24@sha256:00e9195ebd49985a6da8921f419978d85dfe354589755192dc090425ce4da2f7"
             command:
               - sh
               - -c
@@ -324,7 +324,7 @@ spec:
               # -- Chromium image repository
               repository: zenika/alpine-chrome
               # -- Chromium image tag
-              tag: "124"
+              tag: "124@sha256:84eb7600ebcacf0650dc6a7e38b8184596310083081f1af8735da89a1782bec6"
             command:
               - chromium-browser
             args:

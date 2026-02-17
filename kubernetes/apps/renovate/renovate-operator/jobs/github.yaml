@@ -5,6 +5,7 @@ kind: GithubAccessToken
 metadata:
   name: mushu-bot-auth-token
 spec:
+  refreshInterval: 1h
   appID: "1140279"
   installID: "60837150"
   auth:
@@ -19,6 +20,7 @@ kind: ExternalSecret
 metadata:
   name: &name mushu-bot-auth-token
 spec:
+  refreshInterval: 1h
   target:
     name: *name
     template:
@@ -42,6 +44,7 @@ metadata:
   name: oxygncorp
   namespace: renovate
 spec:
+  refreshInterval: 1h
   discoveryFilter: OxygnCorp/*
   extraEnv:
     - name: LOG_LEVEL

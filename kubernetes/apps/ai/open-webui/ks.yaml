@@ -3,30 +3,30 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: &app ollama
-  namespace: &namespace ai
+  name: open-webui
+  namespace: ai
 spec:
   commonMetadata:
     labels:
-      app.kubernetes.io/name: *app
+      app.kubernetes.io/name: open-webui
   components:
     - ../../../../components/volsync
   dependsOn:
-    - name: nvidia-device-plugin
-      namespace: kube-system
+    - name: ollama
+      namespace: ai
     - name: volsync
       namespace: volsync-system
   interval: 30m
-  path: ./kubernetes/apps/ai/ollama/app
+  path: ./kubernetes/apps/ai/open-webui/app
   postBuild:
     substitute:
-      APP: *app
-      VOLSYNC_CAPACITY: 25Gi
+      APP: open-webui
+      VOLSYNC_CAPACITY: 2Gi
   prune: true
   sourceRef:
     kind: GitRepository
     name: flux-system
     namespace: flux-system
-  targetNamespace: *namespace
+  targetNamespace: ai
   timeout: 5m
   wait: false

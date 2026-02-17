@@ -8,16 +8,16 @@ data:
     # Regenerable from web (TMDB/TVDB) - saves ~7GB
     Cache/
     Metadata/
-    
+
     # Logs and diagnostics - not needed for restore
     Logs/
     Crash Reports/
     Diagnostics/
-    
+
     # Auto-downloaded on startup
     Codecs/
     Updates/
-    
+
     # Misc
     *.log
     *.log.*

@@ -19,11 +19,11 @@ spec:
     endpointURL: https://d1403fac4607ccda8f0f9d8153b6c03f.eu.r2.cloudflarestorage.com
     s3Credentials:
       accessKeyId:
-          name: cloudnative-pg-secret
-          key: CLOUDFLARE_R2_ACCESS_KEY_ID
+        name: cloudnative-pg-secret
+        key: CLOUDFLARE_R2_ACCESS_KEY_ID
       secretAccessKey:
-          name: cloudnative-pg-secret
-          key: CLOUDFLARE_R2_SECRET_ACCESS_KEY
+        name: cloudnative-pg-secret
+        key: CLOUDFLARE_R2_SECRET_ACCESS_KEY
     wal:
       compression: bzip2
       maxParallel: 8

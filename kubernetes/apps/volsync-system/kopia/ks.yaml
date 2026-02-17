@@ -5,6 +5,9 @@ kind: Kustomization
 metadata:
   name: kopia
 spec:
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: kopia
   components:
     - ../../../../components/nfs-scaler
   dependsOn:
