@@ -72,4 +72,3 @@ spec:
         existingClaim: "{{ .Release.Name }}"
       tmp:
         type: emptyDir
-

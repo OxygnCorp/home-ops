@@ -1,62 +1,74 @@
 ---
-# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/kustomization-kustomize-v1.json
+# yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: &app cloudnative-pg
-  namespace: &namespace database
+  name: cloudnative-pg
 spec:
   commonMetadata:
     labels:
-      app.kubernetes.io/name: *app
-  interval: 30m
+      app.kubernetes.io/name: cloudnative-pg
+  healthChecks:
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: cloudnative-pg
+      namespace: database
+  interval: 1h
   path: ./kubernetes/apps/database/cloudnative-pg/app
   postBuild:
     substitute:
-      APP: *app
+      APP: cloudnative-pg
   prune: true
+  retryInterval: 2m
   sourceRef:
     kind: GitRepository
     name: flux-system
     namespace: flux-system
-  targetNamespace: *namespace
-  timeout: 5m
-  wait: false
+  targetNamespace: database
+  wait: true
 ---
-# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/kustomization-kustomize-v1.json
+# yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: &app cloudnative-pg-barman
-  namespace: &namespace database
+  name: cloudnative-pg-barman
 spec:
   commonMetadata:
     labels:
-      app.kubernetes.io/name: *app
-  interval: 30m
+      app.kubernetes.io/name: cloudnative-pg-barman
+  healthChecks:
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: cloudnative-pg-barman
+      namespace: database
+  interval: 1h
   path: ./kubernetes/apps/database/cloudnative-pg/barman
   postBuild:
     substitute:
-      APP: *app
+      APP: cloudnative-pg-barman
   prune: true
+  retryInterval: 2m
   sourceRef:
     kind: GitRepository
     name: flux-system
     namespace: flux-system
-  targetNamespace: *namespace
-  timeout: 5m
-  wait: false
+  targetNamespace: database
+  wait: true
 ---
-# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/kustomization-kustomize-v1.json
+# yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: &app cloudnative-pg-cluster
-  namespace: &namespace database
+  name: cloudnative-pg-cluster
 spec:
   commonMetadata:
     labels:
-      app.kubernetes.io/name: *app
+      app.kubernetes.io/name: cloudnative-pg-cluster
+  healthChecks:
+    - apiVersion: postgresql.cnpg.io/v1
+      kind: Cluster
+      name: postgres
+      namespace: database
   dependsOn:
     - name: onepassword
       namespace: external-secrets
@@ -64,16 +76,16 @@ spec:
       namespace: database
     - name: cloudnative-pg-barman
       namespace: database
-  interval: 30m
+  interval: 1h
   path: ./kubernetes/apps/database/cloudnative-pg/cluster
   postBuild:
     substitute:
-      APP: *app
+      APP: cloudnative-pg-cluster
   prune: true
+  retryInterval: 2m
   sourceRef:
     kind: GitRepository
     name: flux-system
     namespace: flux-system
-  targetNamespace: *namespace
-  timeout: 5m
-  wait: false
+  targetNamespace: database
+  wait: true

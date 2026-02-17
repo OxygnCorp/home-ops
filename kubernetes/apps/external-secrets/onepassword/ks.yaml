@@ -5,6 +5,9 @@ kind: Kustomization
 metadata:
   name: onepassword
 spec:
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: onepassword
   dependsOn:
     - name: external-secrets
   healthChecks:
@@ -20,8 +23,10 @@ spec:
   interval: 1h
   path: ./kubernetes/apps/external-secrets/onepassword/app
   prune: true
+  retryInterval: 2m
   sourceRef:
     kind: GitRepository
     name: flux-system
     namespace: flux-system
   targetNamespace: external-secrets
+  wait: true

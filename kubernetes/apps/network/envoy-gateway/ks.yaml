@@ -5,6 +5,9 @@ kind: Kustomization
 metadata:
   name: envoy-gateway
 spec:
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: envoy-gateway
   dependsOn:
     - name: certificates-import
   interval: 1h
