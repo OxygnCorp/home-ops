@@ -70,7 +70,6 @@ spec:
       exposedSecretScannerEnabled: true
 
 
-
     # ============================================
     # Trivy Operator Configuration
     # ============================================

@@ -5,6 +5,9 @@ kind: Kustomization
 metadata:
   name: trivy-operator
 spec:
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: trivy-operator
   interval: 1h
   path: ./kubernetes/apps/trivy-system/trivy-operator/app
   prune: true
