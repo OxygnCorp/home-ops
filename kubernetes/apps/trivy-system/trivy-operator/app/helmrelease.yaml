@@ -11,49 +11,124 @@ spec:
     name: trivy-operator
   values:
     excludeNamespaces: "kube-system,flux-system,cert-manager,volsync-system"
+
+    # Operator Configuration
+    # The operator is a lightweight controller that watches for changes
+    # and creates scan jobs - it does NOT perform scans itself.
     operator:
-      replicas: 1
-      scanJobsConcurrentLimit: 3
-      scanJobTTL: 300s
-      scanJobTimeout: 20m
-      builtInTrivyServer: true
-      vulnerabilityScannerScanOnlyCurrentRevisions: true
-      configAuditScannerScanOnlyCurrentRevisions: true
-      metricsVulnIdEnabled: true
-      vulnerabilityScannerEnabled: true
-      configAuditScannerEnabled: true
-      rbacAssessmentScannerEnabled: true
-      infraAssessmentScannerEnabled: true
-      exposedSecretScannerEnabled: true
       annotations:
         reloader.stakater.com/auto: "true"
-    trivy:
-      slow: true # flag is to use less CPU/memory for scanning though it takes more time than normal scanning
-      ignoreUnfixed: true
-      mode: ClientServer
-      severity: MEDIUM,HIGH,CRITICAL
-      storageClassEnabled: false # ephemeral storage
+
       resources:
         requests:
-          cpu: 10m
-          memory: 100Mi
+          cpu: 100m
+          memory: 256Mi
         limits:
-          memory: 100Mi
+          cpu: 500m
+          memory: 512Mi
+
+      # Replicas for HA
+      replicas: 1
+
+      # Scan frequency settings (reduce cluster load)
+      # Max concurrent scan jobs (default: 10)
+      scanJobsConcurrentLimit: 3
+      # Max concurrent node collector jobs (default: 1)
+      scanNodeCollectorLimit: 1
+      # Delay between retrying failed scans (default: 30s)
+      scanJobsRetryDelay: 60s
+      # How long reports are valid before re-scanning (default: 24h)
+      scannerReportTTL: "72h"
+      # Cluster SBOM cache TTL (default: 120h)
+      cacheReportTTL: "168h"
+
+      # Time to keep completed/failed scan job pods before cleanup (default: 60s)
+      scanJobTTL: 300s
+      # Max duration a scan job can run before being killed (default: 5m)
+      scanJobTimeout: 20m
+
+      # Deploy a dedicated Trivy server in-cluster instead of downloading
+      # the vuln DB in each scan job (requires mode: ClientServer)
+      builtInTrivyServer: true
+      # Only scan the latest ReplicaSet per Deployment (skip old revisions)
+      vulnerabilityScannerScanOnlyCurrentRevisions: true
+      # Only audit config of the latest ReplicaSet per Deployment
+      configAuditScannerScanOnlyCurrentRevisions: true
+      # Expose individual CVE IDs in Prometheus metrics (increases cardinality)
+      metricsVulnIdEnabled: true
+
+      # --- Enabled scanners ---
+      # Scan container images for known CVEs
+      vulnerabilityScannerEnabled: true
+      # Audit workload configs against OPA/Rego policies (securityContext, etc.)
+      configAuditScannerEnabled: true
+      # Check RBAC roles/bindings for overly permissive permissions
+      rbacAssessmentScannerEnabled: true
+      # Assess infrastructure components (kubelet, apiserver configs)
+      infraAssessmentScannerEnabled: true
+      # Detect secrets leaked in container images (tokens, passwords, keys)
+      exposedSecretScannerEnabled: true
+
+
+
+    # ============================================
+    # Trivy Operator Configuration
+    # ============================================
+    trivy:
+      # flag is to use less CPU/memory for scanning though it takes more time than normal scanning
+      slow: true
+
+      # Ignore vulnerabilities without available fixes to reduce noise
+      ignoreUnfixed: true
+
+      # Severity threshold for vulnerability detection
+      severity: CRITICAL,HIGH,MEDIUM
+
+      # Use ClientServer mode for better performance and resource efficiency
+      mode: ClientServer
+
+      storageClassEnabled: false # ephemeral storage
+
+      # DB source for vulnerability scanning
+      dbRepository: ghcr.io/aquasecurity/trivy-db
+      dbRepositoryInsecure: false
+
+      # Enable SBOM generation with Rekor transparency log
+      sbomSources: "rekor"
+
+      # Resource limits for ephemeral scan job pods
+      # In ClientServer mode these are lightweight - the heavy lifting is done by the server
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+
+      # Trivy Server (StatefulSet) - the central component that holds the vuln DB
+      # in memory and performs the actual scanning work
+      server:
+        resources:
+          requests:
+            cpu: 200m
+            memory: 512Mi
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+
 
     trivyOperator:
       excludeImages: "quay.io/backube/*"
       skipResourceByLabels: "app.kubernetes.io/created-by=volsync"
-      resources:
-        requests:
-          cpu: 15m
-          memory: 512Mi
-        limits:
-          memory: 1500Mi
 
     # https://github.com/aquasecurity/trivy-operator/issues/2566
     # Configure node collector for Talos Linux (only mount writable /var paths)
     nodeCollector:
       useNodeSelector: false
+      # Allow scanning nodes with taints (e.g. control-plane)
+      tolerations:
+        - operator: Exists
       volumeMounts:
         - mountPath: /var/lib/etcd
           name: var-lib-etcd
@@ -80,18 +155,23 @@ spec:
         - name: var-lib-kube-controller-manager
           hostPath:
             path: /var/lib/kube-controller-manager
+
+    # Service Monitor Configuration
     serviceMonitor:
       enabled: true
+      # Add label to match Prometheus ServiceMonitor selector
+      additionalLabels:
+        prometheus: kube-prometheus-stack
+      interval: 30s
+      scrapeTimeout: 10s
 
     # Vulnerability reports scanner
     vulnerabilityReports:
       scanner: Trivy
 
-    # Scan job settings
-    scanJobsConcurrentLimit: 3
-    scanJobsRetryDelay: 30s
-
-    # Compliance reports
+    # Compliance and RBAC Scanning
     compliance:
+      enabled: true
+      # Run compliance scans once daily at midnight (default: every 6 hours)
       failEntriesLimit: 10
       cron: "0 1 * * *"
