@@ -212,7 +212,7 @@ spec:
                 # ============================================================
                 # Install skills from ClawHub (https://clawhub.com)
                 # Add skill slugs to the list below to install them declaratively.
-                mkdir -p skills
+                mkdir -p ~/.openclaw/skills
                 for skill in weather github obsidian summarize; do
                   if [ -n "$skill" ] && [ ! -d "skills/${skill##*/}" ]; then
                     log "Installing skill: $skill"
