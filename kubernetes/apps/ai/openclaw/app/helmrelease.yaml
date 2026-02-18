@@ -208,15 +208,6 @@ spec:
                 log "Starting skills initialization"
 
                 # ============================================================
-                # NPM Dependencies for Hook Scripts
-                # ============================================================
-                # Install npm packages required by hook scripts in ConfigMap
-                cd /home/node/.openclaw/workspace-devops
-                log "Installing npm dependencies for hook scripts..."
-                npm install --no-save jsonwebtoken || log "Failed to install npm packages"
-                log "NPM dependencies installation complete"
-
-                # ============================================================
                 # Skill Installation
                 # ============================================================
                 # Install skills from ClawHub (https://clawhub.com)
