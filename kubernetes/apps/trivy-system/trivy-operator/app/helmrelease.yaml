@@ -121,6 +121,24 @@ spec:
       excludeImages: "quay.io/backube/*"
       skipResourceByLabels: "app.kubernetes.io/created-by=volsync"
 
+      # Fix for race condition in multi-container scan jobs:
+      # When a pod has multiple containers (e.g. app + sidecar), they all share
+      # the same /tmp emptyDir volume. Trivy uses sequential temp dir names
+      # (/tmp/trivy-0, /tmp/trivy-1, ...) based on layer index. Two containers
+      # scanning images with the same layer count will race to create/delete the
+      # same /tmp/trivy-N path → "stat /tmp/trivy-7: no such file or directory"
+      #
+      # Without readOnlyRootFilesystem: true, each container gets its own writable
+      # overlay filesystem so /tmp paths are isolated per container.
+      # Acceptable trade-off for ephemeral scan jobs (< 20min lifetime).
+      scanJobPodTemplateContainerSecurityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - ALL
+        privileged: false
+        readOnlyRootFilesystem: false
+
     # https://github.com/aquasecurity/trivy-operator/issues/2566
     # Configure node collector for Talos Linux (only mount writable /var paths)
     nodeCollector:
