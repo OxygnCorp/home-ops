@@ -46,7 +46,6 @@ jobs:
             xargs kubeconform \
               -strict \
               -ignore-missing-schemas \
-              -schema-location=default \
               "-schema-location=https://k8s-schemas.oxygn.dev/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json" \
               -output=text \
               -verbose
