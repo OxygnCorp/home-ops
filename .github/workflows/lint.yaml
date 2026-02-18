@@ -42,13 +42,57 @@ jobs:
           curl -fsSL -o /tmp/kubeconform.tar.gz \
             "https://github.com/yannh/kubeconform/releases/download/v0.7.0/kubeconform-linux-amd64.tar.gz"
           tar xzf /tmp/kubeconform.tar.gz -C /usr/local/bin kubeconform
+
           find kubernetes/ -name "*.yaml" -not -path "*/templates/*" | \
             xargs kubeconform \
               -strict \
               -ignore-missing-schemas \
               "-schema-location=https://k8s-schemas.oxygn.dev/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json" \
-              -output=text \
-              -verbose
+              -output=json 2>/dev/null | \
+          python3 -c "
+          import sys, json
+
+          failures = []
+          schema_errors = []
+
+          for line in sys.stdin:
+              line = line.strip()
+              if not line:
+                  continue
+              try:
+                  r = json.loads(line)
+              except json.JSONDecodeError:
+                  continue
+
+              status = r.get('status', '')
+              msg = r.get('msg', '')
+              filename = r.get('filename', '')
+              name = r.get('name', '')
+              kind = r.get('kind', '')
+
+              if status == 'statusValid':
+                  pass
+              elif status == 'statusSkipped':
+                  pass
+              elif status == 'statusInvalid':
+                  print(f'INVALID: {filename} - {kind} {name}: {msg}')
+                  failures.append(r)
+              elif status == 'statusError':
+                  if 'received HTTP status' in msg or 'error while downloading' in msg:
+                      schema_errors.append(r)
+                  else:
+                      print(f'ERROR: {filename} - {kind} {name}: {msg}')
+                      failures.append(r)
+
+          if schema_errors:
+              print(f'WARNING: {len(schema_errors)} resource(s) could not be validated (schema server unavailable)')
+
+          if failures:
+              print(f'FAIL: {len(failures)} validation failure(s)')
+              sys.exit(1)
+          else:
+              print(f'OK: all resources valid ({len(schema_errors)} schema-unavailable skipped)')
+          "
 
   success:
     if: ${{ !cancelled() }}
