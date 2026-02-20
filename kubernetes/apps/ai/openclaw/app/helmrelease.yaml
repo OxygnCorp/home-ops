@@ -107,7 +107,7 @@ spec:
                 usermod -s /home/node/.local/homebrew/bin/zsh node || log "Failed to change default shell, zsh may not be installed yet"
             env:
               - name: CONFIG_MODE
-                value: "merge"
+                value: "overwrite" # Change to "merge" to enable merging with existing config instead of overwriting
             securityContext:
               runAsUser: 0
               allowPrivilegeEscalation: false
