@@ -40,6 +40,10 @@ spec:
     txtPrefix: k8s.
     domainFilters:
       - oxygn.dev
+    livenessProbe:
+      failureThreshold: 5
+    readinessProbe:
+      failureThreshold: 10
     serviceMonitor:
       enabled: true
     podAnnotations:
