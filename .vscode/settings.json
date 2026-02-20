@@ -51,7 +51,8 @@
   },
   "yaml.schemaStore.enable": true,
   "yaml.schemas": {
-    "kubernetes": "./kubernetes/**/*.yaml"
+    "kubernetes": "./kubernetes/**/*.yaml",
+    "https://kube-schemas.pages.dev/external-secrets.io/externalsecret_v1.json": "file:///home/nea0d/git/home-ops/kubernetes/apps/ai/openclaw/app/externalsecret.yaml"
   },
   "python.defaultInterpreterPath": "/home/nea0d/.local/share/mise/installs/python/3.14.0/bin/python",
   "debug.javascript.defaultRuntimeExecutable": {
