@@ -20,6 +20,15 @@
       ignoreTests: false,
     },
     {
+      description: "Auto-merge Renovate container",
+      matchDatasources: ["docker"],
+      automerge: true,
+      automergeType: "pr",
+      matchUpdateTypes: ["minor", "patch", "digest"],
+      matchPackageNames: ["/renovatebot/renovate/"],
+      ignoreTests: false,
+    },
+    {
       description: "Auto-merge GitHub Actions",
       matchManagers: ["github-actions"],
       automerge: true,
