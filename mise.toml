@@ -39,7 +39,7 @@ gum = "0.16.2"
 "aqua:aws/aws-cli" = "2.33.28"
 
 # Flux Stuff
-"aqua:fluxcd/flux2" = "2.7.5"
+"aqua:fluxcd/flux2" = "2.8.0"
 "aqua:flux-iac/tofu-controller/tfctl" = "0.16.1"
 "pipx:flux-local" = "8.1.0"
 
