@@ -243,6 +243,9 @@ spec:
                 # Set up openclaw CLI symlink
                 ln -sf /app/openclaw.mjs /home/node/.local/bin/openclaw
 
+                # Fix conf if necessary
+                openclaw doctor --fix
+
                 # Configure npm to install locally
                 npm config set prefix '~/.npm'
 
