@@ -33,7 +33,7 @@ spec:
 
                 log "Starting config initialization"
                 mkdir -p /home/node/.openclaw
-                CONFIG_MODE="${CONFIG_MODE:-merge}"
+                CONFIG_MODE="${CONFIG_MODE:-overwrite}"
 
                 # Check if existing config file has valid JSON content
                 EXISTING_VALID=false
