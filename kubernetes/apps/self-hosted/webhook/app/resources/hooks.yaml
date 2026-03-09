@@ -120,7 +120,7 @@
     - source: string
       value: >
         curl -s -X POST
-        "http://openclaw-gateway.openclaw.svc.cluster.local:18789/hooks/github-issues?sessionKey=devops"
+        "http://openclaw.ai:18789/hooks/github-issues?sessionKey=devops"
         -H "Content-Type: application/json"
         -H "Authorization: Bearer {{ getenv "GITHUB_ISSUES_WEBHOOK_SECRET" | js }}"
         -d @-
