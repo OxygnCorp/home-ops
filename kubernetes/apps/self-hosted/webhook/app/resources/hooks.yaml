@@ -120,13 +120,13 @@
     - source: string
       value: >
         curl -s -X POST
-        "http://openclaw-gateway.openclaw.svc.cluster.local:18789/hooks/github-issues?sessionKey=devops"
+        "http://openclaw.ai:18789/hooks/github-issues?sessionKey=devops"
         -H "Content-Type: application/json"
         -H "Authorization: Bearer {{ getenv "GITHUB_ISSUES_WEBHOOK_SECRET" | js }}"
         -d @-
   trigger-rule:
     and:
-      - # Validate the webhook secret
+      - # Validate the webhook secret (same as OpenClaw auth)
         match:
           type: payload-hmac-sha1
           secret: >-
@@ -141,31 +141,24 @@
           parameter:
             source: payload
             name: repository.owner.login
-      - # Trigger on GitHub Issue events
+      - # Trigger on GitHub Issue
         match:
           type: value
           value: issues
           parameter:
             source: header
             name: x-github-event
-      - # Trigger on opened OR labeled action
+      - # Trigger only for opened issues
         match:
-          type: contains
-          value: "opened"
+          type: value
+          value: open
           parameter:
             source: payload
-            name: action
+            name: issue.state
       - # Trigger only if issue has "bot" label
-        or:
-          - match:
-              type: contains
-              value: '"name":"bot"'
-              parameter:
-                source: payload
-                name: issue.labels
-          - match:
-              type: value
-              value: bot
-              parameter:
-                source: payload
-                name: label.name
+        match:
+          type: contains
+          parameter:
+            source: payload
+            name: issue.labels
+          contains: '"name":"bot"'
