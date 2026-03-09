@@ -122,11 +122,11 @@
         curl -s -X POST
         "http://openclaw-gateway.openclaw.svc.cluster.local:18789/hooks/github-issues?sessionKey=devops"
         -H "Content-Type: application/json"
-        -H "Authorization: Bearer {{ getenv "OPENCLAW_WEBHOOK_TOKEN" | js }}"
+        -H "Authorization: Bearer {{ getenv "GITHUB_ISSUES_WEBHOOK_SECRET" | js }}"
         -d @-
   trigger-rule:
     and:
-      - # Validate the webhook secret
+      - # Validate the webhook secret (same as OpenClaw auth)
         match:
           type: payload-hmac-sha1
           secret: >-
@@ -157,12 +157,10 @@
             name: action
       - # Trigger only if issue has "bot" label
         match:
-          type: payload-hmac-sha1
+          type: contains
           secret: >-
-            {{ getenv "OPENCLAW_WEBHOOK_TOKEN" | js }}
+            {{ getenv "GITHUB_ISSUES_WEBHOOK_SECRET" | js }}
           parameter:
             source: payload
             name: issue.labels
-          hash:
-            algorithm: sha256
           contains: '"name":"bot"'
