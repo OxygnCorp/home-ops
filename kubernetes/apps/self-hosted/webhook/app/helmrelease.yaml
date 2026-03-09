@@ -15,7 +15,8 @@ spec:
         replicas: 2
         strategy: RollingUpdate
         annotations:
-          reloader.stakater.com/auto: "true"
+          secret.reloader.stakater.com/reload: "webhook"
+          configmap.reloader.stakater.com/reload: "webhook-configmap"
         containers:
           app:
             image:
