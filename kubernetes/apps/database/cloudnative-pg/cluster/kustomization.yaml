@@ -9,4 +9,3 @@ resources:
   - ./externalsecret.yaml
   - ./objectstore.yaml
   - ./scheduledbackup.yaml
-  - ./service.yaml

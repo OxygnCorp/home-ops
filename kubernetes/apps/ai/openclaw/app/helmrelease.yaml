@@ -203,6 +203,26 @@ spec:
                 fi
                 set -e # Re-enable error checking
 
+                # Install 1password-cli if not present on PVC
+                set +e  # Don't fail on brew errors
+                if [ ! -f /home/node/.local/homebrew/bin/1password-cli ]; then
+                  log "Installing 1password-cli..."
+                  /home/node/.local/homebrew/bin/brew install 1password-cli
+                fi
+                set -e # Re-enable error checking
+
+                # Install mcporter if not present on PVC
+                if [ ! -f /home/node/.npm/bin/mcporter ]; then
+                  log "Installing mcporter..."
+                  npm i -g mcporter
+                fi
+
+                # Install clawhub if not present on PVC
+                if [ ! -f /home/node/.npm/bin/clawhub ]; then
+                  log "Installing clawhub..."
+                  npm i -g clawhub
+                fi
+
                 log "Tool installation complete"
 
                 log "Starting skills initialization"
@@ -213,7 +233,7 @@ spec:
                 # Install skills from ClawHub (https://clawhub.com)
                 # Add skill slugs to the list below to install them declaratively.
                 mkdir -p ~/.openclaw/skills
-                for skill in weather github obsidian summarize; do
+                for skill in weather github obsidian summarize 1password; do
                   if [ -n "$skill" ] && [ ! -d "skills/${skill##*/}" ]; then
                     log "Installing skill: $skill"
                     npx -y clawhub install "$skill" --no-input || true
@@ -494,12 +514,6 @@ spec:
         globalMounts:
           - path: /config/openclaw.json
             subPath: openclaw.json
-      gog-credentials:
-        type: secret
-        name: "{{ .Release.Name }}-gog-secret"
-        globalMounts:
-          - path: /home/node/.openclaw/credentials/gog-credentials.json
-            subPath: gog-credentials.json
       documents:
         type: nfs
         server: funkstation.internal
