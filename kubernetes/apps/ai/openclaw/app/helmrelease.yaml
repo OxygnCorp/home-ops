@@ -205,7 +205,7 @@ spec:
 
                 # Install 1password-cli if not present on PVC
                 set +e  # Don't fail on brew errors
-                if [ ! -f /home/node/.local/homebrew/bin/1password-cli ]; then
+                if [ ! -f /home/node/.local/homebrew/bin/op ]; then
                   log "Installing 1password-cli..."
                   /home/node/.local/homebrew/bin/brew install 1password-cli
                 fi
