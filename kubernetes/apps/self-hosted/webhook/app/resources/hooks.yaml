@@ -142,87 +142,87 @@
             name: repository.owner.login
       # Trigger on only essential event types with OR conditions
       - or:
-        - and:
-          - # Trigger on GitHub Issue
-            match:
-              type: value
-              value: issues
-              parameter:
-                source: header
-                name: x-github-event
-          - # Trigger only for opened issues
-            match:
-              type: value
-              value: open
-              parameter:
-                source: payload
-                name: issue.state
-          - # Trigger only if issue is assigned to puchu-ai
-            match:
-              type: value
-              value: puchu-ai
-              parameter:
-                source: payload
-                name: issue.assignees.*.login
-        - # Trigger on pull request OPENED events (new PRs)
-          and:
-            - match:
-                type: value
-                value: pull_request
-                parameter:
-                  source: header
-                  name: x-github-event
-            - match:
-                type: value
-                value: opened
-                parameter:
-                  source: payload
-                  name: action
-        - # Trigger on pull request REOPENED events (reopened closed PRs)
-          and:
-            - match:
-                type: value
-                value: pull_request
-                parameter:
-                  source: header
-                  name: x-github-event
-            - match:
-                type: value
-                value: reopened
-                parameter:
-                  source: payload
-                  name: action
-        - # Trigger on pull request SYNCHRONIZE events (new commits pushed to existing PRs)
-          and:
-            - match:
-                type: value
-                value: pull_request
-                parameter:
-                  source: header
-                  name: x-github-event
-            - match:
-                type: value
-                value: synchronize
-                parameter:
-                  source: payload
-                  name: action
-        - # Trigger on pull request review events (approvals)
-          and:
-            - match:
-                type: value
-                value: pull_request_review
-                parameter:
-                  source: header
-                  name: x-github-event
-            - match:
-                type: value
-                value: submitted
-                parameter:
-                  source: payload
-                  name: action
-            - match:
-                type: value
-                value: approved
-                parameter:
-                  source: payload
-                  name: review.state
+          - and:
+              - # Trigger on GitHub Issue
+                match:
+                  type: value
+                  value: issues
+                  parameter:
+                    source: header
+                    name: x-github-event
+              - # Trigger only for opened issues
+                match:
+                  type: value
+                  value: open
+                  parameter:
+                    source: payload
+                    name: issue.state
+              - # Trigger only if issue is assigned to puchu-ai
+                match:
+                  type: value
+                  value: puchu-ai
+                  parameter:
+                    source: payload
+                    name: issue.assignees.*.login
+          - # Trigger on pull request OPENED events (new PRs)
+            and:
+              - match:
+                  type: value
+                  value: pull_request
+                  parameter:
+                    source: header
+                    name: x-github-event
+              - match:
+                  type: value
+                  value: opened
+                  parameter:
+                    source: payload
+                    name: action
+          - # Trigger on pull request REOPENED events (reopened closed PRs)
+            and:
+              - match:
+                  type: value
+                  value: pull_request
+                  parameter:
+                    source: header
+                    name: x-github-event
+              - match:
+                  type: value
+                  value: reopened
+                  parameter:
+                    source: payload
+                    name: action
+          - # Trigger on pull request SYNCHRONIZE events (new commits pushed to existing PRs)
+            and:
+              - match:
+                  type: value
+                  value: pull_request
+                  parameter:
+                    source: header
+                    name: x-github-event
+              - match:
+                  type: value
+                  value: synchronize
+                  parameter:
+                    source: payload
+                    name: action
+          - # Trigger on pull request review events (approvals)
+            and:
+              - match:
+                  type: value
+                  value: pull_request_review
+                  parameter:
+                    source: header
+                    name: x-github-event
+              - match:
+                  type: value
+                  value: submitted
+                  parameter:
+                    source: payload
+                    name: action
+              - match:
+                  type: value
+                  value: approved
+                  parameter:
+                    source: payload
+                    name: review.state
