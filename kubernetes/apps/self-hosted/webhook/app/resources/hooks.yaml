@@ -143,7 +143,7 @@
       # Trigger on only essential event types with OR conditions
       - or:
           - and:
-              - # Trigger on GitHub Issue
+              - # Trigger on GitHub Issue opened
                 match:
                   type: value
                   value: issues
@@ -164,6 +164,138 @@
                   parameter:
                     source: payload
                     name: issue.assignees.*.login
+          - and:
+              - # Trigger on GitHub Issue assigned
+                match:
+                  type: value
+                  value: issues
+                  parameter:
+                    source: header
+                    name: x-github-event
+              - # Trigger on assigned action
+                match:
+                  type: value
+                  value: assigned
+                  parameter:
+                    source: payload
+                    name: action
+              - # Trigger only if issue is assigned to puchu-ai
+                match:
+                  type: value
+                  value: puchu-ai
+                  parameter:
+                    source: payload
+                    name: issue.assignee.login
+          - and:
+              - # Trigger on issue_comment events
+                match:
+                  type: value
+                  value: issue_comment
+                  parameter:
+                    source: header
+                    name: x-github-event
+              - # Comment is on an issue (not a PR)
+                match:
+                  type: value
+                  value: "false"
+                  parameter:
+                    source: payload
+                    name: issue.pull_request
+              - # Issue is assigned to puchu-ai
+                match:
+                  type: value
+                  value: puchu-ai
+                  parameter:
+                    source: payload
+                    name: issue.assignees.*.login
+          - and:
+              - # Trigger on issue_comment events
+                match:
+                  type: value
+                  value: issue_comment
+                  parameter:
+                    source: header
+                    name: x-github-event
+              - # Comment is on an issue (not a PR)
+                match:
+                  type: value
+                  value: "false"
+                  parameter:
+                    source: payload
+                    name: issue.pull_request
+              - # Comment contains @puchu-ai mention
+                match:
+                  type: regex
+                  value: "@puchu-ai"
+                  parameter:
+                    source: payload
+                    name: comment.body
+          - and:
+              - # Trigger on issue_comment events (PR comments)
+                match:
+                  type: value
+                  value: issue_comment
+                  parameter:
+                    source: header
+                    name: x-github-event
+              - # Comment is on a PR (has pull_request)
+                match:
+                  type: regex
+                  value: ".+"
+                  parameter:
+                    source: payload
+                    name: issue.pull_request
+              - # PR is assigned to puchu-ai
+                match:
+                  type: value
+                  value: puchu-ai
+                  parameter:
+                    source: payload
+                    name: pull_request.assignees.*.login
+          - and:
+              - # Trigger on issue_comment events (PR comments)
+                match:
+                  type: value
+                  value: issue_comment
+                  parameter:
+                    source: header
+                    name: x-github-event
+              - # Comment is on a PR (has pull_request)
+                match:
+                  type: regex
+                  value: ".+"
+                  parameter:
+                    source: payload
+                    name: issue.pull_request
+              - # Comment contains @puchu-ai mention
+                match:
+                  type: regex
+                  value: "@puchu-ai"
+                  parameter:
+                    source: payload
+                    name: comment.body
+          - and:
+              - # Trigger on pull request ASSIGNED events
+                match:
+                  type: value
+                  value: pull_request
+                  parameter:
+                    source: header
+                    name: x-github-event
+              - # Trigger on assigned action
+                match:
+                  type: value
+                  value: assigned
+                  parameter:
+                    source: payload
+                    name: action
+              - # PR is assigned to puchu-ai
+                match:
+                  type: value
+                  value: puchu-ai
+                  parameter:
+                    source: payload
+                    name: pull_request.assignee.login
           - # Trigger on pull request OPENED events (new PRs)
             and:
               - match:
@@ -178,6 +310,13 @@
                   parameter:
                     source: payload
                     name: action
+              - # PR is assigned to puchu-ai
+                match:
+                  type: value
+                  value: puchu-ai
+                  parameter:
+                    source: payload
+                    name: pull_request.assignees.*.login
           - # Trigger on pull request REOPENED events (reopened closed PRs)
             and:
               - match:
