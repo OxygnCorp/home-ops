@@ -142,23 +142,23 @@
             source: payload
             name: repository.owner.login
       - # Trigger on GitHub Issue
-        match:
-          type: value
-          value: issues
-          parameter:
-            source: header
-            name: x-github-event
+          match:
+            type: value
+            value: issues
+            parameter:
+              source: header
+              name: x-github-event
       - # Trigger only for opened issues
-        match:
-          type: value
-          value: open
-          parameter:
-            source: payload
-            name: issue.state
+          match:
+            type: value
+            value: open
+            parameter:
+              source: payload
+              name: issue.state
       - # Trigger only if issue has "bot" label
-        match:
-          type: contains
-          parameter:
-            source: payload
-            name: issue.labels
-          contains: '"name":"bot"'
+          match:
+            type: contains
+            parameter:
+              source: payload
+              name: issue.labels
+            contains: '"name":"bot"'
