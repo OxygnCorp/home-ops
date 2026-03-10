@@ -2,6 +2,20 @@
   $schema: "https://docs.renovatebot.com/renovate-schema.json",
   packageRules: [
     {
+      description: "Auto-merge all digest updates",
+      matchUpdateTypes: ["digest"],
+      automerge: true,
+      automergeType: "branch",
+      ignoreTests: true,
+    },
+    {
+      description: "Auto-merge all patch updates",
+      matchUpdateTypes: ["patch"],
+      automerge: true,
+      automergeType: "branch",
+      ignoreTests: true,
+    },
+    {
       description: "Auto-merge trusted container digests",
       matchDatasources: ["docker"],
       automerge: true,
@@ -41,8 +55,8 @@
       description: "Auto-merge trusted GitHub Actions",
       matchManagers: ["github-actions"],
       matchPackageNames: [
-        "/^actions\//",
-        "/^renovatebot\//",
+        "/^actions\\//",
+        "/^renovatebot\\//",
       ],
       automerge: true,
       automergeType: "branch",
