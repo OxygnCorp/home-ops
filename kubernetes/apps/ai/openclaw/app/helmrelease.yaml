@@ -494,12 +494,6 @@ spec:
         globalMounts:
           - path: /config/openclaw.json
             subPath: openclaw.json
-      gog-credentials:
-        type: secret
-        name: "{{ .Release.Name }}-gog-secret"
-        globalMounts:
-          - path: /home/node/.openclaw/credentials/gog-credentials.json
-            subPath: gog-credentials.json
       documents:
         type: nfs
         server: funkstation.internal
