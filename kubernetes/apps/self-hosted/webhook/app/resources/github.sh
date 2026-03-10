@@ -18,7 +18,7 @@ PAYLOAD_JSON=$(jq -n \
   }')
 
 curl -s -X POST \
-  "${OPENCLAW_GITHUB_WEBHOOK_URL}/webhook/v1/schedule?job=${JOB}&namespace=${NAMESPACE}&project=${PROJECT}" \
+  "${OPENCLAW_GITHUB_WEBHOOK_URL}" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $OPENCLAW_WEBHOOK_TOKEN" \
   -d "$PAYLOAD_JSON"
