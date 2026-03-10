@@ -194,13 +194,6 @@
                   parameter:
                     source: header
                     name: x-github-event
-              - # Comment is on an issue (not a PR)
-                match:
-                  type: value
-                  value: "false"
-                  parameter:
-                    source: payload
-                    name: issue.pull_request
               - # Issue is assigned to puchu-ai
                 match:
                   type: value
@@ -216,57 +209,6 @@
                   parameter:
                     source: header
                     name: x-github-event
-              - # Comment is on an issue (not a PR)
-                match:
-                  type: value
-                  value: "false"
-                  parameter:
-                    source: payload
-                    name: issue.pull_request
-              - # Comment contains @puchu-ai mention
-                match:
-                  type: regex
-                  value: "@puchu-ai"
-                  parameter:
-                    source: payload
-                    name: comment.body
-          - and:
-              - # Trigger on issue_comment events (PR comments)
-                match:
-                  type: value
-                  value: issue_comment
-                  parameter:
-                    source: header
-                    name: x-github-event
-              - # Comment is on a PR (has pull_request)
-                match:
-                  type: regex
-                  value: ".+"
-                  parameter:
-                    source: payload
-                    name: issue.pull_request
-              - # PR is assigned to puchu-ai
-                match:
-                  type: value
-                  value: puchu-ai
-                  parameter:
-                    source: payload
-                    name: pull_request.assignees.*.login
-          - and:
-              - # Trigger on issue_comment events (PR comments)
-                match:
-                  type: value
-                  value: issue_comment
-                  parameter:
-                    source: header
-                    name: x-github-event
-              - # Comment is on a PR (has pull_request)
-                match:
-                  type: regex
-                  value: ".+"
-                  parameter:
-                    source: payload
-                    name: issue.pull_request
               - # Comment contains @puchu-ai mention
                 match:
                   type: regex
@@ -345,6 +287,13 @@
                   parameter:
                     source: payload
                     name: action
+              # PR is assigned to puchu-ai
+              - match:
+                  type: value
+                  value: puchu-ai
+                  parameter:
+                    source: payload
+                    name: pull_request.assignees.*.login
           - # Trigger on pull request review events (approvals)
             and:
               - match:
