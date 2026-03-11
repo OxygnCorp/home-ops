@@ -132,6 +132,9 @@
     - # Pull request number (optional - depends on event type)
       source: payload
       name: pull_request.number
+    - # GitHub event type
+      source: header
+      name: x-github-event
   trigger-rule:
     and:
       - # Validate the webhook secret (same as OpenClaw auth)
