@@ -233,7 +233,7 @@ spec:
                 # Install skills from ClawHub (https://clawhub.com)
                 # Add skill slugs to the list below to install them declaratively.
                 mkdir -p ~/.openclaw/skills
-                for skill in weather github obsidian summarize 1password; do
+                for skill in weather github obsidian summarize 1password self-improving-agent ; do
                   if [ -n "$skill" ] && [ ! -d "skills/${skill##*/}" ]; then
                     log "Installing skill: $skill"
                     npx -y clawhub install "$skill" --no-input || true
@@ -265,6 +265,8 @@ spec:
 
                 # Fix conf if necessary
                 openclaw doctor --fix
+
+                openclaw plugins install @thisisjeron/openclaw-better-gateway
 
                 # Configure npm to install locally
                 npm config set prefix '~/.npm'
