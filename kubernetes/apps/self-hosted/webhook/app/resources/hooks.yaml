@@ -123,6 +123,15 @@
     - # OpenClaw webhook URL
       source: string
       name: http://openclaw.ai:18789/hooks/agent
+    - # Repository full name (owner/repo)
+      source: payload
+      name: repository.full_name
+    - # Issue or PR number (optional - depends on event type)
+      source: payload
+      name: issue.number
+    - # Pull request number (optional - depends on event type)
+      source: payload
+      name: pull_request.number
   trigger-rule:
     and:
       - # Validate the webhook secret (same as OpenClaw auth)
