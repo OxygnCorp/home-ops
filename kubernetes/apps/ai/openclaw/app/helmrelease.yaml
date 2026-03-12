@@ -340,7 +340,7 @@ spec:
               # -- Chromium image repository
               repository: zenika/alpine-chrome
               # -- Chromium image tag
-              tag: "124@sha256:3ccccdd0e1cd81e4a069891b86e526d14431a046ab7afed544f63a2fa8b70960"
+              tag: "124@sha256:e6a3036fe54b75425d6676609437c0bcdc32b86dffcc9fbbc9494f91a0da77a0"
             command:
               - chromium-browser
             args:
