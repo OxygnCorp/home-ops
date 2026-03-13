@@ -266,8 +266,6 @@ spec:
                 # Fix conf if necessary
                 openclaw doctor --fix
 
-                openclaw plugins install @thisisjeron/openclaw-better-gateway
-
                 # Configure npm to install locally
                 npm config set prefix '~/.npm'
 
