@@ -28,6 +28,15 @@ spec:
     # Allow communication with other pods
     - to:
         - podSelector: {}
+    # Allow sending metrics to Prometheus in observability namespace
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: observability
+      ports:
+        - protocol: TCP
+          port: 9090  # Prometheus port
+          # port: 8080  # metrics port if exposed
 ---
 # Documentation for trivy-system NetworkPolicy
 # 
@@ -37,6 +46,7 @@ spec:
 # Egress:
 #   - All namespaces: Required to scan container images across the cluster
 #   - All pods: Required for inter-pod communication
+#   - observability: Required to send metrics to Prometheus
 #
 # Note: This is a baseline policy. For stricter security, consider limiting
 # egress to specific registries (ghcr.io, docker.io) and specific namespaces.
