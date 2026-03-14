@@ -37,6 +37,25 @@ spec:
       enabled: false
     hubble:
       enabled: true
+      metrics:
+        enabled:
+          - dns:query;response
+          - drop:source;destination;identity
+          - flow:source;destination;identity;traffic-direction
+          - port-distribution
+          - tcp:flags
+        serviceMonitor:
+          enabled: true
+      relay:
+        enabled: true
+        prometheus:
+          enabled: true
+          serviceMonitor:
+            enabled: true
+      ui:
+        enabled: true
+        standalone:
+          enabled: true
     ipam:
       mode: kubernetes
     ipv4NativeRoutingCIDR: 10.42.0.0/16
