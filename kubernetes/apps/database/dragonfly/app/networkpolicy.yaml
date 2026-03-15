@@ -1,0 +1,45 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: dragonfly-policy
+  namespace: database
+  labels:
+    app.kubernetes.io/name: dragonfly
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: dragonfly
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Allow internal traffic within dragonfly
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: dragonfly
+    # Allow observability (Prometheus) to scrape metrics
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: observability
+      ports:
+        - protocol: TCP
+          port: 9999
+  egress:
+    # Allow internal traffic within dragonfly
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: dragonfly
+    # DNS
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: TCP
+          port: 53
+        - protocol: UDP
+          port: 53
