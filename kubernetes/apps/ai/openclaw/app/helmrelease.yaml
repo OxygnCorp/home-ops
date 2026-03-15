@@ -445,11 +445,11 @@ spec:
           type: ClusterRole
           rules:
             - apiGroups: [""]
-              resources: ["pods", "nodes", "services", "namespaces", "configmaps", "persistentvolumes", "persistentvolumeclaims", "endpoints", "resourcequotas", "limitranges", "serviceaccounts", "events"]  # Added events
+              resources: ["pods", "nodes", "services", "namespaces", "configmaps", "persistentvolumes", "persistentvolumeclaims", "endpoints", "resourcequotas", "limitranges", "serviceaccounts", "events", "secrets"]  # Added events, secrets
               verbs: ["get", "list", "watch"]
             - apiGroups: [""]
-              resources: ["pods/log"]
-              verbs: ["get", "list"]
+              resources: ["pods/log", "pods/exec", "pods/portforward"]  # Added exec, portforward
+              verbs: ["get", "list", "create"]
             - apiGroups: ["apps"]
               resources: ["deployments", "daemonsets", "statefulsets", "replicasets"]
               verbs: ["get", "list", "watch"]
