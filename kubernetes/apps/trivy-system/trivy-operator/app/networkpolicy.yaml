@@ -21,22 +21,49 @@ spec:
       ports:
         - protocol: TCP
           port: 80
+    # Allow Prometheus to scrape metrics from trivy-operator
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: observability
+      ports:
+        - protocol: TCP
+          port: 8080
   egress:
+    # Allow trivy-operator to communicate with trivy-server (port 4954)
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: trivy-server
+      ports:
+        - protocol: TCP
+          port: 4954
     # Allow scanning images in all namespaces
     - to:
         - namespaceSelector: {}
     # Allow communication with other pods
     - to:
         - podSelector: {}
+    # Allow sending metrics to Prometheus in observability namespace
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: observability
+      ports:
+        - protocol: TCP
+          port: 9090
 ---
 # Documentation for trivy-system NetworkPolicy
 # 
 # Ingress:
-#   - flux-system: Required for Flux to trigger vulnerability scans via trivy-operator API
+#   - flux-system: Required for Flux to trigger vulnerability scans via trivy-operator API (port 80)
+#   - observability: Required for Prometheus to scrape metrics (port 8080)
 #
 # Egress:
+#   - trivy-server: Required for trivy-operator to talk to trivy-server (port 4954)
 #   - All namespaces: Required to scan container images across the cluster
 #   - All pods: Required for inter-pod communication
+#   - observability: Required to send metrics to Prometheus (port 9090)
 #
 # Note: This is a baseline policy. For stricter security, consider limiting
 # egress to specific registries (ghcr.io, docker.io) and specific namespaces.
