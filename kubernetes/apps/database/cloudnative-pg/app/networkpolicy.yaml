@@ -27,14 +27,14 @@ spec:
       ports:
         - protocol: TCP
           port: 5432
-    # Allow observability (Prometheus) to scrape metrics
+    # Allow Prometheus to scrape metrics
     - from:
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: observability
-      ports:
-        - protocol: TCP
-          port: 9187
+        podSelector:
+          matchLabels:
+            prometheus: kube-prometheus-stack
   egress:
     # Allow internal traffic within cloudnative-pg
     - to:

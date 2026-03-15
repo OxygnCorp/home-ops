@@ -19,14 +19,14 @@ spec:
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: dragonfly
-    # Allow observability (Prometheus) to scrape metrics
+    # Allow Prometheus to scrape metrics
     - from:
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: observability
-      ports:
-        - protocol: TCP
-          port: 9999
+        podSelector:
+          matchLabels:
+            prometheus: kube-prometheus-stack
   egress:
     # Allow internal traffic within dragonfly
     - to:
