@@ -20,7 +20,7 @@ spec:
     - from:
         - namespaceSelector:
             matchLabels:
-              name: flux-system
+              kubernetes.io/metadata.name: flux-system
       ports:
         - protocol: TCP
           port: 80
@@ -28,7 +28,7 @@ spec:
     - from:
         - namespaceSelector:
             matchLabels:
-              name: observability
+              kubernetes.io/metadata.name: observability
       ports:
         - protocol: TCP
           port: 8080
@@ -51,7 +51,7 @@ spec:
     - to:
         - namespaceSelector:
             matchLabels:
-              name: observability
+              kubernetes.io/metadata.name: observability
       ports:
         - protocol: TCP
           port: 9090
@@ -59,7 +59,7 @@ spec:
     - to:
         - namespaceSelector:
             matchLabels:
-              name: kube-system
+              kubernetes.io/metadata.name: kube-system
       ports:
         - protocol: TCP
           port: 53
