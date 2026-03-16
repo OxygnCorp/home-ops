@@ -32,6 +32,13 @@ spec:
       ports:
         - protocol: TCP
           port: 6443
+    # Allow Kubernetes service access (10.43.0.0/16)
+    - to:
+        - ipBlock:
+            cidr: 10.43.0.0/16
+      ports:
+        - protocol: TCP
+          port: 6443
     # Allow access to all namespaces for database management
     - to:
         - namespaceSelector: {}

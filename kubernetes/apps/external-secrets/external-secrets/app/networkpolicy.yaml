@@ -27,7 +27,7 @@ spec:
         - protocol: TCP
           port: 8081
   egress:
-    # Allow DNS resolution
+    # Allow DNS resolution (pod)
     - to:
         - namespaceSelector:
             matchLabels:
@@ -40,10 +40,26 @@ spec:
           port: 53
         - protocol: UDP
           port: 53
+    # Allow DNS resolution (service IP)
+    - to:
+        - ipBlock:
+            cidr: 10.43.0.0/16
+      ports:
+        - protocol: TCP
+          port: 53
+        - protocol: UDP
+          port: 53
     # Allow Kubernetes API access
     - to:
         - ipBlock:
             cidr: 10.10.10.0/24
+      ports:
+        - protocol: TCP
+          port: 6443
+    # Allow Kubernetes service access (10.43.0.0/16)
+    - to:
+        - ipBlock:
+            cidr: 10.43.0.0/16
       ports:
         - protocol: TCP
           port: 6443
