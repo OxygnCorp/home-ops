@@ -25,6 +25,14 @@ spec:
           podSelector:
             matchLabels:
               app.kubernetes.io/name: tautulli
+    # Allow traffic from seerr (media namespace)
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: media
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: seerr
     # Allow traffic from gatus (observability)
     - from:
         - namespaceSelector:
@@ -33,6 +41,17 @@ spec:
           podSelector:
             matchLabels:
               app.kubernetes.io/name: gatus
+    # Allow direct external access to Plex (port 32400)
+    - from:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+      ports:
+        - protocol: TCP
+          port: 32400
   egress:
     # Allow DNS resolution
     - to:
