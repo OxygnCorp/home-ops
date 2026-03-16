@@ -8,3 +8,4 @@ resources:
   - ./dnsendpoint.yaml
   - ./helmrelease.yaml
   - ./ocirepository.yaml
+  - ./networkpolicy.yaml
