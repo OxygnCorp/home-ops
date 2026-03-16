@@ -56,6 +56,8 @@ spec:
         # Plex DLNA
         - protocol: TCP
           port: 32469
+        - protocol: UDP
+          port: 1900
         # GDM discovery
         - protocol: UDP
           port: 32410
