@@ -6,7 +6,7 @@ metadata:
   name: omni-tools
 spec:
   components:
-    - ./components/gatus
+    - ../../../../components/gatus
   commonMetadata:
     labels:
       app.kubernetes.io/name: omni-tools

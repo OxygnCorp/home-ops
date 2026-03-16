@@ -6,7 +6,7 @@ metadata:
   name: webhook
 spec:
   components:
-    - ./components/gatus
+    - ../../../../components/gatus
   commonMetadata:
     labels:
       app.kubernetes.io/name: webhook
