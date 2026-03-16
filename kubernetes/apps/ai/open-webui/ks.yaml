@@ -10,6 +10,7 @@ spec:
     labels:
       app.kubernetes.io/name: open-webui
   components:
+    - ../../../../components/gatus
     - ../../../../components/volsync
   dependsOn:
     - name: ollama
