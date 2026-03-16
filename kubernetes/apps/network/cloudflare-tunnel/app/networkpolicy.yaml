@@ -12,6 +12,11 @@ spec:
     - Ingress
     - Egress
   ingress:
+    # Allow traffic from observability (Prometheus)
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: observability
     # Allow traffic from Cloudflare
     - from:
         - ipBlock:

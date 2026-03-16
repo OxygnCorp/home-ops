@@ -25,7 +25,7 @@ spec:
           port: 80
         - protocol: TCP
           port: 443
-    # Allow traffic from kube-system for health checks
+    # Allow traffic from kube-system (DNS responses, health checks)
     - from:
         - namespaceSelector:
             matchLabels:
@@ -35,8 +35,12 @@ spec:
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: observability
+    # Allow traffic from node IPs (internal services)
+    - from:
+        - ipBlock:
+            cidr: 10.10.20.0/24
   egress:
-    # Allow DNS resolution
+    # Allow DNS resolution (pod)
     - to:
         - namespaceSelector:
             matchLabels:
@@ -49,10 +53,26 @@ spec:
           port: 53
         - protocol: UDP
           port: 53
+    # Allow DNS resolution (service IP)
+    - to:
+        - ipBlock:
+            cidr: 10.43.0.0/16
+      ports:
+        - protocol: TCP
+          port: 53
+        - protocol: UDP
+          port: 53
     # Allow Kubernetes API access
     - to:
         - ipBlock:
             cidr: 10.10.10.0/24
+      ports:
+        - protocol: TCP
+          port: 6443
+    # Allow Kubernetes service access
+    - to:
+        - ipBlock:
+            cidr: 10.43.0.0/16
       ports:
         - protocol: TCP
           port: 6443
