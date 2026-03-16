@@ -9,6 +9,7 @@ spec:
   policyTypes:
     - Ingress
   ingress:
+    # Allow Prometheus scraping
     - from:
         - namespaceSelector:
             matchLabels:
@@ -16,3 +17,11 @@ spec:
           podSelector:
             matchLabels:
               app.kubernetes.io/name: prometheus
+    # Allow external traffic to network services (envoy, etc.)
+    - from:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16

@@ -11,12 +11,7 @@ spec:
   policyTypes:
     - Ingress
     - Egress
-  ingress:
-    # Allow traffic from observability (Prometheus)
-    - from:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: observability
+  ingress: []
   egress:
     # Allow DNS resolution (pod)
     - to:
