@@ -67,6 +67,10 @@ spec:
           port: 32413
         - protocol: UDP
           port: 32414
+        - protocol: UDP
+          port: 32415
+        - protocol: UDP
+          port: 65001
         # Bonjour
         - protocol: UDP
           port: 5353
