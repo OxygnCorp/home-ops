@@ -32,6 +32,14 @@ spec:
       ports:
         - protocol: TCP
           port: 6443
+    # Allow access to Ceph cluster (internal communication)
+    - to:
+        - ipBlock:
+            cidr: 169.254.255.20/32
+        - ipBlock:
+            cidr: 169.254.255.21/32
+        - ipBlock:
+            cidr: 169.254.255.22/32
     # Allow access to all namespaces for storage operations
     - to:
         - namespaceSelector: {}
