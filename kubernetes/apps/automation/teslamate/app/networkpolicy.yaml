@@ -17,14 +17,6 @@ spec:
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: network
-    # Allow traffic from gatus (observability) for health checks
-    - from:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: observability
-          podSelector:
-            matchLabels:
-              app.kubernetes.io/name: gatus
   egress:
     # Allow DNS resolution
     - to:

@@ -9,6 +9,7 @@ spec:
     labels:
       app.kubernetes.io/name: sabnzbd
   components:
+    - ../../../../components/gatus
     - ../../../../components/nfs-scaler
     - ../../../../components/volsync
   dependsOn:

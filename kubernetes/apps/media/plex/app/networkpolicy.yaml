@@ -33,14 +33,6 @@ spec:
           podSelector:
             matchLabels:
               app.kubernetes.io/name: seerr
-    # Allow traffic from gatus (observability)
-    - from:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: observability
-          podSelector:
-            matchLabels:
-              app.kubernetes.io/name: gatus
     # Allow direct access to Plex from LAN only
     - from:
         - ipBlock:
