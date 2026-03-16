@@ -40,6 +40,8 @@ spec:
           port: 6882
         - protocol: TCP
           port: 50469
+        - protocol: TCP
+          port: 80
   egress:
     # Allow DNS resolution
     - to:
