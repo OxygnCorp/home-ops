@@ -41,7 +41,7 @@ spec:
           podSelector:
             matchLabels:
               app.kubernetes.io/name: gatus
-    # Allow direct access to Plex (port 32400) from LAN only
+    # Allow direct access to Plex from LAN only
     - from:
         - ipBlock:
             cidr: 10.0.0.0/8
@@ -50,8 +50,33 @@ spec:
         - ipBlock:
             cidr: 192.168.0.0/16
       ports:
+        # Required
         - protocol: TCP
           port: 32400
+        # Plex DLNA
+        - protocol: TCP
+          port: 32469
+        - protocol: UDP
+          port: 1900
+        # GDM discovery
+        - protocol: UDP
+          port: 32410
+        - protocol: UDP
+          port: 32412
+        - protocol: UDP
+          port: 32413
+        - protocol: UDP
+          port: 32414
+        - protocol: UDP
+          port: 32415
+        - protocol: UDP
+          port: 65001
+        # Bonjour
+        - protocol: UDP
+          port: 5353
+        # Plex Companion
+        - protocol: TCP
+          port: 8324
   egress:
     # Allow DNS resolution
     - to:
