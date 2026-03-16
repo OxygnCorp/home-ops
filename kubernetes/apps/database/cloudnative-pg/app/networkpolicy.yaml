@@ -11,6 +11,12 @@ spec:
   policyTypes:
     - Ingress
     - Egress
+  ingress:
+    # Allow traffic within database namespace (webhook, operator)
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: database
   egress:
     # Allow DNS resolution
     - to:
