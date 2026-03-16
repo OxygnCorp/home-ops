@@ -5,6 +5,8 @@ kind: Kustomization
 metadata:
   name: cloudflare-tunnel
 spec:
+  components:
+    - ./components/gatus
   commonMetadata:
     labels:
       app.kubernetes.io/name: cloudflare-tunnel

@@ -20,14 +20,6 @@ spec:
           podSelector:
             matchLabels:
               app.kubernetes.io/name: teslamate
-    # Allow traffic from gatus (observability) for health checks
-    - from:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: observability
-          podSelector:
-            matchLabels:
-              app.kubernetes.io/name: gatus
     # Allow traffic within automation namespace for other clients
     - from:
         - namespaceSelector:

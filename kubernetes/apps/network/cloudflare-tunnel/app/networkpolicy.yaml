@@ -47,14 +47,6 @@ spec:
           port: 443
         - protocol: UDP
           port: 7844
-    # Allow traffic from gatus (observability)
-    - from:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: observability
-          podSelector:
-            matchLabels:
-              app.kubernetes.io/name: gatus
   egress:
     # Allow DNS resolution
     - to:
