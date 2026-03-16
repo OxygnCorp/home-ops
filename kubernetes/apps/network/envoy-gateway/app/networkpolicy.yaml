@@ -43,6 +43,22 @@ spec:
             cidr: 172.16.0.0/12
         - ipBlock:
             cidr: 192.168.0.0/16
+    # Allow traffic from node IPs (for Gateway API and health checks)
+    - from:
+        - ipBlock:
+            cidr: 10.10.0.0/16
+    # Allow traffic from network namespace (envoy-internal)
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: network
+      ports:
+        - protocol: TCP
+          port: 18000
+        - protocol: TCP
+          port: 19000
+        - protocol: TCP
+          port: 19001
   egress:
     # Allow DNS resolution (pod)
     - to:
