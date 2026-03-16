@@ -35,10 +35,10 @@ spec:
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: observability
-    # Allow traffic from node IPs (internal services)
+    # Allow traffic from LAN (internal services)
     - from:
         - ipBlock:
-            cidr: 10.10.20.0/24
+            cidr: 10.0.0.0/8
   egress:
     # Allow DNS resolution (pod)
     - to:
