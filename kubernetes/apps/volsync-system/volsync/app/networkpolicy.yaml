@@ -11,6 +11,23 @@ spec:
   policyTypes:
     - Ingress
     - Egress
+  ingress:
+    # Allow traffic from ingress (envoy)
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: network
+    # Allow Prometheus to scrape
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: observability
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: prometheus
+      ports:
+        - protocol: TCP
+          port: 8443
   egress:
     # Allow DNS resolution
     - to:

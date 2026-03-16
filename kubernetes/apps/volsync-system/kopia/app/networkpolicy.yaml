@@ -38,11 +38,14 @@ spec:
       ports:
         - protocol: TCP
           port: 6443
-    # Allow access to Rook Ceph
+    # Allow access to Rook Ceph for storage
     - to:
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: rook-ceph
+    # Allow access to all namespaces for backup operations
+    - to:
+        - namespaceSelector: {}
     # Allow external access for backup storage
     - to:
         - ipBlock:
