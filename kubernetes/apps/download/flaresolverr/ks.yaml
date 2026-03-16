@@ -5,6 +5,8 @@ kind: Kustomization
 metadata:
   name: flaresolverr
 spec:
+  components:
+    - ./components/gatus
   commonMetadata:
     labels:
       app.kubernetes.io/name: flaresolverr
