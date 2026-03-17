@@ -6,7 +6,6 @@ metadata:
   name: echo
 spec:
   components:
-    - ../../../../components/gatus
   commonMetadata:
     labels:
       app.kubernetes.io/name: echo

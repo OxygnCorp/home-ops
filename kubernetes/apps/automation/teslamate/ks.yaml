@@ -6,7 +6,6 @@ metadata:
   name: teslamate
 spec:
   components:
-    - ../../../../components/gatus
   commonMetadata:
     labels:
       app.kubernetes.io/name: teslamate
