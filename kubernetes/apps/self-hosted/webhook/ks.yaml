@@ -5,7 +5,6 @@ kind: Kustomization
 metadata:
   name: webhook
 spec:
-  components:
   commonMetadata:
     labels:
       app.kubernetes.io/name: webhook

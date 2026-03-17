@@ -30,7 +30,6 @@ kind: Kustomization
 metadata:
   name: grafana-instance
 spec:
-  components:
   commonMetadata:
     labels:
       app.kubernetes.io/name: grafana-instance

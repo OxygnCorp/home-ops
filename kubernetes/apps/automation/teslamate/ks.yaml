@@ -5,7 +5,6 @@ kind: Kustomization
 metadata:
   name: teslamate
 spec:
-  components:
   commonMetadata:
     labels:
       app.kubernetes.io/name: teslamate
