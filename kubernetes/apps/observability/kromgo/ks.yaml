@@ -5,7 +5,6 @@ kind: Kustomization
 metadata:
   name: kromgo
 spec:
-  components:
   commonMetadata:
     labels:
       app.kubernetes.io/name: kromgo

@@ -5,7 +5,6 @@ kind: Kustomization
 metadata:
   name: kube-prometheus-stack
 spec:
-  components:
   commonMetadata:
     labels:
       app.kubernetes.io/name: kube-prometheus-stack

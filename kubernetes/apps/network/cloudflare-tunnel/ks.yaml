@@ -5,7 +5,6 @@ kind: Kustomization
 metadata:
   name: cloudflare-tunnel
 spec:
-  components:
   commonMetadata:
     labels:
       app.kubernetes.io/name: cloudflare-tunnel

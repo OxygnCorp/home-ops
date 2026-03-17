@@ -5,7 +5,6 @@ kind: Kustomization
 metadata:
   name: cloudflare-dns
 spec:
-  components:
   commonMetadata:
     labels:
       app.kubernetes.io/name: cloudflare-dns

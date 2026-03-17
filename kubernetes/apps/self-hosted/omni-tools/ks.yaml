@@ -5,7 +5,6 @@ kind: Kustomization
 metadata:
   name: omni-tools
 spec:
-  components:
   commonMetadata:
     labels:
       app.kubernetes.io/name: omni-tools
