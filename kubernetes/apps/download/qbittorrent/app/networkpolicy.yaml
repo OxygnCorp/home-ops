@@ -17,23 +17,6 @@ spec:
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: network
-    # Allow incoming connections from torrent peers
-    - from:
-        - ipBlock:
-            cidr: 0.0.0.0/0
-            except:
-              - 10.0.0.0/8
-              - 172.16.0.0/12
-              - 192.168.0.0/16
-      ports:
-        - protocol: TCP
-          port: 6881
-        - protocol: TCP
-          port: 6882
-        - protocol: TCP
-          port: 50469
-        - protocol: TCP
-          port: 80
   egress:
     # Allow external access for torrent trackers
     - to:
