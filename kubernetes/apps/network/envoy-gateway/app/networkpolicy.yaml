@@ -114,7 +114,7 @@ metadata:
 spec:
   podSelector:
     matchLabels:
-      gateway.networking.k8s.io/gateway-name=envoy-external: envoy-external
+      gateway.networking.k8s.io/gateway-name: envoy-external
   policyTypes:
     - Ingress
     - Egress
@@ -186,7 +186,7 @@ metadata:
 spec:
   podSelector:
     matchLabels:
-      gateway.networking.k8s.io/gateway-name=envoy-external: envoy-internal
+      gateway.networking.k8s.io/gateway-name: envoy-internal
   policyTypes:
     - Ingress
     - Egress
