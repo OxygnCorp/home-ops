@@ -8,5 +8,4 @@ components:
 
 resources:
   - ./namespace.yaml
-  - ./networkpolicy.yaml
   - ./openclaw/ks.yaml

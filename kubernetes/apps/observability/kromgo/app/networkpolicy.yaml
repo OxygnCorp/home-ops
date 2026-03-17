@@ -18,26 +18,6 @@ spec:
             matchLabels:
               kubernetes.io/metadata.name: network
   egress:
-    # Allow DNS resolution
-    - to:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: kube-system
-          podSelector:
-            matchLabels:
-              k8s-app: kube-dns
-      ports:
-        - protocol: TCP
-          port: 53
-        - protocol: UDP
-          port: 53
-    # Allow Kubernetes API access
-    - to:
-        - ipBlock:
-            cidr: 10.10.10.0/24
-      ports:
-        - protocol: TCP
-          port: 6443
     # Allow access to Prometheus
     - to:
         - namespaceSelector:
@@ -45,18 +25,3 @@ spec:
               kubernetes.io/metadata.name: observability
           podSelector:
             matchLabels:
-              app.kubernetes.io/name: prometheus
-      ports:
-        - protocol: TCP
-          port: 9090
-    # Allow external access
-    - to:
-        - ipBlock:
-            cidr: 0.0.0.0/0
-            except:
-              - 10.0.0.0/8
-              - 172.16.0.0/12
-              - 192.168.0.0/16
-      ports:
-        - protocol: TCP
-          port: 443

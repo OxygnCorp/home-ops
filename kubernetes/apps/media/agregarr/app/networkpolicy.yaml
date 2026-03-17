@@ -18,42 +18,6 @@ spec:
             matchLabels:
               kubernetes.io/metadata.name: network
   egress:
-    # Allow DNS resolution (pod)
-    - to:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: kube-system
-          podSelector:
-            matchLabels:
-              k8s-app: kube-dns
-      ports:
-        - protocol: TCP
-          port: 53
-        - protocol: UDP
-          port: 53
-    # Allow DNS resolution (service IP)
-    - to:
-        - ipBlock:
-            cidr: 10.43.0.0/16
-      ports:
-        - protocol: TCP
-          port: 53
-        - protocol: UDP
-          port: 53
-    # Allow Kubernetes API access
-    - to:
-        - ipBlock:
-            cidr: 10.10.10.0/24
-      ports:
-        - protocol: TCP
-          port: 6443
-    # Allow Kubernetes service access (10.43.0.0/16)
-    - to:
-        - ipBlock:
-            cidr: 10.43.0.0/16
-      ports:
-        - protocol: TCP
-          port: 6443
     # Allow external access for RSS/API
     - to:
         - ipBlock:
