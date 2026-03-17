@@ -112,7 +112,7 @@ spec:
               kubernetes.io/metadata.name: network
           podSelector:
             matchLabels:
-              gateway.networking.k8s.io/gateway-name=envoy-external: envoy-external
+              gateway.networking.k8s.io/gateway-name: envoy-external
       ports:
         - protocol: TCP
           port: 10443
