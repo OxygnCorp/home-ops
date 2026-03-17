@@ -7,7 +7,7 @@ metadata:
 spec:
   podSelector:
     matchLabels:
-      app.kubernetes.io/name: envoy-gateway
+      app.kubernetes.io/instance: envoy-gateway
   policyTypes:
     - Ingress
     - Egress
@@ -173,10 +173,18 @@ spec:
               kubernetes.io/metadata.name: network
           podSelector:
             matchLabels:
-              app.kubernetes.io/name: envoy-gateway
+              app.kubernetes.io/instance: envoy-gateway
       ports:
         - protocol: TCP
           port: 18000
+    # Allow traffic to self-hosted namespace (backend services)
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: self-hosted
+    # Allow traffic to all namespaces (routing to backend services)
+    - to:
+        - namespaceSelector: {}
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -220,10 +228,18 @@ spec:
               kubernetes.io/metadata.name: network
           podSelector:
             matchLabels:
-              app.kubernetes.io/name: envoy-gateway
+              app.kubernetes.io/instance: envoy-gateway
       ports:
         - protocol: TCP
           port: 18000
+    # Allow traffic to self-hosted namespace (backend services)
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: self-hosted
+    # Allow traffic to all namespaces (routing to backend services)
+    - to:
+        - namespaceSelector: {}
   ingress:
     # Allow traffic from kube-system (DNS responses)
     - from:
@@ -248,4 +264,6 @@ spec:
             cidr: 192.168.0.0/16
       ports:
         - protocol: TCP
+          port: 10443
+        - protocol: UDP
           port: 10443
