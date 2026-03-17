@@ -11,7 +11,15 @@ spec:
   policyTypes:
     - Ingress
     - Egress
-  ingress: []
+  ingress:
+    # Allow traffic from kube-system (DNS responses)
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
   egress:
     # Allow DNS resolution (pod)
     - to:

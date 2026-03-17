@@ -61,7 +61,7 @@ spec:
               kubernetes.io/metadata.name: network
           podSelector:
             matchLabels:
-              app: cloudflare-tunnel # Vérifiez ce label sur votre pod source
+              app.kubernetes.io/name: cloudflare-tunnel # Vérifiez ce label sur votre pod source
       ports:
       - protocol: TCP
         port: 10443
@@ -119,6 +119,19 @@ spec:
     - Ingress
     - Egress
   ingress:
+    # Allow traffic from kube-system (DNS responses)
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: TCP
+          port: 53
+        - protocol: UDP
+          port: 53
     # Allow traffic traffic from cloudflare-tunnel (envoy-external)
     - from:
         - namespaceSelector:
@@ -126,11 +139,33 @@ spec:
               kubernetes.io/metadata.name: network
           podSelector:
             matchLabels:
-              app: cloudflare-tunnel # Vérifiez ce label sur votre pod source
+              app.kubernetes.io/name: cloudflare-tunnel
       ports:
       - protocol: TCP
         port: 10443
   egress:
+    # Allow DNS resolution (pod)
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: TCP
+          port: 53
+        - protocol: UDP
+          port: 53
+    # Allow DNS resolution (service IP)
+    - to:
+        - ipBlock:
+            cidr: 10.43.0.0/16
+      ports:
+        - protocol: TCP
+          port: 53
+        - protocol: UDP
+          port: 53
     # Allow traffic to envoy-gateway (port 18000)
     - to:
         - namespaceSelector:
@@ -154,7 +189,55 @@ spec:
       gateway.networking.k8s.io/gateway-name=envoy-external: envoy-internal
   policyTypes:
     - Ingress
+    - Egress
+  egress:
+    # Allow DNS resolution (pod)
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: TCP
+          port: 53
+        - protocol: UDP
+          port: 53
+    # Allow DNS resolution (service IP)
+    - to:
+        - ipBlock:
+            cidr: 10.43.0.0/16
+      ports:
+        - protocol: TCP
+          port: 53
+        - protocol: UDP
+          port: 53
+    # Allow traffic to envoy-gateway (port 18000)
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: network
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: envoy-gateway
+      ports:
+        - protocol: TCP
+          port: 18000
   ingress:
+    # Allow traffic from kube-system (DNS responses)
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: TCP
+          port: 53
+        - protocol: UDP
+          port: 53
     # Allow traffic from LAN (internal services)
     - from:
         - ipBlock:
