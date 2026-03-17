@@ -8,7 +8,6 @@ components:
 
 resources:
   - ./namespace.yaml
-  - ./cilium-networkpolicy.yaml
   - ./cilium/ks.yaml
   - ./coredns/ks.yaml
   - ./descheduler/ks.yaml
