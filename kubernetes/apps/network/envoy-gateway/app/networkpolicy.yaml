@@ -117,6 +117,7 @@ spec:
       gateway.networking.k8s.io/gateway-name=envoy-external: envoy-external
   policyTypes:
     - Ingress
+    - Egress
   ingress:
     # Allow traffic traffic from cloudflare-tunnel (envoy-external)
     - from:
@@ -129,6 +130,18 @@ spec:
       ports:
       - protocol: TCP
         port: 10443
+  egress:
+    # Allow traffic to envoy-gateway (port 18000)
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: network
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: envoy-gateway
+      ports:
+        - protocol: TCP
+          port: 18000
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
