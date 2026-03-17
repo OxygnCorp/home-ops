@@ -12,24 +12,10 @@ spec:
     - Ingress
     - Egress
   ingress:
-    # Allow traffic from grafana
+    # Allow traffic from all namespaces (metrics collection)
     - from:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: observability
-          podSelector:
-            matchLabels:
-              app.kubernetes.io/name: grafana
-    # Allow traffic from other observability components
-    - from:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: observability
-    # Allow ingress from network namespace (if needed)
-    - from:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: network
+        - namespaceSelector: {}
+
   egress:
     # Allow scrape from all namespaces (metrics collection)
     - to:
