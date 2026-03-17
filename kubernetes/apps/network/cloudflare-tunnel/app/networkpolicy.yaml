@@ -92,6 +92,17 @@ spec:
           port: 443
         - protocol: TCP
           port: 80
+    # Allow traffic to envoy-external (port 10443)
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: network
+          podSelector:
+            matchLabels:
+              gateway.networking.k8s.io/gateway-name: envoy-external
+      ports:
+        - protocol: TCP
+          port: 10443
     # Allow egress to external world (Cloudflare tunnel)
     - to:
         - ipBlock:
