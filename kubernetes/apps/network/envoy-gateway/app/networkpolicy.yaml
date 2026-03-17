@@ -30,11 +30,6 @@ spec:
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: kube-system
-    # Allow traffic from observability for monitoring
-    - from:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: observability
     # Allow traffic from LAN (internal services)
     - from:
         - ipBlock:
@@ -59,6 +54,17 @@ spec:
           port: 19000
         - protocol: TCP
           port: 19001
+    # Allow traffic traffic from cloudflare-tunnel (envoy-external)
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: network
+          podSelector:
+            matchLabels:
+              app: cloudflare-tunnel # Vérifiez ce label sur votre pod source
+      ports:
+      - protocol: TCP
+        port: 10443
   egress:
     # Allow DNS resolution (pod)
     - to:
@@ -99,3 +105,51 @@ spec:
     # Allow traffic to all namespaces (routing to backend services) - all ports
     - to:
         - namespaceSelector: {}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: envoy-external
+  namespace: network
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: envoy-external
+  policyTypes:
+    - Ingress
+  ingress:
+    # Allow traffic traffic from cloudflare-tunnel (envoy-external)
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: network
+          podSelector:
+            matchLabels:
+              app: cloudflare-tunnel # Vérifiez ce label sur votre pod source
+      ports:
+      - protocol: TCP
+        port: 10443
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: envoy-internal
+  namespace: network
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: envoy-internal
+  policyTypes:
+    - Ingress
+  ingress:
+    # Allow traffic from LAN (internal services)
+    - from:
+        - ipBlock:
+            cidr: 10.0.0.0/8
+        - ipBlock:
+            cidr: 172.16.0.0/12
+        - ipBlock:
+            cidr: 192.168.0.0/16
+      ports:
+        - protocol: TCP
+          port: 10443

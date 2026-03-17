@@ -17,11 +17,6 @@ spec:
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: network
-    # Allow traffic from observability (Prometheus)
-    - from:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: observability
   egress:
     # Allow DNS resolution (pod)
     - to:

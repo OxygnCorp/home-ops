@@ -20,14 +20,6 @@ spec:
           podSelector:
             matchLabels:
               app.kubernetes.io/name: dragonfly-operator
-    # Allow traffic from Prometheus (observability namespace)
-    - from:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: observability
-          podSelector:
-            matchLabels:
-              app.kubernetes.io/name: prometheus
     # Allow traffic from other dragonfly pods (replication)
     - from:
         - podSelector:

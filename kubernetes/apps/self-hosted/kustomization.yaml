@@ -8,6 +8,7 @@ components:
 
 resources:
   - ./namespace.yaml
+  - ./networkpolicy.yaml
   - ./convertx/ks.yaml
   - ./mealie/ks.yaml
   - ./omni-tools/ks.yaml
