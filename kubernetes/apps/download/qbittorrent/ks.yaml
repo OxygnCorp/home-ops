@@ -9,7 +9,6 @@ spec:
     labels:
       app.kubernetes.io/name: qbittorrent
   components:
-    - ../../../../components/gatus
     - ../../../../components/nfs-scaler
     - ../../../../components/volsync
   dependsOn:

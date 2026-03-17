@@ -6,7 +6,6 @@ metadata:
   name: kube-prometheus-stack
 spec:
   components:
-    - ../../../../components/gatus
   commonMetadata:
     labels:
       app.kubernetes.io/name: kube-prometheus-stack

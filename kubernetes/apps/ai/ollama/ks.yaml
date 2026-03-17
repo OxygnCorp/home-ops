@@ -10,7 +10,6 @@ spec:
     labels:
       app.kubernetes.io/name: ollama
   components:
-    - ../../../../components/gatus
     - ../../../../components/volsync
   dependsOn:
     - name: nvidia-device-plugin
