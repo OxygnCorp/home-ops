@@ -7,6 +7,12 @@ metadata:
 spec:
   podSelector:
     matchLabels:
+      app.kubernetes.io/name: prometheus
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Allow traffic from grafana
     - from:
         - namespaceSelector:
             matchLabels:

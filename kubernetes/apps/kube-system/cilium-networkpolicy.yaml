@@ -7,6 +7,17 @@ metadata:
 spec:
   endpointSelector:
     matchLabels:
+      k8s-app: kube-dns
+  egress:
+    - toEntities:
+        - kube-apiserver
+    - toEndpoints:
+        - matchLabels:
+            k8s-app: kube-dns
+          toPorts:
+            - ports:
+                - port: "53"
+                  protocol: UDP
 ---
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
@@ -18,6 +29,7 @@ spec:
   ingress:
     - fromEndpoints:
         - matchLabels:
+            app.kubernetes.io/name: prometheus
 ---
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
@@ -37,3 +49,4 @@ spec:
               protocol: TCP
     - toEndpoints:
         - matchLabels:
+            k8s-app: kube-dns

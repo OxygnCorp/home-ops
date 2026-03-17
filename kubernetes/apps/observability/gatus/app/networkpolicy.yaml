@@ -7,7 +7,7 @@ metadata:
 spec:
   podSelector:
     matchLabels:
-      name: gatus
+      app.kubernetes.io/name: gatus
   policyTypes:
     - Ingress
     - Egress
