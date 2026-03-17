@@ -1,4 +1,333 @@
 ---
+# Default deny all traffic
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+  namespace: flux-system
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+---
+# Helm Controller
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: helm-controller
+  namespace: flux-system
+spec:
+  podSelector:
+    matchLabels:
+      app: helm-controller
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: prometheus
+      ports:
+        - port: 8080
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - port: 53
+          protocol: UDP
+    - to:
+        - podSelector:
+            matchLabels:
+              app: notification-controller
+        - podSelector:
+            matchLabels:
+              app: source-controller
+      ports:
+        - port: 9090
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+      ports:
+        - port: 443
+          protocol: TCP
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: helm-controller
+  namespace: flux-system
+spec:
+  endpointSelector:
+    matchLabels:
+      app: helm-controller
+  egress:
+    - toEntities:
+      - kube-apiserver
+  ingress:
+    - fromEntities:
+      - kube-apiserver
+---
+# Kustomize Controller
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: kustomize-controller
+  namespace: flux-system
+spec:
+  podSelector:
+    matchLabels:
+      app: kustomize-controller
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: prometheus
+      ports:
+        - port: 8080
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - port: 53
+          protocol: UDP
+    - to:
+        - podSelector:
+            matchLabels:
+              app: notification-controller
+        - podSelector:
+            matchLabels:
+              app: source-controller
+      ports:
+        - port: 9090
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: kustomize-controller
+  namespace: flux-system
+spec:
+  endpointSelector:
+    matchLabels:
+      app: kustomize-controller
+  egress:
+    - toEntities:
+      - kube-apiserver
+  ingress:
+    - fromEntities:
+      - kube-apiserver
+---
+# Notification Controller
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: notification-controller
+  namespace: flux-system
+spec:
+  podSelector:
+    matchLabels:
+      app: notification-controller
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: helm-controller
+        - podSelector:
+            matchLabels:
+              app: kustomize-controller
+        - podSelector:
+            matchLabels:
+              app: source-controller
+      ports:
+        - port: 9090
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: prometheus
+      ports:
+        - port: 8080
+    # GitHub webhooks
+    - from:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+      ports:
+        - port: 9292
+          protocol: TCP
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - port: 53
+          protocol: UDP
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+          podSelector:
+            matchLabels:
+              alertmanager: kube-prom
+              app.kubernetes.io/instance: kube-prom
+              app.kubernetes.io/managed-by: prometheus-operator
+              app.kubernetes.io/name: alertmanager
+      ports:
+        - port: 9093
+          protocol: TCP
+    # Egress to other Flux controllers
+    - to:
+        - podSelector:
+            matchLabels:
+              app: helm-controller
+        - podSelector:
+            matchLabels:
+              app: kustomize-controller
+        - podSelector:
+            matchLabels:
+              app: source-controller
+      ports:
+        - port: 9090
+    # Discord alerting and other external services
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+      ports:
+        - port: 443
+          protocol: TCP
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: notification-controller
+  namespace: flux-system
+spec:
+  endpointSelector:
+    matchLabels:
+      app: notification-controller
+  egress:
+    - toEntities:
+      - kube-apiserver
+  ingress:
+    - fromEntities:
+      - kube-apiserver
+---
+# Source Controller
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: source-controller
+  namespace: flux-system
+spec:
+  podSelector:
+    matchLabels:
+      app: source-controller
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: helm-controller
+        - podSelector:
+            matchLabels:
+              app: kustomize-controller
+      ports:
+        - port: 9090
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: prometheus
+      ports:
+        - port: 8080
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - port: 53
+          protocol: UDP
+    - to:
+        - podSelector:
+            matchLabels:
+              app: notification-controller
+      ports:
+        - port: 9090
+    # Git and OCI registries access
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+      ports:
+        - port: 22
+          protocol: TCP
+        - port: 443
+          protocol: TCP
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: source-controller
+  namespace: flux-system
+spec:
+  endpointSelector:
+    matchLabels:
+      app: source-controller
+  egress:
+    - toEntities:
+      - kube-apiserver
+  ingress:
+    - fromEntities:
+      - kube-apiserver
+---
+# Flux Instance (general access for reconciliation)
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -28,7 +357,7 @@ spec:
           port: 443
         - protocol: TCP
           port: 22
-    # Allow access to Helm repositories
+    # Allow access to Helm/OCI repositories
     - to:
         - ipBlock:
             cidr: 0.0.0.0/0
