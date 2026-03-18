@@ -1,0 +1,20 @@
+---
+---
+# yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: vpa
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: vpa
+  values:
+    updater:
+      enabled: false
+    recommender:
+      extraArgs:
+        storage: prometheus
+        prometheus-address: |-
+          http://prometheus-operated.observability.svc.cluster.local:9090
