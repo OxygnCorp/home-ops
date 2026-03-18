@@ -1,0 +1,25 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: vpa
+spec:
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: vpa
+  healthChecks:
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: vpa-recommender
+      namespace: vpa
+  interval: 1h
+  path: ./kubernetes/apps/vpa-system/vpa/app
+  prune: true
+  retryInterval: 2m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  targetNamespace: vpa
+  wait: true
