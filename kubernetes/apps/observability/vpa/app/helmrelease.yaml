@@ -11,10 +11,20 @@ spec:
     kind: OCIRepository
     name: vpa
   values:
-    updater:
-      enabled: false
+    # only used for goldilocks right now, so only the recommender is needed
     recommender:
+      enabled: true
+      image:
+        repository: registry.k8s.io/autoscaling/vpa-recommender
+        tag: 1.6.0@sha256:4af365370c187e4eb60302e937b18a188774698b049a1bfdd77d43e51b30abec
       extraArgs:
         storage: prometheus
         prometheus-address: |-
           http://prometheus-operated.observability.svc.cluster.local:9090
+    updater:
+      enabled: false
+    admissionController:
+      enabled: false
+    metrics-server:
+      enabled: false
+
