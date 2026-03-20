@@ -8,8 +8,14 @@ spec:
   commonMetadata:
     labels:
       app.kubernetes.io/name: kguardian
+  components:
+    - ../../../../components/volsync
   interval: 1h
   path: "./kubernetes/apps/kguardian/kguardian/app"
+  postBuild:
+    substitute:
+      APP: kguardian
+      VOLSYNC_CAPACITY: 5Gi
   prune: true
   sourceRef:
     kind: GitRepository

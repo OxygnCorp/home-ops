@@ -26,31 +26,51 @@ spec:
       # Enable debug logging
       debug: true
 
+      # -- Ignore traffic from daemonset pods to reduce noise
+      ignoreDaemonSet: true
+
       # Resource limits
       resources:
         requests:
-          cpu: "100m"
-          memory: "128Mi"
+          cpu: 100m
+          memory: 256Mi
         limits:
-          cpu: "500m"
-          memory: "512Mi"
+          memory: 512Mi
 
     # Broker configuration
     broker:
       # Number of replicas for HA
-      replicas: 2
-
-      # Persistence
-      persistence:
-        enabled: true
-        size: "10Gi"
-        storageClass: "ceph-block"
+      replicaCount: 2
 
       # Resource limits
       resources:
         requests:
-          cpu: "100m"
-          memory: "256Mi"
+          cpu: 100m
+          memory: 256Mi
         limits:
-          cpu: "1000m"
-          memory: "1Gi"
+          memory: 1Gi
+
+    # DB configuration
+    database:
+      # Persistence
+      persistence:
+        enabled: true
+        existingClaim: "kguardian"
+
+    # LLM Bridge service for AI assistant
+    llmBridge:
+      enabled: true
+
+      secrets:
+        # -- Normalized secret key name used for all providers
+        keyName: "API_KEY"
+
+        # Google Gemini configuration
+        gemini:
+          enabled: true
+          name: "kguardian-gemini-secret"
+
+    # MCP Server Configuration (Model Context Protocol)
+    mcpServer:
+      # -- Enable MCP Server for external integrations
+      enabled: true
