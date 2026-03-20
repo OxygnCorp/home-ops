@@ -10,6 +10,47 @@ spec:
     name: kguardian
   interval: 30m
   values:
+    # Controller configuration
     controller:
+      # Exclude namespaces from monitoring
       excludedNamespaces:
         - kguardian
+        - kube-system
+        - observability
+        - network
+        - rook-ceph
+        - trivy-system
+        - openebs-system
+        - flux-system
+
+      # Enable debug logging
+      debug: true
+
+      # Resource limits
+      resources:
+        requests:
+          cpu: "100m"
+          memory: "128Mi"
+        limits:
+          cpu: "500m"
+          memory: "512Mi"
+
+    # Broker configuration
+    broker:
+      # Number of replicas for HA
+      replicas: 2
+
+      # Persistence
+      persistence:
+        enabled: true
+        size: "10Gi"
+        storageClass: "ceph-block"
+
+      # Resource limits
+      resources:
+        requests:
+          cpu: "100m"
+          memory: "256Mi"
+        limits:
+          cpu: "1000m"
+          memory: "1Gi"
