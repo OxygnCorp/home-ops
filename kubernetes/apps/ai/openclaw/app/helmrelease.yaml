@@ -255,7 +255,7 @@ spec:
           app:
             image:
               repository: ghcr.io/openclaw/openclaw
-              tag: 2026.3.12@sha256:c871ddf7ad1b4125218e5f010b59724f0d2bb299714c5bd6ba7c1e99462450a7
+              tag: 2026.3.22-beta.1@sha256:4eebf2f357affd72e90384c739ad785ed652d175b72cf9a5494e679f476841f4
             command:
               - /bin/sh
               - -c
