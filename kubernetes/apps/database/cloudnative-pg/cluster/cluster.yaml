@@ -20,13 +20,13 @@ spec:
   postgresql:
     parameters:
       max_connections: "300"
-      shared_buffers: 512MB
+      shared_buffers: 256MB
       pg_stat_statements.max: "10000"
       pg_stat_statements.track: all
   resources:
     requests:
       cpu: 100m
-      memory: 350Mi
+      memory: 512Mi
     limits:
       memory: 850Mi
   monitoring:
