@@ -34,9 +34,9 @@ spec:
             resources:
               requests:
                 cpu: 15m
-                memory: 256Mi
+                memory: 640Mi
               limits:
-                memory: 2Gi
+                memory: 1024Mi
     service:
       app:
         controller: komga

@@ -66,9 +66,10 @@ spec:
             resources:
               requests:
                 cpu: 100m
+                memory: 256Mi
               limits:
                 # nvidia.com/gpu: 1
-                memory: 4Gi
+                memory: 1Gi
     defaultPodOptions:
       securityContext:
         runAsNonRoot: true

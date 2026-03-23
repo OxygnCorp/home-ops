@@ -37,6 +37,12 @@ spec:
             port: http-webhook
           initialDelaySeconds: 10
           timeoutSeconds: 5
+        resources:
+          requests:
+            cpu: 10m
+            memory: 192Mi
+          limits:
+            memory: 256Mi
     triggerLoopOnEvent: true
     policy: sync
     sources:
