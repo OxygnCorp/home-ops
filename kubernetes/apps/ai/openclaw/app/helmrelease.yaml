@@ -377,6 +377,27 @@ spec:
                     port: 9222
                   initialDelaySeconds: 5
                   periodSeconds: 10
+
+          mission-control:
+            image:
+              repository: ghcr.io/joryirving/mission-control
+              tag: 2.0.1@sha256:36e8ecbbd850d44d2f29a01834a6a735d152c4bf0f480786145b4aa9a9bc2043
+            env:
+              OPENCLAW_GATEWAY_HOST: "127.0.0.1"
+              NEXT_PUBLIC_GATEWAY_URL: "wss://claw.oxygn.dev"
+              MC_ALLOWED_HOSTS: "claw-control.oxygn.dev"
+              MC_ENABLE_HSTS: 1
+              MC_COOKIE_SECURE: 1
+            envFrom:
+              - secretRef:
+                  name: mission-control-secret
+            resources:
+              requests:
+                cpu: 100m
+                memory: 128Mi
+              limits:
+                memory: 512Mi
+
           codeserver:
             image:
               repository: ghcr.io/coder/code-server
@@ -414,6 +435,8 @@ spec:
         ports:
           http:
             port: *port
+          mission-control:
+            port: &missioncontrolPort 3000
           codeserver:
             port: &codeserverPort 12321
     route:
@@ -437,6 +460,17 @@ spec:
           - backendRefs:
               - name: "{{ .Release.Name }}"
                 port: *codeserverPort
+      mission-control:
+        hostnames:
+          - "claw-control.oxygn.dev"
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
+        rules:
+          - backendRefs:
+              - name: "{{ .Release.Name }}"
+                port: *missioncontrolPort
+
     rbac:
       roles:
         openclaw-read-all:
