@@ -6,7 +6,7 @@ metadata:
   name: dragonfly-operator
 spec:
   interval: 1h
-  path: ./kubernetes/apps/base/database/dragonfly
+  path: ./kubernetes/apps/database/dragonfly
   prune: true
   sourceRef:
     kind: GitRepository
