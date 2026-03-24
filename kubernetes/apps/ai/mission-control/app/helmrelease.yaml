@@ -1,0 +1,57 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: mission-control
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: mission-control
+  values:
+    controllers:
+      mission-control:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: ghcr.io/builderz-labs/mission-control
+              tag: 2.0.1
+            env:
+              OPENCLAW_GATEWAY_HOST: "openclaw.ai"
+              NEXT_PUBLIC_GATEWAY_URL: "https://claw.oxygn.dev"
+              MC_ALLOWED_HOSTS: "mission-control.oxygn.dev"
+            envFrom:
+              - secretRef:
+                  name: mission-control-secret
+            resources:
+              requests:
+                cpu: 100m
+                memory: 128Mi
+              limits:
+                memory: 512Mi
+    defaultPodOptions:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 100
+        fsGroup: 100
+        fsGroupChangePolicy: OnRootMismatch
+    service:
+      app:
+        controller: mission-control
+        ports:
+          http:
+            port: 3000
+    route:
+      app:
+        hostnames:
+          - "mission-control.oxygn.dev"
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
+        rules:
+          - backendRefs:
+              - name: mission-control
+                port: 3000
