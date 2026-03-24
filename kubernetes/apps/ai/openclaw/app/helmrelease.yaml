@@ -405,12 +405,12 @@ spec:
       securityContext:
         fsGroup: 100
         fsGroupChangePolicy: OnRootMismatch
-
     service:
-      main:
-        ipFamilyPolicy: SingleStack
-        ipFamilies:
-          - IPv4
+      app:
+        type: LoadBalancer
+        annotations:
+          lbipam.cilium.io/ips: 10.10.98.190
+        externalTrafficPolicy: Cluster
         ports:
           http:
             port: *port
@@ -419,7 +419,6 @@ spec:
     route:
       main:
         hostnames:
-          - "{{ .Release.Name }}.oxygn.dev"
           - "claw.oxygn.dev"
         parentRefs:
           - name: envoy-internal
@@ -430,7 +429,6 @@ spec:
                 port: *port
       codeserver:
         hostnames:
-          - "openclaw-code.oxygn.dev"
           - "claw-code.oxygn.dev"
         parentRefs:
           - name: envoy-internal
