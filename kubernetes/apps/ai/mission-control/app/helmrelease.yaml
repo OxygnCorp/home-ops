@@ -55,3 +55,8 @@ spec:
           - backendRefs:
               - name: mission-control
                 port: 3000
+    persistence:
+      data:
+        existingClaim: "{{ .Release.Name }}"
+        globalMounts:
+          - path: /app/.data
