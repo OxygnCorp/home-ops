@@ -21,7 +21,7 @@ spec:
               tag: 2.0.1@sha256:36e8ecbbd850d44d2f29a01834a6a735d152c4bf0f480786145b4aa9a9bc2043
             env:
               OPENCLAW_GATEWAY_HOST: "openclaw.ai"
-              NEXT_PUBLIC_GATEWAY_URL: "https://claw.oxygn.dev"
+              NEXT_PUBLIC_GATEWAY_URL: "wss://claw.oxygn.dev"
               MC_ALLOWED_HOSTS: "mission-control.oxygn.dev"
             envFrom:
               - secretRef:
