@@ -19,6 +19,7 @@ spec:
     substitute:
       APP: openclaw
       VOLSYNC_CAPACITY: 10Gi
+      GATUS_SUBDOMAIN: claw
   prune: true
   sourceRef:
     kind: GitRepository
