@@ -380,12 +380,13 @@ spec:
 
           mission-control:
             image:
-              repository: ghcr.io/joryirving/mission-control
-              tag: 2.0.1@sha256:36e8ecbbd850d44d2f29a01834a6a735d152c4bf0f480786145b4aa9a9bc2043
+              repository: ghcr.io/builderz-labs/mission-control
+              tag: v2.1.0
             env:
               OPENCLAW_GATEWAY_HOST: "127.0.0.1"
               NEXT_PUBLIC_GATEWAY_URL: "wss://claw.oxygn.dev"
               MC_ALLOWED_HOSTS: "claw-control.oxygn.dev"
+              OPENCLAW_HOME: /home/node/.openclaw
               MC_ENABLE_HSTS: 1
               MC_COOKIE_SECURE: 1
             envFrom:
@@ -546,6 +547,10 @@ spec:
         globalMounts:
           - path: /config/openclaw.json
             subPath: openclaw.json
+      mission-control:
+        existingClaim: "mission-control-data"
+        globalMounts:
+          - path: /app/.data
       documents:
         type: nfs
         server: funkstation.internal
