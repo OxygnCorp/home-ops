@@ -11,6 +11,10 @@ spec:
       app.kubernetes.io/name: mission-control
   interval: 30m
   path: ./kubernetes/apps/ai/mission-control/app
+  postBuild:
+    substitute:
+      APP: mission-control
+      VOLSYNC_CAPACITY: 5Gi
   prune: true
   sourceRef:
     kind: GitRepository
