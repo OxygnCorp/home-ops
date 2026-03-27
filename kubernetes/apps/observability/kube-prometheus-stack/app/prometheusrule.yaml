@@ -1,0 +1,58 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/monitoring.coreos.com/prometheusrule_v1.json
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: cluster-resource-alerts
+spec:
+  groups:
+    - name: node-resources
+      interval: 30s
+      rules:
+        # CPU Warning - node above 50% for 10min
+        - alert: NodeCPUWarning
+          expr: |
+            100 * (1 - avg by(instance) (node_cpu_seconds_total{mode="idle"}))
+            > 50
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Node CPU usage high ({{ $value | printf \"%.1f\" }}%)"
+            description: "Node {{ $labels.instance }} CPU usage has been above 50% for more than 10 minutes."
+
+        # CPU Critical - node above 80% for 10min
+        - alert: NodeCPUCritical
+          expr: |
+            100 * (1 - avg by(instance) (node_cpu_seconds_total{mode="idle"}))
+            > 80
+          for: 10m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Node CPU usage critical ({{ $value | printf \"%.1f\" }}%)"
+            description: "Node {{ $labels.instance }} CPU usage has been above 80% for more than 10 minutes."
+
+        # Memory Warning - node above 70% for 10min
+        - alert: NodeMemoryWarning
+          expr: |
+            100 * (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)
+            > 70
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Node Memory usage high ({{ $value | printf \"%.1f\" }}%)"
+            description: "Node {{ $labels.instance }} memory usage has been above 70% for more than 10 minutes."
+
+        # Memory Critical - node above 85% for 10min
+        - alert: NodeMemoryCritical
+          expr: |
+            100 * (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)
+            > 85
+          for: 10m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Node Memory usage critical ({{ $value | printf \"%.1f\" }}%)"
+            description: "Node {{ $labels.instance }} memory usage has been above 85% for more than 10 minutes."
