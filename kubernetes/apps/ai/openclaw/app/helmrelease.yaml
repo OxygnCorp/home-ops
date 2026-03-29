@@ -13,7 +13,7 @@ spec:
     controllers:
       openclaw:
         annotations:
-          secret.reloader.stakater.com/reload: "openclaw-secret, openclaw-config"
+          reloader.stakater.com/auto: "true"
         initContainers:
           install-tools:
             image:
