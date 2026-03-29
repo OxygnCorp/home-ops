@@ -397,6 +397,9 @@ spec:
         existingClaim: "mission-control-data"
         globalMounts:
           - path: /app/.data
+      next-cache:
+        type: emptyDir
+        mountPath: /app/.next/cache
       documents:
         type: nfs
         server: funkstation.internal
