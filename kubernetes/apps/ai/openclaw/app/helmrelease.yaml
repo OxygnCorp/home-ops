@@ -399,7 +399,8 @@ spec:
           - path: /app/.data
       next-cache:
         type: emptyDir
-        mountPath: /app/.next/cache
+        globalMounts:
+          - path: /app/.next/cache
       documents:
         type: nfs
         server: funkstation.internal
