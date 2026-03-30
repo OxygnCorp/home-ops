@@ -45,9 +45,10 @@ spec:
                 fi
 
                 if [ ! -f /home/node/.local/bin/openclaw ]; then
-                # Set up openclawbot CLI symlink
-                  echo "Installing creating symlink..."
-                  ln -s /app/openclaw.mjs /home/node/.local/bin/openclaw
+                  # Copy openclaw CLI to shared volume (NOT a symlink - /app is container-specific)
+                  echo "Copying openclaw CLI to shared volume..."
+                  mkdir -p /home/node/.local/bin
+                  cp /app/openclaw.mjs /home/node/.local/bin/openclaw
                 fi
 
                 # Install Go if not present on PVC
@@ -139,7 +140,26 @@ spec:
               - /bin/sh
               - -c
               - |
+                # Wait for Mission Control to be ready
+                echo "Waiting for Mission Control to be ready..."
+                until curl -sf http://localhost:3000/api/health > /dev/null 2>&1; do
+                  sleep 1
+                done
+                
+                # Register gateway with Mission Control
+                echo "Registering gateway with Mission Control..."
+                curl -X POST http://localhost:3000/api/gateways \
+                  -H "Content-Type: application/json" \
+                  -H "Authorization: Bearer $MC_API_KEY" \
+                  -d '{
+                    "name": "sidecar-gateway",
+                    "host": "127.0.0.1",
+                    "port": 18789,
+                    "is_primary": true
+                  }'
+                
                 # Start gateway
+                echo "Starting OpenClaw gateway..."
                 exec node dist/index.js gateway --bind lan
             env:
               OPENCLAW_LOG_LEVEL: debug
@@ -157,6 +177,11 @@ spec:
               PIP_BREAK_SYSTEM_PACKAGES: "1"
               TERM: xterm-256color
               TZ: &tz Europe/Paris
+              MC_API_KEY:
+                valueFrom:
+                  secretKeyRef:
+                    name: mission-control-secret
+                    key: MC_API_KEY
             envFrom:
               - secretRef:
                   name: "{{ .Release.Name }}-secret"
@@ -199,7 +224,11 @@ spec:
             image:
               repository: ghcr.io/joryirving/mission-control
               tag: 2.0.1@sha256:36e8ecbbd850d44d2f29a01834a6a735d152c4bf0f480786145b4aa9a9bc2043
+            volumeMounts:
+              - name: config
+                mountPath: *homepath
             env:
+              PATH: "/home/node/.local/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin"
               OPENCLAW_GATEWAY_HOST: "localhost"
               OPENCLAW_GATEWAY_PORT: "18789"
               OPENCLAW_HOME: "/home/node/.openclaw"
