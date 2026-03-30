@@ -39,8 +39,7 @@ spec:
 
     # Broker configuration
     broker:
-      # Number of replicas for HA
-      replicaCount: 2
+      replicaCount: 1
 
       # Resource limits
       resources:
