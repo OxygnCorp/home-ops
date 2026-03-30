@@ -28,7 +28,7 @@ spec:
           app:
             image:
               repository: docker.io/ollama/ollama
-              tag: 0.18.3
+              tag: 0.19.0
 
             env:
               TZ: America/Vancouver
