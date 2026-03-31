@@ -206,11 +206,12 @@ spec:
               PATH: "/home/node/.local/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin"
               OPENCLAW_GATEWAY_HOST: "127.0.0.1"
               OPENCLAW_GATEWAY_PORT: "18789"
-              OPENCLAW_HOME: "/home/node/.openclaw"
+              OPENCLAW_STATE_DIR: "/home/node/.openclaw"
               OPENCLAW_CONFIG_PATH: "/home/node/.openclaw/openclaw.json"
               NEXT_PUBLIC_GATEWAY_URL: "wss://claw.oxygn.dev"
               NEXT_PUBLIC_GATEWAY_CLIENT_ID: "openclaw-control-ui"
               MC_ALLOWED_HOSTS: "claw-control.oxygn.dev,localhost,127.0.0.1"
+              LOG_LEVEL: "debug"
             envFrom:
               - secretRef:
                   name: mission-control-secret
