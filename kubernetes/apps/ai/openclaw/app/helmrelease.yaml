@@ -204,7 +204,6 @@ spec:
               tag: 2.0.1@sha256:36e8ecbbd850d44d2f29a01834a6a735d152c4bf0f480786145b4aa9a9bc2043
             env:
               PATH: "/home/node/.local/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin"
-              # OPENCLAW_BIN: "/home/node/.local/bin/openclaw/openclaw.mjs"
               OPENCLAW_GATEWAY_HOST: "127.0.0.1"
               OPENCLAW_GATEWAY_PORT: "18789"
               OPENCLAW_HOME: "/home/node/.openclaw"
@@ -218,9 +217,7 @@ spec:
             resources:
               requests:
                 cpu: 100m
-                memory: 128Mi
-              limits:
-                memory: 1Gi
+                memory: 256Mi
 
           codeserver:
             image:
