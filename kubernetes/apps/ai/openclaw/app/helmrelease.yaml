@@ -200,8 +200,10 @@ spec:
 
           mission-control:
             image:
-              repository: ghcr.io/joryirving/mission-control
-              tag: 2.0.1@sha256:36e8ecbbd850d44d2f29a01834a6a735d152c4bf0f480786145b4aa9a9bc2043
+              repository: ghcr.io/builderz-labs/mission-control
+              tag: sha-30ecc3d
+              # repository: ghcr.io/joryirving/mission-control
+              # tag: 2.0.1@sha256:36e8ecbbd850d44d2f29a01834a6a735d152c4bf0f480786145b4aa9a9bc2043
             env:
               PATH: "/home/node/.local/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin"
               OPENCLAW_GATEWAY_HOST: "127.0.0.1"
@@ -209,7 +211,7 @@ spec:
               OPENCLAW_STATE_DIR: "/home/node/.openclaw"
               OPENCLAW_CONFIG_PATH: "/home/node/.openclaw/openclaw.json"
               NEXT_PUBLIC_GATEWAY_URL: "wss://claw.oxygn.dev"
-              NEXT_PUBLIC_GATEWAY_CLIENT_ID: "openclaw-control-ui"
+              NEXT_PUBLIC_GATEWAY_CLIENT_ID: "mission-control"
               MC_ALLOWED_HOSTS: "claw-control.oxygn.dev,localhost,127.0.0.1"
               LOG_LEVEL: "debug"
             envFrom:
