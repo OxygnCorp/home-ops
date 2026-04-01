@@ -82,11 +82,11 @@ spec:
 
                 echo "Tool installation complete"
 
-                # Install Homebrew if not present on PVC
-                if [ ! -f /home/node/.local/homebrew/bin/openclaw-cli ]; then
-                  echo "Installing openclaw-cli..."
-                  /home/node/.local/homebrew/bin/brew install openclaw-cli
-                fi
+                # # Install Homebrew if not present on PVC
+                # if [ ! -f /home/node/.local/homebrew/bin/openclaw-cli ]; then
+                #   echo "Installing openclaw-cli..."
+                #   /home/node/.local/homebrew/bin/brew install openclaw-cli
+                # fi
 
                 if [ ! -f /home/node/.local/bin/openclaw ]; then
                   echo "Creating symlink..."
