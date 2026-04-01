@@ -44,14 +44,6 @@ spec:
                   rm -rf gh.tar.gz gh_2.86.0_linux_amd64
                 fi
 
-                if [ ! -f /home/node/.local/bin/openclaw-cli/openclaw.mjs ]; then
-                  echo "Copying openclaw CLI to shared volume..."
-                  mkdir -p /home/node/.local/bin/openclaw-cli
-                  cp -r /app/* /home/node/.local/bin/openclaw-cli/
-                  echo "Creating symlink..."
-                  ln -s /home/node/.local/bin/openclaw-cli/openclaw.mjs /home/node/.local/bin/openclaw
-                fi
-
                 # Install Go if not present on PVC
                 if [ ! -f /home/node/.local/go/bin/go ]; then
                   echo "Installing Go..."
@@ -89,6 +81,14 @@ spec:
                 set -e # Re-enable error checking
 
                 echo "Tool installation complete"
+
+                #Copy CLI to shared volume and create symlink
+                echo "Copying openclaw CLI to shared volume..."
+                rm -rf /home/node/.local/bin/openclaw-cli
+                mkdir -p /home/node/.local/bin/openclaw-cli
+                cp -r /app/* /home/node/.local/bin/openclaw-cli/
+                echo "Creating symlink..."
+                ln -s /home/node/.local/bin/openclaw-cli/openclaw.mjs /home/node/.local/bin/openclaw
 
                 # Ensure config directory exists
                 mkdir -p /home/node/.openclaw
