@@ -18,7 +18,7 @@ spec:
           install-tools:
             image:
               repository: ghcr.io/openclaw/openclaw
-              tag: 2026.3.31@sha256:05f1a6f1c2fa6abde75a64a99e465b16c62a95579173416fdee97045fc0f48e0
+              tag: 2026.3.28@sha256:5900559f795ef15ea2f0b1fc488726d9b27bb2de398424c14d13c9b1f1ff0d66
             command:
               - /bin/sh
               - -c
@@ -80,18 +80,14 @@ spec:
                 fi
                 set -e # Re-enable error checking
 
+                # Copy openclaw-cli to emptydir for mission-control access
+                echo "Copying openclaw CLI to emptydir volume..."
+                mkdir -p /tmp/openclaw-cli
+                cp -r /app/* /tmp/openclaw-cli/
+                echo "Creating symlink..."
+                ln -s /tmp/openclaw-cli/openclaw.mjs /home/node/.local/bin/openclaw
+
                 echo "Tool installation complete"
-
-                # # Install Homebrew if not present on PVC
-                # if [ ! -f /home/node/.local/homebrew/bin/openclaw-cli ]; then
-                #   echo "Installing openclaw-cli..."
-                #   /home/node/.local/homebrew/bin/brew install openclaw-cli
-                # fi
-
-                if [ ! -f /home/node/.local/bin/openclaw ]; then
-                  echo "Creating symlink..."
-                  ln -s /app/openclaw.mjs /home/node/.local/bin/openclaw
-                fi
 
                 # Ensure config directory exists
                 mkdir -p /home/node/.openclaw
@@ -139,7 +135,7 @@ spec:
           app:
             image:
               repository: ghcr.io/openclaw/openclaw
-              tag: 2026.3.31@sha256:05f1a6f1c2fa6abde75a64a99e465b16c62a95579173416fdee97045fc0f48e0
+              tag: 2026.3.28@sha256:5900559f795ef15ea2f0b1fc488726d9b27bb2de398424c14d13c9b1f1ff0d66
             command:
               - /bin/sh
               - -c
@@ -208,7 +204,7 @@ spec:
               # repository: ghcr.io/joryirving/mission-control
               # tag: 2.0.1@sha256:36e8ecbbd850d44d2f29a01834a6a735d152c4bf0f480786145b4aa9a9bc2043
             env:
-              PATH: "/home/node/.local/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin:/home/node/.local/homebrew/bin"
+              PATH: "/home/node/.local/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin"
               OPENCLAW_GATEWAY_HOST: "127.0.0.1"
               OPENCLAW_GATEWAY_PORT: "18789"
               OPENCLAW_STATE_DIR: "/home/node/.openclaw"
