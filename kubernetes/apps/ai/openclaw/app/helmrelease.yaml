@@ -85,6 +85,7 @@ spec:
                 mkdir -p /tmp/openclaw-cli
                 cp -r /app/* /tmp/openclaw-cli/
                 echo "Creating symlink..."
+                rm /home/node/.local/bin/openclaw
                 ln -s /tmp/openclaw-cli/openclaw.mjs /home/node/.local/bin/openclaw
 
                 echo "Tool installation complete"
