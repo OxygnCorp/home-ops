@@ -81,12 +81,14 @@ spec:
                 set -e # Re-enable error checking
 
                 # Copy openclaw-cli to emptydir for mission-control access
+                set +e # Don't fail on error
                 echo "Copying openclaw CLI to emptydir volume..."
                 mkdir -p /tmp/openclaw-cli
                 cp -r /app/* /tmp/openclaw-cli/
                 echo "Creating symlink..."
                 rm /home/node/.local/bin/openclaw
                 ln -s /tmp/openclaw-cli/openclaw.mjs /home/node/.local/bin/openclaw
+                set -e # Re-enable error checking
 
                 echo "Tool installation complete"
 
