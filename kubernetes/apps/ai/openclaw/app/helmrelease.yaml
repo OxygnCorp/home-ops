@@ -82,13 +82,14 @@ spec:
 
                 echo "Tool installation complete"
 
-                #Copy CLI to shared volume and create symlink
-                echo "Copying openclaw CLI to shared volume..."
-                rm -rf /home/node/.local/bin/openclaw-cli
-                mkdir -p /home/node/.local/bin/openclaw-cli
-                cp -r /app/* /home/node/.local/bin/openclaw-cli/
+                # Install Homebrew if not present on PVC
+                if [ ! -f /home/node/.local/homebrew/bin/openclaw-cli ]; then
+                  echo "Installing openclaw-cli..."
+                  brew install openclaw-cli
+                fi
+
                 echo "Creating symlink..."
-                ln -s /home/node/.local/bin/openclaw-cli/openclaw.mjs /home/node/.local/bin/openclaw
+                ln -s /app/openclaw.mjs /home/node/.local/bin/openclaw
 
                 # Ensure config directory exists
                 mkdir -p /home/node/.openclaw
