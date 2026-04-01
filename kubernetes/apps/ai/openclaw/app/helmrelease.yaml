@@ -85,11 +85,13 @@ spec:
                 # Install Homebrew if not present on PVC
                 if [ ! -f /home/node/.local/homebrew/bin/openclaw-cli ]; then
                   echo "Installing openclaw-cli..."
-                  brew install openclaw-cli
+                  /home/node/.local/homebrew/bin/brew install openclaw-cli
                 fi
 
-                echo "Creating symlink..."
-                ln -s /app/openclaw.mjs /home/node/.local/bin/openclaw
+                if [ ! -f /home/node/.local/bin/openclaw ]; then
+                  echo "Creating symlink..."
+                  ln -s /app/openclaw.mjs /home/node/.local/bin/openclaw
+                fi
 
                 # Ensure config directory exists
                 mkdir -p /home/node/.openclaw
