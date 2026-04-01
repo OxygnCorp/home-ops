@@ -206,7 +206,7 @@ spec:
               # repository: ghcr.io/joryirving/mission-control
               # tag: 2.0.1@sha256:36e8ecbbd850d44d2f29a01834a6a735d152c4bf0f480786145b4aa9a9bc2043
             env:
-              PATH: "/home/node/.local/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin"
+              PATH: "/home/node/.local/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin:/home/node/.local/homebrew/bin"
               OPENCLAW_GATEWAY_HOST: "127.0.0.1"
               OPENCLAW_GATEWAY_PORT: "18789"
               OPENCLAW_STATE_DIR: "/home/node/.openclaw"
