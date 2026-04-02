@@ -8,7 +8,7 @@ spec:
   chartRef:
     kind: OCIRepository
     name: mcp-grafana
-  interval: 15m
+  interval: 1h
   values:
     controllers:
       mcp-grafana:
@@ -54,11 +54,11 @@ spec:
               capabilities:
                 drop:
                   - ALL
-        defaultPodOptions:
-          securityContext:
-            runAsNonRoot: false
-            runAsUser: 0
-            runAsGroup: 0
+    defaultPodOptions:
+      securityContext:
+        runAsNonRoot: false
+        runAsUser: 0
+        runAsGroup: 0
     service:
       app:
         ports:
@@ -66,12 +66,7 @@ spec:
             port: 8000
     route:
       app:
-        hostnames:
-          - "grafana-mcp.oxygn.dev"
+        hostnames: ["grafana-mcp.oxygn.dev"]
         parentRefs:
           - name: envoy-internal
             namespace: network
-        rules:
-          - backendRefs:
-              - name: "{{ .Release.Name }}"
-                port: 8000
