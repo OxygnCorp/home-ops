@@ -1,0 +1,77 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: mcp-grafana
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: app-template
+  interval: 15m
+  values:
+    controllers:
+      mcp-grafana:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: mcp/grafana
+              tag: latest
+              pullPolicy: Always
+            args:
+              - "run"
+              - "--rm"
+              - "-i"
+              - "-e"
+              - "GRAFANA_URL"
+              - "-e"
+              - "GRAFANA_AUTH"
+              - "mcp/grafana"
+              - "-t"
+              - "sse"
+            env:
+              GRAFANA_URL: "http://grafana-service.observability:3000"
+            envFrom:
+              - secretRef:
+                  name: mcp-grafana
+            probes:
+              liveness:
+                enabled: false
+              readiness:
+                enabled: false
+              startup:
+                enabled: false
+            resources:
+              requests:
+                cpu: 50m
+                memory: 128Mi
+              limits:
+                memory: 256Mi
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                  - ALL
+        defaultPodOptions:
+          securityContext:
+            runAsNonRoot: false
+            runAsUser: 0
+            runAsGroup: 0
+    service:
+      app:
+        ports:
+          http:
+            port: 8000
+    route:
+      app:
+        hostnames:
+          - "grafana-mcp.oxygn.dev"
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
+        rules:
+          - backendRefs:
+              - name: "{{ .Release.Name }}"
+                port: 8000
