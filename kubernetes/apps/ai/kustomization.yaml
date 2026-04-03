@@ -8,4 +8,4 @@ components:
 
 resources:
   - ./namespace.yaml
-  - ./openclaw/ks.yaml
+  # - ./openclaw/ks.yaml
