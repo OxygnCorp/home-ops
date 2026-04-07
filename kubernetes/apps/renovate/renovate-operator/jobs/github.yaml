@@ -20,7 +20,8 @@ metadata:
   name: oxygncorp
   namespace: renovate
 spec:
-  discoveryFilter: OxygnCorp/*
+  discoveryFilters:
+    - OxygnCorp/*
   provider:
     name: github
     endpoint: https://api.github.com/
