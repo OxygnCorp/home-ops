@@ -29,8 +29,10 @@ spec:
           tag: 5.0.0
           pullPolicy: IfNotPresent
       secret:
-        key: ZWX26VJdlcVHqgmdsCwA7wM+9/lQI4m6iyL139tHJ8A=
+        existingSecret: plane-secret
       settings:
+        admin:
+          email: "admin@oxygn.dev"
         email:
           enabled: false
         external-url:
