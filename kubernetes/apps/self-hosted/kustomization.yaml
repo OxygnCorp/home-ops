@@ -1,4 +1,3 @@
----
 # yaml-language-server: $schema=https://json.schemastore.org/kustomization
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
@@ -11,5 +10,6 @@ resources:
   - ./convertx/ks.yaml
   - ./mealie/ks.yaml
   - ./omni-tools/ks.yaml
+  - ./plane/ks.yaml
   - ./stirling-pdf/ks.yaml
   - ./webhook/ks.yaml
