@@ -7,6 +7,7 @@ components:
 
 resources:
   - ./namespace.yaml
+  - ./actual/ks.yaml
   - ./convertx/ks.yaml
   - ./mealie/ks.yaml
   - ./omni-tools/ks.yaml
