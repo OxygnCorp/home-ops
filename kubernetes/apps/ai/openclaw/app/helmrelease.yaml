@@ -18,7 +18,7 @@ spec:
           install-tools:
             image:
               repository: ghcr.io/openclaw/openclaw
-              tag: 2026.4.5@sha256:f38ff3d987e6c3e2d77bbb379de575f280d16037fd6a7ec334a35d48e480fd54
+              tag: 2026.4.14@sha256:7ea070b04d1e70811fe8ba15feaad5890b1646021b24e00f4795bd4587a594ed
             command:
               - /bin/sh
               - -c
@@ -98,7 +98,7 @@ spec:
           daemon:
             image:
               repository: docker
-              tag: 29.3.1-dind@sha256:686d2c5464787b0ca42420e0aa03a94fc9781ff9bf8b5ff947614b9fa4c3c3e0
+              tag: 29.4.0-dind@sha256:f80c26212befc1c1988b529495532c6b9180d9b1dab1611f4a1efbe9da8ec821
             restartPolicy: Always
             env:
               DOCKER_TLS_CERTDIR: /certs
@@ -138,7 +138,7 @@ spec:
           app:
             image:
               repository: ghcr.io/openclaw/openclaw
-              tag: 2026.4.5@sha256:f38ff3d987e6c3e2d77bbb379de575f280d16037fd6a7ec334a35d48e480fd54
+              tag: 2026.4.14@sha256:7ea070b04d1e70811fe8ba15feaad5890b1646021b24e00f4795bd4587a594ed
             command:
               - /bin/sh
               - -c
@@ -227,7 +227,7 @@ spec:
           codeserver:
             image:
               repository: ghcr.io/coder/code-server
-              tag: 4.114.1@sha256:df6e26973ab703254d6e736971906b6a1956494e8bbfd7e297afb4cf5d30ab5f
+              tag: 4.115.0@sha256:cbd5e05849367e521f774b760602cb9e0a8da1f159eaf89600490eec34129fe5
             env:
               TZ: *tz
             args:
