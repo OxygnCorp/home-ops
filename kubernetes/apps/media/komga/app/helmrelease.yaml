@@ -37,6 +37,7 @@ spec:
                 memory: 640Mi
               limits:
                 memory: 1024Mi
+                cpu: 200m
     service:
       app:
         controller: komga
