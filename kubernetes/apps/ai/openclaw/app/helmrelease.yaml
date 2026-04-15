@@ -171,6 +171,7 @@ spec:
                 memory: 512Mi
               limits:
                 memory: 4Gi
+                cpu: 2000m
 
           # -- Chromium sidecar for browser automation (CDP on port 9222)
           chrome:

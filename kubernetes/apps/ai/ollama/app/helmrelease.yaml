@@ -47,6 +47,7 @@ spec:
               limits:
                 nvidia.com/gpu: 1
                 memory: 6Gi
+                cpu: 2000m
 
         pod:
           affinity:
