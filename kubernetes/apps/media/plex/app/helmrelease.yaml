@@ -70,6 +70,7 @@ spec:
               limits:
                 # nvidia.com/gpu: 1
                 memory: 1Gi
+                cpu: 2000m
     defaultPodOptions:
       securityContext:
         runAsNonRoot: true
