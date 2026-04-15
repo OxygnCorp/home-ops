@@ -11,6 +11,5 @@ resources:
   - ./convertx/ks.yaml
   - ./mealie/ks.yaml
   - ./omni-tools/ks.yaml
-  - ./plane/ks.yaml
   - ./stirling-pdf/ks.yaml
   - ./webhook/ks.yaml
