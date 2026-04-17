@@ -68,7 +68,7 @@ gum = "0.16.2"
 
 # Linters
 "pipx:yamllint" = "1.38.0"
-"aqua:mikefarah/yq" = "4.53.1"
+"aqua:mikefarah/yq" = "4.53.2"
 "aqua:jqlang/jq" = "1.7.1"
 
 
