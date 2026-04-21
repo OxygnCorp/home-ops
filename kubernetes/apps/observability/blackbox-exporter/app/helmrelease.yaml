@@ -59,3 +59,11 @@ spec:
           annotations:
             summary: |-
               The host {{ $labels.target }} is currently unreachable
+
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi
