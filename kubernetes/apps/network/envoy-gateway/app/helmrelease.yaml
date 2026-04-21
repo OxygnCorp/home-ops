@@ -17,6 +17,8 @@ spec:
         provider:
           type: Kubernetes
           kubernetes:
+            deploy:
+              type: GatewayNamespace
     resources:
       requests:
         cpu: 100m
@@ -24,5 +26,3 @@ spec:
       limits:
         cpu: 500m
         memory: 512Mi
-            deploy:
-              type: GatewayNamespace
