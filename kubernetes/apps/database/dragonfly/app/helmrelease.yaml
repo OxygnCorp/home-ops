@@ -16,3 +16,11 @@ spec:
     grafanaDashboard:
       enabled: true
       folder: database
+
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 2Gi
