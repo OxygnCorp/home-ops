@@ -188,3 +188,11 @@ spec:
       # Run compliance scans once daily at midnight (default: every 6 hours)
       failEntriesLimit: 10
       cron: "0 1 * * *"
+
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
