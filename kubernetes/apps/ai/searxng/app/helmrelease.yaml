@@ -116,6 +116,10 @@ spec:
         parentRefs:
           - name: envoy-internal
             namespace: network
+        rules:
+          - backendRefs:
+              - name: searxng
+                port: *port
 
     service:
       app:
