@@ -162,39 +162,87 @@ if [[ -n "$X_GITHUB_DELIVERY" ]]; then
 Event ID: ${X_GITHUB_DELIVERY}"
 fi
 
-# Payload OpenClaw enrichi
-PAYLOAD_JSON=$(jq -n \
-    --arg msg "$CONTEXT_MSG" \
-    --arg repo "$REPO_FULL_NAME" \
-    --arg number "$NUMBER" \
-    --arg type "$EVENT_TYPE" \
-    --arg action "$ACTION" \
-    --arg title "$TITLE" \
-    --arg sender "$SENDER" \
-    --arg assignee "$ASSIGNEE" \
-    '{
-        "message": $msg,
-        "name": "GitHub",
-        "agentId": "devops",
-        "wakeMode": "now",
-        "deliver": true,
-        "channel": "discord",
-        "thinking": "medium",
-        "timeoutSeconds": 300,
-        "metadata": {
-            "repository": $repo,
-            "number": $number,
-            "type": $type,
-            "action": $action,
-            "title": $title,
-            "sender": $sender,
-            "assignee": $assignee
-        }
-    }')
+# ============================================================
+# Pour les événements PR (pull_request), orienter vers lobster
+# ============================================================
+# Si c'est un PR (pas un review), on envoie un message directive pour lobster
+# avec deliver=false pour que l'agent isolé exécute le pipeline
+
+if [[ "$EVENT_TYPE" == "pull_request" ]]; then
+    LOBSTER_MSG="PR #$NUMBER - $REPO_FULL_NAME
+
+Run lobster pipeline: lobster run --file ~/.openclaw/workspace/projects/openclaw-automatisation/pipelines/devops-pr-gate.lobster --args-json '{\"PR\":$NUMBER,\"REPO\":\"$REPO_FULL_NAME\"}'
+
+PR Title: $TITLE
+PR Author: $USER
+PR Action: $ACTION"
+
+    # Payload pour PR - directive lobster, deliver=false
+    PAYLOAD_JSON=$(jq -n \
+        --arg msg "$LOBSTER_MSG" \
+        --arg repo "$REPO_FULL_NAME" \
+        --arg number "$NUMBER" \
+        --arg type "$EVENT_TYPE" \
+        --arg action "$ACTION" \
+        --arg title "$TITLE" \
+        --arg sender "$SENDER" \
+        --arg assignee "$ASSIGNEE" \
+        '{
+            "message": $msg,
+            "name": "GitHub",
+            "agentId": "devops",
+            "wakeMode": "now",
+            "deliver": false,
+            "channel": "discord",
+            "thinking": "medium",
+            "timeoutSeconds": 300,
+            "metadata": {
+                "repository": $repo,
+                "number": $number,
+                "type": $type,
+                "action": $action,
+                "title": $title,
+                "sender": $sender,
+                "assignee": $assignee
+            }
+        }')
+
+    echo "Sending PR to lobster pipeline: $REPO_FULL_NAME #$NUMBER" >&2
+else
+    # Pour les issues et reviews, garder le comportement actuel (deliver=true)
+    PAYLOAD_JSON=$(jq -n \
+        --arg msg "$CONTEXT_MSG" \
+        --arg repo "$REPO_FULL_NAME" \
+        --arg number "$NUMBER" \
+        --arg type "$EVENT_TYPE" \
+        --arg action "$ACTION" \
+        --arg title "$TITLE" \
+        --arg sender "$SENDER" \
+        --arg assignee "$ASSIGNEE" \
+        '{
+            "message": $msg,
+            "name": "GitHub",
+            "agentId": "devops",
+            "wakeMode": "now",
+            "deliver": true,
+            "channel": "discord",
+            "thinking": "medium",
+            "timeoutSeconds": 300,
+            "metadata": {
+                "repository": $repo,
+                "number": $number,
+                "type": $type,
+                "action": $action,
+                "title": $title,
+                "sender": $sender,
+                "assignee": $assignee
+            }
+        }')
+
+    echo "Sending to OpenClaw: $EVENT_TYPE $ACTION on $REPO_FULL_NAME #$NUMBER" >&2
+fi
 
 # Envoyer à OpenClaw
-echo "Sending to OpenClaw: $EVENT_TYPE $ACTION on $REPO_FULL_NAME #$NUMBER" >&2
-
 curl -s -X POST \
     "${OPENCLAW_WEBHOOK_URL}" \
     -H "Content-Type: application/json" \
