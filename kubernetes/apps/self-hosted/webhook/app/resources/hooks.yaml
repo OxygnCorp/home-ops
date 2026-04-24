@@ -131,8 +131,7 @@
       source: string
       name: http://10.10.10.18:18789/hooks/agent
     - # Full payload JSON
-      source: payload
-      name: root
+      source: entire-payload
   trigger-rule:
     and:
       - # Validate the webhook secret (same as OpenClaw auth)
