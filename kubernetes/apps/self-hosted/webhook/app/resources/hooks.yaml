@@ -128,7 +128,7 @@
   pass-arguments-to-command:
     - # OpenClaw webhook URL
       source: string
-      name: http://openclaw.ai:18789/hooks/agent
+      name: http://10.10.10.18:18789/hooks/agent
     - # Full payload JSON
       source: payload
       name: .
