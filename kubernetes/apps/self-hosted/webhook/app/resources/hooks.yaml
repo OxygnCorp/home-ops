@@ -114,6 +114,7 @@
 # Webhook pour notifier OpenClaw des issues avec label "bot"
 - id: github-oxygn-bot
   execute-command: /config/github.sh
+  incoming-payload-content-type: "application/json"
   pass-environment-to-command:
     - source: string
       envname: OPENCLAW_WEBHOOK_TOKEN
@@ -131,7 +132,7 @@
       name: http://10.10.10.18:18789/hooks/agent
     - # Full payload JSON
       source: payload
-      name: .
+      name: root
   trigger-rule:
     and:
       - # Validate the webhook secret (same as OpenClaw auth)
