@@ -28,7 +28,7 @@ go = "1.26.2"
 gum = "0.16.2"
 
 # Mise
-"slsa-verifier" = "2.7.0"
+"slsa-verifier" = "2.7.1"
 "aqua:sigstore/cosign" = "3.0.6"
 
 # 1Password
