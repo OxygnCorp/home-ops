@@ -171,7 +171,7 @@ fi
 if [[ "$IS_PR" == "true" && "$EVENT_TYPE" == "pull_request" ]]; then
     LOBSTER_MSG="PR #$NUMBER - $REPO_FULL_NAME
 
-Run lobster pipeline: lobster run --file ~/.openclaw/workspace/projects/openclaw-automatisation/pipelines/devops-pr-gate.lobster --args-json '{\"PR\":$NUMBER,\"REPO\":\"$REPO_FULL_NAME\"}'
+Run lobster pipeline: lobster run --file ~/.openclaw/workspace-devops/pipelines/devops-pr-gate.lobster --args-json '{\"PR\":$NUMBER,\"REPO\":\"$REPO_FULL_NAME\"}'
 
 PR Title: $TITLE
 PR Author: $USER
