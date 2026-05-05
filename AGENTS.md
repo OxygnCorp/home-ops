@@ -8,19 +8,19 @@ This repository maintains modular instruction files for different aspects of the
 
 **Reference instruction files:**
 
-- [`repo-structure.instructions.md`](instructions/repo-structure.instructions.md): Repository structure and operations guide
-- [`flux.instructions.md`](instructions/flux.instructions.md): Flux configuration guidelines
-- [`flux-kustomization.instructions.md`](instructions/flux-kustomization.instructions.md): Flux Kustomization (ks.yaml) guidelines
-- [`ocirepository.instructions.md`](instructions/ocirepository.instructions.md): OCIRepository configuration
-- [`kustomization.instructions.md`](instructions/kustomization.instructions.md): Kustomize kustomization.yaml patterns
-- [`namespace.instructions.md`](instructions/namespace.instructions.md): Namespace definitions
-- [`helmrelease.instructions.md`](instructions/helmrelease.instructions.md): HelmRelease patterns and examples
-- [`secrets.instructions.md`](instructions/secrets.instructions.md): Secret management practices
-- [`externaldns.instructions.md`](instructions/externaldns.instructions.md): ExternalDNS configuration
-- [`talos.instructions.md`](instructions/talos.instructions.md): Talos OS configuration best practices
-- [`volsync.instructions.md`](instructions/volsync.instructions.md): VolSync integration for persistent storage
-- [`yaml-schemas.instructions.md`](instructions/yaml-schemas.instructions.md): YAML Schema Validation Guidelines
-- [`sorting.instructions.md`](instructions/sorting.instructions.md): YAML sorting rules
+- [`repo-structure.instructions.md`](.agents/instructions/repo-structure.instructions.md): Repository structure and operations guide
+- [`flux.instructions.md`](.agents/instructions/flux.instructions.md): Flux configuration guidelines
+- [`flux-kustomization.instructions.md`](.agents/instructions/flux-kustomization.instructions.md): Flux Kustomization (ks.yaml) guidelines
+- [`ocirepository.instructions.md`](.agents/instructions/ocirepository.instructions.md): OCIRepository configuration
+- [`kustomization.instructions.md`](.agents/instructions/kustomization.instructions.md): Kustomize kustomization.yaml patterns
+- [`namespace.instructions.md`](.agents/instructions/namespace.instructions.md): Namespace definitions
+- [`helmrelease.instructions.md`](.agents/instructions/helmrelease.instructions.md): HelmRelease patterns and examples
+- [`secrets.instructions.md`](.agents/instructions/secrets.instructions.md): Secret management practices
+- [`externaldns.instructions.md`](.agents/instructions/externaldns.instructions.md): ExternalDNS configuration
+- [`talos.instructions.md`](.agents/instructions/talos.instructions.md): Talos OS configuration best practices
+- [`volsync.instructions.md`](.agents/instructions/volsync.instructions.md): VolSync integration for persistent storage
+- [`yaml-schemas.instructions.md`](.agents/instructions/yaml-schemas.instructions.md): YAML Schema Validation Guidelines
+- [`sorting.instructions.md`](.agents/instructions/sorting.instructions.md): YAML sorting rules
 
 > **Note**: The guidance from these files is incorporated into the sections below. When working with specific components, refer to the relevant sections in this file.
 
@@ -106,12 +106,7 @@ This repository manages a Kubernetes cluster using GitOps with Flux. Key compone
 
 ## Adding New Applications
 
-1. Create directory: `kubernetes/apps/<category>/<app-name>/`
-2. Add `ks.yaml` for Flux management
-3. Create `app/` with kustomization.yaml, helmrelease.yaml, etc.
-4. Include namespace.yaml if needed
-5. Configure secrets externally
-6. Commit and let Flux reconcile
+A skill for adding a new application exists in [`SKILL.md`](.agents/skills/add-app/SKILL.md): Adding a new application
 
 ## YAML Schema Validation
 
