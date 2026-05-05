@@ -209,7 +209,15 @@ PR Action: $ACTION"
 
     echo "Sending PR to lobster pipeline: $REPO_FULL_NAME #$NUMBER" >&2
 else
-    # Pour les issues et reviews, garder le comportement actuel (deliver=true)
+    # Supprimer le deliver pour les events PR non-opened (labeled, synchronize, etc.)
+    # pour éviter les doublons avec le message PR Gate.
+    # Garder deliver pour les issues et reviews.
+    if [[ "$IS_PR" == "true" && "$EVENT_TYPE" == "pull_request" ]]; then
+        DELIVER=false
+    else
+        DELIVER=true
+    fi
+
     PAYLOAD_JSON=$(jq -n \
         --arg msg "$CONTEXT_MSG" \
         --arg repo "$REPO_FULL_NAME" \
@@ -219,12 +227,13 @@ else
         --arg title "$TITLE" \
         --arg sender "$SENDER" \
         --arg assignee "$ASSIGNEE" \
+        --argjson deliver "$DELIVER" \
         '{
             "message": $msg,
             "name": "GitHub",
             "agentId": "devops",
             "wakeMode": "now",
-            "deliver": true,
+            "deliver": $deliver,
             "channel": "discord",
             "thinking": "medium",
             "timeoutSeconds": 300,
