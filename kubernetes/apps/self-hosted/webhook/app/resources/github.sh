@@ -168,7 +168,7 @@ fi
 # Si c'est un PR (pas un review), on envoie un message directive pour lobster
 # avec deliver=false pour que l'agent isolé exécute le pipeline
 
-if [[ "$IS_PR" == "true" && "$EVENT_TYPE" == "pull_request" ]]; then
+if [[ "$IS_PR" == "true" && "$EVENT_TYPE" == "pull_request" && "$ACTION" == "opened" ]]; then
     LOBSTER_MSG="PR #$NUMBER - $REPO_FULL_NAME
 
 Run lobster pipeline: lobster run --file ~/.openclaw/workspace-devops/pipelines/devops-pr-gate.lobster --args-json '{\"PR\":$NUMBER,\"REPO\":\"$REPO_FULL_NAME\"}'
