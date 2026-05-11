@@ -24,7 +24,7 @@ spec:
           app:
             image:
               repository: ghcr.io/actualbudget/actual-server
-              tag: sha-95b2925-alpine #26.4.0
+              tag: 26.5.2
               pullPolicy: IfNotPresent
             env:
               TZ: "Europe/Paris"
