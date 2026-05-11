@@ -1,4 +1,15 @@
 ---
+# yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/grafana.integreatly.org/grafanafolder_v1beta1.json
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaFolder
+metadata:
+  name: ai
+spec:
+  allowCrossNamespaceImport: true
+  instanceSelector:
+    matchLabels:
+      grafana.internal/instance: grafana
+---
 # yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/grafana.integreatly.org/grafanadashboard_v1beta1.json
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDashboard
@@ -6,6 +17,7 @@ metadata:
   name: toolhive-mcp-gateway
 spec:
   allowCrossNamespaceImport: true
+  folderRef: "ai"
   instanceSelector:
     matchLabels:
       dashboards: grafana
