@@ -8,6 +8,7 @@ components:
 resources:
   - ./oikos/ks.yaml
   - ./namespace.yaml
+  - ./nextcloud/ks.yaml
   - ./actual/ks.yaml
   - ./convertx/ks.yaml
   - ./mealie/ks.yaml
