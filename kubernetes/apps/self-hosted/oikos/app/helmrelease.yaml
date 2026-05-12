@@ -1,0 +1,115 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: oikos
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: oikos
+  interval: 1h
+  values:
+    controllers:
+      oikos:
+        replicas: 1
+        strategy: Recreate
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: ghcr.io/ulsklyc/oikos
+              tag: latest
+              pullPolicy: Always
+            env:
+              TZ: Europe/Paris
+              NODE_ENV: production
+              DB_PATH: /data/oikos.db
+              BACKUP_DIR: /backups
+              SESSION_SECURE: "false"
+            envFrom:
+              - secretRef:
+                  name: oikos
+            probes:
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /health
+                    port: &port 3000
+                  initialDelaySeconds: 30
+                  periodSeconds: 15
+                  timeoutSeconds: 10
+                  failureThreshold: 5
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /health
+                    port: *port
+                  initialDelaySeconds: 5
+                  periodSeconds: 10
+                  timeoutSeconds: 10
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /health
+                    port: *port
+                  initialDelaySeconds: 5
+                  periodSeconds: 10
+                  failureThreshold: 30
+            resources:
+              requests:
+                cpu: 50m
+                memory: 128Mi
+              limits:
+                cpu: 500m
+                memory: 512Mi
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities:
+                drop:
+                  - ALL
+        pod:
+          securityContext:
+            runAsUser: 65534
+            runAsGroup: 65534
+            fsGroup: 65534
+            fsGroupChangePolicy: OnRootMismatch
+    defaultPodOptions:
+      securityContext:
+        runAsNonRoot: true
+    service:
+      app:
+        controller: oikos
+        ports:
+          http:
+            port: *port
+    route:
+      app:
+        hostnames:
+          - oikos.oxygn.dev
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
+    persistence:
+      data:
+        enabled: true
+        existingClaim: "{{ .Release.Name }}"
+        globalMounts:
+          - path: /data
+      tmpfs:
+        type: emptyDir
+        advancedMounts:
+          oikos:
+            app:
+              - path: /backups
+                subPath: backups
+              - path: /tmp
+                subPath: tmp
