@@ -16,6 +16,26 @@ spec:
         strategy: Recreate
         annotations:
           reloader.stakater.com/auto: "true"
+        initContainers:
+          patch-auth:
+            image:
+              repository: ghcr.io/ulsklyc/oikos
+              tag: latest
+              pullPolicy: Always
+            command: ["/bin/sh", "-c"]
+            args:
+              - |
+                cp /app/server/auth.js /patch/auth.js
+                sed -i '/req.authRole = apiToken.role;/a\    req.session.userId = apiToken.created_by;\n    req.session.role = apiToken.role;' /patch/auth.js
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                  - ALL
+            resources:
+              requests:
+                cpu: 10m
+                memory: 32Mi
         containers:
           app:
             image:
@@ -114,3 +134,12 @@ spec:
                 subPath: backups
               - path: /tmp
                 subPath: tmp
+      patch:
+        type: emptyDir
+        advancedMounts:
+          oikos:
+            patch-auth:
+              - path: /patch
+            app:
+              - path: /app/server/auth.js
+                subPath: auth.js
