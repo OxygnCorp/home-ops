@@ -43,7 +43,7 @@ spec:
             'skeletondirectory' => '',
             'trusted_proxies' => array(
               0 => '127.0.0.1',
-              1 => '10.244.0.0/16',
+              1 => '10.42.0.0/16',
             ),
           ); ?>
         misc.config.php: |-
