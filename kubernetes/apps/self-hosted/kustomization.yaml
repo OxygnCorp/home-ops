@@ -6,6 +6,7 @@ components:
   - ../../components/alerts
 
 resources:
+  - ./oikos/ks.yaml
   - ./namespace.yaml
   - ./actual/ks.yaml
   - ./convertx/ks.yaml
