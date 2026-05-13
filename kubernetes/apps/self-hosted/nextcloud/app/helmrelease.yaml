@@ -91,6 +91,7 @@ spec:
           runAsUser: 82
           runAsGroup: 82
         successfulJobsHistoryLimit: 1
+        failedJobsHistoryLimit: 1
 
     httpRoute:
       enabled: true
