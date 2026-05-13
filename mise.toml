@@ -62,7 +62,7 @@ gum = "0.17.0"
 "aqua:casey/just" = "1.51.0"
 "go:github.com/minio/mc" = "RELEASE.2024-10-08T09-37-26Z"
 "aqua:cert-manager/cmctl" = "2.5.0"
-"aqua:cloudflare/cloudflared" = "2026.3.0"
+"aqua:cloudflare/cloudflared" = "2026.5.0"
 "asdf:carnei-ro/asdf-cilium-cli" = "0.18.2"
 "aqua:cilium/hubble" = "1.19.3"
 
