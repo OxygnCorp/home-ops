@@ -24,7 +24,7 @@ spec:
   datasources:
     - inputName: DS_TESLAMATE
       datasourceName: TeslaMate
-  url: https://raw.githubusercontent.com/teslamate-org/teslamate/master/grafana/dashboards/battery-health.json
+  url: https://raw.githubusercontent.com/teslamate-org/teslamate/main/grafana/dashboards/battery-health.json
 ---
 # yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/grafana.integreatly.org/grafanadashboard_v1beta1.json
 apiVersion: grafana.integreatly.org/v1beta1
@@ -40,7 +40,7 @@ spec:
   datasources:
     - inputName: DS_TESLAMATE
       datasourceName: TeslaMate
-  url: https://raw.githubusercontent.com/teslamate-org/teslamate/master/grafana/dashboards/charge-level.json
+  url: https://raw.githubusercontent.com/teslamate-org/teslamate/main/grafana/dashboards/charge-level.json
 ---
 # yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/grafana.integreatly.org/grafanadashboard_v1beta1.json
 apiVersion: grafana.integreatly.org/v1beta1
@@ -56,7 +56,7 @@ spec:
   datasources:
     - inputName: DS_TESLAMATE
       datasourceName: TeslaMate
-  url: https://raw.githubusercontent.com/teslamate-org/teslamate/master/grafana/dashboards/charges.json
+  url: https://raw.githubusercontent.com/teslamate-org/teslamate/main/grafana/dashboards/charges.json
 ---
 # yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/grafana.integreatly.org/grafanadashboard_v1beta1.json
 apiVersion: grafana.integreatly.org/v1beta1
@@ -72,7 +72,23 @@ spec:
   datasources:
     - inputName: DS_TESLAMATE
       datasourceName: TeslaMate
-  url: https://raw.githubusercontent.com/teslamate-org/teslamate/master/grafana/dashboards/charging-stats.json
+  url: https://raw.githubusercontent.com/teslamate-org/teslamate/main/grafana/dashboards/charging-stats.json
+---
+# yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/grafana.integreatly.org/grafanadashboard_v1beta1.json
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: teslamate-database-info
+spec:
+  allowCrossNamespaceImport: true
+  folderRef: "teslamate"
+  instanceSelector:
+    matchLabels:
+      grafana.internal/instance: grafana
+  datasources:
+    - inputName: DS_TESLAMATE
+      datasourceName: TeslaMate
+  url: https://raw.githubusercontent.com/teslamate-org/teslamate/main/grafana/dashboards/database-info.json
 ---
 # yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/grafana.integreatly.org/grafanadashboard_v1beta1.json
 apiVersion: grafana.integreatly.org/v1beta1
@@ -88,7 +104,7 @@ spec:
   datasources:
     - inputName: DS_TESLAMATE
       datasourceName: TeslaMate
-  url: https://raw.githubusercontent.com/teslamate-org/teslamate/master/grafana/dashboards/drive-stats.json
+  url: https://raw.githubusercontent.com/teslamate-org/teslamate/main/grafana/dashboards/drive-stats.json
 ---
 # yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/grafana.integreatly.org/grafanadashboard_v1beta1.json
 apiVersion: grafana.integreatly.org/v1beta1
@@ -104,7 +120,7 @@ spec:
   datasources:
     - inputName: DS_TESLAMATE
       datasourceName: TeslaMate
-  url: https://raw.githubusercontent.com/teslamate-org/teslamate/master/grafana/dashboards/drives.json
+  url: https://raw.githubusercontent.com/teslamate-org/teslamate/main/grafana/dashboards/drives.json
 ---
 # yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/grafana.integreatly.org/grafanadashboard_v1beta1.json
 apiVersion: grafana.integreatly.org/v1beta1
@@ -120,7 +136,7 @@ spec:
   datasources:
     - inputName: DS_TESLAMATE
       datasourceName: TeslaMate
-  url: https://raw.githubusercontent.com/teslamate-org/teslamate/master/grafana/dashboards/efficiency.json
+  url: https://raw.githubusercontent.com/teslamate-org/teslamate/main/grafana/dashboards/efficiency.json
 ---
 # yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/grafana.integreatly.org/grafanadashboard_v1beta1.json
 apiVersion: grafana.integreatly.org/v1beta1
@@ -136,7 +152,7 @@ spec:
   datasources:
     - inputName: DS_TESLAMATE
       datasourceName: TeslaMate
-  url: https://raw.githubusercontent.com/teslamate-org/teslamate/master/grafana/dashboards/locations.json
+  url: https://raw.githubusercontent.com/teslamate-org/teslamate/main/grafana/dashboards/locations.json
 ---
 # yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/grafana.integreatly.org/grafanadashboard_v1beta1.json
 apiVersion: grafana.integreatly.org/v1beta1
@@ -152,7 +168,7 @@ spec:
   datasources:
     - inputName: DS_TESLAMATE
       datasourceName: TeslaMate
-  url: https://raw.githubusercontent.com/teslamate-org/teslamate/master/grafana/dashboards/mileage.json
+  url: https://raw.githubusercontent.com/teslamate-org/teslamate/main/grafana/dashboards/mileage.json
 ---
 # yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/grafana.integreatly.org/grafanadashboard_v1beta1.json
 apiVersion: grafana.integreatly.org/v1beta1
@@ -168,7 +184,7 @@ spec:
   datasources:
     - inputName: DS_TESLAMATE
       datasourceName: TeslaMate
-  url: https://raw.githubusercontent.com/teslamate-org/teslamate/master/grafana/dashboards/overview.json
+  url: https://raw.githubusercontent.com/teslamate-org/teslamate/main/grafana/dashboards/overview.json
 ---
 # yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/grafana.integreatly.org/grafanadashboard_v1beta1.json
 apiVersion: grafana.integreatly.org/v1beta1
@@ -184,7 +200,7 @@ spec:
   datasources:
     - inputName: DS_TESLAMATE
       datasourceName: TeslaMate
-  url: https://raw.githubusercontent.com/teslamate-org/teslamate/master/grafana/dashboards/projected-range.json
+  url: https://raw.githubusercontent.com/teslamate-org/teslamate/main/grafana/dashboards/projected-range.json
 ---
 # yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/grafana.integreatly.org/grafanadashboard_v1beta1.json
 apiVersion: grafana.integreatly.org/v1beta1
@@ -200,7 +216,7 @@ spec:
   datasources:
     - inputName: DS_TESLAMATE
       datasourceName: TeslaMate
-  url: https://raw.githubusercontent.com/teslamate-org/teslamate/master/grafana/dashboards/states.json
+  url: https://raw.githubusercontent.com/teslamate-org/teslamate/main/grafana/dashboards/states.json
 ---
 # yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/grafana.integreatly.org/grafanadashboard_v1beta1.json
 apiVersion: grafana.integreatly.org/v1beta1
@@ -216,7 +232,7 @@ spec:
   datasources:
     - inputName: DS_TESLAMATE
       datasourceName: TeslaMate
-  url: https://raw.githubusercontent.com/teslamate-org/teslamate/master/grafana/dashboards/statistics.json
+  url: https://raw.githubusercontent.com/teslamate-org/teslamate/main/grafana/dashboards/statistics.json
 ---
 # yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/grafana.integreatly.org/grafanadashboard_v1beta1.json
 apiVersion: grafana.integreatly.org/v1beta1
@@ -232,7 +248,7 @@ spec:
   datasources:
     - inputName: DS_TESLAMATE
       datasourceName: TeslaMate
-  url: https://raw.githubusercontent.com/teslamate-org/teslamate/master/grafana/dashboards/timeline.json
+  url: https://raw.githubusercontent.com/teslamate-org/teslamate/main/grafana/dashboards/timeline.json
 ---
 # yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/grafana.integreatly.org/grafanadashboard_v1beta1.json
 apiVersion: grafana.integreatly.org/v1beta1
@@ -248,7 +264,7 @@ spec:
   datasources:
     - inputName: DS_TESLAMATE
       datasourceName: TeslaMate
-  url: https://raw.githubusercontent.com/teslamate-org/teslamate/master/grafana/dashboards/trip.json
+  url: https://raw.githubusercontent.com/teslamate-org/teslamate/main/grafana/dashboards/trip.json
 ---
 # yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/grafana.integreatly.org/grafanadashboard_v1beta1.json
 apiVersion: grafana.integreatly.org/v1beta1
@@ -264,7 +280,7 @@ spec:
   datasources:
     - inputName: DS_TESLAMATE
       datasourceName: TeslaMate
-  url: https://raw.githubusercontent.com/teslamate-org/teslamate/master/grafana/dashboards/updates.json
+  url: https://raw.githubusercontent.com/teslamate-org/teslamate/main/grafana/dashboards/updates.json
 ---
 # yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/grafana.integreatly.org/grafanadashboard_v1beta1.json
 apiVersion: grafana.integreatly.org/v1beta1
@@ -280,7 +296,7 @@ spec:
   datasources:
     - inputName: DS_TESLAMATE
       datasourceName: TeslaMate
-  url: https://raw.githubusercontent.com/teslamate-org/teslamate/master/grafana/dashboards/vampire-drain.json
+  url: https://raw.githubusercontent.com/teslamate-org/teslamate/main/grafana/dashboards/vampire-drain.json
 ---
 # yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/grafana.integreatly.org/grafanadashboard_v1beta1.json
 apiVersion: grafana.integreatly.org/v1beta1
@@ -296,7 +312,7 @@ spec:
   datasources:
     - inputName: DS_TESLAMATE
       datasourceName: TeslaMate
-  url: https://raw.githubusercontent.com/teslamate-org/teslamate/master/grafana/dashboards/visited.json
+  url: https://raw.githubusercontent.com/teslamate-org/teslamate/main/grafana/dashboards/visited.json
 ---
 # yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/grafana.integreatly.org/grafanadashboard_v1beta1.json
 apiVersion: grafana.integreatly.org/v1beta1
@@ -489,6 +505,22 @@ spec:
     - inputName: DS_TESLAMATE
       datasourceName: TeslaMate
   url: https://raw.githubusercontent.com/jheredianet/Teslamate-CustomGrafanaDashboards/main/dashboards/SpeedRates.json
+---
+# yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/grafana.integreatly.org/grafanadashboard_v1beta1.json
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: teslamate-custom-speed-temperature
+spec:
+  allowCrossNamespaceImport: true
+  folderRef: "teslamate"
+  instanceSelector:
+    matchLabels:
+      grafana.internal/instance: grafana
+  datasources:
+    - inputName: DS_TESLAMATE
+      datasourceName: TeslaMate
+  url: https://raw.githubusercontent.com/jheredianet/Teslamate-CustomGrafanaDashboards/main/dashboards/SpeedTemperature.json
 ---
 # yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/grafana.integreatly.org/grafanadashboard_v1beta1.json
 apiVersion: grafana.integreatly.org/v1beta1
