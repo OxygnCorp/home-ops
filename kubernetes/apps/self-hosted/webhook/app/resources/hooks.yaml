@@ -129,7 +129,7 @@
   pass-arguments-to-command:
     - # OpenClaw webhook URL
       source: string
-      name: http://10.10.10.18:18789/hooks/agent
+      name: http://10.10.10.18:18789/hooks/pr-gate
     - # Full payload JSON
       source: entire-payload
   trigger-rule:
