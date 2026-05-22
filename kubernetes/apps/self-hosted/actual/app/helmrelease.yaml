@@ -29,6 +29,7 @@ spec:
             env:
               TZ: "Europe/Paris"
               ACTUAL_PORT: &httpPort 5006
+              DEBUG: "actual:enable-banking:app"
             probes:
               liveness:
                 enabled: true
