@@ -39,6 +39,7 @@ spec:
             env:
               NODE_ENV: production
               TZ: Europe/Paris
+              BASE_CURRENCY: EUR
               REDIS_HOST: ghostfolio-dragonfly
               REDIS_PORT: "6379"
             envFrom:
