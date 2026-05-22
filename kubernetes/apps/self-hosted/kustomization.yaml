@@ -11,6 +11,7 @@ resources:
   - ./nextcloud/ks.yaml
   - ./actual/ks.yaml
   - ./convertx/ks.yaml
+  - ./ghostfolio/ks.yaml
   - ./mealie/ks.yaml
   - ./omni-tools/ks.yaml
   - ./stirling-pdf/ks.yaml

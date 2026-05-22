@@ -1,0 +1,90 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: ghostfolio
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: ghostfolio
+  interval: 1h
+  install:
+    remediation:
+      retries: -1
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  values:
+    controllers:
+      ghostfolio:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        initContainers:
+          init-db:
+            image:
+              repository: ghcr.io/home-operations/postgres-init
+              tag: 18@sha256:5086f94abc783f1147d7c2a32c01db00ab594820026e4f6a82ac2af3dbde7fc7
+              pullPolicy: Always
+            envFrom:
+              - secretRef:
+                  name: ghostfolio-secret
+        containers:
+          app:
+            image:
+              repository: docker.io/ghostfolio/ghostfolio
+              tag: 3.4.0@sha256:5e4e8b538534dd7c219f9c03f16cba56a88f9225a3408dab7931895eba3061b0
+              pullPolicy: IfNotPresent
+            env:
+              NODE_ENV: production
+              TZ: Europe/Paris
+              REDIS_HOST: ghostfolio-dragonfly
+              REDIS_PORT: "6379"
+            envFrom:
+              - secretRef:
+                  name: ghostfolio-secret
+            probes:
+              liveness:
+                enabled: true
+                type: HTTP
+                path: /api/v1/health
+              readiness:
+                enabled: true
+                type: HTTP
+                path: /api/v1/health
+              startup:
+                enabled: true
+                type: HTTP
+                path: /api/v1/health
+                spec:
+                  failureThreshold: 30
+                  periodSeconds: 10
+            resources:
+              requests:
+                cpu: 100m
+                memory: 256Mi
+              limits:
+                memory: 512Mi
+                cpu: 200m
+    service:
+      app:
+        controller: ghostfolio
+        type: ClusterIP
+        ports:
+          http:
+            port: &port 3333
+    route:
+      app:
+        annotations:
+          gatus.home-operations.com/endpoint: |-
+            conditions: ["[STATUS] == 200"]
+        hostnames:
+          - finance.oxygn.dev
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
+        rules:
+          - backendRefs:
+              - identifier: app
+                port: *port
