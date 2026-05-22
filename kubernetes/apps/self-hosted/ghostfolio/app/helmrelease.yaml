@@ -65,8 +65,7 @@ spec:
                 cpu: 100m
                 memory: 256Mi
               limits:
-                memory: 512Mi
-                cpu: 200m
+                memory: 1Gi
     service:
       app:
         controller: ghostfolio
