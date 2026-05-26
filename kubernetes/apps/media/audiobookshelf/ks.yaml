@@ -9,15 +9,14 @@ spec:
     labels:
       app.kubernetes.io/name: audiobookshelf
   components:
-    - ../../../../components/nfs-scaler
+    - ../../../../components/zeroscaler
     - ../../../../components/volsync
   dependsOn:
     - name: volsync
       namespace: volsync-system
     - name: rook-ceph-cluster
       namespace: rook-ceph
-    - name: keda
-      namespace: observability
+
   interval: 1h
   path: ./kubernetes/apps/media/audiobookshelf/app
   postBuild:

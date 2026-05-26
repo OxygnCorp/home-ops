@@ -9,15 +9,14 @@ spec:
     labels:
       app.kubernetes.io/name: tautulli
   components:
-    - ../../../../components/nfs-scaler
+    - ../../../../components/zeroscaler
     - ../../../../components/volsync
   dependsOn:
     - name: rook-ceph-cluster
       namespace: rook-ceph
     - name: volsync
       namespace: volsync-system
-    - name: keda
-      namespace: observability
+
   interval: 1h
   path: ./kubernetes/apps/media/tautulli/app
   postBuild:

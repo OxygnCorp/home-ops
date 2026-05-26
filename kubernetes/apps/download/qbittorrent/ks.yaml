@@ -9,7 +9,7 @@ spec:
     labels:
       app.kubernetes.io/name: qbittorrent
   components:
-    - ../../../../components/nfs-scaler
+    - ../../../../components/zeroscaler
     - ../../../../components/volsync
   dependsOn:
     - name: multus-networks
