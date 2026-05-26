@@ -55,9 +55,6 @@ spec:
                     secretKeyRef:
                       name: "{{ .Release.Name }}-superuser"
                       key: password
-            envFrom:
-              - secretRef:
-                  name: teslamate-secret
         containers:
           app:
             image:
