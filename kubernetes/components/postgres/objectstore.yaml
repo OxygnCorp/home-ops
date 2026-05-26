@@ -1,0 +1,22 @@
+---
+# yaml-language-server: $schema=https://github.com/datreeio/CRDs-catalog/raw/refs/heads/main/barmancloud.cnpg.io/objectstore_v1.json
+apiVersion: barmancloud.cnpg.io/v1
+kind: ObjectStore
+metadata:
+  name: ${APP}
+spec:
+  retentionPolicy: 15d
+  configuration:
+    destinationPath: s3://postgres-backup-v1/
+    endpointURL: https://d1403fac4607ccda8f0f9d8153b6c03f.eu.r2.cloudflarestorage.com
+    s3Credentials:
+      accessKeyId:
+        name: cloudnative-pg-secret
+        key: CLOUDFLARE_R2_ACCESS_KEY_ID
+      secretAccessKey:
+        name: cloudnative-pg-secret
+        key: CLOUDFLARE_R2_SECRET_ACCESS_KEY
+    wal:
+      compression: bzip2
+    data:
+      compression: bzip2
