@@ -12,35 +12,30 @@ spec:
     matchLabels:
       grafana.internal/instance: grafana
   valuesFrom:
-    - targetPath: "url"
-      valueFrom:
-        secretKeyRef:
-          name: teslamate-secret
-          key: DATABASE_HOST
     - targetPath: "database"
       valueFrom:
         secretKeyRef:
-          name: teslamate-secret
-          key: DATABASE_NAME
+          name: teslamate-app
+          key: dbname
     - targetPath: "user"
       valueFrom:
         secretKeyRef:
-          name: teslamate-secret
-          key: DATABASE_USER
+          name: teslamate-app
+          key: username
     - targetPath: "secureJsonData.password"
       valueFrom:
         secretKeyRef:
-          name: teslamate-secret
-          key: DATABASE_PASS
+          name: teslamate-app
+          key: password
   datasource:
     name: TeslaMate
     type: postgres
     access: proxy
-    url: ${DATABASE_HOST}:5432
-    database: ${DATABASE_NAME}
-    user: ${DATABASE_USER}
+    url: "teslamate-rw.automation.svc.cluster.local:5432"
+    database: ${dbname}
+    user: ${username}
     secureJsonData:
-      password: ${DATABASE_PASS}
+      password: ${password}
     jsonData:
       postgresVersion: 1000
       sslmode: disable
