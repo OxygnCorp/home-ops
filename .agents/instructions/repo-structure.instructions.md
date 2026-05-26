@@ -53,8 +53,10 @@ Flux configuration files:
 ### `components/`
 Reusable components and shared configurations:
 - `alerts/`: Alerting rules
-- `nfs-scaler/`: NFS scaling configurations
+- `dragonfly/`: Dragonfly configurations
+- `postgres/`: PostgreSQL database
 - `volsync/`: Volume synchronization
+- `zeroscaler/`: NFS scaling configurations
 
 ### `talos/`
 Talos OS configurations:
