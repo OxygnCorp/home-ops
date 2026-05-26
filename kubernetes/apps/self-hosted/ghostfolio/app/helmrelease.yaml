@@ -27,9 +27,33 @@ spec:
               repository: ghcr.io/home-operations/postgres-init
               tag: 18@sha256:5086f94abc783f1147d7c2a32c01db00ab594820026e4f6a82ac2af3dbde7fc7
               pullPolicy: Always
-            envFrom:
-              - secretRef:
-                  name: ghostfolio-secret
+            env:
+              INIT_POSTGRES_HOST: "{{ .Release.Name }}-rw.self-hosted.svc.cluster.local"
+              INIT_POSTGRES_USER:
+                valueFrom:
+                    secretKeyRef:
+                      name: "{{ .Release.Name }}-app"
+                      key: username
+              INIT_POSTGRES_PASS:
+                valueFrom:
+                    secretKeyRef:
+                      name: "{{ .Release.Name }}-app"
+                      key: password
+              INIT_POSTGRES_DBNAME:
+                valueFrom:
+                    secretKeyRef:
+                      name: "{{ .Release.Name }}-app"
+                      key: dbname
+              INIT_POSTGRES_SUPER_USER:
+                valueFrom:
+                    secretKeyRef:
+                      name: "{{ .Release.Name }}-superuser"
+                      key: username
+              INIT_POSTGRES_SUPER_PASS:
+                valueFrom:
+                    secretKeyRef:
+                      name: "{{ .Release.Name }}-superuser"
+                      key: password
         containers:
           app:
             image:
@@ -41,6 +65,11 @@ spec:
               TZ: Europe/Paris
               REDIS_HOST: ghostfolio-dragonfly
               REDIS_PORT: "6379"
+              DATABASE_URL:
+                valueFrom:
+                  secretKeyRef:
+                    name: "{{ .Release.Name }}-app"
+                    key: uri
             envFrom:
               - secretRef:
                   name: ghostfolio-secret
