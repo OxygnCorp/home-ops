@@ -27,6 +27,27 @@ spec:
               repository: ghcr.io/home-operations/postgres-init
               tag: 18@sha256:5086f94abc783f1147d7c2a32c01db00ab594820026e4f6a82ac2af3dbde7fc7
               pullPolicy: Always
+            env:
+              INIT_POSTGRES_HOST:
+                valueFrom:
+                  secretKeyRef:
+                    name: "{{ .Release.Name }}-app"
+                    key: uri
+              INIT_POSTGRES_USER:
+                valueFrom:
+                    secretKeyRef:
+                      name: "{{ .Release.Name }}-app"
+                      key: username
+              INIT_POSTGRES_PASS:
+                valueFrom:
+                    secretKeyRef:
+                      name: "{{ .Release.Name }}-app"
+                      key: password
+              INIT_POSTGRES_DBNAME:
+                valueFrom:
+                    secretKeyRef:
+                      name: "{{ .Release.Name }}-app"
+                      key: dbname
             envFrom:
               - secretRef:
                   name: teslamate-secret
@@ -39,6 +60,26 @@ spec:
               TZ: Europe/Paris
               DISABLE_MQTT: "false"
               MQTT_HOST: mosquitto.automation.svc.cluster.local
+              DATABASE_HOST:
+                valueFrom:
+                  secretKeyRef:
+                    name: "{{ .Release.Name }}-app"
+                    key: uri
+              DATABASE_USER:
+                valueFrom:
+                    secretKeyRef:
+                      name: "{{ .Release.Name }}-app"
+                      key: username
+              DATABASE_PASS:
+                valueFrom:
+                    secretKeyRef:
+                      name: "{{ .Release.Name }}-app"
+                      key: password
+              DATABASE_NAME:
+                valueFrom:
+                    secretKeyRef:
+                      name: "{{ .Release.Name }}-app"
+                      key: dbname
             envFrom:
               - secretRef:
                   name: teslamate-secret
