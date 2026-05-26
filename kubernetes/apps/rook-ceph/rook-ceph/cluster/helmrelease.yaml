@@ -77,9 +77,9 @@ spec:
         mon:
           requests:
             cpu: 100m
-            memory: 128Mi
+            memory: 256Mi
           limits:
-            memory: 512Mi
+            memory: 1Gi
         osd:
           requests:
             cpu: 100m
