@@ -75,8 +75,8 @@ spec:
                   path: /spec/bootstrap
                   value:
                     initdb:
-                      database: $${POSTGRES_USERNAME:=$${APP}}
-                      owner: $${POSTGRES_USERNAME:=$${APP}}
+                      database: ${POSTGRES_USERNAME:=${APP}}
+                      owner: ${POSTGRES_USERNAME:=${APP}}
                 - op: remove
                   path: /spec/externalClusters
       target:
