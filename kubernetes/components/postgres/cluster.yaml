@@ -35,8 +35,8 @@ spec:
   bootstrap:
     recovery:
       source: ${APP}
-      # database: ${APP}
-      # owner: ${APP}
+      database: ${APP}
+      owner: ${APP}
   plugins:
     - name: barman-cloud.cloudnative-pg.io
       isWALArchiver: true
