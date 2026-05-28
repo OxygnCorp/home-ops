@@ -104,7 +104,7 @@ spec:
       app:
         annotations:
           gatus.home-operations.com/endpoint: |-
-            conditions: ["[STATUS] == 401"]
+            path: /identity
         hostnames:
           - "{{ .Release.Name }}.oxygn.dev"
         parentRefs:
