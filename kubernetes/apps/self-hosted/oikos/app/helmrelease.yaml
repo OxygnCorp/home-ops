@@ -20,7 +20,7 @@ spec:
           patch-auth:
             image:
               repository: ghcr.io/ulsklyc/oikos
-              tag: 0.53.1
+              tag: 0.54.0
             command: ["/bin/sh", "-c"]
             args:
               - |
@@ -39,7 +39,7 @@ spec:
           app:
             image:
               repository: ghcr.io/ulsklyc/oikos
-              tag: 0.53.1
+              tag: 0.54.0
             command: ["node", "server/index.js"]
             env:
               TZ: Europe/Paris
