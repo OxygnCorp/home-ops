@@ -109,6 +109,7 @@ spec:
           gatus.home-operations.com/endpoint: |-
             conditions: ["[STATUS] == 200"]
         hostnames:
+          - "{{ .Release.Name }}.oxygn.dev"
           - finance.oxygn.dev
         parentRefs:
           - name: envoy-internal
