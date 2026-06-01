@@ -1,0 +1,12 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sonarr-kopiaignore
+data:
+  .kopiaignore: |
+    # Regenerable from web (TMDB/TVDB)
+    MediaCover/
+
+    # Logs and diagnostics - not needed for restore
+    logs/
