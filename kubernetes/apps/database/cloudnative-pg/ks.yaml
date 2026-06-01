@@ -54,38 +54,38 @@ spec:
     namespace: flux-system
   targetNamespace: database
   wait: true
----
-# yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
-apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
-metadata:
-  name: cloudnative-pg-cluster
-spec:
-  commonMetadata:
-    labels:
-      app.kubernetes.io/name: cloudnative-pg-cluster
-  healthChecks:
-    - apiVersion: postgresql.cnpg.io/v1
-      kind: Cluster
-      name: postgres
-      namespace: database
-  dependsOn:
-    - name: onepassword
-      namespace: external-secrets
-    - name: cloudnative-pg
-      namespace: database
-    - name: cloudnative-pg-barman
-      namespace: database
-  interval: 1h
-  path: ./kubernetes/apps/database/cloudnative-pg/cluster
-  postBuild:
-    substitute:
-      APP: cloudnative-pg-cluster
-  prune: true
-  retryInterval: 2m
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-    namespace: flux-system
-  targetNamespace: database
-  wait: true
+# ---
+# # yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+# apiVersion: kustomize.toolkit.fluxcd.io/v1
+# kind: Kustomization
+# metadata:
+#   name: cloudnative-pg-cluster
+# spec:
+#   commonMetadata:
+#     labels:
+#       app.kubernetes.io/name: cloudnative-pg-cluster
+#   healthChecks:
+#     - apiVersion: postgresql.cnpg.io/v1
+#       kind: Cluster
+#       name: postgres
+#       namespace: database
+#   dependsOn:
+#     - name: onepassword
+#       namespace: external-secrets
+#     - name: cloudnative-pg
+#       namespace: database
+#     - name: cloudnative-pg-barman
+#       namespace: database
+#   interval: 1h
+#   path: ./kubernetes/apps/database/cloudnative-pg/cluster
+#   postBuild:
+#     substitute:
+#       APP: cloudnative-pg-cluster
+#   prune: true
+#   retryInterval: 2m
+#   sourceRef:
+#     kind: GitRepository
+#     name: flux-system
+#     namespace: flux-system
+#   targetNamespace: database
+#   wait: true
