@@ -87,6 +87,11 @@ spec:
     persistence:
       config:
         existingClaim: "{{ .Release.Name }}"
+      kopiaignore:
+        type: configMap
+        name: sonarr-kopiaignore
+        globalMounts:
+          - path: /kopiaignore
       media:
         type: nfs
         server: funkstation.internal
