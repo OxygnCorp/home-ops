@@ -87,6 +87,11 @@ spec:
     persistence:
       config:
         existingClaim: "{{ .Release.Name }}"
+      kopiaignore:
+        type: configMap
+        name: radarr-kopiaignore
+        globalMounts:
+          - path: /kopiaignore
       tmp:
         type: emptyDir
       media:
