@@ -9,6 +9,9 @@ data:
     Cache/
     Metadata/
 
+    # Library
+    Media/
+
     # Logs and diagnostics - not needed for restore
     Logs/
     Crash Reports/
@@ -21,3 +24,7 @@ data:
     # Misc
     *.log
     *.log.*
+
+    # DB backups
+    **/Databases/com.plexapp.plugins.library.db-20*
+    **/Databases/com.plexapp.plugins.library.blobs.db-20*
