@@ -53,14 +53,25 @@ spec:
             'maintenance_window_start' => 2,
           ); ?>
 
+    # externalDatabase:
+    #   enabled: true
+    #   type: postgresql
+    #   host: postgres-rw.database.svc.cluster.local
+    #   database: nextcloud
+    #   existingSecret:
+    #     enabled: true
+    #     secretName: nextcloud-db-secret
+    #     usernameKey: username
+    #     passwordKey: password
+
     externalDatabase:
       enabled: true
       type: postgresql
-      host: postgres-rw.database.svc.cluster.local
+      host: "{{ .Release.Name }}-rw.self-hosted.svc.cluster.local"
       database: nextcloud
       existingSecret:
         enabled: true
-        secretName: nextcloud-db-secret
+        secretName: nextcloud-app
         usernameKey: username
         passwordKey: password
 
