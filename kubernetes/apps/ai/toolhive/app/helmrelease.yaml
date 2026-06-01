@@ -19,6 +19,3 @@ spec:
         limits:
           cpu: 500m
           memory: 512Mi
-      gc:
-        gomemlimit: 450MiB
-        gogc: 75
