@@ -19,10 +19,12 @@ machine:
     {% if ENV.IS_CONTROLLER %}
     kubernetesTalosAPIAccess:
       allowedKubernetesNamespaces:
+        - ai
         - actions-runner-system
         - system-upgrade
       allowedRoles:
         - os:admin
+        - os:reader
       enabled: true
     {% endif %}
     rbac: true
