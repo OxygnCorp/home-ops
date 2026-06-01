@@ -118,58 +118,58 @@ spec:
     namespace: flux-system
   targetNamespace: ai
   wait: false
----
-# yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
-apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
-metadata:
-  name: &name grafana-mcp-entry
-spec:
-  commonMetadata:
-    labels:
-      app.kubernetes.io/name: *name
-  dependsOn:
-    - name: toolhive
-    - name: grafana-mcp
-      namespace: observability
-  interval: 1h
-  path: ./kubernetes/apps/ai/toolhive/mcp-servers/grafana-mcp
-  postBuild:
-    substitute:
-      APP: *name
-  prune: true
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-    namespace: flux-system
-  targetNamespace: ai
-  wait: false
----
-# yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
-apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
-metadata:
-  name: &name ha-mcp
-spec:
-  commonMetadata:
-    labels:
-      app.kubernetes.io/name: *name
-  dependsOn:
-    - name: toolhive
-    - name: home-assistant
-      namespace: automation
-  interval: 1h
-  path: ./kubernetes/apps/ai/toolhive/mcp-servers/ha-mcp
-  postBuild:
-    substitute:
-      APP: *name
-  prune: true
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-    namespace: flux-system
-  targetNamespace: ai
-  wait: false
+# ---
+# # yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+# apiVersion: kustomize.toolkit.fluxcd.io/v1
+# kind: Kustomization
+# metadata:
+#   name: &name grafana-mcp-entry
+# spec:
+#   commonMetadata:
+#     labels:
+#       app.kubernetes.io/name: *name
+#   dependsOn:
+#     - name: toolhive
+#     - name: grafana-mcp
+#       namespace: observability
+#   interval: 1h
+#   path: ./kubernetes/apps/ai/toolhive/mcp-servers/grafana-mcp
+#   postBuild:
+#     substitute:
+#       APP: *name
+#   prune: true
+#   sourceRef:
+#     kind: GitRepository
+#     name: flux-system
+#     namespace: flux-system
+#   targetNamespace: ai
+#   wait: false
+# ---
+# # yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+# apiVersion: kustomize.toolkit.fluxcd.io/v1
+# kind: Kustomization
+# metadata:
+#   name: &name ha-mcp
+# spec:
+#   commonMetadata:
+#     labels:
+#       app.kubernetes.io/name: *name
+#   dependsOn:
+#     - name: toolhive
+#     - name: home-assistant
+#       namespace: automation
+#   interval: 1h
+#   path: ./kubernetes/apps/ai/toolhive/mcp-servers/ha-mcp
+#   postBuild:
+#     substitute:
+#       APP: *name
+#   prune: true
+#   sourceRef:
+#     kind: GitRepository
+#     name: flux-system
+#     namespace: flux-system
+#   targetNamespace: ai
+#   wait: false
 ---
 # yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
 apiVersion: kustomize.toolkit.fluxcd.io/v1
@@ -213,6 +213,78 @@ spec:
       namespace: media
   interval: 1h
   path: ./kubernetes/apps/ai/toolhive/mcp-servers/seerr-mcp
+  postBuild:
+    substitute:
+      APP: *name
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  targetNamespace: ai
+  wait: false
+---
+# yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: &name github-mcp
+spec:
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: *name
+  dependsOn:
+    - name: toolhive
+  interval: 1h
+  path: ./kubernetes/apps/ai/toolhive/mcp-servers/github-mcp
+  postBuild:
+    substitute:
+      APP: *name
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  targetNamespace: ai
+  wait: false
+---
+# yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: &name kubectl-mcp
+spec:
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: *name
+  dependsOn:
+    - name: toolhive
+  interval: 1h
+  path: ./kubernetes/apps/ai/toolhive/mcp-servers/kubectl-mcp
+  postBuild:
+    substitute:
+      APP: *name
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  targetNamespace: ai
+  wait: false
+---
+# yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: &name talos-mcp
+spec:
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: *name
+  dependsOn:
+    - name: toolhive
+  interval: 1h
+  path: ./kubernetes/apps/ai/toolhive/mcp-servers/talos-mcp
   postBuild:
     substitute:
       APP: *name
