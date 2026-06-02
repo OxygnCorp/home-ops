@@ -13,6 +13,8 @@ spec:
         prefixFormat: "{workload}_"
   embeddingServerRef:
     name: mcp-tools-embedding
+  telemetryConfigRef:
+    name: prometheus
   incomingAuth:
     type: anonymous
   outgoingAuth:
