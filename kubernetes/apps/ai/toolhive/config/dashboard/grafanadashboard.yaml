@@ -17,6 +17,9 @@ metadata:
   name: toolhive-mcp-gateway
 spec:
   allowCrossNamespaceImport: true
+  datasources:
+    - datasourceName: Prometheus
+      inputName: DS_PROMETHEUS
   folderRef: "ai"
   instanceSelector:
     matchLabels:
