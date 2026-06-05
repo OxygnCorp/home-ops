@@ -15,7 +15,7 @@ When working with `externalsecret.yaml` files:
 - Reference the appropriate SecretStore (e.g., onepassword-connect)
 - Use target creation policy `Owner` for proper lifecycle management
 - Use template data with references to external values
-- Structure paths consistently (e.g., `op://vault/item/field` for 1Password)
+- Structure paths consistently (e.g., `ref+op://vault/item/field` for 1Password)
 
 ### Schema Validation
 Include the schema header:
@@ -46,7 +46,7 @@ spec:
   data:
   - secretKey: api-key
     remoteRef:
-      key: op://vault/my-app/api-key
+      key: ref+op://vault/my-app/api-key
 ```
 
 ## General Secret Management
