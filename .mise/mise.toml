@@ -56,7 +56,7 @@ gum = "0.17.0"
 "aqua:cert-manager/cmctl" = "2.5.0"
 "aqua:cloudflare/cloudflared" = "2026.5.2"
 "asdf:carnei-ro/asdf-cilium-cli" = "0.18.2"
-"aqua:cilium/hubble" = "1.19.3"
+"aqua:cilium/hubble" = "1.19.4"
 
 # Linters
 "pipx:yamllint" = "1.38.0"
