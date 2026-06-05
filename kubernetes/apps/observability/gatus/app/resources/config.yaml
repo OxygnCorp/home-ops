@@ -1,0 +1,57 @@
+---
+connectivity:
+  checker:
+    target: 1.1.1.1:53
+    interval: 1m
+
+endpoints:
+  - name: Cloudflare
+    group: connectivity
+    url: icmp://1.1.1.1
+    interval: 1m
+    conditions:
+      - "[CONNECTED] == true"
+
+  - name: Google
+    group: connectivity
+    url: icmp://8.8.8.8
+    interval: 1m
+    conditions:
+      - "[CONNECTED] == true"
+
+  - name: Quad9
+    group: connectivity
+    url: icmp://9.9.9.9
+    interval: 1m
+    conditions:
+      - "[CONNECTED] == true"
+
+metrics: true
+
+storage:
+  type: sqlite
+  caching: true
+  path: ${GATUS_CONFIG_PATH}/gatus.db
+
+ui:
+  title: Status | Gatus
+  header: Status
+  logo: https://avatars.githubusercontent.com/in/1140279
+  link: https://github.com/OxygnCorp
+  buttons:
+    - name: Github
+      link: https://github.com/OxygnCorp
+
+    - name: Homelab
+      link: https://github.com/OxygnCorp/home-ops
+alerting:
+  discord:
+    webhook-url: ${DISCORD_WEBHOOK}
+    default-alert:
+      description: health-check failed
+      send-on-resolved: true
+      failure-threshold: 3
+      success-threshold: 3
+
+web:
+  port: ${GATUS_WEB_PORT}
