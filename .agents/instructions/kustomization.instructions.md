@@ -10,7 +10,7 @@ Kustomization files in the `app/` directory combine and customize Kubernetes res
 ## Schema Validation
 Include the schema header:
 ```yaml
-# yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/kustomize.config.k8s.io/kustomization_v1beta1.json
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kustomize.config.k8s.io/kustomization_v1beta1.json
 ```
 
 ## Structure and Best Practices
@@ -21,7 +21,7 @@ Include the schema header:
 
 ## Example
 ```yaml
-# yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/kustomize.config.k8s.io/kustomization_v1beta1.json
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kustomize.config.k8s.io/kustomization_v1beta1.json
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:

@@ -10,7 +10,7 @@ Namespace files define the Kubernetes namespace for each application.
 ## Schema Validation
 Include the schema header:
 ```yaml
-# yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/v1/namespace.json
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/v1/namespace.json
 ```
 
 ## Structure and Best Practices
@@ -20,7 +20,7 @@ Include the schema header:
 
 ## Example
 ```yaml
-# yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/v1/namespace.json
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/v1/namespace.json
 apiVersion: v1
 kind: Namespace
 metadata:

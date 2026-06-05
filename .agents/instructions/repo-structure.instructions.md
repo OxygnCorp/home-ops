@@ -125,7 +125,7 @@ Create the directory structure: `kubernetes/apps/<category>/<app-name>/`
 
 #### `ks.yaml` (Flux Kustomization)
 ```yaml
-# yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kustomize.toolkit.fluxcd.io/kustomization_v1.json
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
@@ -138,7 +138,7 @@ spec:
 
 #### `app/namespace.yaml`
 ```yaml
-# yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/v1/namespace.json
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/v1/namespace.json
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -147,7 +147,7 @@ metadata:
 
 #### `app/kustomization.yaml`
 ```yaml
-# yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/kustomize.config.k8s.io/kustomization_v1beta1.json
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kustomize.config.k8s.io/kustomization_v1beta1.json
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
@@ -158,7 +158,7 @@ resources:
 
 #### `app/ocirepository.yaml`
 ```yaml
-# yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/source.toolkit.fluxcd.io/ocirepository_v1.json
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/source.toolkit.fluxcd.io/ocirepository_v1.json
 apiVersion: source.toolkit.fluxcd.io/v1
 kind: OCIRepository
 metadata:
@@ -172,7 +172,7 @@ spec:
 
 #### `app/helmrelease.yaml`
 ```yaml
-# yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/helm.toolkit.fluxcd.io/helmrelease_v2beta1.json
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/helm.toolkit.fluxcd.io/helmrelease_v2beta1.json
 apiVersion: helm.toolkit.fluxcd.io/v2beta1
 kind: HelmRelease
 metadata:

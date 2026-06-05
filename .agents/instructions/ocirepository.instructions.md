@@ -10,7 +10,7 @@ OCIRepository files define sources for pulling Helm charts from OCI registries l
 ## Schema Validation
 Always include the YAML schema header:
 ```yaml
-# yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/source.toolkit.fluxcd.io/ocirepository_v1.json
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/source.toolkit.fluxcd.io/ocirepository_v1.json
 ```
 
 ## Structure and Best Practices
@@ -25,7 +25,7 @@ Always include the YAML schema header:
 
 ## Example
 ```yaml
-# yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/source.toolkit.fluxcd.io/ocirepository_v1.json
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/source.toolkit.fluxcd.io/ocirepository_v1.json
 apiVersion: source.toolkit.fluxcd.io/v1
 kind: OCIRepository
 metadata:

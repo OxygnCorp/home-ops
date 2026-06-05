@@ -20,7 +20,7 @@ When working with `externalsecret.yaml` files:
 ### Schema Validation
 Include the schema header:
 ```yaml
-# yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/external-secrets.io/externalsecret_v1beta1.json
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/external-secrets.io/externalsecret_v1beta1.json
 ```
 
 ### Best Practices
@@ -31,7 +31,7 @@ Include the schema header:
 
 ### Example
 ```yaml
-# yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/external-secrets.io/externalsecret_v1beta1.json
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/external-secrets.io/externalsecret_v1beta1.json
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:

@@ -10,7 +10,7 @@ Flux Kustomization files (`ks.yaml`) are used to manage the deployment of applic
 ## Schema Validation
 Always include the YAML schema header for validation:
 ```yaml
-# yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kustomize.toolkit.fluxcd.io/kustomization_v1.json
 ```
 
 ## Structure and Best Practices
@@ -26,7 +26,7 @@ Always include the YAML schema header for validation:
 
 ## Example
 ```yaml
-# yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kustomize.toolkit.fluxcd.io/kustomization_v1.json
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:

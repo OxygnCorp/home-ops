@@ -111,6 +111,6 @@ A skill for adding a new application exists in [`SKILL.md`](.agents/skills/add-a
 ## YAML Schema Validation
 
 Always include schema headers for validation:
-- `# yaml-language-server: $schema=https://k8s-schemas.oxygn.dev/...`
+- `# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/...`
 
 See [yaml-schemas.instructions.md](instructions/yaml-schemas.instructions.md) for specific schema URLs.
