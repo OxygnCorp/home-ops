@@ -21,7 +21,7 @@ gum = "0.17.0"
 "slsa-verifier" = "2.7.1"
 "aqua:sigstore/cosign" = "3.1.0"
 "just" = "1.51.0"
-"yq" = "4.53.2"
+"yq" = "4.53.3"
 "jq" = "1.8.1"
 
 # 1Password
