@@ -109,7 +109,6 @@ rules:
       - kustomize.toolkit.fluxcd.io
       - metrics.k8s.io
       - monitoring.coreos.com
-      - monitoring.giantswarm.io
       - networking.k8s.io
       - node.k8s.io
       - notification.toolkit.fluxcd.io

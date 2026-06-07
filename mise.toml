@@ -1,6 +1,7 @@
 [tools]
 jq = "latest"
 just = "latest"
+kubectl = "latest"
 talosctl = "latest"
 vals = "latest"
 yq = "latest"
