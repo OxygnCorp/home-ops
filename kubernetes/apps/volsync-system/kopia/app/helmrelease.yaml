@@ -31,7 +31,7 @@ spec:
               - --without-password
             probes:
               liveness: &probes
-                enabl     ed: true
+                enabled: true
                 custom: true
                 spec:
                   httpGet:
