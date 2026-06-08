@@ -11,11 +11,15 @@ spec:
       conflictResolution: prefix
       conflictResolutionConfig:
         prefixFormat: "{workload}_"
-  embeddingServerRef:
-    name: mcp-tools-embedding
+  # embeddingServerRef:
+  #   name: mcp-tools-embedding
   telemetryConfigRef:
     name: prometheus
   incomingAuth:
     type: anonymous
   outgoingAuth:
     source: discovered
+  sessionStorage:
+    provider: redis
+    address: dragonfly.database:6379
+    keyPrefix: "mcp-gateway-internal:"
