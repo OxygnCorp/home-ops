@@ -30,7 +30,7 @@ gum = "0.17.0"
 "vals" = "0.44.0"
 
 # S3
-"aqua:aws/aws-cli" = "2.34.63"
+"aqua:aws/aws-cli" = "2.34.64"
 
 # Flux Stuff
 "aqua:fluxcd/flux2" = "2.8.8"
