@@ -27,7 +27,7 @@ spec:
       fsGroup: ${VOLSYNC_PGID:=100}
       fsGroupChangePolicy: OnRootMismatch
     moverVolumes:
-      - mountPath: repository
+      - mountPath: /repository
         volumeSource:
           nfs:
             path: /volume1/Volsync
