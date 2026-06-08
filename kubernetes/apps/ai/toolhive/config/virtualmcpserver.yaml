@@ -20,6 +20,6 @@ spec:
   outgoingAuth:
     source: discovered
   sessionStorage:
-    provider: redis
-    address: dragonfly.database:6379
+    address: toolhive-dragonfly.ai.svc.cluster.local:6379
     keyPrefix: "mcp-gateway-internal:"
+    provider: redis
