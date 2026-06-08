@@ -99,13 +99,20 @@ spec:
         serviceMonitorSelectorNilUsesHelmValues: false
         scrapeInterval: 1m # Must match interval in Grafana Helm chart
         retention: 30d
-        retentionSize: 50GB
+        retentionSize: 45GB
+        additionalArgs:
+          - name: storage.tsdb.min-block-duration
+            value: 2h          # défaut, laisser tel quel
+          - name: storage.tsdb.max-block-duration
+            value: 24h         # défaut 10% de retention → ~3j avec 30d, réduire peut aider
+          - name: query.max-concurrency
+            value: "4"         # limiter les queries parallèles qui lisent du disque
         resources:
           requests:
             cpu: 100m
             memory: 1Gi
           limits:
-            memory: 2Gi
+            memory: 6Gi
         version: v2.55.1 # override 'unsupported Prometheus version' error for prompp
         image:
           registry: mirror.gcr.io
