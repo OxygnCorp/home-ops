@@ -27,10 +27,11 @@ spec:
               - secretRef:
                   name: kopia-secret
             args:
+              - --refresh-interval=5m
               - --without-password
             probes:
               liveness: &probes
-                enabled: true
+                enabl     ed: true
                 custom: true
                 spec:
                   httpGet:

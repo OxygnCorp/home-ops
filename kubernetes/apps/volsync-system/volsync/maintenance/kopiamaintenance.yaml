@@ -8,7 +8,13 @@ metadata:
 spec:
   enabled: true
   trigger:
-    schedule: 0 */8 * * *
+    schedule: 30 3,15 * * *
+  moverVolumes:
+    - mountPath: repository
+      volumeSource:
+        nfs:
+          path: /volume1/Volsync
+          server: funkstation.internal
   repository:
     repository: volsync-maintenance-secret
   podSecurityContext:
