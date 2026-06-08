@@ -22,6 +22,12 @@ spec:
       runAsGroup: ${VOLSYNC_PGID:=100}
       fsGroup: ${VOLSYNC_PGID:=100}
       fsGroupChangePolicy: OnRootMismatch
+    moverVolumes:
+      - mountPath: repository
+        volumeSource:
+          nfs:
+            path: /volume1/Volsync
+            server: funkstation.internal
     parallelism: 2
     repository: ${APP}-volsync-secret
     retain:
