@@ -30,16 +30,20 @@ kind: Kustomization
 metadata:
   name: ceph-csi-drivers
 spec:
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: ceph-csi-drivers
   dependsOn:
     - name: rook-ceph
   interval: 1h
   path: ./kubernetes/apps/rook-ceph/rook-ceph/ceph-csi-drivers
-  wait: true
   prune: true
   sourceRef:
     kind: GitRepository
     name: flux-system
     namespace: flux-system
+  targetNamespace: rook-ceph
+  wait: true
 ---
 # yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kustomize.toolkit.fluxcd.io/kustomization_v1.json
 apiVersion: kustomize.toolkit.fluxcd.io/v1
