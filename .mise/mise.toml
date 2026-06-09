@@ -54,7 +54,7 @@ gum = "0.17.0"
 
 # Misc Tools
 "aqua:cert-manager/cmctl" = "2.5.0"
-"aqua:cloudflare/cloudflared" = "2026.5.2"
+"aqua:cloudflare/cloudflared" = "2026.6.0"
 "asdf:carnei-ro/asdf-cilium-cli" = "0.18.2"
 "aqua:cilium/hubble" = "1.19.4"
 
