@@ -1,0 +1,236 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: devclaw
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: devclaw
+  interval: 1h
+  values:
+    controllers:
+      openclaw:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        initContainers:
+          init:
+            image:
+              repository: docker.io/library/alpine
+              tag: "3.23"
+            command:
+              - sh
+              - -c
+              - |
+                set -euo pipefail
+                rm -f /home/node/.openclaw/openclaw.json
+                cp /tmp/openclaw.json /home/node/.openclaw/openclaw.json
+                chown 1000:100 /home/node/.openclaw/openclaw.json
+                chmod 400 /home/node/.openclaw/openclaw.json
+        containers:
+          app:
+            image:
+              repository: ghcr.io/openclaw/openclaw
+              tag: 2026.6.1@sha256:b12f76a7947e4cdd328bf3ea1045d41a5494b33852c911e9bc4fdd03dde469d5
+            command:
+              - /bin/sh
+              - -c
+              - |
+                # Start gateway
+                echo "Starting OpenClaw gateway..."
+                exec node dist/index.js gateway --bind lan
+            env:
+              OPENCLAW_LOG_LEVEL: debug
+              BROWSER_WS_ENDPOINT: "ws://localhost:9222"
+              GOPATH: /home/node/go
+              HOME: /home/node
+              HOMEBREW_CELLAR: /home/node/.local/homebrew/Cellar
+              HOMEBREW_PREFIX: /home/node/.local/homebrew
+              HOMEBREW_REPOSITORY: /home/node/.local/homebrew
+              OPENCLAW_GATEWAY_PORT: 18789
+              PATH: /home/node/.local/bin:/home/node/.local/go/bin:/home/node/.local/homebrew/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+              PIP_BREAK_SYSTEM_PACKAGES: "1"
+              TERM: xterm-256color
+              TZ: Europe/Paris
+            envFrom:
+              - secretRef:
+                  name: "{{ .Release.Name }}-secret"
+            resources:
+              requests:
+                cpu: 100m
+                memory: 512Mi
+              limits:
+                cpu: 2000m
+                memory: 4Gi
+
+          codeserver:
+            image:
+              repository: ghcr.io/coder/code-server
+              tag: 4.123.0@sha256:6d46b83ea0687ab1826ec029b6d0e6342bbd55cc5c29b98258463e7faee16d1e
+            env:
+              TZ: Europe/Paris
+            args:
+              [
+                "--auth",
+                "none",
+                "--user-data-dir",
+                "/home/node/.vscode",
+                "--extensions-dir",
+                "/home/node/.vscode",
+                "--port",
+                "12321",
+                "/config"
+              ]
+            resources:
+              requests:
+                cpu: 10m
+              limits:
+                memory: 1Gi
+    defaultPodOptions:
+      automountServiceAccountToken: true
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 100
+        fsGroup: 100
+        fsGroupChangePolicy: OnRootMismatch
+    service:
+      app:
+        type: LoadBalancer
+        annotations:
+          lbipam.cilium.io/ips: 10.10.98.190
+        externalTrafficPolicy: Cluster
+        ports:
+          http:
+            port: 18789
+          codeserver:
+            port: 12321
+    route:
+      main:
+        hostnames:
+          - "devclaw.oxygn.dev"
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
+        rules:
+          - backendRefs:
+              - name: "{{ .Release.Name }}"
+                port: 18789
+      codeserver:
+        hostnames:
+          - "devclaw-code.oxygn.dev"
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
+        rules:
+          - backendRefs:
+              - name: "{{ .Release.Name }}"
+                port: 12321
+
+    rbac:
+      roles:
+        openclaw-read-all:
+          type: ClusterRole
+          rules:
+            # Broad read-only access across cluster resources. Secrets intentionally excluded.
+            - apiGroups: [""]
+              resources: ["pods", "pods/log", "nodes", "services", "namespaces", "configmaps", "persistentvolumes", "persistentvolumeclaims", "endpoints", "resourcequotas", "limitranges", "serviceaccounts", "events"]
+              verbs: ["get", "list", "watch"]
+            - apiGroups: ["apps"]
+              resources: ["deployments", "daemonsets", "statefulsets", "replicasets", "controllerrevisions"]
+              verbs: ["get", "list", "watch"]
+            - apiGroups: ["batch"]
+              resources: ["jobs", "cronjobs"]
+              verbs: ["get", "list", "watch"]
+            - apiGroups: ["networking.k8s.io"]
+              resources: ["ingresses", "ingressclasses", "networkpolicies"]
+              verbs: ["get", "list", "watch"]
+            - apiGroups: ["storage.k8s.io"]
+              resources: ["storageclasses", "csinodes", "csidrivers", "volumeattachments"]
+              verbs: ["get", "list", "watch"]
+            - apiGroups: ["autoscaling"]
+              resources: ["horizontalpodautoscalers"]
+              verbs: ["get", "list", "watch"]
+            - apiGroups: ["policy"]
+              resources: ["poddisruptionbudgets"]
+              verbs: ["get", "list", "watch"]
+            - apiGroups: ["coordination.k8s.io"]
+              resources: ["leases"]
+              verbs: ["get", "list", "watch"]
+            - apiGroups: ["rbac.authorization.k8s.io"]
+              resources: ["roles", "rolebindings", "clusterroles", "clusterrolebindings"]
+              verbs: ["get", "list", "watch"]
+            - apiGroups: ["apiextensions.k8s.io"]
+              resources: ["customresourcedefinitions"]
+              verbs: ["get", "list", "watch"]
+            - apiGroups: ["apiregistration.k8s.io"]
+              resources: ["apiservices"]
+              verbs: ["get", "list", "watch"]
+            - apiGroups: ["metrics.k8s.io"]
+              resources: ["nodes", "pods"]
+              verbs: ["get", "list", "watch"]
+            - apiGroups: ["helm.toolkit.fluxcd.io"]
+              resources: ["helmreleases"]
+              verbs: ["get", "list", "watch"]
+            - apiGroups: ["kustomize.toolkit.fluxcd.io"]
+              resources: ["kustomizations"]
+              verbs: ["get", "list", "watch"]
+            - apiGroups: ["source.toolkit.fluxcd.io"]
+              resources: ["gitrepositories", "helmrepositories", "ocirepositories", "buckets", "helmcharts"]
+              verbs: ["get", "list", "watch"]
+            - apiGroups: ["external-secrets.io"]
+              resources: ["externalsecrets", "secretstores", "clustersecretstores"]
+              verbs: ["get", "list", "watch"]
+            - apiGroups: ["monitoring.coreos.com"]
+              resources: ["prometheuses", "alertmanagers", "servicemonitors", "podmonitors", "prometheusrules", "thanosrulers", "probes"]
+              verbs: ["get", "list", "watch"]
+            - apiGroups: ["snapshot.storage.k8s.io"]
+              resources: ["volumesnapshots", "volumesnapshotcontents", "volumesnapshotclasses"]
+              verbs: ["get", "list", "watch"]
+        openclaw-write-restricted:
+          type: Role
+          rules:
+            - apiGroups: [""]
+              resources: ["pods"]
+              verbs: ["delete"]
+            - apiGroups: [""]
+              resources: ["pods/exec"]
+              verbs: ["create"]
+            - apiGroups: ["apps"]
+              resources: ["deployments"]
+              verbs: ["patch", "update"]
+      bindings:
+        openclaw-read-all:
+          type: ClusterRoleBinding
+          roleRef:
+            identifier: openclaw-read-all
+          subjects:
+            - identifier: openclaw
+              serviceAccount: openclaw
+        openclaw-write-restricted:
+          type: RoleBinding
+          roleRef:
+            identifier: openclaw-write-restricted
+          subjects:
+            - identifier: openclaw
+              serviceAccount: openclaw
+    persistence:
+      openclaw-home:
+        type: emptyDir
+      config:
+        existingClaim: "{{ .Release.Name }}"
+        globalMounts:
+          - path: /home/node
+      data:
+        type: nfs
+        server: funkstation.internal
+        path: /volume1/Agents/devclaw
+        globalMounts:
+          - path: /data
+      configmap:
+        type: configMap
+        name: "{{ .Release.Name }}-config"
+        defaultMode: 0755
+        globalMounts:
+          - path: /tmp/openclaw.json
+            subPath: openclaw.json

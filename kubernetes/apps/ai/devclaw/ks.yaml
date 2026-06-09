@@ -3,23 +3,23 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: openclaw
+  name: devclaw
 spec:
   commonMetadata:
     labels:
-      app.kubernetes.io/name: openclaw
+      app.kubernetes.io/name: devclaw
   components:
     - ../../../../components/volsync
   dependsOn:
     - name: rook-ceph-cluster
       namespace: rook-ceph
   interval: 1h
-  path: ./kubernetes/apps/ai/openclaw/app
+  path: ./kubernetes/apps/ai/devclaw/app
   postBuild:
     substitute:
-      APP: openclaw
+      APP: devclaw
       VOLSYNC_CAPACITY: 10Gi
-      GATUS_SUBDOMAIN: claw
+      GATUS_SUBDOMAIN: devclaw
   prune: true
   sourceRef:
     kind: GitRepository

@@ -8,6 +8,6 @@ components:
 
 resources:
   - ./namespace.yaml
-  # - ./openclaw/ks.yaml
+  - ./devclaw/ks.yaml
   - ./searxng/ks.yaml
   - ./toolhive/ks.yaml
