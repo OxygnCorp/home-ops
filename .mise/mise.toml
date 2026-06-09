@@ -6,8 +6,8 @@ MINIJINJA_CONFIG_FILE = '{{config_root}}/.minijinja.toml'
 TALOSCONFIG = '{{config_root}}/talosconfig'
 JUST_UNSTABLE = "1"
 
-[hooks]
-postinstall = "lefthook install"
+[settings]
+experimental = true
 
 [tools]
 # Runtimes
@@ -18,15 +18,11 @@ go = "1.26.4"
 gum = "0.17.0"
 
 # Mise
-"slsa-verifier" = "2.7.1"
-"aqua:sigstore/cosign" = "3.1.0"
 "just" = "1.52.0"
 "yq" = "4.53.3"
 "jq" = "1.8.1"
 
 # 1Password
-"1password" = "2.31.1"
-"1password-cli" = "2.31.1"
 "vals" = "0.44.0"
 
 # S3
@@ -34,8 +30,7 @@ gum = "0.17.0"
 
 # Flux Stuff
 "aqua:fluxcd/flux2" = "2.8.8"
-"aqua:flux-iac/tofu-controller/tfctl" = "0.16.4"
-"pipx:flux-local" = "8.2.0"
+"github:home-operations/flate" = "0.3.3"
 
 # Kubectl + Plugins
 "aqua:kubernetes/kubectl" = "1.32.3"
@@ -60,4 +55,3 @@ gum = "0.17.0"
 
 # Linters
 "pipx:yamllint" = "1.38.0"
-"github:home-operations/flate" = "v0.3.3"

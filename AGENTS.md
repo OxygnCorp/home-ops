@@ -1,116 +1,140 @@
-# GitHub Copilot Instructions for home-ops Repository
+# Home Operations - AI Assistant Guide
 
-This repository manages a GitOps-based Kubernetes deployment using FluxCD to deploy and maintain applications on a Talos-based cluster. The repository follows structured patterns for application deployment, secret management, and infrastructure configuration.
+This is a **Home Kubernetes cluster monorepo** managed with GitOps (Flux, Renovate, GitHub Actions).
 
-## Modular Instruction Files
+## Repository Structure
 
-This repository maintains modular instruction files for different aspects of the GitOps workflow in `.github/instructions/`. These files serve as detailed reference documentation, while this main file contains all the critical information that GitHub Copilot needs.
+```
+home-ops/
+├── kubernetes/           # Kubernetes configurations (Flux-managed)
+│   ├── apps/            # Application configs (namespaces as subdirectories)
+│   │   ├── ai/          # AI apps (openclaw, toolhive, etc.)
+│   │   ├── network/     # Networking (cilium, envoy, etc.)
+│   │   ├── observability/ # Monitoring (grafana, prometheus, etc.)
+│   │   └── ...         # Other namespaces
+│   ├── components/      # Reusable k8s components
+│   └── crds/           # Custom CRDs
+├── talos/               # Talos Linux machine configs
+├── bootstrap/           # Bootstrap templates (helmfile.d, templates)
+```
 
-**Reference instruction files:**
+## Key Technologies
 
-- [`repo-structure.instructions.md`](.agents/instructions/repo-structure.instructions.md): Repository structure and operations guide
-- [`flux.instructions.md`](.agents/instructions/flux.instructions.md): Flux configuration guidelines
-- [`flux-kustomization.instructions.md`](.agents/instructions/flux-kustomization.instructions.md): Flux Kustomization (ks.yaml) guidelines
-- [`ocirepository.instructions.md`](.agents/instructions/ocirepository.instructions.md): OCIRepository configuration
-- [`kustomization.instructions.md`](.agents/instructions/kustomization.instructions.md): Kustomize kustomization.yaml patterns
-- [`namespace.instructions.md`](.agents/instructions/namespace.instructions.md): Namespace definitions
-- [`helmrelease.instructions.md`](.agents/instructions/helmrelease.instructions.md): HelmRelease patterns and examples
-- [`secrets.instructions.md`](.agents/instructions/secrets.instructions.md): Secret management practices
-- [`externaldns.instructions.md`](.agents/instructions/externaldns.instructions.md): ExternalDNS configuration
-- [`talos.instructions.md`](.agents/instructions/talos.instructions.md): Talos OS configuration best practices
-- [`volsync.instructions.md`](.agents/instructions/volsync.instructions.md): VolSync integration for persistent storage
-- [`yaml-schemas.instructions.md`](.agents/instructions/yaml-schemas.instructions.md): YAML Schema Validation Guidelines
-- [`sorting.instructions.md`](.agents/instructions/sorting.instructions.md): YAML sorting rules
+| Category   | Tool                         | Purpose                           |
+| ---------- | ---------------------------- | --------------------------------- |
+| GitOps     | Flux                         | Deploys configs from Git to k8s   |
+| CI         | Renovate + GitHub Actions    | Dependency updates, automation    |
+| Networking | cilium (eBPF)                | CNI, BGP, service mesh            |
+| Ingress    | Envoy Gateway                | L7 proxy, ingress controller      |
+| DNS        | external-dns                 | Syncs ingress to Cloudflare/UniFi |
+| Secrets    | external-secrets + 1Password   | Secret management                 |
+| Storage    | Rook/Ceph + volsync           | Distributed storage + backups    |
+| Images     | spegel                       | Local OCI mirror                  |
+| IaC        | tofu-controller              | Terraform on k8s                 |
+| AI         | toolhive (MCP)              | MCP gateway for AI assistants      |
 
-> **Note**: The guidance from these files is incorporated into the sections below. When working with specific components, refer to the relevant sections in this file.
+## GitOps Flow
 
-## Instructions Reference Guide
+```
+Git push → Flux source sync → Kustomization → HelmRelease → k8s resources
+```
 
-The following sections contain file-specific guidance. When helping with code in this repository, apply these instructions based on the context:
+Flux recursively searches `kubernetes/apps/` for `kustomization.yaml` files. Each app directory must have a `kustomization.yaml` and `ks.yaml` (Flux Kustomization).
 
-- **For Flux Configuration Files**: Apply the Flux guidelines when working with files in `flux/`.
-- **For Flux Kustomization Files**: Apply the Flux Kustomization best practices when working with `ks.yaml` files.
-- **For OCIRepository Files**: Apply the OCIRepository patterns when working with `ocirepository.yaml` files.
-- **For Kustomize Files**: Apply the Kustomize guidelines when working with `kustomization.yaml` files.
-- **For Namespace Files**: Apply the Namespace patterns when working with `namespace.yaml` files.
-- **For HelmRelease Files**: Apply the HelmRelease patterns when working with `helmrelease.yaml` files.
-- **For Secret Management**: Apply the secret management practices when working with secret-related files.
-- **For ExternalDNS**: Apply the ExternalDNS practices when working with DNS configuration files.
-- **For Talos Configuration**: Apply the Talos management guidelines when working with files in `talos/`.
-- **For VolSync**: Apply the VolSync integration practices when working with persistent storage.
-- **For All YAML Files**: Apply the sorting rules from `sorting.instructions.md` and schema validation from `yaml-schemas.instructions.md`.
+## Conventions
 
-## Component-Specific Guidelines
+- Component READMEs stay with components (e.g., `kubernetes/apps/ai/toolhive/README.md`)
+- Secrets stored in 1Password, referenced via `external-secrets`
+- SOPS used for encrypting sensitive values in Git
+- Apps use `HelmRelease` via Flux, rarely raw manifests
+- Each namespace is a subdirectory under `kubernetes/apps/`
 
-### Flux Configuration
-When working with files in `flux/`:
-- Use appropriate API versions for Flux resources
-- Set reconciliation intervals (10m for cluster, 15m for apps)
-- Configure `prune: true` for garbage collection
-- Use SOPS for secret decryption
+## Common Operations
 
-### Secret Management
-When working with secrets:
-- Never commit plaintext secrets
-- Use External Secrets Operator for external providers
-- Encrypt with SOPS/AGE when needed
-- Name encrypted files with `.sops.yaml` suffix
+- **Add app**: Create in `kubernetes/apps/${namespace}/` with kustomization + HelmRelease
+- **Update app**: Merge renovate PR or manually edit and push
+- **Troubleshoot**: Check `flux get all -n <namespace>`, `kubectl get events --sort-by=.lastTimestamp`
+- **Scripts**: `hack/` contains operational scripts (cert-extract.sh, delete-stuck-ns.sh, etc.)
+- **Validate locally**: Run `flate` (auto-installed via `.mise.toml`) before pushing GitOps changes:
 
-### ExternalDNS
-When working with ExternalDNS:
-- Use separate deployments for external and internal DNS
-- Configure proper annotations for DNS targets
-- Use ESO for API credentials
-- Test DNS propagation
+    ```bash
+    # Test Kustomizations + HelmReleases for all clusters
+    flate test ks --path ./kubernetes/apps
 
-### Talos Configuration
-When working with files in `talos/`:
-- Use `talconfig.yaml` with proper schema references
-- Pin Talos and Kubernetes versions
-- Configure node-specific settings
-- Use YAML anchors for repeated values
+    # Diff against a baseline (e.g., main branch)
+    git worktree add --detach /tmp/baseline origin/main
+    flate diff ks --path ./kubernetes/apps --path-orig /tmp/baseline/kubernetes/apps
+    flate diff hr --path ./kubernetes/apps --path-orig /tmp/baseline/kubernetes/apps
+    git worktree remove /tmp/baseline --force
+    ```
 
-### VolSync
-When working with VolSync:
-- Configure backup schedules appropriately
-- Set retention policies
-- Use proper storage classes
-- Test restore procedures
+- **Gateway policy namespace rule**: `ClientTrafficPolicy` and `EnvoyPatchPolicy` that target a `Gateway` must live in the same namespace as that `Gateway`. For `envoy-internal`, put those resources in `kubernetes/apps/network/` with namespace `network`.
 
-## Repository Overview
+## MCP Servers (toolhive)
 
-This repository manages a Kubernetes cluster using GitOps with Flux. Key components include:
-- **Flux**: For continuous deployment
-- **Kustomize**: For resource customization
-- **Helm**: For application packaging
-- **External Secrets Operator**: For secret management
-- **Talos**: For OS management
+MCP servers are managed via toolhive in the `ai` namespace:
 
-## Directory Structure
+- **mcp-tools** (default group): arr, ha, memory, seerr
+- **mcp-devops** (DevOps group): github, grafana, kubectl, talos
 
-- `/kubernetes/apps/`: Application deployments by category
-  - Each app: `ks.yaml` + `app/` subdirectory with manifests
-- `/flux/`: Flux configuration
-- `/components/`: Shared components
-- `/talos/`: Talos OS configs
-- `/bootstrap/`: Initial setup
+Each MCP server is in `kubernetes/apps/ai/toolhive/mcp-servers/` with its own directory.
 
-## Best Practices
+## PR Review Standards
 
-1. Follow GitOps principles - repository is source of truth
-2. Use declarative YAML for all resources
-3. Encrypt secrets with External Secrets Operator
-4. Include YAML schema headers for validation
-5. Follow sorting rules for consistent formatting
-6. Test changes before committing
+When reviewing Renovate PRs, enforce these criteria:
 
-## Adding New Applications
+### HelmRelease Requirements
 
-A skill for adding a new application exists in [`SKILL.md`](.agents/skills/add-app/SKILL.md): Adding a new application
+- All applications MUST use `HelmRelease` via Flux, not raw manifests
+- Must include `spec.chart.spec.version` for pinned chart versions outside of `app-template`
+- Must include `spec.interval` for reconciliation frequency
+- Resource limits (CPU/memory) SHOULD be specified for production workloads, but this is not a hard requirement
+- `valuesFrom` should reference ConfigMaps/Secrets, not inline values
 
-## YAML Schema Validation
+### Namespace Convention
 
-Always include schema headers for validation:
-- `# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/...`
+- `metadata.namespace` is **never** set inline on `HelmRelease` or `Kustomization` resources — this is intentional, not a violation
+- The namespace is injected at build time by kustomize's `namespace:` directive in the per-app `kustomization.yaml` (e.g., `namespace: ai`)
+- For Flux `Kustomization` resources, `spec.targetNamespace` is propagated automatically via the replacement component at `kubernetes/components/replacements/ks.yaml`
+- Reviewers MUST NOT flag missing `metadata.namespace` on these resources as an issue
 
-See [yaml-schemas.instructions.md](instructions/yaml-schemas.instructions.md) for specific schema URLs.
+### Secret Management Rules
+
+- **NEVER** commit plain-text secrets or credentials in Git
+- All secrets MUST use `external-secrets` with 1Password backend
+- SOPS encryption required for any sensitive values in Git
+- If a PR introduces a new secret, verify it's external-secrets backed
+
+### Image & Digest Policy
+
+- Prefer `@sha256:` digests over version tags for reproducibility (container images only)
+- OCI artifacts (e.g., Helm charts pulled via `OCIRepository`) are exempt: pin by tag/version, since they don't support SHA-tag references the same way container images do
+- For tag-only updates, verify OCI metadata (revision/source/created)
+- If revision changes between digests, ensure it's intentional
+- Reject updates from untrusted registries (must be allowlisted)
+- Preferred registries: GHCR.io, registry.k8s.io, Docker Hub (fallback)
+- Avoid Docker Hub for critical infrastructure components
+
+### Breaking Change Detection
+
+Always `request_changes` if:
+
+- API version changes (e.g., `apiVersion: apps/v1beta1` → `apps/v1`)
+- Deprecated field usage introduced
+- Major version bumps without justification
+- CRD changes or custom resource modifications
+- Network policy or security context relaxations
+
+### Required Evidence for Approval
+
+Before approving, verify:
+
+1. Release notes/changelog mention the upgrade
+2. GitHub compare shows expected changes
+3. Version aligns with what Renovate reported
+4. No breaking changes identified in release notes
+5. Security advisories don't apply to this version
+
+For Helm chart and container image upgrades, you **must** use tool requests (e.g., `gh_api`) to fetch release notes, changelogs, and upstream metadata from the source repository. Do not rely on the PR description alone — verify against the actual upstream release.
+
+_Flux automatically reconciles changes once the PR is merged._
