@@ -8,4 +8,4 @@ spec:
   remoteUrl: http://grafana-mcp.observability:8000/sse
   transport: sse
   groupRef:
-    name: mcp-tools
+    name: mcp-devops

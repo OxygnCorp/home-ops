@@ -1,0 +1,23 @@
+---
+apiVersion: toolhive.stacklok.dev/v1alpha1
+kind: VirtualMCPServer
+metadata:
+  name: mcp-gateway-devops
+spec:
+  groupRef:
+    name: mcp-devops
+  config:
+    aggregation:
+      conflictResolution: prefix
+      conflictResolutionConfig:
+        prefixFormat: "{workload}_"
+  telemetryConfigRef:
+    name: prometheus
+  incomingAuth:
+    type: anonymous
+  outgoingAuth:
+    source: discovered
+  sessionStorage:
+    address: toolhive-dragonfly.ai.svc.cluster.local:6379
+    keyPrefix: "mcp-gateway-devops:"
+    provider: redis
