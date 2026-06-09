@@ -195,7 +195,7 @@ data:
         "maxConcurrentRuns": 8,
         "failureDestination": {
           "channel": "discord",
-          "to": "channel:${{DISCORD_DEVOPS_CHANNEL_ID}}",
+          "to": "channel:$${DISCORD_DEVOPS_CHANNEL_ID}",
           "accountId": "default",
           "mode": "announce"
         },

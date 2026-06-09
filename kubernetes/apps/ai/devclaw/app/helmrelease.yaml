@@ -126,7 +126,8 @@ spec:
           - backendRefs:
               - name: "{{ .Release.Name }}"
                 port: 12321
-
+    serviceAccount:
+      openclaw: {}
     rbac:
       roles:
         openclaw-read-all:
