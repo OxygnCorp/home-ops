@@ -229,8 +229,8 @@ spec:
         path: /volume1/Agents/devclaw
         globalMounts:
           - path: /data
-      configmap:
-        type: configMap
+      openclaw-config:
+        type: secret
         name: "{{ .Release.Name }}-config"
         defaultMode: 0755
         globalMounts:

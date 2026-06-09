@@ -1,10 +1,8 @@
 ---
-# JSON5-friendly OpenClaw gateway config. Flux postBuild leaves OpenClaw ${VAR} placeholders;
-# use $${VAR} here so Flux emits a literal ${VAR} for runtime env substitution.
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: devclaw-config
+  name: devclaw-configmap
 data:
   openclaw.json: |
     {
@@ -42,7 +40,6 @@ data:
             "primary": "minimax/MiniMax-M3",
             "fallbacks": [
               "opencode-go/deepseek-v4-flash",
-              "llama-cpp/qwen3.5:9b",
               "opencode-go/kimi-k2.5"
             ]
           },
@@ -96,7 +93,7 @@ data:
                 "end": "22:00"
               },
               "target": "discord",
-              "to": "channel:$${DISCORD_DEVOPS_CHANNEL_ID}"
+              "to": "channel:{{ .DISCORD_DEVOPS_CHANNEL_ID }}"
             },
             "identity": {
               "name": "Puchu",
@@ -112,9 +109,9 @@ data:
             "channel": "discord",
             "peer": {
               "kind": "channel",
-              "id": "$${DISCORD_DEVOPS_CHANNEL_ID}"
+              "id": "{{ .DISCORD_DEVOPS_CHANNEL_ID }}"
             },
-            "guildId": "$${DISCORD_GUILD_ID}"
+            "guildId": "{{ .DISCORD_GUILD_ID }}"
           }
         }
       ],
@@ -141,7 +138,7 @@ data:
             "stickerUploads": false
           },
           "allowFrom": [
-            "$${DISCORD_MATT_USER_ID}"
+            "{{ .DISCORD_MATT_USER_ID }}"
           ],
           "dmPolicy": "allowlist",
           "enabled": true,
@@ -151,22 +148,22 @@ data:
               "main"
             ],
             "approvers": [
-              "$${DISCORD_MATT_USER_ID}"
+              "{{ .DISCORD_MATT_USER_ID }}"
             ],
             "enabled": true,
             "target": "channel"
           },
           "groupPolicy": "allowlist",
           "guilds": {
-            "$${DISCORD_GUILD_ID}": {
+            "{{ .DISCORD_GUILD_ID }}": {
               "channels": {
-                "$${DISCORD_DEVOPS_CHANNEL_ID}": {
+                "{{ .DISCORD_DEVOPS_CHANNEL_ID }}": {
                   "enabled": true,
                   "requireMention": false
                 }
               },
               "users": [
-                "$${DISCORD_MATT_USER_ID}"
+                "{{ .DISCORD_MATT_USER_ID }}"
               ]
             }
           },
@@ -179,14 +176,14 @@ data:
             "maxAgeHours": 0,
             "spawnSessions": true
           },
-          "token": "$${DISCORD_BOT_TOKEN}"
+          "token": "{{ .DISCORD_BOT_TOKEN }}"
         }
       },
       "commands": {
         "native": "auto",
         "nativeSkills": "auto",
         "ownerAllowFrom": [
-          "discord:$${DISCORD_MATT_USER_ID}"
+          "discord:{{ .DISCORD_MATT_USER_ID }}"
         ],
         "ownerDisplay": "raw",
         "restart": false
@@ -195,7 +192,7 @@ data:
         "maxConcurrentRuns": 8,
         "failureDestination": {
           "channel": "discord",
-          "to": "channel:$${DISCORD_DEVOPS_CHANNEL_ID}",
+          "to": "channel:{{ .DISCORD_DEVOPS_CHANNEL_ID }}",
           "accountId": "default",
           "mode": "announce"
         },
@@ -211,7 +208,7 @@ data:
       "gateway": {
         "auth": {
           "mode": "token",
-          "token": "$${OPENCLAW_GATEWAY_TOKEN}"
+          "token": "{{ .OPENCLAW_GATEWAY_TOKEN }}"
         },
         "controlUi": {
           "allowedOrigins": [
@@ -302,8 +299,7 @@ data:
             "llm": {
               "allowModelOverride": true,
               "allowedModels": [
-                "opencode-go/deepseek-v4-flash",
-                "llama-cpp/qwen3.5:9b"
+                "opencode-go/deepseek-v4-flash"
               ]
             },
             "subagent": {
@@ -431,7 +427,7 @@ data:
         "elevated": {
           "enabled": true,
           "allowFrom": {
-            "discord": ["$${DISCORD_MATT_USER_ID}"]
+            "discord": ["{{ .DISCORD_MATT_USER_ID }}"]
           }
         },
         "exec": {
