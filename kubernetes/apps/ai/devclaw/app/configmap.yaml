@@ -69,10 +69,8 @@ data:
               ]
             },
             "runTimeoutSeconds": 900,
-            "announceTimeoutMs": 180000,
-            "thinking": "high"
+            "announceTimeoutMs": 180000
           },
-          "thinkingDefault": "high",
           "timeoutSeconds": 600,
           "typingMode": "instant",
           "typingIntervalSeconds": 6,
