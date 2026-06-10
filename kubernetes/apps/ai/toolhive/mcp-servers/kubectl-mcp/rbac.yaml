@@ -146,4 +146,4 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: kubectl-mcp-readonly
-    namespace: llm
+    namespace: ai
