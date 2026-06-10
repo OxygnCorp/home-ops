@@ -56,19 +56,6 @@ spec:
         enabled: true
         existingClaim: "kguardian"
 
-    # LLM Bridge service for AI assistant
-    llmBridge:
-      enabled: true
-
-      secrets:
-        # -- Normalized secret key name used for all providers
-        keyName: "API_KEY"
-
-        # Google Gemini configuration
-        gemini:
-          enabled: true
-          name: "kguardian-gemini-secret"
-
     # MCP Server Configuration (Model Context Protocol)
     mcpServer:
       # -- Enable MCP Server for external integrations
