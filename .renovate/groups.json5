@@ -77,5 +77,35 @@
       },
       minimumGroupSize: 2,
     },
+    {
+      description: "Toolhive Group",
+      groupName: "toolhive",
+      matchDatasources: ["docker"],
+      matchPackageNames: ["/toolhive-operator/"],
+      group: {
+        commitMessageTopic: "{{{groupName}}} group",
+      },
+      minimumGroupSize: 2,
+    },
+    {
+      description: "CloudNative PG Group",
+      groupName: "cloudnative-pg",
+      matchDatasources: ["docker"],
+      matchPackageNames: ["/cloudnative-pg/charts/"],
+      group: {
+        commitMessageTopic: "{{{groupName}}} group",
+      },
+      minimumGroupSize: 2,
+    },
+    {
+      description: "Servarr Stack Group",
+      groupName: "servarr",
+      matchDatasources: ["docker"],
+      matchPackageNames: ["/sonarr", "/prowlarr", "/radarr"],
+      group: {
+        commitMessageTopic: "{{{groupName}}} group",
+      },
+      minimumGroupSize: 2,
+    },
   ],
 }
