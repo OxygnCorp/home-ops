@@ -28,14 +28,14 @@ data:
             "provider": "local",
             "local": {
               "modelPath": "hf:ggml-org/embeddinggemma-300m-qat-q8_0-GGUF/embeddinggemma-300m-qat-Q8_0.gguf"
-            }
-          },
-          "query": {
-            "hybrid": {
-                "enabled": true,
-                "textWeight": 0.3,
-                "mmr": { "enabled": true },
-                "temporalDecay": { "enabled": true }
+            },
+            "query": {
+              "hybrid": {
+                  "enabled": true,
+                  "textWeight": 0.3,
+                  "mmr": { "enabled": true },
+                  "temporalDecay": { "enabled": true }
+                }
               }
             }
           },
@@ -73,7 +73,7 @@ data:
             "runTimeoutSeconds": 900,
             "announceTimeoutMs": 180000
           },
-          "timeoutSeconds": 600,
+          "timeoutSeconds": 1200,
           "typingMode": "instant",
           "typingIntervalSeconds": 6,
           "userTimezone": "Europe/Paris"
@@ -270,7 +270,7 @@ data:
           "tokenjuice",
           "web-readability"
         ],
-        bundledDiscovery: "compat",
+        "bundledDiscovery": "compat",
         "entries": {
           "browser": { "enabled": true },
           "active-memory": {
@@ -375,8 +375,8 @@ data:
             "enabled": true,
             "config": {
               "webSearch": {
-                "baseUrl": "https://searxng.ai:8080",
-                "language": "en"
+                "baseUrl": "http://searxng.ai:8080",
+                "language": "fr"
               }
             }
           },
