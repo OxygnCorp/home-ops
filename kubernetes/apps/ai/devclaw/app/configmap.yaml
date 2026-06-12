@@ -25,8 +25,10 @@ data:
           },
           "maxConcurrent": 4,
           "memorySearch": {
-            "provider": "ollama",
-            "model": "nomic-embed-text-v1.5",
+            "provider": "local",
+            "local": {
+              "contextSize": 2048
+            },
             "query": {
               "hybrid": {
                 "enabled": true,
@@ -266,6 +268,7 @@ data:
           "tokenjuice",
           "web-readability"
         ],
+        bundledDiscovery: "compat",
         "entries": {
           "browser": { "enabled": true },
           "active-memory": {
