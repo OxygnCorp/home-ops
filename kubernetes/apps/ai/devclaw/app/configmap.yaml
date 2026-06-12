@@ -256,7 +256,6 @@ data:
           "discord",
           "document-extract",
           "file-transfer",
-          "llama-cpp-provider",
           "llm-task",
           "lossless-claw",
           "memory-core",
@@ -292,7 +291,6 @@ data:
               }
             }
           },
-          "llama-cpp-provider": { "enabled": true },
           "llm-task": { "enabled": true },
           "lossless-claw": {
             "enabled": true,
