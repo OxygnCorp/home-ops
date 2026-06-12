@@ -32,7 +32,7 @@ gum = "0.17.0"
 
 # Flux Stuff
 "aqua:fluxcd/flux2" = "2.8.8"
-"github:home-operations/flate" = "0.4.4"
+"github:home-operations/flate" = "0.4.5"
 
 # Kubectl + Plugins
 "aqua:kubernetes/kubectl" = "1.32.3"
