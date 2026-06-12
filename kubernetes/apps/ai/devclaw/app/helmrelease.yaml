@@ -30,7 +30,7 @@ spec:
                 cp /tmp/openclaw.json /home/node/.openclaw/openclaw.json
                 chown 1000:100 /home/node/.openclaw/openclaw.json
                 chmod 400 /home/node/.openclaw/openclaw.json
-                cp /kopiaignore/.kopiaignore /config/.kopiaignore
+                cp /kopiaignore/.kopiaignore /home/node/.kopiaignore
         containers:
           app:
             image:
