@@ -13,7 +13,8 @@ spec:
     controllers:
       openclaw:
         annotations:
-          reloader.stakater.com/auto: "true"
+          secret.reloader.stakater.com/reload: "devclaw-secret, devclaw-config"
+          configmap.reloader.stakater.com/reload: "devclaw-configmap"
         initContainers:
           init:
             image:
