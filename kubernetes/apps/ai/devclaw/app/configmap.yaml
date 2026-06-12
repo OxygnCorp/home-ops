@@ -173,7 +173,7 @@ data:
             "maxAgeHours": 0,
             "spawnSessions": true
           },
-          "token": : { "source": "env", "provider": "default", "id": "DISCORD_BOT_TOKEN"}
+          "token": : { "source": "env", "provider": "default", "id": "DISCORD_BOT_TOKEN" }
         }
       },
       "commands": {
@@ -205,8 +205,13 @@ data:
       "gateway": {
         "auth": {
           "mode": "token",
-          "token": { "source": "env", "provider": "default", "id": "OPENCLAW_GATEWAY_TOKEN"}
+          "token": {
+            "source": "env",
+            "provider": "default",
+            "id": "OPENCLAW_GATEWAY_TOKEN"
+          }
         },
+        "bind": "lan",
         "controlUi": {
           "allowedOrigins": [
             "https://devclaw.oxygn.dev"
@@ -470,7 +475,7 @@ data:
             "source": "env",
             "allowlist": [
               "OPENCLAW_GATEWAY_TOKEN",
-              "OPENCLAW_DISCORD_TOKEN"
+              "DISCORD_BOT_TOKEN"
             ]
           }
         }

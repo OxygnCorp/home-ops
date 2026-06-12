@@ -41,10 +41,9 @@ spec:
               - |
                 # Start gateway
                 echo "Starting OpenClaw gateway..."
-                exec node dist/index.js gateway --bind lan
+                exec node dist/index.js gateway
             env:
               OPENCLAW_LOG_LEVEL: debug
-              BROWSER_WS_ENDPOINT: "ws://localhost:9222"
               GOPATH: /home/node/go
               HOME: /home/node
               HOMEBREW_CELLAR: /home/node/.local/homebrew/Cellar
