@@ -27,10 +27,11 @@ data:
           "memorySearch": {
             "provider": "local",
             "local": {
-              "contextSize": 2048
-            },
-            "query": {
-              "hybrid": {
+              "modelPath": "hf:ggml-org/embeddinggemma-300m-qat-q8_0-GGUF/embeddinggemma-300m-qat-Q8_0.gguf"
+            }
+          },
+          "query": {
+            "hybrid": {
                 "enabled": true,
                 "textWeight": 0.3,
                 "mmr": { "enabled": true },
@@ -292,6 +293,7 @@ data:
               }
             }
           },
+          "llama-cpp-provider": { "enabled": true },
           "llm-task": { "enabled": true },
           "lossless-claw": {
             "enabled": true,
