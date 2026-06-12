@@ -173,7 +173,7 @@ data:
             "maxAgeHours": 0,
             "spawnSessions": true
           },
-          "token": : { "source": "env", "provider": "default", "id": "DISCORD_BOT_TOKEN" }
+          "token": { "source": "env", "provider": "default", "id": "DISCORD_BOT_TOKEN" }
         }
       },
       "commands": {
