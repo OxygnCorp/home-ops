@@ -20,7 +20,7 @@ data:
           "heartbeat": {
             "directPolicy": "allow",
             "includeReasoning": false,
-            "isolatedSession": false,
+            "isolatedSession": true,
             "lightContext": true
           },
           "maxConcurrent": 4,
@@ -58,7 +58,6 @@ data:
           },
           "subagents": {
             "archiveAfterMinutes": 120,
-            "delegationMode": "prefer",
             "maxSpawnDepth": 1,
             "maxChildrenPerAgent": 3,
             "maxConcurrent": 4,
@@ -174,7 +173,7 @@ data:
             "maxAgeHours": 0,
             "spawnSessions": true
           },
-          "token": "{{ .DISCORD_BOT_TOKEN }}"
+          "token": : { "source": "env", "provider": "default", "id": "DISCORD_BOT_TOKEN"}
         }
       },
       "commands": {
@@ -206,7 +205,7 @@ data:
       "gateway": {
         "auth": {
           "mode": "token",
-          "token": "{{ .OPENCLAW_GATEWAY_TOKEN }}"
+          "token": { "source": "env", "provider": "default", "id": "OPENCLAW_GATEWAY_TOKEN"}
         },
         "controlUi": {
           "allowedOrigins": [
@@ -243,6 +242,25 @@ data:
         }
       },
       "plugins": {
+        "allow": [
+          "active-memory",
+          "browser",
+          "device-pair",
+          "discord",
+          "document-extract",
+          "file-transfer",
+          "llm-task",
+          "lossless-claw",
+          "memory-core",
+          "memory-wiki",
+          "minimax"
+          "oc-path",
+          "opencode-go",
+          "searxng",
+          "thread-ownership",
+          "tokenjuice",
+          "web-readability",
+        ],
         "entries": {
           "browser": { "enabled": true },
           "active-memory": {
@@ -444,6 +462,17 @@ data:
             }
           },
           "fetch": { "enabled": true }
+        }
+      },
+      "secrets": {
+        "providers": {
+          "default": {
+            "source": "env",
+            "allowlist": [
+              "OPENCLAW_GATEWAY_TOKEN",
+              "OPENCLAW_DISCORD_TOKEN"
+            ]
+          }
         }
       }
     }

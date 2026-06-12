@@ -1,0 +1,4 @@
+[tools]
+"aqua:kubescape/kubescape" = "latest"
+gh = "latest"
+rg = "latest"
