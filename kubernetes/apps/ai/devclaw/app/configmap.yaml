@@ -31,11 +31,10 @@ data:
             },
             "query": {
               "hybrid": {
-                  "enabled": true,
-                  "textWeight": 0.3,
-                  "mmr": { "enabled": true },
-                  "temporalDecay": { "enabled": true }
-                }
+                "enabled": true,
+                "textWeight": 0.3,
+                "mmr": { "enabled": true },
+                "temporalDecay": { "enabled": true }
               }
             }
           },
