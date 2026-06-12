@@ -258,13 +258,13 @@ data:
           "lossless-claw",
           "memory-core",
           "memory-wiki",
-          "minimax"
+          "minimax",
           "oc-path",
           "opencode-go",
           "searxng",
           "thread-ownership",
           "tokenjuice",
-          "web-readability",
+          "web-readability"
         ],
         "entries": {
           "browser": { "enabled": true },
