@@ -30,6 +30,7 @@ spec:
                 cp /tmp/openclaw.json /home/node/.openclaw/openclaw.json
                 chown 1000:100 /home/node/.openclaw/openclaw.json
                 chmod 400 /home/node/.openclaw/openclaw.json
+                cp /kopiaignore/.kopiaignore /config/.kopiaignore
         containers:
           app:
             image:
@@ -219,6 +220,11 @@ spec:
     persistence:
       openclaw-home:
         type: emptyDir
+      kopiaignore:
+        type: configMap
+        name: devclaw-kopiaignore
+        globalMounts:
+          - path: /kopiaignore
       config:
         existingClaim: "{{ .Release.Name }}"
         globalMounts:
