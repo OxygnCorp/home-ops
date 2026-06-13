@@ -15,9 +15,6 @@ spec:
       kind: Dragonfly
       failed: status.phase != 'ready'
       current: status.phase == 'ready'
-  dependsOn:
-    - name: dragonfly
-      namespace: database
   interval: 1h
   path: "./kubernetes/apps/ai/litellm/app"
   postBuild:
