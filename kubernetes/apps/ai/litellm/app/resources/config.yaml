@@ -1,0 +1,95 @@
+model_list:
+  # MiniMax M3 - primary model
+  - model_name: MiniMax-M3
+    model_info:
+      mode: messages
+      max_input_tokens: 1000000
+      max_output_tokens: 131072
+      supports_function_calling: true
+      supports_prompt_caching: true
+      supports_vision: true
+    litellm_params:
+      model: minimax/MiniMax-M3
+      api_base: https://api.minimax.io/anthropic/v1/messages
+      api_key: os.environ/MINIMAX_API_KEY
+      cache_control_injection_points:
+        - location: message
+          role: system
+        - location: message
+          index: -1
+
+  # MiniMax M2.7 - fallback
+  - model_name: MiniMax-M2.7
+    model_info:
+      mode: messages
+      max_input_tokens: 204800
+      max_output_tokens: 131072
+      supports_function_calling: true
+      supports_prompt_caching: true
+      supports_vision: false
+    litellm_params:
+      model: minimax/MiniMax-M2.7
+      api_base: https://api.minimax.io/anthropic/v1/messages
+      api_key: os.environ/MINIMAX_API_KEY
+      cache_control_injection_points:
+        - location: message
+          role: system
+        - location: message
+          index: -1
+
+  # OpenCode deepseek-v4-flash
+  - model_name: opencode-flash
+    model_info:
+      mode: chat
+      max_input_tokens: 1000000
+      max_output_tokens: 16384
+      supports_function_calling: true
+      supports_prompt_caching: true
+    litellm_params:
+      model: openai/deepseek-v4-flash
+      api_base: https://opencode.ai/zen/go/v1
+      api_key: os.environ/OPENCODE_API_KEY
+
+  # OpenCode deepseek-v4-pro
+  - model_name: opencode-pro
+    model_info:
+      mode: chat
+      max_input_tokens: 1000000
+      max_output_tokens: 16384
+      supports_function_calling: true
+      supports_prompt_caching: true
+    litellm_params:
+      model: openai/deepseek-v4-pro
+      api_base: https://opencode.ai/zen/go/v1
+      api_key: os.environ/OPENCODE_API_KEY
+
+general_settings:
+  health_check_endpoint: /v1/health
+
+router_settings:
+  redis_host: os.environ/REDIS_HOST
+  redis_port: os.environ/REDIS_PORT
+  cooldown_time: 30
+  enable_pre_call_checks: true
+  fallbacks:
+    - MiniMax-M3: ["MiniMax-M2.7", "opencode-flash"]
+    - MiniMax-M2.7: ["opencode-flash"]
+    - opencode-flash: ["opencode-pro"]
+    - opencode-pro: ["opencode-flash"]
+
+litellm_settings:
+  success_callback: ["prometheus"]
+  failure_callback: ["prometheus"]
+  prometheus_adapter: true
+  require_auth_for_metrics_endpoint: false
+  cache: true
+  cache_params:
+    type: redis
+    host: os.environ/REDIS_HOST
+    port: os.environ/REDIS_PORT
+    ttl: 300
+  drop_params: true
+  request_timeout: 600
+  num_retries: 2
+  retry_after: 5
+  set_verbose: false

@@ -9,5 +9,6 @@ components:
 resources:
   - ./namespace.yaml
   - ./devclaw/ks.yaml
+  - ./litellm/ks.yaml
   - ./searxng/ks.yaml
   - ./toolhive/ks.yaml
