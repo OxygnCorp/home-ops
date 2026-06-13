@@ -23,7 +23,7 @@ spec:
             args: ["--config=/app/config.yaml"]
             env:
               TZ: Europe/Paris
-              LITELLM_LOG: INFO
+              LITELLM_LOG: DEBUG
               LITELLM_MODE: PRODUCTION
               REDIS_HOST: litellm-dragonfly
               REDIS_PORT: 6379
@@ -35,35 +35,44 @@ spec:
               readOnlyRootFilesystem: false
               capabilities: { drop: ["ALL"] }
             probes:
-              liveness: &probes
+              liveness:
                 enabled: true
                 custom: true
                 spec:
                   httpGet:
                     path: /
-                    port: &port 4000
-                  initialDelaySeconds: 5
+                    port: 4000
+                  initialDelaySeconds: 60
+                  periodSeconds: 10
+                  failureThreshold: 5
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /
+                    port: 4000
+                  initialDelaySeconds: 30
                   periodSeconds: 10
                   failureThreshold: 3
-              readiness: *probes
             resources:
               requests:
                 cpu: 10m
                 memory: 256Mi
-              limits:
-                memory: 2Gi
+              # limits:
+              #   memory: 2Gi
     defaultPodOptions:
       securityContext:
         runAsNonRoot: true
-        runAsUser: 1024
-        runAsGroup: 100
-        fsGroup: 100
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
     service:
       app:
         ports:
           http:
-            port: *port
+            port: 4000
     route:
       app:
         hostnames:
@@ -71,6 +80,10 @@ spec:
         parentRefs:
           - name: envoy-internal
             namespace: network
+        rules:
+          - backendRefs:
+              - identifier: app
+                port: 4000                  # → 4000, port du service.app.ports.http
     persistence:
       config:
         type: configMap
