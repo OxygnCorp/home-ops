@@ -53,11 +53,15 @@ spec:
           - name: diskprediction_local
             enabled: true
           - name: insights
-            enabled: true
+            enabled: false
           - name: pg_autoscaler
-            enabled: true
+            enabled: false
           - name: rook
             enabled: true
+          - name: restful
+            enabled: false
+          - name: telemetry
+            enabled: false
       network:
         provider: host
         addressRanges:
@@ -73,7 +77,7 @@ spec:
             cpu: 100m
             memory: 512Mi
           limits:
-            memory: 1Gi
+            memory: 2Gi
         mon:
           requests:
             cpu: 100m
