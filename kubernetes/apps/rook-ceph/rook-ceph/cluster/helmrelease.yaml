@@ -55,7 +55,7 @@ spec:
           - name: insights
             enabled: false
           - name: pg_autoscaler
-            enabled: true
+            enabled: false
           - name: rook
             enabled: true
           - name: restful
