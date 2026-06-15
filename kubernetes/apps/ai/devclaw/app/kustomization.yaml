@@ -8,3 +8,9 @@ resources:
   - ./helmrelease.yaml
   - ./externalsecret.yaml
   - ./kopiaignore.yaml
+configMapGenerator:
+  - name: devclaw-configmap
+    files:
+      - openclaw.json=./resources/openclaw.json
+generatorOptions:
+  disableNameSuffixHash: true
