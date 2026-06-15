@@ -251,7 +251,7 @@
   "models": {
     "providers": {
       "litellm": {
-        "baseUrl": "http://litellm.ai:4000/v1",
+        "baseUrl": "http://headroom.ai:8787/v1",
         "apiKey": { "source": "env", "provider": "default", "id": "LITELLM_API_KEY" },
         "api": "openai-completions",
         "timeoutSeconds": 600,
@@ -266,7 +266,7 @@
         ]
       },
       "litellm-anthropic": {
-        "baseUrl": "http://litellm.ai:4000",
+        "baseUrl": "http://headroom.ai:8787",
         "apiKey": { "source": "env", "provider": "default", "id": "LITELLM_API_KEY" },
         "api": "anthropic-messages",
         "timeoutSeconds": 600,
