@@ -504,7 +504,7 @@
         "allowlist": [
           "OPENCLAW_GATEWAY_TOKEN",
           "DISCORD_BOT_TOKEN",
-          "LITELLM_MASTER_KEY"
+          "LITELLM_API_KEY"
         ]
       }
     }
