@@ -46,7 +46,7 @@
         ]
       },
       "models": {
-        "litellm-anthropic/MiniMax": { "alias": "minimax", "params": { "cacheRetention": "short" } },
+        "litellm-anthropic/MiniMax": { "alias": "minimax-m3", "params": { "cacheRetention": "short" } },
         "litellm-anthropic/MiniMax-M2.7": { "alias": "minimax-m2.7", "params": { "cacheRetention": "short" } },
         "litellm/dsv4f": { "alias": "dsv4f", "params": { "cache_prompt": true } },
         "litellm/dsv4p": { "alias": "dsv4p", "params": { "cache_prompt": true } },
@@ -252,7 +252,7 @@
     "providers": {
       "litellm": {
         "baseUrl": "http://litellm.ai:4000/v1",
-        "apiKey": "{{ .LITELLM_API_KEY }}",
+        "apiKey": { "source": "env", "provider": "default", "id": "LITELLM_API_KEY" },
         "api": "openai-completions",
         "timeoutSeconds": 600,
         "models": [
@@ -267,7 +267,7 @@
       },
       "litellm-anthropic": {
         "baseUrl": "http://litellm.ai:4000",
-        "apiKey": "{{ .LITELLM_API_KEY }}",
+        "apiKey": { "source": "env", "provider": "default", "id": "LITELLM_API_KEY" },
         "api": "anthropic-messages",
         "timeoutSeconds": 600,
         "models": [
@@ -503,7 +503,8 @@
         "source": "env",
         "allowlist": [
           "OPENCLAW_GATEWAY_TOKEN",
-          "DISCORD_BOT_TOKEN"
+          "DISCORD_BOT_TOKEN",
+          "LITELLM_MASTER_KEY"
         ]
       }
     }
