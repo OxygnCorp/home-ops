@@ -32,17 +32,16 @@
         }
       },
       "model": {
-        "primary": "litellm-anthropic/MiniMax",
+        "primary": "litellm/dsv4f",
         "fallbacks": [
           "litellm/go-minimax-m3",
-          "litellm/dsv4f",
           "litellm/go-kimi-k2.6"
         ]
       },
       "imageModel": {
-        "primary": "litellm-anthropic/MiniMax",
+        "primary": "litellm/go-kimi-k2.6",
         "fallbacks": [
-          "litellm/go-kimi-k2.6"
+          "litellm/go-minimax-m3"
         ]
       },
       "models": {
@@ -64,9 +63,9 @@
         "maxChildrenPerAgent": 3,
         "maxConcurrent": 4,
         "model": {
-          "primary": "litellm-anthropic/MiniMax",
+          "primary": "litellm/dsv4f",
           "fallbacks": [
-            "litellm/dsv4f"
+            "litellm/go-minimax-m3"
           ]
         },
         "runTimeoutSeconds": 900,
@@ -306,7 +305,7 @@
             "main"
           ],
           "model": "litellm/dsv4f",
-          "modelFallback": "litellm-anthropic/MiniMax-M2.7",
+          "modelFallback": "litellm/go-minimax-m3",
           "timeoutMs": 30000,
           "queryMode": "recent",
           "promptStyle": "balanced",
@@ -328,8 +327,8 @@
           "contextThreshold": 0.75,
           "incrementalMaxDepth": 1,
           "newSessionRetainDepth": 2,
-          "summaryModel": "litellm/dsv4f",
-          "expansionModel": "litellm/dsv4f",
+          "summaryModel": "litellm/go-minimax-m3",
+          "expansionModel": "litellm/go-minimax-m3",
           "delegationTimeoutMs": 120000,
           "summaryTimeoutMs": 30000,
           "ignoreSessionPatterns": [
