@@ -28,9 +28,6 @@ spec:
               LANGS: "fr-FR"
               SYSTEM_DEFAULTLOCALE: fr-FR
               SYSTEM_ENABLEURLTOPDF: false
-              # PUID: 1024
-              # PGID: 100
-              # UMASK: 022
             probes:
               liveness: &probe
                 enabled: true
@@ -49,15 +46,6 @@ spec:
               limits:
                 memory: 2Gi
                 cpu: 500m
-            # securityContext:
-            #   readOnlyRootFilesystem: true
-        # pod:
-        #   securityContext:
-        #     # runAsNonRoot: true
-        #     runAsUser: 1024
-        #     runAsGroup: 100
-        #     fsGroup: 100
-        #     fsGroupChangePolicy: OnRootMismatch
     service:
       app:
         controller: stirling-pdf
