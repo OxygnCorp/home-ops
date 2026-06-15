@@ -15,9 +15,5 @@ spec:
     kind: GitRepository
     name: flux-system
     namespace: flux-system
-  postBuild:
-    substitute:
-      APP: omni-tools
-      GATUS_SUBDOMAIN: tools
   wait: false
   interval: 1h

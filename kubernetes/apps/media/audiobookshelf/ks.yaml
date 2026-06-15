@@ -23,7 +23,6 @@ spec:
     substitute:
       APP: audiobookshelf
       VOLSYNC_CAPACITY: 1Gi
-      GATUS_PATH: /ping
   prune: true
   sourceRef:
     kind: GitRepository

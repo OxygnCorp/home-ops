@@ -44,6 +44,7 @@ ui:
 
     - name: Homelab
       link: https://github.com/OxygnCorp/home-ops
+
 alerting:
   discord:
     webhook-url: ${DISCORD_WEBHOOK}

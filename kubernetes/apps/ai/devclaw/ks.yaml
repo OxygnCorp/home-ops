@@ -19,7 +19,6 @@ spec:
     substitute:
       APP: devclaw
       VOLSYNC_CAPACITY: 10Gi
-      GATUS_SUBDOMAIN: devclaw
   prune: true
   sourceRef:
     kind: GitRepository
