@@ -18,12 +18,12 @@ spec:
         containers:
           app:
             image:
-              repository: ghcr.io/berriai/litellm-non_root
-              tag: v1.89.0@sha256:cdd3fb9a85814bd71768b311df772407862f88715fae99e02f09a1c71b72da10
+              repository: ghcr.io/berriai/litellm
+              tag: v1.89.0@sha256:66a108711edea25ef531a74764f001d0c1934cc8abb422f5a3bd17a2860e4035
             args: ["--config=/app/config.yaml"]
             env:
               TZ: Europe/Paris
-              LITELLM_LOG: DEBUG
+              LITELLM_LOG: INFO
               LITELLM_MODE: PRODUCTION
               REDIS_HOST: litellm-dragonfly
               REDIS_PORT: 6379
@@ -32,7 +32,7 @@ spec:
                   name: litellm-secret
             securityContext:
               allowPrivilegeEscalation: false
-              readOnlyRootFilesystem: false
+              readOnlyRootFilesystem: true
               capabilities: { drop: ["ALL"] }
             probes:
               liveness:
@@ -42,9 +42,9 @@ spec:
                   httpGet:
                     path: /
                     port: 4000
-                  initialDelaySeconds: 60
+                  initialDelaySeconds: 5
                   periodSeconds: 10
-                  failureThreshold: 5
+                  failureThreshold: 3
               readiness:
                 enabled: true
                 custom: true
@@ -52,15 +52,25 @@ spec:
                   httpGet:
                     path: /
                     port: 4000
-                  initialDelaySeconds: 30
+                  initialDelaySeconds: 5
                   periodSeconds: 10
                   failureThreshold: 3
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /
+                    port: 4000
+                  initialDelaySeconds: 5
+                  periodSeconds: 10
+                  failureThreshold: 30
             resources:
               requests:
                 cpu: 10m
                 memory: 256Mi
-              # limits:
-              #   memory: 2Gi
+              limits:
+                memory: 2Gi
     defaultPodOptions:
       securityContext:
         runAsNonRoot: true
@@ -73,6 +83,13 @@ spec:
         ports:
           http:
             port: 4000
+    serviceMonitor:
+      app:
+        endpoints:
+          - interval: 30s
+            path: /metrics/
+            port: http
+            scrapeTimeout: 10s
     route:
       app:
         hostnames:
@@ -92,10 +109,9 @@ spec:
           - path: /app/config.yaml
             subPath: config.yaml
             readOnly: true
-      tmpfs:
+      cache:
         type: emptyDir
-        globalMounts:
-          - path: /cache
-            subPath: cache
-          - path: /tmp
-            subPath: tmp
+        advancedMounts:
+          litellm:
+            app:
+              - path: /app/cache

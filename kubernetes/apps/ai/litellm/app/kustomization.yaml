@@ -6,7 +6,6 @@ resources:
   - ./ocirepository.yaml
   - ./helmrelease.yaml
   - ./externalsecret.yaml
-  - ./servicemonitor.yaml
   - ./dashboard
   - ./grafanadashboard.yaml
 configMapGenerator:
