@@ -6,9 +6,6 @@ configMapGenerator:
   - name: litellm
     files:
       - litellm.json
-  - name: litellm-economics
-    files:
-      - litellm-economics.json
 generatorOptions:
   disableNameSuffixHash: true
   annotations:
