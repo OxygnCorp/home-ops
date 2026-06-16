@@ -5,7 +5,7 @@ kind: MCPServer
 metadata:
   name: todoist
 spec:
-  image: docker.io/node:22-slim
+  image: docker.io/node:24-slim
   transport: streamable-http
   proxyMode: streamable-http
   proxyPort: 8080
