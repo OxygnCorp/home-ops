@@ -1,0 +1,39 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com//toolhive.stacklok.dev/mcpserver_v1alpha1.json
+apiVersion: toolhive.stacklok.dev/v1alpha1
+kind: MCPServer
+metadata:
+  name: todoist
+spec:
+  image: docker.io/node:22-slim
+  transport: streamable-http
+  proxyMode: streamable-http
+  proxyPort: 8080
+  mcpPort: 8000
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+  podTemplateSpec:
+    spec:
+      containers:
+        - name: mcp
+          command:
+            - npx
+            - -y
+            - "@doist/todoist-mcp"
+          env:
+            - name: TODOIST_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: toolhive-todoist
+                  key: TODOIST_API_KEY
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+  groupRef:
+    name: mcp-tools
