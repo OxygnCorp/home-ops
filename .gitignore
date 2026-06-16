@@ -1,6 +1,6 @@
 .private
 .task
-
+.claude
 *.crt
 *.key
 .decrypted~*
