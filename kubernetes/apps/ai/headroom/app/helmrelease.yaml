@@ -25,7 +25,7 @@ spec:
               HEADROOM_HOST: 0.0.0.0
               HEADROOM_PORT: "8787"
               OPENAI_TARGET_API_URL: http://litellm.ai:4000/v1
-              HEADROOM_REQUIRE_RUST_CORE: false #AVX2 support required
+              HEADROOM_REQUIRE_RUST_CORE: "false" #AVX2 support required - String format
             securityContext:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
