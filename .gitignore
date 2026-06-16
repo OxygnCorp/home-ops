@@ -1,7 +1,6 @@
-/.private/
-/.task/
-/.venv/
-/.claude/
+.private
+.task
+.claude
 *.crt
 *.key
 .decrypted~*

@@ -19,12 +19,14 @@ spec:
             image:
               repository: ghcr.io/chopratejas/headroom
               tag: latest
-            args: []
+            args:
+              - --no-optimize #TODO : temporarily disable optimizations to prevent crashes - see https://github.com/chopratejas/headroom/issues/1005
             env:
               TZ: Europe/Paris
               HEADROOM_HOST: 0.0.0.0
               HEADROOM_PORT: "8787"
               OPENAI_TARGET_API_URL: http://litellm.ai:4000/v1
+              ANTHROPIC_TARGET_API_URL: http://litellm.ai:4000
               HEADROOM_REQUIRE_RUST_CORE: "false" #AVX2 support required - String format
             securityContext:
               allowPrivilegeEscalation: false
