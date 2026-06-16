@@ -266,7 +266,7 @@
         ]
       },
       "litellm-anthropic": {
-        "baseUrl": "http://headroom.ai:8787",
+        "baseUrl": "http://litellm.ai:4000",
         "apiKey": { "source": "env", "provider": "default", "id": "LITELLM_API_KEY" },
         "api": "anthropic-messages",
         "timeoutSeconds": 600,

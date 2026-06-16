@@ -19,11 +19,13 @@ spec:
             image:
               repository: ghcr.io/chopratejas/headroom
               tag: latest
-            args: ["proxy", "--host", "0.0.0.0", "--port", "8787"]
+            args: []
             env:
               TZ: Europe/Paris
+              HEADROOM_HOST: 0.0.0.0
+              HEADROOM_PORT: "8787"
               OPENAI_TARGET_API_URL: http://litellm.ai:4000/v1
-              ANTHROPIC_TARGET_URL: http://litellm.ai:4000
+              ANTHROPIC_BASE_URL: http://litellm.ai:4000
             securityContext:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
@@ -77,6 +79,13 @@ spec:
         ports:
           http:
             port: 8787
+    serviceMonitor:
+      app:
+        endpoints:
+          - interval: 30s
+            path: /metrics/
+            port: http
+            scrapeTimeout: 10s
     route:
       app:
         hostnames:
