@@ -38,7 +38,7 @@ gum = "0.17.0"
 # Misc K8S Tools
 "aqua:kubernetes-sigs/kustomize" = "5.6.0"
 "aqua:helm/helm" = "4.2.1"
-"aqua:helmfile/helmfile" = "1.5.3"
+"aqua:helmfile/helmfile" = "1.5.4"
 
 # Talos Stuff
 "talosctl" = "1.13.4"
