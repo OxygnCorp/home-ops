@@ -6,7 +6,7 @@ metadata:
   name: ${APP}-dragonfly
 spec:
   image: ghcr.io/dragonflydb/dragonfly:v1.39.0
-  replicas: ${DRAGONFLY_REPLICAS:=2}
+  replicas: 2
   env:
     - name: MAX_MEMORY
       valueFrom:
@@ -20,7 +20,7 @@ spec:
     - --default_lua_flags=allow-undeclared-keys
   resources:
     requests:
-      cpu: 25m
+      cpu: 100m
     limits:
       memory: 768Mi
   topologySpreadConstraints:
