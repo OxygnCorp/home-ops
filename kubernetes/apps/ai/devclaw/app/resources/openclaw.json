@@ -266,7 +266,7 @@
         ]
       },
       "litellm-anthropic": {
-        "baseUrl": "http://litellm.ai:4000",
+        "baseUrl": "http://headroom.ai:8787",
         "apiKey": { "source": "env", "provider": "default", "id": "LITELLM_API_KEY" },
         "api": "anthropic-messages",
         "timeoutSeconds": 600,
@@ -285,6 +285,7 @@
       "discord",
       "document-extract",
       "file-transfer",
+      "litellm",
       "llm-task",
       "lossless-claw",
       "memory-core",
@@ -318,6 +319,7 @@
           }
         }
       },
+      "litellm": { "enabled": true },
       "llm-task": { "enabled": true },
       "lossless-claw": {
         "enabled": true,
