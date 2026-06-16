@@ -9,6 +9,7 @@ spec:
     kind: OCIRepository
     name: dragonfly-operator
   interval: 1h
+  dependsOn: []
   values:
     manager:
       image:
