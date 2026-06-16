@@ -1,39 +1,51 @@
 ---
-# yaml-language-server: $schema=https://k8s-schemas.home-operations.com//toolhive.stacklok.dev/mcpserver_v1alpha1.json
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/toolhive.stacklok.dev/mcpserver_v1alpha1.json
 apiVersion: toolhive.stacklok.dev/v1alpha1
 kind: MCPServer
 metadata:
-  name: todoist
+  name: &name todoist-mcp
 spec:
-  image: docker.io/node:22-slim
+  image: docker.io/node:24-alpine
   transport: streamable-http
+  targetPort: 3000
   proxyMode: streamable-http
   proxyPort: 8080
-  mcpPort: 8000
+  port: 8080
+  env:
+    - name: HOME
+      value: /tmp
+    - name: NPM_CONFIG_CACHE
+      value: /tmp/.npm
+    - name: PORT
+      value: "3000"
+  secrets:
+    - name: toolhive-todoist
+      key: TODOIST_API_KEY
+      targetEnvName: TODOIST_API_KEY
   resources:
     requests:
-      cpu: 100m
+      cpu: 50m
       memory: 128Mi
     limits:
-      cpu: 200m
       memory: 256Mi
   podTemplateSpec:
     spec:
       containers:
         - name: mcp
+          image: docker.io/node:24-alpine
           command:
             - npx
+          args:
             - -y
-            - "@doist/todoist-mcp"
-          env:
-            - name: TODOIST_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: toolhive-todoist
-                  key: TODOIST_API_KEY
-          ports:
-            - name: http
-              containerPort: 8000
-              protocol: TCP
+            - -p
+            - "@doist/todoist-mcp@10.1.5"
+            - --
+            - todoist-mcp-http
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
   groupRef:
     name: mcp-tools
