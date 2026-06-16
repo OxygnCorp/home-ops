@@ -32,7 +32,7 @@
         }
       },
       "model": {
-        "primary": "litellm-anthropic/MiniMax",
+        "primary": "litellm/MiniMax-M3",
         "fallbacks": [
           "litellm/go-minimax-m3",
           "litellm/dsv4f",
@@ -40,14 +40,14 @@
         ]
       },
       "imageModel": {
-        "primary": "litellm-anthropic/MiniMax",
+        "primary": "litellm/MiniMax-M3",
         "fallbacks": [
           "litellm/go-kimi-k2.6"
         ]
       },
       "models": {
-        "litellm-anthropic/MiniMax": { "alias": "minimax-m3", "params": { "cacheRetention": "short" } },
-        "litellm-anthropic/MiniMax-M2.7": { "alias": "minimax-m2.7", "params": { "cacheRetention": "short" } },
+        "litellm/MiniMax-M3": { "alias": "minimax-m3", "params": { "cacheRetention": "short" } },
+        "litellm/MiniMax-M2.7": { "alias": "minimax-m2.7", "params": { "cacheRetention": "short" } },
         "litellm/dsv4f": { "alias": "dsv4f", "params": { "cache_prompt": true } },
         "litellm/dsv4p": { "alias": "dsv4p", "params": { "cache_prompt": true } },
         "litellm/glm-5.1": { "alias": "glm-5.1", "params": { "cache_prompt": true } },
@@ -64,7 +64,7 @@
         "maxChildrenPerAgent": 3,
         "maxConcurrent": 4,
         "model": {
-          "primary": "litellm-anthropic/MiniMax",
+          "primary": "litellm/MiniMax-M3",
           "fallbacks": [
             "litellm/dsv4f"
           ]
@@ -256,6 +256,8 @@
         "api": "openai-completions",
         "timeoutSeconds": 600,
         "models": [
+          { "id": "MiniMax-M3", "name": "MiniMax M3", "reasoning": true, "input": ["text", "image"], "cost": { "input": 15, "output": 60, "cacheRead": 2, "cacheWrite": 0 }, "contextWindow": 1000000, "maxTokens": 131072 },
+          { "id": "MiniMax-M2.7", "name": "MiniMax M2.7", "reasoning": true, "input": ["text"], "cost": { "input": 15, "output": 60, "cacheRead": 2, "cacheWrite": 0 }, "contextWindow": 204800, "maxTokens": 131072 },
           { "id": "dsv4f", "name": "OpenCode Go DeepSeek V4 Flash", "reasoning": true, "input": ["text"], "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }, "contextWindow": 1000000, "maxTokens": 16384 },
           { "id": "dsv4p", "name": "OpenCode Go DeepSeek V4 Pro", "reasoning": true, "input": ["text"], "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }, "contextWindow": 1000000, "maxTokens": 16384 },
           { "id": "glm-5.1", "name": "OpenCode Go GLM 5.1", "reasoning": true, "input": ["text"], "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }, "contextWindow": 203000, "maxTokens": 16384 },
@@ -263,16 +265,6 @@
           { "id": "go-minimax-m3", "name": "OpenCode Go MiniMax M3", "reasoning": true, "input": ["text"], "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }, "contextWindow": 1000000, "maxTokens": 32768 },
           { "id": "go-minimax-m2.7", "name": "OpenCode Go MiniMax M2.7", "reasoning": true, "input": ["text"], "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }, "contextWindow": 204800, "maxTokens": 16384 },
           { "id": "mimo-v2.5-pro", "name": "OpenCode Go MiMo V2.5 Pro", "reasoning": true, "input": ["text"], "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }, "contextWindow": 262144, "maxTokens": 16384 }
-        ]
-      },
-      "litellm-anthropic": {
-        "baseUrl": "http://headroom.ai:8787",
-        "apiKey": { "source": "env", "provider": "default", "id": "LITELLM_API_KEY" },
-        "api": "anthropic-messages",
-        "timeoutSeconds": 600,
-        "models": [
-          { "id": "MiniMax", "name": "MiniMax M3", "reasoning": true, "input": ["text","image"], "cost": { "input": 15, "output": 60, "cacheRead": 2, "cacheWrite": 10 }, "contextWindow": 1000000, "maxTokens": 32768 },
-          { "id": "MiniMax-M2.7", "name": "MiniMax M2.7", "reasoning": true, "input": ["text"], "cost": { "input": 15, "output": 60, "cacheRead": 2, "cacheWrite": 10 }, "contextWindow": 204800, "maxTokens": 32768 }
         ]
       }
     }
@@ -307,7 +299,7 @@
             "main"
           ],
           "model": "litellm/dsv4f",
-          "modelFallback": "litellm-anthropic/MiniMax-M2.7",
+          "modelFallback": "litellm/MiniMax-M2.7",
           "timeoutMs": 30000,
           "queryMode": "recent",
           "promptStyle": "balanced",

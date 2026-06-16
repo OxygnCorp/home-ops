@@ -1,41 +1,31 @@
 model_list:
-  # MiniMax M3 - primary model
+  # MiniMax M3 - primary model (OpenAI-compat, caching passif automatique)
   - model_name: MiniMax-M3
     model_info:
-      mode: messages
+      mode: chat
       max_input_tokens: 1000000
       max_output_tokens: 131072
       supports_function_calling: true
-      supports_prompt_caching: true
       supports_vision: true
+      supports_prompt_caching: true
     litellm_params:
       model: minimax/MiniMax-M3
-      api_base: https://api.minimax.io/anthropic/v1/messages
+      api_base: https://api.minimax.io/v1
       api_key: os.environ/MINIMAX_API_KEY
-      cache_control_injection_points:
-        - location: message
-          role: system
-        - location: message
-          index: -1
 
-  # MiniMax M2.7 - fallback
+  # MiniMax M2.7 - fallback (OpenAI-compat, caching passif automatique)
   - model_name: MiniMax-M2.7
     model_info:
-      mode: messages
+      mode: chat
       max_input_tokens: 204800
       max_output_tokens: 131072
       supports_function_calling: true
-      supports_prompt_caching: true
       supports_vision: false
+      supports_prompt_caching: true
     litellm_params:
       model: minimax/MiniMax-M2.7
-      api_base: https://api.minimax.io/anthropic/v1/messages
+      api_base: https://api.minimax.io/v1
       api_key: os.environ/MINIMAX_API_KEY
-      cache_control_injection_points:
-        - location: message
-          role: system
-        - location: message
-          index: -1
 
   - model_name: glm-5.1
     model_info:
@@ -145,27 +135,6 @@ model_list:
       api_base: https://opencode.ai/zen/go/v1
       api_key: os.environ/OPENCODE_API_KEY
 
-# mcp_servers:
-#   arr:
-#     url: http://mcp-arr-proxy.ai:8080/mcp
-#   flux:
-#     url: http://mcp-flux.ai:8000/mcp
-#   github:
-#     url: http://mcp-github-proxy.ai:8080/mcp
-#   grafana:
-#     url: http://grafana-mcp.observability:8000/sse
-#     transport: sse
-#   # ha:
-#   #   url: http://mcp-ha-mcp.ai:8080/mcp
-#   kubectl:
-#     url: http://mcp-kubectl.ai:8000/mcp
-#   memory:
-#     url: http://mcp-memory-mcp-proxy.ai:8080/mcp
-#   seerr:
-#     url: http://mcp-seerr-mcp-proxy.ai:8080/mcp
-#   talos:
-#     url: http://mcp-talos-mcp.ai:8080/mcp
-
 general_settings:
   health_check_endpoint: /v1/health
 
@@ -175,15 +144,14 @@ router_settings:
   cooldown_time: 30
   enable_pre_call_checks: true
   fallbacks:
-    - MiniMax: ["go-minimax-m3"]
+    - MiniMax-M3: ["go-minimax-m3"]
+    - MiniMax-M2.7: ["go-minimax-m2.7"]
     - dsv4f: ["go-minimax-m3"]
 
 litellm_settings:
   success_callback: ["prometheus"]
   failure_callback: ["prometheus"]
   prometheus_adapter: true
-  # v1.88.x enforces auth on /metrics; the ServiceMonitor scrapes tokenless,
-  # so keep the endpoint open for in-cluster Prometheus scraping.
   require_auth_for_metrics_endpoint: false
   cache: true
   cache_params:
@@ -196,11 +164,6 @@ litellm_settings:
   num_retries: 2
   retry_after: 5
   set_verbose: false
-  # mcp_semantic_tool_filter:
-  #   enabled: true
-  #   embedding_model: qwen3-embedding-0-6b
-  #   top_k: 6
-  #   similarity_threshold: 0.3
 
 environment:
   - MINIMAX_API_KEY

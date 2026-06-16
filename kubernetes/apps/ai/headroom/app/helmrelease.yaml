@@ -25,7 +25,6 @@ spec:
               HEADROOM_HOST: 0.0.0.0
               HEADROOM_PORT: "8787"
               OPENAI_TARGET_API_URL: http://litellm.ai:4000/v1
-              ANTHROPIC_BASE_URL: http://litellm.ai:4000
             securityContext:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
