@@ -15,7 +15,7 @@ spec:
     - name: NPM_CONFIG_CACHE
       value: /tmp/.npm
     - name: PORT
-      value: "3000"
+      value: "8080"
   secrets:
     - name: toolhive-todoist
       key: TODOIST_API_KEY
