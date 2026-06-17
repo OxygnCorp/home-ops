@@ -7,10 +7,8 @@ metadata:
 spec:
   image: docker.io/node:24-alpine
   transport: streamable-http
-  targetPort: 3000
   proxyMode: streamable-http
   proxyPort: 8080
-  port: 8080
   env:
     - name: HOME
       value: /tmp
