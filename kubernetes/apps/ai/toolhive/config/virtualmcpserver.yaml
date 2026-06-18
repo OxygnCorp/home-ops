@@ -11,6 +11,10 @@ spec:
       conflictResolution: prefix
       conflictResolutionConfig:
         prefixFormat: "{workload}_"
+      tools:
+        - workload: todoist-mcp
+          exclude:
+            - "get-overview"
   # embeddingServerRef:
   #   name: mcp-tools-embedding
   telemetryConfigRef:
