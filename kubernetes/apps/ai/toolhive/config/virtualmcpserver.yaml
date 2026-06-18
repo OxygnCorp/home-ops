@@ -13,17 +13,61 @@ spec:
         prefixFormat: "{workload}_"
       tools:
         - workload: todoist-mcp
-          exclude:
-            - "get-overview"
-  # embeddingServerRef:
-  #   name: mcp-tools-embedding
+          filter:
+            - add-comments
+            - add-filters
+            - add-goals
+            - add-labels
+            - add-projects
+            - add-reminders
+            - add-sections
+            - add-tasks
+            - analyze-project-health
+            - complete-goals
+            - complete-tasks
+            - delete-object
+            - fetch
+            - fetch-object
+            - find-activity
+            - find-comments
+            - find-completed-tasks
+            - find-filters
+            - find-goals
+            - find-labels
+            - find-project-collaborators
+            - find-projects
+            - find-reminders
+            - find-sections
+            - find-tasks
+            - find-tasks-by-date
+            - get-productivity-stats
+            - get-project-activity-stats
+            - get-project-health
+            - get-workspace-insights
+            - link-goal-tasks
+            - list-workspaces
+            - manage-assignments
+            - project-management
+            - project-move
+            - reorder-objects
+            - reschedule-tasks
+            - search
+            - uncomplete-tasks
+            - update-comments
+            - update-filters
+            - update-goals
+            - update-labels
+            - update-projects
+            - update-reminders
+            - update-sections
+            - update-tasks
+            - user-info
+            - view-attachment
+  embeddingServerRef:
+    name: mcp-tools-embedding
   telemetryConfigRef:
     name: prometheus
   incomingAuth:
     type: anonymous
   outgoingAuth:
     source: discovered
-  # sessionStorage:
-  #   address: toolhive-dragonfly.ai.svc.cluster.local:6379
-  #   keyPrefix: "mcp-gateway-internal:"
-  #   provider: redis
