@@ -11,13 +11,15 @@ spec:
       conflictResolution: prefix
       conflictResolutionConfig:
         prefixFormat: "{workload}_"
+  embeddingServerRef:
+    name: text-embeddings-inference
   telemetryConfigRef:
     name: prometheus
   incomingAuth:
     type: anonymous
   outgoingAuth:
     source: discovered
-  sessionStorage:
-    address: toolhive-dragonfly.ai.svc.cluster.local:6379
-    keyPrefix: "mcp-gateway-devops:"
-    provider: redis
+  # sessionStorage:
+  #   address: toolhive-dragonfly.ai.svc.cluster.local:6379
+  #   keyPrefix: "mcp-gateway-devops:"
+  #   provider: redis

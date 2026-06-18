@@ -19,7 +19,7 @@ spec:
     type: anonymous
   outgoingAuth:
     source: discovered
-  sessionStorage:
-    address: toolhive-dragonfly.ai.svc.cluster.local:6379
-    keyPrefix: "mcp-gateway-internal:"
-    provider: redis
+  # sessionStorage:
+  #   address: toolhive-dragonfly.ai.svc.cluster.local:6379
+  #   keyPrefix: "mcp-gateway-internal:"
+  #   provider: redis
