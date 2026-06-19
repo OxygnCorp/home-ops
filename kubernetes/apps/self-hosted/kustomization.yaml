@@ -6,7 +6,6 @@ components:
   - ../../components/alerts
 
 resources:
-  - ./oikos/ks.yaml
   - ./namespace.yaml
   - ./nextcloud/ks.yaml
   - ./actual/ks.yaml
