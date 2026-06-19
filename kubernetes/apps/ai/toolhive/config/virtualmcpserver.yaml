@@ -15,15 +15,15 @@ spec:
         - workload: todoist-mcp
           exclude:
             - "get-overview"
-  # embeddingServerRef:
-  #   name: mcp-tools-embedding
+  embeddingServerRef:
+    name: mcp-tools-embedding
   telemetryConfigRef:
     name: prometheus
   incomingAuth:
     type: anonymous
   outgoingAuth:
     source: discovered
-  # sessionStorage:
-  #   address: toolhive-dragonfly.ai.svc.cluster.local:6379
-  #   keyPrefix: "mcp-gateway-internal:"
-  #   provider: redis
+  sessionStorage:
+    address: toolhive-dragonfly.ai.svc.cluster.local:6379
+    keyPrefix: "mcp-gateway-internal:"
+    provider: redis
