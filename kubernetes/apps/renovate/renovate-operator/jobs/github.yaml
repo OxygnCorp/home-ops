@@ -30,9 +30,11 @@ spec:
       value: debug
     - name: RENOVATE_ALLOWED_COMMANDS
       value: '["pnpm run bundle"]'
-    - name: RENOVATE_PLATFORM_COMMIT
+    - name: RENOVATE_ALLOWED_UNSAFE_EXECUTIONS
+      value: '["mise"]'
+    - name: RENOVATE_PLATFORM_COMMIT_ENABLED
       value: "true"
-  image: ghcr.io/renovatebot/renovate:43.232.1
+  image: ghcr.io/renovatebot/renovate:43.231.4
   parallelism: 5
   resources:
     requests:
