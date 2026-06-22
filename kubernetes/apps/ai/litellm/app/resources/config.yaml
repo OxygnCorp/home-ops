@@ -141,6 +141,7 @@ general_settings:
 router_settings:
   redis_host: os.environ/REDIS_HOST
   redis_port: os.environ/REDIS_PORT
+  routing_strategy: simple-shuffle
   cooldown_time: 30
   enable_pre_call_checks: true
   fallbacks:
@@ -149,6 +150,7 @@ router_settings:
     - dsv4f: ["go-minimax-m3"]
 
 litellm_settings:
+  callbacks: ["prometheus"]
   success_callback: ["prometheus"]
   failure_callback: ["prometheus"]
   prometheus_adapter: true
@@ -160,9 +162,8 @@ litellm_settings:
     port: os.environ/REDIS_PORT
     ttl: 300
   drop_params: true
-  request_timeout: 600
-  num_retries: 2
-  retry_after: 5
+  request_timeout: 3600
+  num_retries: 1
   set_verbose: false
 
 environment:
