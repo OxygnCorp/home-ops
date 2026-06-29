@@ -12,7 +12,7 @@ spec:
       conflictResolutionConfig:
         prefixFormat: "{workload}_"
   embeddingServerRef:
-    name: text-embeddings-inference
+    name: mcp-tools-embedding
   telemetryConfigRef:
     name: prometheus
   incomingAuth:
