@@ -23,3 +23,12 @@ spec:
     address: toolhive-dragonfly.ai.svc.cluster.local:6379
     keyPrefix: "mcp-gateway-devops:"
     provider: redis
+  podTemplateSpec:
+    spec:
+      containers:
+        - name: vmcp
+          resources:
+            requests:
+              memory: 256Mi
+            limits:
+              memory: 1Gi
