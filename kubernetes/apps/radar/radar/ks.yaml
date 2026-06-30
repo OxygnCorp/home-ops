@@ -1,0 +1,30 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: radar
+spec:
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: radar
+  components:
+    - ../../../../components/volsync
+  dependsOn:
+    - name: volsync
+      namespace: volsync-system
+  interval: 1h
+  path: ./kubernetes/apps/radar/radar/app
+  postBuild:
+    substitute:
+      APP: radar
+      VOLSYNC_CAPACITY: 1Gi
+      VOLSYNC_PUID: "65532"
+      VOLSYNC_PGID: "65532"
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  targetNamespace: radar
+  wait: false
