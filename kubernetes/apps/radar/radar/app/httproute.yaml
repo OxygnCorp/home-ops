@@ -12,7 +12,7 @@ spec:
     - name: envoy-internal
       namespace: network
   hostnames:
-    - radarr.oxygn.dev
+    - radar.oxygn.dev
   rules:
     - matches:
         - path:
