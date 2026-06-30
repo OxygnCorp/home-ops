@@ -5,4 +5,4 @@ kind: MCPGroup
 metadata:
   name: mcp-devops
 spec:
-  description: MCP tools for DevOps (github, grafana, kubectl, talos)
+  description: MCP tools for DevOps (github, grafana, kubectl, radar, talos)
