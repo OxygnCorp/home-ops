@@ -105,7 +105,7 @@ spec:
             cpu: 100m
             memory: 1Gi
           limits:
-            memory: 2Gi
+            memory: 4Gi
         version: v2.55.1 # override 'unsupported Prometheus version' error for prompp
         image:
           registry: mirror.gcr.io
