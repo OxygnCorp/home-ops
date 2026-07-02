@@ -1,0 +1,39 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: lightrag
+spec:
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: lightrag
+  components:
+    - ../../../../components/volsync
+  dependsOn:
+    - name: onepassword
+      namespace: external-secrets
+    - name: volsync
+      namespace: volsync-system
+    - name: rook-ceph-cluster
+      namespace: rook-ceph
+    - name: litellm
+      namespace: ai
+    - name: embeddings
+      namespace: ai
+    - name: neo4j
+      namespace: database
+  interval: 1h
+  path: ./kubernetes/apps/ai/lightrag/app
+  postBuild:
+    substitute:
+      APP: lightrag
+      VOLSYNC_CAPACITY: 10Gi
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  targetNamespace: ai
+  timeout: 5m
+  wait: false

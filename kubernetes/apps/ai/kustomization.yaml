@@ -9,7 +9,9 @@ components:
 resources:
   - ./namespace.yaml
   - ./devclaw/ks.yaml
+  - ./embeddings/ks.yaml
   - ./headroom/ks.yaml
+  - ./lightrag/ks.yaml
   - ./litellm/ks.yaml
   - ./searxng/ks.yaml
   - ./toolhive/ks.yaml
