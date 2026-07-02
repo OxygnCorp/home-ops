@@ -36,9 +36,9 @@ spec:
               # Embeddings via local TEI (OpenAI-compatible)
               EMBEDDING_BINDING: openai
               EMBEDDING_BINDING_HOST: http://embeddings.ai.svc.cluster.local:80
-              EMBEDDING_MODEL: Alibaba-NLP/gte-multilingual-base
+              EMBEDDING_MODEL: intfloat/multilingual-e5-base
               EMBEDDING_DIM: "768"
-              EMBEDDING_TOKEN_LIMIT: "8192"
+              EMBEDDING_TOKEN_LIMIT: "512"
               EMBEDDING_BINDING_API_KEY: not-required
               EMBEDDING_BATCH_NUM: "32"
               # Storage backends: Neo4j for graph, file-based for the rest (persisted on PVC)
@@ -54,6 +54,8 @@ spec:
               LOG_DIR: /tmp
               # Document processing
               SUMMARY_LANGUAGE: French
+              CHUNK_SIZE: "500"
+              CHUNK_OVERLAP_SIZE: "100"
               ENTITY_EXTRACTION_USE_JSON: "true"
               MAX_PARALLEL_INSERT: "3"
               ENABLE_LLM_CACHE: "false"
