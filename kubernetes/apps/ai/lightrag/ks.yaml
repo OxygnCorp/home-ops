@@ -8,13 +8,9 @@ spec:
   commonMetadata:
     labels:
       app.kubernetes.io/name: lightrag
-  components:
-    - ../../../../components/volsync
   dependsOn:
     - name: onepassword
       namespace: external-secrets
-    - name: volsync
-      namespace: volsync-system
     - name: rook-ceph-cluster
       namespace: rook-ceph
     - name: litellm
@@ -28,7 +24,6 @@ spec:
   postBuild:
     substitute:
       APP: lightrag
-      VOLSYNC_CAPACITY: 10Gi
   prune: true
   sourceRef:
     kind: GitRepository
