@@ -6,4 +6,4 @@ metadata:
   name: neo4j
 spec:
   interval: 30m
-  url: https://helm.neo4j.io/public
+  url: https://helm.neo4j.com/neo4j
