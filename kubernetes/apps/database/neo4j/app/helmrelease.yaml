@@ -59,6 +59,8 @@ spec:
         matchLabels:
           helm.neo4j.com/service: admin
       port: tcp-prometheus
+      interval: 30s
+      path: /metrics
     podSpec:
       annotations:
         reloader.stakater.com/auto: "true"
