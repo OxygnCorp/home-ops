@@ -22,7 +22,7 @@ spec:
               tag: cpu-1.9.3
             args:
               - --model-id
-              - BAAI/bge-m3
+              - Alibaba-NLP/gte-multilingual-base
             env:
               TZ: Europe/Paris
             probes:
@@ -60,6 +60,8 @@ spec:
               requests:
                 cpu: 500m
                 memory: 2Gi
+              limits:
+                memory: 5Gi
             securityContext:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
