@@ -49,7 +49,7 @@ spec:
       additionalRules:
         - apiGroups: [""]
           resources: ["pods"]
-          verbs: ["delete"]
+          verbs: ["delete", "patch"]
 
     traffic:
       prometheusUrl: http://prometheus-operated.observability.svc.cluster.local:9090
