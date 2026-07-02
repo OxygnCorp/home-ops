@@ -34,12 +34,17 @@ spec:
 
     rbac:
       podLogs: true
-      podExec: false
-      portForward: false
+      podExec: true
+      portForward: true
       helm: false
-      secrets: false
+      secrets: true
       traffic: true
       metrics: true
+      viewRBAC: true
+      viewWebhooks: true
+
+      crdGroups:
+        all: true
 
     traffic:
       prometheusUrl: http://prometheus-operated.observability.svc.cluster.local:9090
