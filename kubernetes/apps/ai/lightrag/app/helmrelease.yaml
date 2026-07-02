@@ -36,8 +36,8 @@ spec:
               # Embeddings via local TEI (OpenAI-compatible)
               EMBEDDING_BINDING: openai
               EMBEDDING_BINDING_HOST: http://embeddings.ai.svc.cluster.local:80
-              EMBEDDING_MODEL: BAAI/bge-m3
-              EMBEDDING_DIM: "1024"
+              EMBEDDING_MODEL: Alibaba-NLP/gte-multilingual-base
+              EMBEDDING_DIM: "768"
               EMBEDDING_TOKEN_LIMIT: "8192"
               EMBEDDING_BINDING_API_KEY: not-required
               EMBEDDING_BATCH_NUM: "32"
