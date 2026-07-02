@@ -46,6 +46,11 @@ spec:
       crdGroups:
         all: true
 
+      additionalRules:
+        - apiGroups: [""]
+          resources: ["pods"]
+          verbs: ["delete"]
+
     traffic:
       prometheusUrl: http://prometheus-operated.observability.svc.cluster.local:9090
 
