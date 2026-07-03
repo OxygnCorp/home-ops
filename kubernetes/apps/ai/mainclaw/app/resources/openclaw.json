@@ -788,7 +788,8 @@
   },
   "commands": {
     "ownerAllowFrom": [
-      "discord:{{ .DISCORD_MATT_USER_ID }}"
+      "discord:{{ .DISCORD_MATT_USER_ID }}",
+      "discord:{{ .DISCORD_AGNES_USER_ID }}"
     ],
     "native": "auto",
     "nativeSkills": "auto",
