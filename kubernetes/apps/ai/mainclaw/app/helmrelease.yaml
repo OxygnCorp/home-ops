@@ -1,0 +1,155 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: mainclaw
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: mainclaw
+  interval: 1h
+  values:
+    controllers:
+      openclaw:
+        annotations:
+          secret.reloader.stakater.com/reload: "mainclaw-secret, mainclaw-config"
+          configmap.reloader.stakater.com/reload: "mainclaw-configmap"
+        initContainers:
+          init:
+            image:
+              repository: docker.io/library/alpine
+              tag: "3.24"
+            command:
+              - sh
+              - -c
+              - |
+                set -euo pipefail
+                mkdir -p /home/node/.openclaw
+                rm -f /home/node/.openclaw/openclaw.json
+                cp /tmp/openclaw.json /home/node/.openclaw/openclaw.json
+                chown 1000:100 /home/node/.openclaw/openclaw.json
+                chmod 400 /home/node/.openclaw/openclaw.json
+                cp /kopiaignore/.kopiaignore /home/node/.kopiaignore
+        containers:
+          app:
+            image:
+              repository: ghcr.io/openclaw/openclaw
+              tag: 2026.6.11@sha256:3814fb1f62f9cfc5944de088c5817c68c88b5d721feebe36420b666a90a61ce7
+            command:
+              - /bin/sh
+              - -c
+              - |
+                # Start gateway
+                echo "Starting OpenClaw gateway..."
+                exec node dist/index.js gateway
+            env:
+              OPENCLAW_LOG_LEVEL: debug
+              GOPATH: /home/node/go
+              HOME: /home/node
+              HOMEBREW_CELLAR: /home/node/.local/homebrew/Cellar
+              HOMEBREW_PREFIX: /home/node/.local/homebrew
+              HOMEBREW_REPOSITORY: /home/node/.local/homebrew
+              OPENCLAW_GATEWAY_PORT: 18789
+              PATH: /home/node/.local/bin:/home/node/.local/go/bin:/home/node/.local/homebrew/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+              PIP_BREAK_SYSTEM_PACKAGES: "1"
+              TERM: xterm-256color
+              TZ: Europe/Paris
+            envFrom:
+              - secretRef:
+                  name: "{{ .Release.Name }}-secret"
+            resources:
+              requests:
+                cpu: 100m
+                memory: 512Mi
+              limits:
+                cpu: 2000m
+                memory: 4Gi
+
+          codeserver:
+            image:
+              repository: ghcr.io/coder/code-server
+              tag: 4.126.0@sha256:e1f03b5faaefd63ba6c7173a5290c6ec0526ac907f23acfe6bc949dd965279e4
+            env:
+              TZ: Europe/Paris
+            args:
+              [
+                "--auth",
+                "none",
+                "--user-data-dir",
+                "/home/node/.vscode",
+                "--extensions-dir",
+                "/home/node/.vscode",
+                "--port",
+                "12321",
+                "/config"
+              ]
+            resources:
+              requests:
+                cpu: 10m
+              limits:
+                memory: 1Gi
+    defaultPodOptions:
+      automountServiceAccountToken: true
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 100
+        fsGroup: 100
+        fsGroupChangePolicy: OnRootMismatch
+    service:
+      app:
+        type: LoadBalancer
+        annotations:
+          lbipam.cilium.io/ips: 10.10.98.191
+        externalTrafficPolicy: Cluster
+        ports:
+          http:
+            port: 18789
+          codeserver:
+            port: 12321
+    route:
+      main:
+        hostnames:
+          - "mainclaw.oxygn.dev"
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
+        rules:
+          - backendRefs:
+              - name: "{{ .Release.Name }}"
+                port: 18789
+      codeserver:
+        hostnames:
+          - "mainclaw-code.oxygn.dev"
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
+        rules:
+          - backendRefs:
+              - name: "{{ .Release.Name }}"
+                port: 12321
+    persistence:
+      openclaw-home:
+        type: emptyDir
+      kopiaignore:
+        type: configMap
+        name: mainclaw-kopiaignore
+        globalMounts:
+          - path: /kopiaignore
+      config:
+        existingClaim: "{{ .Release.Name }}"
+        globalMounts:
+          - path: /home/node
+      data:
+        type: nfs
+        server: funkstation.internal
+        path: /volume1/Agents/mainclaw
+        globalMounts:
+          - path: /data
+      openclaw-config:
+        type: secret
+        name: "{{ .Release.Name }}-config"
+        defaultMode: 0755
+        globalMounts:
+          - path: /tmp/openclaw.json
+            subPath: openclaw.json
