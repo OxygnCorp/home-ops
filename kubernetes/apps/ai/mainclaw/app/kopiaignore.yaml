@@ -1,0 +1,12 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mainclaw-kopiaignore
+data:
+  .kopiaignore: |
+    # can be reinstalled via mise install
+    .local/share/
+
+    #npm cache
+    .npm/_cacache/

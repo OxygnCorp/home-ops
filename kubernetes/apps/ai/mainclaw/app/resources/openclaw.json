@@ -1,0 +1,1396 @@
+{
+  "agents": {
+    "defaults": {
+      "compaction": {
+        "memoryFlush": {
+          "enabled": true,
+          "prompt": "Extract key decisions, state changes, lessons, blockers to memory/YYYY-MM-DD.md. Format: ## [HH:MM] Topic. Skip routine work. NO_FLUSH if nothing important.",
+          "softThresholdTokens": 12000,
+          "systemPrompt": "Compacting session context. Extract only what's worth remembering. No fluff."
+        },
+        "mode": "safeguard",
+        "reserveTokensFloor": 24000
+      },
+      "contextPruning": {
+        "hardClear": {
+          "enabled": true,
+          "placeholder": "[Old tool result content cleared]"
+        },
+        "hardClearRatio": 0.5,
+        "keepLastAssistants": 4,
+        "minPrunableToolChars": 50000,
+        "mode": "cache-ttl",
+        "softTrim": {
+          "headChars": 1500,
+          "maxChars": 4000,
+          "tailChars": 1500
+        },
+        "softTrimRatio": 0.3,
+        "ttl": "6h"
+      },
+      "heartbeat": {
+        "directPolicy": "allow",
+        "includeReasoning": true,
+        "lightContext": true
+      },
+      "imageModel": {
+        "primary": "litellm/MiniMax-M3",
+        "fallbacks": [
+          "litellm/go-kimi-k2.6"
+        ]
+      },
+      "maxConcurrent": 4,
+      "memorySearch": {
+        "provider": "local",
+        "local": {
+          "modelPath": "hf:ggml-org/embeddinggemma-300m-qat-q8_0-GGUF/embeddinggemma-300m-qat-Q8_0.gguf"
+        },
+        "query": {
+          "hybrid": {
+            "enabled": true,
+            "textWeight": 0.3,
+            "mmr": {
+              "enabled": true
+            },
+            "temporalDecay": {
+              "enabled": true
+            }
+          }
+        }
+      },
+      "model": {
+        "primary": "litellm/MiniMax-M3",
+        "fallbacks": [
+          "litellm/go-minimax-m3",
+          "litellm/dsv4f",
+          "litellm/go-kimi-k2.6"
+        ]
+      },
+      "models": {
+        "litellm/MiniMax-M3": {
+          "alias": "minimax-m3",
+          "params": {
+            "cacheRetention": "short"
+          }
+        },
+        "litellm/MiniMax-M2.7": {
+          "alias": "minimax-m2.7",
+          "params": {
+            "cacheRetention": "short"
+          }
+        },
+        "litellm/dsv4f": {
+          "alias": "dsv4f",
+          "params": {
+            "cache_prompt": true
+          }
+        },
+        "litellm/dsv4p": {
+          "alias": "dsv4p",
+          "params": {
+            "cache_prompt": true
+          }
+        },
+        "litellm/glm-5.1": {
+          "alias": "glm-5.1",
+          "params": {
+            "cache_prompt": true
+          }
+        },
+        "litellm/go-kimi-k2.6": {
+          "alias": "go-kimi-2.6",
+          "params": {
+            "cache_prompt": true
+          }
+        },
+        "litellm/go-minimax-m3": {
+          "alias": "go-minimax-m3",
+          "params": {
+            "cache_prompt": true
+          }
+        },
+        "litellm/go-minimax-m2.7": {
+          "alias": "go-minimax-m2.7",
+          "params": {
+            "cache_prompt": true
+          }
+        },
+        "litellm/mimo-v2.5-pro": {
+          "alias": "mimo-agent",
+          "params": {
+            "cache_prompt": true
+          }
+        },
+        "litellm/mimo-v2.5": {
+          "alias": "mimo-v2.5",
+          "params": {
+            "cache_prompt": true
+          }
+        },
+        "litellm/qwen3.7-plus": {
+          "alias": "qwen-plus",
+          "params": {
+            "cache_prompt": true
+          }
+        }
+      },
+      "subagents": {
+        "archiveAfterMinutes": 120,
+        "delegationMode": "prefer",
+        "maxSpawnDepth": 1,
+        "maxChildrenPerAgent": 3,
+        "maxConcurrent": 4,
+        "runTimeoutSeconds": 900,
+        "announceTimeoutMs": 180000,
+        "model": {
+          "primary": "litellm/MiniMax-M3",
+          "fallbacks": [
+            "litellm/dsv4f"
+          ]
+        },
+        "thinking": "low"
+      },
+      "typingMode": "instant",
+      "typingIntervalSeconds": 6,
+      "timeoutSeconds": 600,
+      "userTimezone": "Europe/Paris",
+      "workspace": "/home/node/.openclaw/workspace"
+    },
+    "list": [
+      {
+        "id": "main",
+        "default": true,
+        "name": "Claw",
+        "workspace": "/home/node/.openclaw/workspace",
+        "agentDir": "/home/node/.openclaw/agents/main/agent",
+        "heartbeat": {
+          "directPolicy": "allow",
+          "every": "1h",
+          "activeHours": {
+            "start": "06:00",
+            "end": "22:00"
+          },
+          "target": "discord",
+          "to": "channel:{{ .DISCORD_CLAW_CHANNEL_ID }}"
+        },
+        "identity": {
+          "name": "OpenClaw",
+          "emoji": "🦞"
+        },
+        "sandbox": {
+          "mode": "off"
+        },
+        "tools": {
+          "profile": "full",
+          "alsoAllow": [
+            "browser",
+            "message",
+            "gateway",
+            "nodes"
+          ],
+          "exec": {
+            "security": "full"
+          }
+        }
+      },
+      {
+        "id": "family",
+        "name": "Family",
+        "workspace": "/home/node/.openclaw/workspace-family",
+        "agentDir": "/home/node/.openclaw/agents/family/agent",
+        "heartbeat": {
+          "directPolicy": "allow",
+          "every": "6h",
+          "activeHours": {
+            "start": "06:00",
+            "end": "22:00"
+          },
+          "target": "discord",
+          "to": "channel:{{ .DISCORD_FAMILY_CHANNEL_ID }}"
+        },
+        "identity": {
+          "name": "Family Bot",
+          "emoji": "🏠"
+        },
+        "groupChat": {
+          "mentionPatterns": [
+            "@family",
+            "@familybot"
+          ]
+        },
+        "tools": {
+          "profile": "full",
+          "alsoAllow": [
+            "message",
+            "agents_list",
+            "wiki_apply",
+            "wiki_get",
+            "wiki_status",
+            "wiki_search",
+            "wiki_lint"
+          ],
+          "exec": {
+            "security": "full"
+          }
+        }
+      },
+      {
+        "id": "coach",
+        "name": "Mentor",
+        "workspace": "/home/node/.openclaw/workspace-coach",
+        "agentDir": "/home/node/.openclaw/agents/coach/agent",
+        "heartbeat": {
+          "directPolicy": "allow",
+          "every": "6h",
+          "activeHours": {
+            "start": "06:00",
+            "end": "22:00"
+          },
+          "target": "discord",
+          "to": "channel:{{ .DISCORD_COACH_CHANNEL_ID }}"
+        },
+        "identity": {
+          "name": "Coach",
+          "emoji": "🎓"
+        },
+        "groupChat": {
+          "mentionPatterns": [
+            "@coach",
+            "@coachbot"
+          ]
+        },
+        "tools": {
+          "profile": "full",
+          "alsoAllow": [
+            "message",
+            "wiki_apply",
+            "wiki_get",
+            "wiki_lint",
+            "wiki_search",
+            "wiki_status",
+            "agents_list"
+          ],
+          "exec": {
+            "security": "full"
+          }
+        }
+      },
+      {
+        "id": "finance",
+        "name": "Finance Expert",
+        "workspace": "/home/node/.openclaw/workspace-finance",
+        "agentDir": "/home/node/.openclaw/agents/finance/agent",
+        "heartbeat": {
+          "directPolicy": "allow",
+          "every": "6h",
+          "activeHours": {
+            "start": "06:00",
+            "end": "22:00"
+          },
+          "target": "discord",
+          "to": "channel:{{ .DISCORD_FINANCE_CHANNEL_ID }}"
+        },
+        "identity": {
+          "name": "Finance Bot",
+          "emoji": "📈"
+        },
+        "groupChat": {
+          "mentionPatterns": [
+            "@finance",
+            "@financebot"
+          ]
+        },
+        "tools": {
+          "profile": "full",
+          "alsoAllow": [
+            "message",
+            "wiki_get",
+            "wiki_lint",
+            "wiki_search",
+            "wiki_status",
+            "wiki_apply",
+            "agents_list"
+          ],
+          "exec": {
+            "security": "full"
+          }
+        }
+      },
+      {
+        "id": "shopping",
+        "name": "Shopping Assistant",
+        "workspace": "/home/node/.openclaw/workspace-shopping",
+        "agentDir": "/home/node/.openclaw/agents/shopping/agent",
+        "heartbeat": {
+          "directPolicy": "allow",
+          "every": "6h",
+          "activeHours": {
+            "start": "06:00",
+            "end": "22:00"
+          },
+          "target": "discord",
+          "to": "channel:{{ .DISCORD_SHOPPING_CHANNEL_ID }}"
+        },
+        "identity": {
+          "name": "Shopping Bot",
+          "emoji": "🛒"
+        },
+        "groupChat": {
+          "mentionPatterns": [
+            "@shopping",
+            "@shoppingbot"
+          ]
+        },
+        "tools": {
+          "profile": "full",
+          "alsoAllow": [
+            "wiki_apply",
+            "wiki_status",
+            "wiki_get",
+            "wiki_lint",
+            "wiki_search",
+            "message"
+          ],
+          "exec": {
+            "security": "full"
+          }
+        }
+      },
+      {
+        "id": "media",
+        "name": "Media",
+        "workspace": "/home/node/.openclaw/workspace-media",
+        "agentDir": "/home/node/.openclaw/agents/media/agent",
+        "heartbeat": {
+          "directPolicy": "allow",
+          "every": "1h",
+          "activeHours": {
+            "start": "06:00",
+            "end": "22:00"
+          },
+          "target": "discord",
+          "to": "channel:{{ .DISCORD_MEDIA_CHANNEL_ID }}",
+          "lightContext": true,
+          "isolatedSession": true
+        },
+        "identity": {
+          "name": "Media Bot",
+          "emoji": "🎬"
+        },
+        "groupChat": {
+          "mentionPatterns": [
+            "@media",
+            "@movie"
+          ]
+        },
+        "tools": {
+          "profile": "full",
+          "alsoAllow": [
+            "message"
+          ],
+          "exec": {
+            "security": "full"
+          }
+        }
+      },
+      {
+        "id": "nova",
+        "name": "Nova",
+        "workspace": "/home/node/.openclaw/workspace-nova",
+        "agentDir": "/home/node/.openclaw/agents/nova/agent",
+        "heartbeat": {
+          "directPolicy": "allow",
+          "every": "6h",
+          "activeHours": {
+            "start": "06:00",
+            "end": "22:00"
+          },
+          "target": "discord",
+          "to": "channel:{{ .DISCORD_NOVA_CHANNEL_ID }}"
+        },
+        "identity": {
+          "name": "Nova",
+          "emoji": "🌟"
+        },
+        "groupChat": {
+          "mentionPatterns": [
+            "@nova"
+          ]
+        },
+        "subagents": {
+          "allowAgents": [
+            "family",
+            "shopping",
+            "finance",
+            "media",
+            "lycos",
+            "nova"
+          ]
+        },
+        "tools": {
+          "profile": "full",
+          "alsoAllow": [
+            "message",
+            "agents_list"
+          ],
+          "exec": {
+            "security": "full"
+          }
+        }
+      },
+      {
+        "id": "lycos",
+        "name": "Lycos",
+        "workspace": "/home/node/.openclaw/workspace-lycos",
+        "agentDir": "/home/node/.openclaw/agents/lycos/agent",
+        "memorySearch": {
+          "extraPaths": [
+            "/home/node/.openclaw/workspace-finance/MEMORY.md",
+            "/home/node/.openclaw/workspace-finance/memory/",
+            "/home/node/.openclaw/workspace-family/MEMORY.md",
+            "/home/node/.openclaw/workspace-family/memory/",
+            "/home/node/.openclaw/workspace-coach/MEMORY.md",
+            "/home/node/.openclaw/workspace-coach/memory/",
+            "/home/node/.openclaw/workspace-nova/MEMORY.md",
+            "/home/node/.openclaw/workspace-nova/memory/",
+            "/home/node/.openclaw/workspace-shopping/MEMORY.md",
+            "/home/node/.openclaw/workspace-shopping/memory/",
+            "/home/node/.openclaw/workspace/MEMORY.md",
+            "/home/node/.openclaw/workspace/memory/"
+          ],
+          "qmd": {
+            "extraCollections": [
+              {
+                "path": "/home/node/.openclaw/workspace-finance/memory/",
+                "name": "finance-memory"
+              },
+              {
+                "path": "/home/node/.openclaw/workspace-family/memory/",
+                "name": "family-memory"
+              },
+              {
+                "path": "/home/node/.openclaw/workspace-coach/memory/",
+                "name": "coach-memory"
+              },
+              {
+                "path": "/home/node/.openclaw/workspace-nova/memory/",
+                "name": "nova-memory"
+              },
+              {
+                "path": "/home/node/.openclaw/workspace/memory/",
+                "name": "claw-memory"
+              },
+              {
+                "path": "/home/node/.openclaw/workspace-shopping/memory/",
+                "name": "shopping-memory"
+              }
+            ]
+          }
+        },
+        "heartbeat": {
+          "directPolicy": "allow",
+          "every": "6h",
+          "activeHours": {
+            "start": "08:00",
+            "end": "22:00"
+          },
+          "target": "discord",
+          "to": "channel:{{ .DISCORD_LYCOS_CHANNEL_ID }}",
+          "lightContext": true,
+          "isolatedSession": true
+        },
+        "identity": {
+          "name": "Lycos",
+          "emoji": "🕷"
+        },
+        "groupChat": {
+          "mentionPatterns": [
+            "@lycos",
+            "@research"
+          ]
+        },
+        "tools": {
+          "profile": "full",
+          "alsoAllow": [
+            "message",
+            "agents_list",
+            "sessions_send",
+            "sessions_list",
+            "sessions_history",
+            "wiki_status",
+            "wiki_search",
+            "wiki_lint",
+            "wiki_apply",
+            "wiki_get"
+          ],
+          "exec": {
+            "security": "full"
+          }
+        },
+        "thinkingDefault": "medium"
+      }
+    ]
+  },
+  "bindings": [
+    {
+      "agentId": "main",
+      "match": {
+        "channel": "discord",
+        "peer": {
+          "kind": "channel",
+          "id": "{{ .DISCORD_CLAW_CHANNEL_ID }}"
+        },
+        "guildId": "{{ .DISCORD_GUILD_ID }}"
+      }
+    },
+    {
+      "agentId": "family",
+      "match": {
+        "channel": "discord",
+        "peer": {
+          "kind": "channel",
+          "id": "{{ .DISCORD_FAMILY_CHANNEL_ID }}"
+        },
+        "guildId": "{{ .DISCORD_GUILD_ID }}"
+      }
+    },
+    {
+      "agentId": "coach",
+      "match": {
+        "channel": "discord",
+        "peer": {
+          "kind": "channel",
+          "id": "{{ .DISCORD_COACH_CHANNEL_ID }}"
+        },
+        "guildId": "{{ .DISCORD_GUILD_ID }}"
+      }
+    },
+    {
+      "agentId": "finance",
+      "match": {
+        "channel": "discord",
+        "peer": {
+          "kind": "channel",
+          "id": "{{ .DISCORD_FINANCE_CHANNEL_ID }}"
+        },
+        "guildId": "{{ .DISCORD_GUILD_ID }}"
+      }
+    },
+    {
+      "agentId": "shopping",
+      "match": {
+        "channel": "discord",
+        "peer": {
+          "kind": "channel",
+          "id": "{{ .DISCORD_SHOPPING_CHANNEL_ID }}"
+        },
+        "guildId": "{{ .DISCORD_GUILD_ID }}"
+      }
+    },
+    {
+      "agentId": "nova",
+      "match": {
+        "channel": "discord",
+        "peer": {
+          "kind": "channel",
+          "id": "{{ .DISCORD_NOVA_CHANNEL_ID }}"
+        },
+        "guildId": "{{ .DISCORD_GUILD_ID }}"
+      }
+    },
+    {
+      "agentId": "media",
+      "match": {
+        "channel": "discord",
+        "peer": {
+          "kind": "channel",
+          "id": "{{ .DISCORD_MEDIA_CHANNEL_ID }}"
+        },
+        "guildId": "{{ .DISCORD_GUILD_ID }}"
+      }
+    },
+    {
+      "agentId": "lycos",
+      "match": {
+        "channel": "discord",
+        "peer": {
+          "kind": "channel",
+          "id": "{{ .DISCORD_LYCOS_CHANNEL_ID }}"
+        },
+        "guildId": "{{ .DISCORD_GUILD_ID }}"
+      }
+    }
+  ],
+  "channels": {
+    "discord": {
+      "actions": {
+        "channelInfo": false,
+        "channels": true,
+        "emojiUploads": false,
+        "events": false,
+        "memberInfo": false,
+        "messages": true,
+        "moderation": false,
+        "permissions": false,
+        "pins": false,
+        "polls": false,
+        "reactions": false,
+        "roleInfo": false,
+        "roles": false,
+        "search": true,
+        "stickerUploads": false,
+        "stickers": false,
+        "threads": false,
+        "voiceStatus": false
+      },
+      "allowFrom": [
+        "{{ .DISCORD_MATT_USER_ID }}",
+        "{{ .DISCORD_AGNES_USER_ID }}"
+      ],
+      "dmPolicy": "allowlist",
+      "enabled": true,
+      "execApprovals": {
+        "agentFilter": [
+          "main",
+          "family",
+          "coach",
+          "finance",
+          "shopping",
+          "media",
+          "lycos"
+        ],
+        "approvers": [
+          "{{ .DISCORD_MATT_USER_ID }}",
+          "{{ .DISCORD_AGNES_USER_ID }}"
+        ],
+        "enabled": true,
+        "target": "channel"
+      },
+      "groupPolicy": "allowlist",
+      "guilds": {
+        "{{ .DISCORD_GUILD_ID }}": {
+          "channels": {
+            "{{ .DISCORD_CLAW_CHANNEL_ID }}": {
+              "enabled": true,
+              "requireMention": false,
+              "skills": [
+                "search",
+                "docs"
+              ],
+              "systemPrompt": "Tu es mon assistant personnel. Aide moi dans ma vie quotidienne, que ce soit pour organiser mes idées, faire des recherches, ou m'assister dans mes projets personnels. Sois polyvalent et fiable."
+            },
+            "{{ .DISCORD_FAMILY_CHANNEL_ID }}": {
+              "enabled": true,
+              "requireMention": false,
+              "skills": [
+                "search",
+                "docs"
+              ],
+              "systemPrompt": "Tu es l'assistant familial. Sois chaleureux, empathique et aide les membres de la famille dans leur quotidien."
+            },
+            "{{ .DISCORD_COACH_CHANNEL_ID }}": {
+              "enabled": true,
+              "requireMention": false,
+              "skills": [
+                "search",
+                "docs"
+              ],
+              "systemPrompt": "Tu es mon coach personnel. Aide moi à atteindre mes objectifs, que ce soit en développement personnel, en apprentissage ou dans mes projets. Sois motivant et pédagogue."
+            },
+            "{{ .DISCORD_FINANCE_CHANNEL_ID }}": {
+              "enabled": true,
+              "requireMention": false,
+              "skills": [
+                "search",
+                "docs"
+              ],
+              "systemPrompt": "Tu es un expert en finance et investissement. Sois pédagogue et explique ton raisonnement."
+            },
+            "{{ .DISCORD_SHOPPING_CHANNEL_ID }}": {
+              "enabled": true,
+              "requireMention": false,
+              "skills": [
+                "search",
+                "docs"
+              ],
+              "systemPrompt": "Tu es un assistant de shopping. Sois aimable et aide les utilisateurs à trouver ce qu'ils cherchent."
+            },
+            "{{ .DISCORD_NOVA_CHANNEL_ID }}": {
+              "enabled": true,
+              "requireMention": false,
+              "skills": [
+                "search",
+                "docs",
+                "project-workflow"
+              ],
+              "systemPrompt": "Tu es Nova, l'assistante personnelle d'Agnès. Sois chaleureuse, organise son quotidien, aide-la pour le shopping, la vie de famille, et délègue aux agents spécialisés si besoin."
+            },
+            "{{ .DISCORD_MEDIA_CHANNEL_ID }}": {
+              "enabled": true,
+              "requireMention": false,
+              "skills": [
+                "search",
+                "docs"
+              ],
+              "systemPrompt": "Tu es l'assistant média. Gère la bibliothèque Plex, les demandes d'ajout de films/séries, les recommandations. Utilise les outils MCP via ToolHive pour interagir avec Radarr, Sonarr, Seerr, Plex. Sois concis et va droit au but."
+            },
+            "{{ .DISCORD_LYCOS_CHANNEL_ID }}": {
+              "enabled": true,
+              "requireMention": false,
+              "skills": [
+                "search",
+                "docs"
+              ],
+              "systemPrompt": "Tu es l'assistant recherche. Sois précis, indique tes sources, fait des tableaux comparatifs."
+            },
+            "{{ .DISCORD_CLAW_PROJECT_FORUM }}": {
+              "enabled": true,
+              "requireMention": false,
+              "skills": [
+                "search",
+                "docs",
+                "project-workflow"
+              ],
+              "systemPrompt": "Tu es le gestionnaire de projets de Matt. Ce channel forum héberge les projets au long cours, un par post. Chaque nouveau projet initié par Matt doit être créé comme un nouveau post dans ce forum, avec un titre clair et un message initial qui résume le contexte, l'objectif et les premières étapes. Le contexte de chaque post est isolé — tu peux y travailler de manière discontinue. Utilise le système de tags pour suivre l'avancement."
+            },
+            "{{ .DISCORD_NOVA_PROJECT_FORUM }}": {
+              "enabled": true,
+              "requireMention": false,
+              "skills": [
+                "search",
+                "docs",
+                "project-workflow"
+              ],
+              "systemPrompt": "Tu es Nova, l'assistante de gestion de projets d'Agnès. Ce channel forum héberge les projets d'Agnès au long cours, un par post. Chaque projet initié pour ou par Agnès doit être créé comme un nouveau post dans ce forum, avec un titre clair et un message initial. Le contexte de chaque post est isolé. Sois proactive, chaleureuse et organisée."
+            }
+          },
+          "users": [
+            "{{ .DISCORD_MATT_USER_ID }}",
+            "{{ .DISCORD_AGNES_USER_ID }}"
+          ]
+        }
+      },
+      "streaming": {
+        "mode": "progress"
+      },
+      "threadBindings": {
+        "enabled": true,
+        "idleHours": 24,
+        "maxAgeHours": 0,
+        "spawnSessions": true
+      },
+      "token": {
+        "source": "env",
+        "provider": "default",
+        "id": "DISCORD_BOT_TOKEN"
+      }
+    }
+  },
+  "commands": {
+    "ownerAllowFrom": [
+      "discord:{{ .DISCORD_MATT_USER_ID }}"
+    ],
+    "native": "auto",
+    "nativeSkills": "auto",
+    "ownerDisplay": "raw",
+    "restart": false
+  },
+  "cron": {
+    "maxConcurrentRuns": 8,
+    "failureDestination": {
+      "channel": "discord",
+      "to": "channel:{{ .DISCORD_CLAW_CHANNEL_ID }}",
+      "accountId": "default",
+      "mode": "announce"
+    },
+    "failureAlert": {
+      "enabled": true,
+      "after": 2,
+      "cooldownMs": 3600000,
+      "includeSkipped": false,
+      "mode": "announce",
+      "accountId": "default"
+    }
+  },
+  "gateway": {
+    "auth": {
+      "mode": "token",
+      "token": {
+        "source": "env",
+        "provider": "default",
+        "id": "OPENCLAW_GATEWAY_TOKEN"
+      }
+    },
+    "bind": "lan",
+    "controlUi": {
+      "allowedOrigins": [
+        "https://mainclaw.oxygn.dev",
+        "https://mainclaw-code.oxygn.dev"
+      ]
+    },
+    "mode": "local",
+    "port": 18789,
+    "tools": {
+      "allow": [
+        "sessions_send"
+      ]
+    },
+    "trustedProxies": [
+      "10.42.0.0/16",
+      "10.10.0.0/16"
+    ]
+  },
+  "logging": {
+    "consoleLevel": "trace",
+    "consoleStyle": "compact",
+    "level": "trace",
+    "redactSensitive": "tools"
+  },
+  "messages": {
+    "ackReactionScope": "group-mentions",
+    "groupChat": {
+      "visibleReplies": "automatic"
+    },
+    "statusReactions": {
+      "enabled": true
+    }
+  },
+  "mcp": {
+    "servers": {
+      "toolhive": {
+        "url": "http://vmcp-mcp-gateway-internal.ai:4483/mcp",
+        "transport": "streamable-http"
+      }
+    }
+  },
+  "models": {
+    "mode": "merge",
+    "providers": {
+      "litellm": {
+        "baseUrl": "http://headroom.ai:8787/v1",
+        "apiKey": {
+          "source": "env",
+          "provider": "default",
+          "id": "LITELLM_API_KEY"
+        },
+        "api": "openai-completions",
+        "timeoutSeconds": 600,
+        "models": [
+          {
+            "id": "MiniMax-M3",
+            "name": "MiniMax M3",
+            "reasoning": true,
+            "input": [
+              "text",
+              "image"
+            ],
+            "cost": {
+              "input": 15,
+              "output": 60,
+              "cacheRead": 2,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1000000,
+            "maxTokens": 131072
+          },
+          {
+            "id": "MiniMax-M2.7",
+            "name": "MiniMax M2.7",
+            "reasoning": true,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 15,
+              "output": 60,
+              "cacheRead": 2,
+              "cacheWrite": 0
+            },
+            "contextWindow": 204800,
+            "maxTokens": 131072
+          },
+          {
+            "id": "dsv4f",
+            "name": "OpenCode Go DeepSeek V4 Flash",
+            "reasoning": true,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1000000,
+            "maxTokens": 16384
+          },
+          {
+            "id": "dsv4p",
+            "name": "OpenCode Go DeepSeek V4 Pro",
+            "reasoning": true,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1000000,
+            "maxTokens": 16384
+          },
+          {
+            "id": "glm-5.1",
+            "name": "OpenCode Go GLM 5.1",
+            "reasoning": true,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 203000,
+            "maxTokens": 16384
+          },
+          {
+            "id": "go-kimi-k2.6",
+            "name": "OpenCode Go Kimi K2.6",
+            "reasoning": true,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 262144,
+            "maxTokens": 16384
+          },
+          {
+            "id": "go-minimax-m3",
+            "name": "OpenCode Go MiniMax M3",
+            "reasoning": true,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1000000,
+            "maxTokens": 32768
+          },
+          {
+            "id": "go-minimax-m2.7",
+            "name": "OpenCode Go MiniMax M2.7",
+            "reasoning": true,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 204800,
+            "maxTokens": 16384
+          },
+          {
+            "id": "mimo-v2.5-pro",
+            "name": "OpenCode Go MiMo V2.5 Pro",
+            "reasoning": true,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 262144,
+            "maxTokens": 16384
+          }
+        ],
+        "request": {
+          "allowPrivateNetwork": true
+        }
+      }
+    }
+  },
+  "plugins": {
+    "allow": [
+      "active-memory",
+      "browser",
+      "discord",
+      "litellm",
+      "llm-task",
+      "lossless-claw",
+      "memory-core",
+      "memory-wiki",
+      "searxng",
+      "thread-ownership",
+      "tokenjuice",
+      "workboard"
+    ],
+    "bundledDiscovery": "compat",
+    "entries": {
+      "active-memory": {
+        "enabled": true,
+        "config": {
+          "enabled": true,
+          "agents": [
+            "main",
+            "finance",
+            "family",
+            "shopping",
+            "coach",
+            "media",
+            "nova",
+            "lycos"
+          ],
+          "model": "litellm/dsv4f",
+          "modelFallback": "litellm/MiniMax-M2.7",
+          "timeoutMs": 30000,
+          "queryMode": "recent",
+          "promptStyle": "balanced",
+          "thinking": "off",
+          "logging": true,
+          "persistTranscripts": true,
+          "qmd": {
+            "searchMode": "inherit"
+          }
+        }
+      },
+      "browser": {
+        "enabled": true,
+        "config": {}
+      },
+      "discord": {
+        "enabled": true,
+        "config": {}
+      },
+      "litellm": {
+        "enabled": true
+      },
+      "llm-task": {
+        "enabled": true,
+        "config": {}
+      },
+      "lossless-claw": {
+        "enabled": true,
+        "config": {
+          "databasePath": "/home/node/.openclaw/lcm.db",
+          "freshTailCount": 64,
+          "leafChunkTokens": 80000,
+          "contextThreshold": 0.75,
+          "incrementalMaxDepth": 1,
+          "newSessionRetainDepth": 2,
+          "summaryModel": "litellm/dsv4f",
+          "expansionModel": "litellm/dsv4f",
+          "delegationTimeoutMs": 120000,
+          "summaryTimeoutMs": 30000,
+          "ignoreSessionPatterns": [
+            "agent:*:cron:**",
+            "agent:*:main:heartbeat"
+          ],
+          "statelessSessionPatterns": [
+            "agent:*:subagent:**"
+          ],
+          "skipStatelessSessions": true,
+          "transcriptGcEnabled": false,
+          "proactiveThresholdCompactionMode": "deferred",
+          "cacheAwareCompaction": {
+            "enabled": true
+          },
+          "pruneHeartbeatOk": true
+        },
+        "llm": {
+          "allowModelOverride": true,
+          "allowedModels": [
+            "litellm/dsv4f"
+          ]
+        },
+        "subagent": {
+          "allowModelOverride": true,
+          "allowedModels": [
+            "litellm/dsv4f"
+          ]
+        }
+      },
+      "memory-core": {
+        "enabled": true,
+        "config": {
+          "dreaming": {
+            "enabled": true
+          }
+        }
+      },
+      "memory-wiki": {
+        "enabled": true,
+        "config": {
+          "vaultMode": "bridge",
+          "vault": {
+            "path": "/home/node/.openclaw/wiki/main",
+            "renderMode": "native"
+          },
+          "bridge": {
+            "enabled": true,
+            "readMemoryArtifacts": true,
+            "indexDreamReports": true,
+            "indexDailyNotes": true,
+            "indexMemoryRoot": true,
+            "followMemoryEvents": true
+          },
+          "search": {
+            "backend": "shared",
+            "corpus": "all"
+          },
+          "render": {
+            "preserveHumanBlocks": true,
+            "createBacklinks": true,
+            "createDashboards": true
+          }
+        }
+      },
+      "searxng": {
+        "enabled": true,
+        "config": {
+          "webSearch": {
+            "baseUrl": "http://searxng.ai:8080",
+            "language": "fr"
+          }
+        }
+      },
+      "thread-ownership": {
+        "enabled": true,
+        "config": {}
+      },
+      "tokenjuice": {
+        "enabled": true,
+        "config": {}
+      },
+      "workboard": {
+        "enabled": true,
+        "config": {}
+      }
+    },
+    "slots": {
+      "contextEngine": "lossless-claw",
+      "memory": "memory-core"
+    }
+  },
+  "secrets": {
+    "providers": {
+      "default": {
+        "source": "env",
+        "allowlist": [
+          "OPENCLAW_GATEWAY_TOKEN",
+          "DISCORD_BOT_TOKEN",
+          "LITELLM_API_KEY"
+        ]
+      }
+    }
+  },
+  "session": {
+    "dmScope": "per-channel-peer",
+    "maintenance": {
+      "maxEntries": 1000,
+      "mode": "enforce",
+      "pruneAfter": "7d",
+      "resetArchiveRetention": "7d",
+      "maxDiskBytes": "500mb",
+      "highWaterBytes": "400mb"
+    },
+    "reset": {
+      "idleMinutes": 10080,
+      "mode": "idle"
+    }
+  },
+  "skills": {
+    "entries": {
+      "apple-notes": {
+        "enabled": false
+      },
+      "apple-reminders": {
+        "enabled": false
+      },
+      "bear-notes": {
+        "enabled": false
+      },
+      "blogwatcher": {
+        "enabled": false
+      },
+      "blucli": {
+        "enabled": false
+      },
+      "bluebubbles": {
+        "enabled": false
+      },
+      "camsnap": {
+        "enabled": false
+      },
+      "clawhub": {
+        "enabled": false
+      },
+      "coding-agent": {
+        "enabled": false
+      },
+      "eightctl": {
+        "enabled": false
+      },
+      "gemini": {
+        "enabled": false
+      },
+      "gifgrep": {
+        "enabled": false
+      },
+      "goplaces": {
+        "enabled": false
+      },
+      "himalaya": {
+        "enabled": false
+      },
+      "imsg": {
+        "enabled": false
+      },
+      "model-usage": {
+        "enabled": false
+      },
+      "nano-pdf": {
+        "enabled": false
+      },
+      "notion": {
+        "enabled": false
+      },
+      "obsidian": {
+        "enabled": false
+      },
+      "openai-whisper": {
+        "enabled": false
+      },
+      "openai-whisper-api": {
+        "enabled": false
+      },
+      "openhue": {
+        "enabled": false
+      },
+      "oracle": {
+        "enabled": false
+      },
+      "ordercli": {
+        "enabled": false
+      },
+      "peekaboo": {
+        "enabled": false
+      },
+      "sag": {
+        "enabled": false
+      },
+      "session-logs": {
+        "enabled": false
+      },
+      "sherpa-onnx-tts": {
+        "enabled": false
+      },
+      "slack": {
+        "enabled": false
+      },
+      "songsee": {
+        "enabled": false
+      },
+      "sonoscli": {
+        "enabled": false
+      },
+      "spotify-player": {
+        "enabled": false
+      },
+      "summarize": {
+        "enabled": false
+      },
+      "things-mac": {
+        "enabled": false
+      },
+      "tmux": {
+        "enabled": false
+      },
+      "trello": {
+        "enabled": false
+      },
+      "video-frames": {
+        "enabled": false
+      },
+      "voice-call": {
+        "enabled": false
+      },
+      "wacli": {
+        "enabled": false
+      },
+      "xurl": {
+        "enabled": false
+      }
+    }
+  },
+  "tools": {
+    "agentToAgent": {
+      "allow": [
+        "main",
+        "family",
+        "coach",
+        "finance",
+        "shopping",
+        "media",
+        "nova",
+        "lycos"
+      ],
+      "enabled": true
+    },
+    "elevated": {
+      "allowFrom": {
+        "discord": [
+          "user:{{ .DISCORD_MATT_USER_ID }}"
+        ]
+      },
+      "enabled": true
+    },
+    "exec": {
+      "ask": "on-miss",
+      "security": "allowlist",
+      "strictInlineEval": false
+    },
+    "fs": {
+      "workspaceOnly": true
+    },
+    "profile": "full",
+    "sessions": {
+      "visibility": "all"
+    },
+    "web": {
+      "fetch": {
+        "enabled": true
+      },
+      "search": {
+        "enabled": true,
+        "provider": "searxng",
+        "openaiCodex": {}
+      }
+    }
+  },
+  "update": {
+    "channel": "stable",
+    "checkOnStart": true,
+    "auto": {
+      "enabled": false
+    }
+  }
+}

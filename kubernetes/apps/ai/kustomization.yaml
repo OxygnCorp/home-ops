@@ -13,5 +13,6 @@ resources:
   - ./headroom/ks.yaml
   - ./lightrag/ks.yaml
   - ./litellm/ks.yaml
+  - ./mainclaw/ks.yaml
   - ./searxng/ks.yaml
   - ./toolhive/ks.yaml
