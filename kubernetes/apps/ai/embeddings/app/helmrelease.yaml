@@ -23,10 +23,6 @@ spec:
             args:
               - --model-id
               - intfloat/multilingual-e5-base
-              - --max-concurrent-requests
-              - "16"
-              - --max-batch-tokens
-              - "8192"
             env:
               TZ: Europe/Paris
             probes:
@@ -64,7 +60,7 @@ spec:
                   failureThreshold: 30
             resources:
               requests:
-                cpu: 2000m
+                cpu: 1000m
                 memory: 2Gi
             securityContext:
               allowPrivilegeEscalation: false
