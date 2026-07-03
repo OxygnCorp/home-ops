@@ -1338,6 +1338,21 @@
       },
       "xurl": {
         "enabled": false
+      },
+      "1password": {
+        "enabled": false
+      },
+      "gh-issues": {
+        "enabled": false
+      },
+      "gog": {
+        "enabled": false
+      },
+      "mcporter": {
+        "enabled": false
+      },
+      "todoist": {
+        "enabled": false
       }
     }
   },
