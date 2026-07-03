@@ -23,6 +23,10 @@ spec:
             args:
               - --model-id
               - intfloat/multilingual-e5-base
+              - --max-concurrent-requests
+              - "16"
+              - --max-batch-tokens
+              - "8192"
             env:
               TZ: Europe/Paris
             probes:
@@ -35,7 +39,8 @@ spec:
                     port: 80
                   initialDelaySeconds: 60
                   periodSeconds: 10
-                  failureThreshold: 3
+                  timeoutSeconds: 15
+                  failureThreshold: 5
               readiness:
                 enabled: true
                 custom: true
@@ -45,7 +50,8 @@ spec:
                     port: 80
                   initialDelaySeconds: 10
                   periodSeconds: 10
-                  failureThreshold: 3
+                  timeoutSeconds: 15
+                  failureThreshold: 5
               startup:
                 enabled: true
                 custom: true
@@ -58,7 +64,7 @@ spec:
                   failureThreshold: 30
             resources:
               requests:
-                cpu: 500m
+                cpu: 2000m
                 memory: 2Gi
             securityContext:
               allowPrivilegeEscalation: false
