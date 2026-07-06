@@ -42,3 +42,15 @@ spec:
                   operator: In
                   values:
                     - "true"
+    tolerations:
+      - key: CriticalAddonsOnly
+        operator: Exists
+      - key: nvidia.com/gpu
+        operator: Exists
+        effect: NoSchedule
+      # k8s-3 is reserved for AI workloads via workload=ai:NoSchedule; the device plugin
+      # must still run on it to advertise nvidia.com/gpu as allocatable.
+      - key: workload
+        operator: Equal
+        value: ai
+        effect: NoSchedule

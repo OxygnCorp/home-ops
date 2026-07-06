@@ -27,7 +27,7 @@ spec:
               HEADROOM_PORT: "8787"
               OPENAI_TARGET_API_URL: http://litellm.ai:4000/v1
               ANTHROPIC_TARGET_API_URL: http://litellm.ai:4000
-              HEADROOM_REQUIRE_RUST_CORE: "false" #AVX2 support required - String format
+              HEADROOM_REQUIRE_RUST_CORE: "true" # Requires AVX2 — pinned to k8s-3 (Skylake E3-1275 v5) via nodeAffinity below
             securityContext:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
@@ -65,9 +65,10 @@ spec:
                   failureThreshold: 30
             resources:
               requests:
-                cpu: 50m
+                cpu: 100m
                 memory: 512Mi
               limits:
+                cpu: 1000m
                 memory: 2Gi
     defaultPodOptions:
       securityContext:
@@ -76,6 +77,22 @@ spec:
         runAsGroup: 1000
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
+    # Pin to AVX2-capable nodes (only k8s-3 today). The Rust core of headroom
+    # requires AVX2 — the Ivy Bridge-EP control planes (k8s-0/1/2) don't have it.
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: oxygen.dev/avx2
+                  operator: In
+                  values:
+                    - "true"
+    tolerations:
+      - key: workload
+        operator: Equal
+        value: ai
+        effect: NoSchedule
     service:
       app:
         ports:

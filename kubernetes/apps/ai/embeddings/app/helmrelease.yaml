@@ -60,8 +60,11 @@ spec:
                   failureThreshold: 30
             resources:
               requests:
-                cpu: 1000m
-                memory: 2Gi
+                cpu: 2000m
+                memory: 4Gi
+              limits:
+                cpu: 3500m
+                memory: 8Gi
             securityContext:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
@@ -73,6 +76,24 @@ spec:
         runAsGroup: 65532
         fsGroup: 65532
         fsGroupChangePolicy: OnRootMismatch
+    # Pin to AVX2-capable nodes (only k8s-3 today). text-embeddings-inference
+    # CPU build benefits significantly from AVX2; the Ivy Bridge-EP control
+    # planes (k8s-0/1/2) lack AVX2 and the pod would crash or fall back to a
+    # slow path. The PVC is bounded to k8s-3 via openebs-hostpath (WFFC).
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: oxygen.dev/avx2
+                  operator: In
+                  values:
+                    - "true"
+    tolerations:
+      - key: workload
+        operator: Equal
+        value: ai
+        effect: NoSchedule
     persistence:
       data:
         existingClaim: embeddings

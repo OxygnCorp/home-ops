@@ -8,6 +8,9 @@ spec:
   commonMetadata:
     labels:
       app.kubernetes.io/name: headroom
+  dependsOn:
+    - name: node-feature-discovery-rules
+      namespace: kube-system
   interval: 1h
   path: "./kubernetes/apps/ai/headroom/app"
   postBuild:

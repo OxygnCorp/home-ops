@@ -1,0 +1,10 @@
+---
+customization:
+  extraKernelArgs:
+    - intel_iommu=on # PCI Passthrough
+    - iommu=pt # PCI Passthrough
+  systemExtensions:
+    officialExtensions:
+      - siderolabs/nonfree-kmod-nvidia-lts # NVIDIA proprietary driver (Pascal support)
+      - siderolabs/nvidia-container-toolkit-lts
+      - siderolabs/intel-ucode

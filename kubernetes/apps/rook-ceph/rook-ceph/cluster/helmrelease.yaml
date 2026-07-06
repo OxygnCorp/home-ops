@@ -109,7 +109,11 @@ spec:
           limits:
             memory: 60Mi
       storage:
-        useAllNodes: true
+        useAllNodes: false
+        nodes:
+          - name: k8s-0
+          - name: k8s-1
+          - name: k8s-2
         useAllDevices: false
         devices:
           - name: /dev/sdb

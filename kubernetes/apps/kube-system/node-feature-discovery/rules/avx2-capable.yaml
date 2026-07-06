@@ -1,0 +1,16 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/nfd.k8s-sigs.io/nodefeaturerule_v1alpha1.json
+apiVersion: nfd.k8s-sigs.io/v1alpha1
+kind: NodeFeatureRule
+metadata:
+  name: avx2-capable
+spec:
+  rules:
+    - # AVX2 capable CPUs (allows scheduling differentiated workloads vs non-AVX2 nodes like Ivy Bridge-EP)
+      name: cpu.avx2
+      labels:
+        oxygen.dev/avx2: "true"
+      matchFeatures:
+        - feature: cpu.cpuid
+          matchExpressions:
+            AVX2: { op: Exists }

@@ -24,5 +24,14 @@ spec:
       config:
         core:
           labelSources: ["pci", "system", "usb"]
+      tolerations:
+        # The GPU worker (k8s-3) is tainted workload=ai:NoSchedule to keep generic
+        # workloads off, but nfd-worker must still run there to enumerate the GPU
+        # (PCI vendor 10de) and emit the nvidia.com/gpu.present label required by
+        # nvidia-device-plugin scheduling.
+        - key: workload
+          operator: Equal
+          value: ai
+          effect: NoSchedule
     prometheus:
       enable: true
