@@ -1,0 +1,2 @@
+---
+machine: {} # Worker nodes — per-node patches own networking, install device and labels

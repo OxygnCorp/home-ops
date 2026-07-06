@@ -1,0 +1,55 @@
+---
+machine:
+  install:
+    # SSD détecté comme /dev/sdb car la clé USB ISO occupe /dev/sda tant que Talos
+    # tourne en mode maintenance. Une fois installé sur le SSD et la clé retirée,
+    # le SSD redeviendra /dev/sda au prochain boot — Talos s'en fiche, il a déjà
+    # flashé le disque cible et boote dessus.
+    disk: /dev/sdb
+    # wipe: true assure une table de partitions vierge avant d'écrire le bootloader
+    # et l'image Talos. Indispensable sur un disque qui a déjà subi un apply partiel
+    # (apply-config avec wipe=false peut laisser un état inconsistent non bootable).
+    # Destructif : efface toutes les données du disque cible.
+    wipe: true
+    image: factory.talos.dev/metal-installer/{{ ENV.SCHEMATIC }}:v1.13.5
+  kernel:
+    modules:
+      - name: nvidia
+      - name: nvidia_uvm
+      - name: nvidia_drm
+      - name: nvidia_modeset
+  kubelet:
+    extraArgs:
+      # Pose le taint workload=ai:NoSchedule au bootstrap via --register-with-taints.
+      # Sur un worker, machine.nodeTaints est bloqué par l'admission controller
+      # NodeRestriction (Forbidden sur  Nodes().Update() fait par NodeApplyController
+      # avec l'identité system:node:<name>). --register-with-taints n'est soumis
+      # qu'à la création initiale du Node object, autorisée par NodeRestriction.
+      # Au reset/rejoin, le taint est automatiquement ré-appliqué.
+      register-with-taints: workload=ai:NoSchedule
+  nodeLabels:
+    topology.kubernetes.io/zone: m
+  sysctls:
+    net.core.bpf_jit_harden: "1"
+---
+apiVersion: v1alpha1
+kind: HostnameConfig
+hostname: k8s-3
+---
+apiVersion: v1alpha1
+kind: LinkAliasConfig
+name: net0
+selector:
+  match: mac(link.permanent_addr) == "a0:36:9f:53:3c:da"
+---
+apiVersion: v1alpha1
+kind: BondConfig
+name: bond0
+links: [net0]
+bondMode: active-backup
+mtu: 1500
+up: true
+---
+apiVersion: v1alpha1
+kind: DHCPv4Config
+name: bond0

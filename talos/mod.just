@@ -11,27 +11,33 @@ default:
 apply-node node target=node *args:
     just talos render-config "{{ node }}" | talosctl -n "{{ target }}" apply-config -f /dev/stdin {{ args }}
 
-[doc('Download Talos machine image')]
+[doc('Download Talos machine image (ISO factory) for a node')]
 [script]
-download-image version:
-    export SCHEMATIC="$(just talos schematic-id)"
+download-image node version:
+    export SCHEMATIC="$(just talos schematic-id {{ node }})"
     curl -fL --remove-on-error --retry 5 --retry-delay 5 --retry-all-errors --progress-bar \
-        -o "{{ source_directory() }}/talos-{{ version }}-${SCHEMATIC:0:8}.iso" \
+        -o "{{ source_directory() }}/talos-{{ node }}-{{ version }}-${SCHEMATIC:0:8}.iso" \
         "https://factory.talos.dev/image/${SCHEMATIC}/{{ version }}/metal-amd64.iso"
-    just log info "Downloaded Talos" version "{{ version }}" schematic "${SCHEMATIC}"
+    just log info "Downloaded Talos" version "{{ version }}" schematic "${SCHEMATIC}" node "{{ node }}"
 
 [confirm('Reboot node ' + node + ' [y|N] ?')]
 [doc('Reboot a node')]
 reboot-node node:
     talosctl -n {{ node }} reboot -m powercycle
 
-[doc('Render Talos config for a node')]
+[doc('Render Talos config for a node (machine type inferred from the subdirectory containing <node>.yaml)')]
 [script]
 render-config node:
-    export CONTROLPLANE="$(just talos machine-controller {{ node }})"
+    export MACHINE_TYPE="$(just talos machine-type {{ node }})"
     export SCHEMATIC="$(just talos schematic-id {{ node }})"
-    talosctl machineconfig patch <(just template "{{ source_directory() }}/machineconfig.yaml.j2") \
-        -p @<(just template "{{ source_directory() }}/nodes/{{ node }}.yaml.j2")
+    PATCH_ARGS=()
+    TYPE_PATCH="{{ source_directory() }}/main/${MACHINE_TYPE}/${MACHINE_TYPE}.yaml"
+    if [ -f "${TYPE_PATCH}" ]; then
+        PATCH_ARGS+=(-p @"${TYPE_PATCH}")
+    fi
+    talosctl machineconfig patch <(just template "{{ source_directory() }}/main/machineconfig.yaml.j2") \
+        "${PATCH_ARGS[@]}" \
+        -p @<(just template "{{ source_directory() }}/main/${MACHINE_TYPE}/{{ node }}.yaml")
 
 [confirm('Reset node ' + node + ' [y|N] ?')]
 [doc('Reset a node')]
@@ -55,20 +61,29 @@ upgrade-node node *args:
 
 [private]
 [script]
-schematic-id node="":
-    if [ -n "{{ node }}" ] && [ -f "{{ source_directory() }}/nodes/{{ node }}.schematic.yaml.j2" ]; then
-        SCHEMATIC_FILE="{{ source_directory() }}/nodes/{{ node }}.schematic.yaml.j2"
-    else
-        SCHEMATIC_FILE="{{ source_directory() }}/schematic.yaml.j2"
-    fi
+schematic-id node:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    MACHINE_TYPE="$(just talos machine-type {{ node }})"
+    SCHEMATIC_FILE="{{ source_directory() }}/main/${MACHINE_TYPE}/schematic.yaml"
     just template "${SCHEMATIC_FILE}" | curl -sX POST --data-binary @- "https://factory.talos.dev/schematics" | jq -r '.id'
 
 [private]
-machine-controller node:
-    just template "{{ source_directory() }}/nodes/{{ node }}.yaml.j2" | yq -e 'select(.machine) | (.machine.type == "controlplane") // ""'
+[script]
+machine-type node:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    NODE_FILE="$(find "{{ source_directory() }}/main" -name "{{ node }}.yaml" -print -quit)"
+    if [ -z "${NODE_FILE}" ]; then
+        echo "error: no patch file found for node '{{ node }}' under {{ source_directory() }}/main/{controlplane,worker}/" >&2
+        exit 1
+    fi
+    basename "$(dirname "${NODE_FILE}")"
 
 [private]
 [script]
-machine-image node="":
+machine-image node:
+    #!/usr/bin/env bash
+    set -euo pipefail
     export SCHEMATIC="$(just talos schematic-id {{ node }})"
-    just template "{{ source_directory() }}/machineconfig.yaml.j2" | yq -e 'select(.machine) | .machine.install.image'
+    just template "{{ source_directory() }}/main/machineconfig.yaml.j2" | yq -e 'select(.machine) | .machine.install.image'

@@ -1,0 +1,4 @@
+---
+machine:
+  nodeLabels:
+    topology.kubernetes.io/zone: m # CP co-located on the same Supermicro host (hyper-converged)
