@@ -7,7 +7,7 @@ spec:
   accessModes: ["ReadWriteOnce"]
   resources:
     requests:
-      storage: 5Gi
+      storage: 10Gi
   # Local hostpath on k8s-3's SSD for the TEI model cache (re-downloadable).
   # WaitForFirstConsumer ensures the PV is created on the node where the pod
   # lands (k8s-3 via nodeAffinity), bounded to that node's lifetime.

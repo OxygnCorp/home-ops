@@ -8,6 +8,8 @@ spec:
   commonMetadata:
     labels:
       app.kubernetes.io/name: lightrag
+  components:
+    - ../../../../components/volsync
   dependsOn:
     - name: onepassword
       namespace: external-secrets
@@ -17,13 +19,16 @@ spec:
       namespace: ai
     - name: embeddings
       namespace: ai
-    - name: neo4j
-      namespace: database
+    - name: volsync
+      namespace: volsync-system
   interval: 1h
   path: ./kubernetes/apps/ai/lightrag/app
   postBuild:
     substitute:
       APP: lightrag
+      VOLSYNC_CAPACITY: "10Gi"
+      VOLSYNC_PUID: "1000"
+      VOLSYNC_PGID: "1000"
   prune: true
   sourceRef:
     kind: GitRepository
