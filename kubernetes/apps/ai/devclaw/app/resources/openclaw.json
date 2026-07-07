@@ -392,7 +392,7 @@
         "enabled": true,
         "config": {
           "webSearch": {
-            "baseUrl": "http://searxng.ai:8080",
+            "baseUrl": "https://search.oxygn.dev",
             "language": "fr"
           }
         }
