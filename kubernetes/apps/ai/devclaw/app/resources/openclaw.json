@@ -251,7 +251,7 @@
   "models": {
     "providers": {
       "litellm": {
-        "baseUrl": "http://headroom.ai:8787/v1",
+        "baseUrl": "http://litellm.ai:4000/v1",
         "apiKey": { "source": "env", "provider": "default", "id": "LITELLM_API_KEY" },
         "api": "openai-completions",
         "request": { "allowPrivateNetwork": true },
