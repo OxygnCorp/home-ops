@@ -77,22 +77,22 @@ spec:
         runAsGroup: 1000
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
-    # Pin to AVX2-capable nodes (only k8s-3 today). The Rust core of headroom
-    # requires AVX2 — the Ivy Bridge-EP control planes (k8s-0/1/2) don't have it.
-    affinity:
-      nodeAffinity:
-        requiredDuringSchedulingIgnoredDuringExecution:
-          nodeSelectorTerms:
-            - matchExpressions:
-                - key: oxygen.dev/avx2
-                  operator: In
-                  values:
-                    - "true"
-    tolerations:
-      - key: workload
-        operator: Equal
-        value: ai
-        effect: NoSchedule
+      # Pin to AVX2-capable nodes (only k8s-3 today). The Rust core of headroom
+      # requires AVX2 — the Ivy Bridge-EP control planes (k8s-0/1/2) don't have it.
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: oxygen.dev/avx2
+                    operator: In
+                    values:
+                      - "true"
+      tolerations:
+        - key: workload
+          operator: Equal
+          value: ai
+          effect: NoSchedule
     service:
       app:
         ports:
