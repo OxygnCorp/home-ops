@@ -26,7 +26,7 @@ spec:
   postBuild:
     substitute:
       APP: lightrag
-      VOLSYNC_CAPACITY: "10Gi"
+      VOLSYNC_CAPACITY: "20Gi"
       VOLSYNC_PUID: "1000"
       VOLSYNC_PGID: "1000"
   prune: true

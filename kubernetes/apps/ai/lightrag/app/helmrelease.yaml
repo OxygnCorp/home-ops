@@ -63,33 +63,34 @@ spec:
               - secretRef:
                   name: lightrag-secret
             probes:
+              # tcpSocket (not httpGet) — robust without asserting an exact
+              # health-endpoint path on first deploy.
               liveness:
                 enabled: true
                 custom: true
                 spec:
-                  httpGet:
-                    path: /health
-                    port: *port
+                  tcpSocket:
+                    port: &httpPort 9621
                   initialDelaySeconds: 30
-                  periodSeconds: 10
-                  failureThreshold: 3
+                  periodSeconds: 30
+                  timeoutSeconds: 5
+                  failureThreshold: 5
               readiness:
                 enabled: true
                 custom: true
                 spec:
-                  httpGet:
-                    path: /health
-                    port: *port
-                  initialDelaySeconds: 10
-                  periodSeconds: 10
+                  tcpSocket:
+                    port: *httpPort
+                  initialDelaySeconds: 15
+                  periodSeconds: 15
+                  timeoutSeconds: 5
                   failureThreshold: 3
               startup:
                 enabled: true
                 custom: true
                 spec:
-                  httpGet:
-                    path: /health
-                    port: *port
+                  tcpSocket:
+                    port: *httpPort
                   initialDelaySeconds: 15
                   periodSeconds: 10
                   failureThreshold: 30
@@ -101,8 +102,16 @@ spec:
                 memory: 2Gi
             securityContext:
               allowPrivilegeEscalation: false
-              readOnlyRootFilesystem: true
-              capabilities: { drop: ["ALL"] }
+              capabilities:
+                drop:
+                  - ALL
+              # readOnlyRootFilesystem omitted for first deploy: the image
+              # may write Python caches / scratch under / at startup.
+              # Durable state is on the data PVC; /tmp is tmpfs below.
+              # Revisit with RO rootfs once the image's write paths are
+              # confirmed clean.
+              seccompProfile:
+                type: RuntimeDefault
     defaultPodOptions:
       securityContext:
         runAsNonRoot: true
