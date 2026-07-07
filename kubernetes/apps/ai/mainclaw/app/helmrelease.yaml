@@ -31,6 +31,12 @@ spec:
                 chown 1000:100 /home/node/.openclaw/openclaw.json
                 chmod 400 /home/node/.openclaw/openclaw.json
                 cp /kopiaignore/.kopiaignore /home/node/.kopiaignore
+
+                # Install Mise if not present on PVC
+                if [ ! -f /home/node/.local/bin/mise ]; then
+                  echo "Installing Mise..."
+                  curl https://mise.run | MISE_INSTALL_PATH=/home/node/.local/bin/mise sh
+                fi
         containers:
           app:
             image:
@@ -47,11 +53,8 @@ spec:
               OPENCLAW_LOG_LEVEL: debug
               GOPATH: /home/node/go
               HOME: /home/node
-              HOMEBREW_CELLAR: /home/node/.local/homebrew/Cellar
-              HOMEBREW_PREFIX: /home/node/.local/homebrew
-              HOMEBREW_REPOSITORY: /home/node/.local/homebrew
               OPENCLAW_GATEWAY_PORT: 18789
-              PATH: /home/node/.local/bin:/home/node/.local/go/bin:/home/node/.local/homebrew/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+              PATH: /home/node/.local/bin:/home/node/.local/share/mise/shims:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
               PIP_BREAK_SYSTEM_PACKAGES: "1"
               TERM: xterm-256color
               TZ: Europe/Paris
