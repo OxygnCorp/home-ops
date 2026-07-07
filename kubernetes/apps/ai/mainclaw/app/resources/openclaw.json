@@ -1197,6 +1197,7 @@
         "source": "env",
         "allowlist": [
           "OPENCLAW_GATEWAY_TOKEN",
+          "OP_SERVICE_ACCOUNT_TOKEN",
           "DISCORD_BOT_TOKEN",
           "LITELLM_API_KEY"
         ]
@@ -1341,7 +1342,7 @@
         "enabled": false
       },
       "1password": {
-        "enabled": false
+        "enabled": true
       },
       "gh-issues": {
         "enabled": false
