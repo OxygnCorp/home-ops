@@ -18,7 +18,7 @@ spec:
           app:
             image:
               repository: ghcr.io/chopratejas/headroom
-              tag: latest
+              tag: code
             # args:
             #   - --no-optimize #TODO : temporarily disable optimizations to prevent crashes - see https://github.com/chopratejas/headroom/issues/1005
             env:

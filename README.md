@@ -55,7 +55,7 @@ There is a template over at [onedr0p/flux-cluster-template](https://github.com/o
 
 ### ⚙️ Installation
 
-My cluster is [talos](https://talos.dev/) overtop VMs provisioned in a 2-nodes PromoxVE 8 cluster. This is a semi-hyper-converged cluster, workloads and block storage are sharing the same available resources on my nodes while I have a separate server for (NFS) file storage.
+My cluster is a 4-node [talos](https://talos.dev/) cluster overtop VMs provisioned in a 2-nodes PromoxVE 8 cluster: 3 control-plane nodes (`k8s-0/1/2`, semi-hyper-converged — workloads and Ceph block storage share the same resources) plus 1 dedicated GPU worker node (`k8s-3`, tainted `workload=ai:NoSchedule` and reserved for AI workloads). I also have a separate server for (NFS) file storage.
 
 ### 🔧 Core Components
 

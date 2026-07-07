@@ -145,10 +145,11 @@ _Flux automatically reconciles changes once the PR is merged._
 
 ## Cluster Topology
 
-The cluster is a 3-node **Talos Linux** cluster running on Proxmox VE 8, semi-hyper-converged:
+The cluster is a 4-node **Talos Linux** cluster running on Proxmox VE 8, semi-hyper-converged:
 
 - **3 control-plane nodes** (HA etcd): `k8s-0`, `k8s-1`, `k8s-2`
-- **Workloads + Ceph (block storage) co-located** on the same nodes
+- **Workloads + Ceph (block storage) co-located** on the control-plane nodes
+- **1 dedicated GPU worker node**: `k8s-3` — tainted `workload=ai:NoSchedule` and reserved for AI workloads (NVIDIA GPU via `nvidia.com/gpu`). Workloads targeting it must set a matching toleration (and usually a `nodeSelector` on `kubernetes.io/hostname: k8s-3`); see the `nvidia-device-plugin` and `toolhive` `EmbeddingServer` for the established pattern
 - **Separate NFS server** for file storage (not on Talos nodes)
 - **Proxmox VM provisioning** with the QEMU guest agent enabled (`siderolabs/qemu-guest-agent` system extension)
 - **PCI passthrough** enabled via kernel args: `intel_iommu=on iommu=pt`

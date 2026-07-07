@@ -16,3 +16,20 @@ spec:
       memory: 512Mi
     limits:
       memory: 1Gi
+  podTemplateSpec:
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: oxygen.dev/avx2
+                    operator: In
+                    values:
+                      - "true"
+      tolerations:
+        # k8s-3 is reserved for AI workloads via workload=ai:NoSchedule.
+        - key: workload
+          operator: Equal
+          value: ai
+          effect: NoSchedule
