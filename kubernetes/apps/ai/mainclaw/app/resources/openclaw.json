@@ -868,7 +868,7 @@
     "mode": "merge",
     "providers": {
       "litellm": {
-        "baseUrl": "http://litellm.ai:4000/v1",
+        "baseUrl": "http://headroom.ai:8787/v1",
         "apiKey": {
           "source": "env",
           "provider": "default",
