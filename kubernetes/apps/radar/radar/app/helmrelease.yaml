@@ -30,13 +30,13 @@ spec:
       maxSize: 800Mi
 
     ingress:
-      enabled: false
+      enabled: true
 
     rbac:
       podLogs: true
       podExec: true
       portForward: true
-      helm: false
+      helm: true
       secrets: true
       traffic: true
       metrics: true
