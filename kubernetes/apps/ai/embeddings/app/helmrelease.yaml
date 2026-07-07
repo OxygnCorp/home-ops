@@ -22,7 +22,7 @@ spec:
               tag: cpu-1.9.3
             args:
               - --model-id
-              - intfloat/multilingual-e5-base
+              - BAAI/bge-m3
             env:
               TZ: Europe/Paris
             probes:

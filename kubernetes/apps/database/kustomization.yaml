@@ -10,4 +10,3 @@ resources:
   - ./namespace.yaml
   - ./cloudnative-pg/ks.yaml
   - ./dragonfly/ks.yaml
-  - ./neo4j/ks.yaml
