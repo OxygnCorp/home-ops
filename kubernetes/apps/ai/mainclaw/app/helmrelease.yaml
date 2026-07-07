@@ -31,28 +31,6 @@ spec:
                 chown 1000:100 /home/node/.openclaw/openclaw.json
                 chmod 400 /home/node/.openclaw/openclaw.json
                 cp /kopiaignore/.kopiaignore /home/node/.kopiaignore
-
-                # Install Homebrew if not present on PVC
-                if [ ! -f /home/node/.local/homebrew/bin/brew ]; then
-                  echo "Installing Homebrew..."
-                  export HOMEBREW_PREFIX=/home/node/.local/homebrew
-                  export HOMEBREW_CELLAR=/home/node/.local/homebrew/Cellar
-                  export HOMEBREW_REPOSITORY=/home/node/.local/homebrew
-                  mkdir -p $HOMEBREW_PREFIX
-                  cd /tmp
-                  git clone --depth 1 https://github.com/Homebrew/brew $HOMEBREW_PREFIX
-                fi
-
-                # Install 1Password CLI if not present on PVC
-                if [ ! -f /home/node/.local/homebrew/bin/op ]; then
-                  echo "Installing 1Password CLI..."
-                  export HOMEBREW_PREFIX=/home/node/.local/homebrew
-                  export HOMEBREW_CELLAR=/home/node/.local/homebrew/Cellar
-                  export HOMEBREW_REPOSITORY=/home/node/.local/homebrew
-                  mkdir -p $HOMEBREW_PREFIX
-                  cd /tmp
-                  /home/node/.local/homebrew/bin/brew install 1password-cli
-                fi
         containers:
           app:
             image:
