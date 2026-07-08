@@ -28,11 +28,17 @@ spec:
     spec:
       containers:
         - name: mcp
+          image: ghcr.io/astral-sh/uv:python3.12-alpine
           command:
             - uvx
           args:
             # renovate: datasource=pypi depName=mcp-lightrag
             - mcp-lightrag==0.2.2
+          env:
+            - name: HOME
+              value: /tmp
+            - name: UV_CACHE_DIR
+              value: /tmp/.uv-cache
           volumeMounts:
             - name: tmp
               mountPath: /tmp
