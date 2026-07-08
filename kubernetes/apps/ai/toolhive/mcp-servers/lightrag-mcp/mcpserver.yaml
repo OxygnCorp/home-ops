@@ -1,0 +1,43 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/toolhive.stacklok.dev/mcpserver_v1alpha1.json
+apiVersion: toolhive.stacklok.dev/v1alpha1
+kind: MCPServer
+metadata:
+  name: lightrag-mcp
+spec:
+  image: ghcr.io/astral-sh/uv:python3.12-alpine
+  transport: stdio
+  proxyMode: streamable-http
+  proxyPort: 8080
+  env:
+    - name: LIGHTRAG_HOST
+      value: lightrag.ai.svc.cluster.local
+    - name: LIGHTRAG_PORT
+      value: "9621"
+  secrets:
+    - name: toolhive-lightrag
+      key: LIGHTRAG_API_KEY
+      targetEnvName: LIGHTRAG_API_KEY
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      memory: 256Mi
+  podTemplateSpec:
+    spec:
+      containers:
+        - name: mcp
+          command:
+            - uvx
+          args:
+            # renovate: datasource=pypi depName=mcp-lightrag
+            - mcp-lightrag==0.2.2
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
+  groupRef:
+    name: mcp-tools
