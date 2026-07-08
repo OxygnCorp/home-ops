@@ -3,7 +3,7 @@
 apiVersion: toolhive.stacklok.dev/v1alpha1
 kind: MCPServer
 metadata:
-  name: &name todoist-mcp
+  name: todoist-mcp
 spec:
   image: docker.io/node:24-alpine
   transport: streamable-http
