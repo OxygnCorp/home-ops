@@ -35,7 +35,8 @@ spec:
             - npx
           args:
             - -y
-            - "@jhomen368/overseerr-mcp"
+            # renovate: datasource=npm depName=@jhomen368/overseerr-mcp
+            - "@jhomen368/overseerr-mcp@2.2.0"
           volumeMounts:
             - name: tmp
               mountPath: /tmp

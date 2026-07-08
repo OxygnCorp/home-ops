@@ -67,5 +67,13 @@
       matchUpdateTypes: ["minor", "patch"],
       ignoreTests: true,
     },
+    {
+      description: "Auto-merge npm minor and patch",
+      matchDatasources: ["npm"],
+      automerge: true,
+      automergeType: "branch",
+      matchUpdateTypes: ["minor", "patch"],
+      ignoreTests: true,
+    },
   ],
 }

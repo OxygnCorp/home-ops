@@ -29,5 +29,16 @@
       ],
       datasourceTemplate: "docker",
     },
+    {
+      customType: "regex",
+      description: "Process npm packages in npx args",
+      managerFilePatterns: [
+        "/\\.yaml(?:\\.j2)?$/",
+      ],
+      matchStrings: [
+        "datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\n\\s*-\\s+\"?[\\S]+@(?<currentValue>[0-9][^\"\\s]*)\"?",
+      ],
+      datasourceTemplate: "{{#if datasource}}{{{datasource}}}{{else}}npm{{/if}}",
+    },
   ],
 }

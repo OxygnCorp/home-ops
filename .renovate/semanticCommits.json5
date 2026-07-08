@@ -43,5 +43,10 @@
       semanticCommitScope: "github-release",
       commitMessageTopic: "release {{depName}}",
     },
+    {
+      matchDatasources: ["npm"],
+      semanticCommitScope: "npm",
+      commitMessageTopic: "package {{depName}}",
+    },
   ],
 }
