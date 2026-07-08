@@ -16,5 +16,20 @@
       matchPackageNames: ["/spegel/"],
       changelogUrl: "https://github.com/spegel-org/spegel/blob/main/CHANGELOG.md",
     },
+    {
+      description: "Changelog URL for todoist-mcp",
+      matchPackageNames: ["@doist/todoist-mcp"],
+      changelogUrl: "https://github.com/doist/todoist-mcp",
+    },
+    {
+      description: "Changelog URL for mcp-arr-server",
+      matchPackageNames: ["mcp-arr-server"],
+      changelogUrl: "https://github.com/aplaceforallmystuff/mcp-arr",
+    },
+    {
+      description: "Changelog URL for overseerr-mcp",
+      matchPackageNames: ["@jhomen368/overseerr-mcp"],
+      changelogUrl: "https://github.com/jhomen368/overseerr-mcp",
+    },
   ],
 }

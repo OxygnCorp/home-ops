@@ -36,7 +36,8 @@ spec:
           args:
             - -y
             - -p
-            - "@doist/todoist-mcp@10.1.5"
+            # renovate: datasource=npm depName=@doist/todoist-mcp
+            - "@doist/todoist-mcp@10.4.1"
             - --
             - todoist-mcp-http
           volumeMounts:
