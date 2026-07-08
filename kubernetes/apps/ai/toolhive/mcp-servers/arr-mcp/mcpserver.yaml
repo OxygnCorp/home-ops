@@ -46,7 +46,7 @@ spec:
           args:
             - -y
             # renovate: datasource=npm depName=mcp-arr-server
-            - mcp-arr-server@1.5.4
+            - mcp-arr-server@1.6.5
           volumeMounts:
             - name: tmp
               mountPath: /tmp
