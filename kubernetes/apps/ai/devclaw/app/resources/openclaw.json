@@ -288,7 +288,6 @@
       "litellm",
       "llm-task",
       "lossless-claw",
-      "memory-core",
       "memory-wiki",
       "memini",
       "oc-path",
@@ -361,12 +360,6 @@
           "allowedModels": [
             "litellm/dsv4f"
           ]
-        }
-      },
-      "memory-core": {
-        "enabled": true,
-        "config": {
-          "dreaming": { "enabled": true }
         }
       },
       "memory-wiki": {
