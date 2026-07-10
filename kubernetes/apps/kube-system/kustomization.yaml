@@ -11,11 +11,10 @@ resources:
   - ./cilium/ks.yaml
   - ./coredns/ks.yaml
   - ./descheduler/ks.yaml
-  # - ./generic-device-plugin/ks.yaml
   - ./metrics-server/ks.yaml
   - ./multus/ks.yaml
   - ./node-feature-discovery/ks.yaml
-  # - ./nvidia-device-plugin/ks.yaml
+  - ./nvidia-device-plugin/ks.yaml
   - ./reloader/ks.yaml
   - ./smtp-relay/ks.yaml
   - ./snapshot-controller/ks.yaml
