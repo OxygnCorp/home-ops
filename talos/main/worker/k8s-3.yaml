@@ -11,7 +11,7 @@ machine:
     # (apply-config avec wipe=false peut laisser un état inconsistent non bootable).
     # Destructif : efface toutes les données du disque cible.
     wipe: true
-    image: factory.talos.dev/metal-installer/{{ ENV.SCHEMATIC }}:v1.13.5
+    image: factory.talos.dev/metal-installer/{{ ENV.SCHEMATIC }}:v1.13.6
   kernel:
     modules:
       - name: nvidia
