@@ -283,6 +283,7 @@
       "lossless-claw",
       "memory-core",
       "memory-wiki",
+      "memini",
       "oc-path",
       "searxng",
       "thread-ownership",
@@ -397,13 +398,30 @@
           }
         }
       },
+      "memini": {
+        "enabled": true,
+        "hooks": {
+          "allowConversationAccess": true
+        },
+        "config": {
+          "base_url": "http://memini.ai:8080",
+          "namespace": "devclaw",
+          "namespace_per_agent": true,
+          "skip_without_agent": true,
+          "skip_system_turns": true,
+          "fallback_on_error": true,
+          "timeout_ms": 15000,
+          "recall_limit": 3,
+          "expose_tools": true
+        }
+      },
       "thread-ownership": { "enabled": true },
       "tokenjuice": { "enabled": true },
       "web-readability": { "enabled": true }
     },
     "slots": {
       "contextEngine": "lossless-claw",
-      "memory": "memory-core"
+      "memory": "memini"
     }
   },
   "session": {
