@@ -46,6 +46,18 @@ spec:
               - /bin/sh
               - -c
               - |
+                # Install the memini memory plugin from ClawHub, version-guarded:
+                # only fetches when the pinned version differs from what's on the
+                # persistent volume, so normal restarts stay offline.
+                # renovate: datasource=github-tags depName=eleboucher/memini
+                MEMINI_PLUGIN_VERSION=0.6.2
+                if [ "$(cat "$HOME/.openclaw/extensions/memini/.clawver" 2>/dev/null)" != "$MEMINI_PLUGIN_VERSION" ]; then
+                  if node dist/index.js plugins install "clawhub:@eleboucher/memini@$MEMINI_PLUGIN_VERSION" --pin --force; then
+                    printf '%s' "$MEMINI_PLUGIN_VERSION" > "$HOME/.openclaw/extensions/memini/.clawver"
+                  else
+                    echo "WARN: memini plugin install failed; starting with whatever is present"
+                  fi
+                fi
                 # Start gateway
                 echo "Starting OpenClaw gateway..."
                 exec node dist/index.js gateway
