@@ -28,7 +28,7 @@ gum = "0.17.0"
 "vals" = "0.44.4"
 
 # Flux Stuff
-"aqua:fluxcd/flux2" = "2.9.1"
+"aqua:fluxcd/flux2" = "2.9.2"
 "github:home-operations/flate" = "0.4.10"
 
 # Kubectl + Plugins
