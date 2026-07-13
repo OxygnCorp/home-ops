@@ -58,6 +58,8 @@ spec:
                     echo "WARN: memini plugin install failed; starting with whatever is present"
                   fi
                 fi
+                # Doctor check and fix any issues with the OpenClaw installation, then start the gateway
+                node dist/index.js doctor --fix
                 # Start gateway
                 echo "Starting OpenClaw gateway..."
                 exec node dist/index.js gateway
