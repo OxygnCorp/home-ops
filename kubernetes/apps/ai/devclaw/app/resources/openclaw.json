@@ -11,6 +11,7 @@
       "contextInjection": "always",
       "contextPruning": { "mode": "off" },
       "heartbeat": {
+        "model": "litellm/MiniMax-M3",
         "directPolicy": "allow",
         "includeReasoning": false,
         "isolatedSession": true,
@@ -32,11 +33,10 @@
         }
       },
       "model": {
-        "primary": "litellm/MiniMax-M3",
+        "primary": "litellm/zai-glm-5.2",
         "fallbacks": [
-          "litellm/go-minimax-m3",
-          "litellm/dsv4f",
-          "litellm/go-kimi-k2.6"
+          "litellm/zai-glm-4.7",
+          "litellm/MiniMax-M3"
         ]
       },
       "imageModel": {
@@ -51,6 +51,8 @@
         "litellm/dsv4f": { "alias": "dsv4f", "params": { "cache_prompt": true } },
         "litellm/dsv4p": { "alias": "dsv4p", "params": { "cache_prompt": true } },
         "litellm/glm-5.1": { "alias": "glm-5.1", "params": { "cache_prompt": true } },
+        "litellm/zai-glm-5.2": { "alias": "glm-5.2", "params": { "cache_prompt": true } },
+        "litellm/zai-glm-4.7": { "alias": "glm-4.7", "params": { "cache_prompt": true } },
         "litellm/go-kimi-k2.6": { "alias": "go-kimi-2.6", "params": { "cache_prompt": true } },
         "litellm/go-minimax-m3": { "alias": "go-minimax-m3", "params": { "cache_prompt": true } },
         "litellm/go-minimax-m2.7": { "alias": "go-minimax-m2.7", "params": { "cache_prompt": true } },
@@ -272,7 +274,9 @@
           { "id": "go-kimi-k2.6", "name": "OpenCode Go Kimi K2.6", "reasoning": true, "input": ["text"], "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }, "contextWindow": 262144, "maxTokens": 16384 },
           { "id": "go-minimax-m3", "name": "OpenCode Go MiniMax M3", "reasoning": true, "input": ["text"], "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }, "contextWindow": 1000000, "maxTokens": 32768 },
           { "id": "go-minimax-m2.7", "name": "OpenCode Go MiniMax M2.7", "reasoning": true, "input": ["text"], "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }, "contextWindow": 204800, "maxTokens": 16384 },
-          { "id": "mimo-v2.5-pro", "name": "OpenCode Go MiMo V2.5 Pro", "reasoning": true, "input": ["text"], "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }, "contextWindow": 262144, "maxTokens": 16384 }
+          { "id": "mimo-v2.5-pro", "name": "OpenCode Go MiMo V2.5 Pro", "reasoning": true, "input": ["text"], "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }, "contextWindow": 262144, "maxTokens": 16384 },
+          { "id": "zai-glm-5.2", "name": "z.ai GLM 5.2", "reasoning": true, "input": ["text"], "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }, "contextWindow": 1000000, "maxTokens": 131072 },
+          { "id": "zai-glm-4.7", "name": "z.ai GLM 4.7", "reasoning": true, "input": ["text"], "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }, "contextWindow": 204800, "maxTokens": 131072 }
         ]
       }
     }
