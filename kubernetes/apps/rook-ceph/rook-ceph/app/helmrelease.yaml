@@ -11,19 +11,19 @@ spec:
   interval: 1h
   timeout: 15m
   values:
+    crds:
+      enabled: true
     csi:
       serviceMonitor:
-        enabled: true
-    deleteUnusedCrushRules: false
+        enabled: false # liveness metrics require Driver.spec.liveness (not yet in ceph-csi-drivers chart v1.0.1)
     enableDiscoveryDaemon: true
     image:
       repository: ghcr.io/rook/ceph
+    logLevel: INFO
     monitoring:
       enabled: true
     resources:
       requests:
-        memory: 512Mi
-        cpu: 200m
-      limits:
-        cpu: 1000m
-        memory: 2Gi
+        memory: 128Mi # unchangable
+        cpu: 100m # unchangable
+      limits: {}
