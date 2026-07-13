@@ -31,9 +31,6 @@ spec:
     cephClusterSpec:
       cephConfig:
         global:
-          debugMgr: "0/0"
-          debugMon: "0/0"
-          debugOSD: "0/0"
           bdev_enable_discard: "true" # quote
           bdev_async_discard_threads: "1" # quote
           osd_class_update_on_start: "false" # quote
