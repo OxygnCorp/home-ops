@@ -107,5 +107,14 @@
       },
       minimumGroupSize: 2,
     },
+    {
+      description: "Memini Group",
+      groupName: "memini",
+      matchPackageNames: ["/eleboucher/memini$/", "/charts/memini$/"],
+      group: {
+        commitMessageTopic: "{{{groupName}}} group",
+      },
+      minimumGroupSize: 1,
+    },
   ],
 }
