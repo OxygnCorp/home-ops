@@ -135,6 +135,43 @@ model_list:
       api_base: https://opencode.ai/zen/go/v1
       api_key: os.environ/OPENCODE_API_KEY
 
+  # z.ai GLM Coding Lite plan (direct, dedicated endpoint)
+  - model_name: zai-glm-5.2
+    model_info:
+      mode: chat
+      max_input_tokens: 1000000
+      max_output_tokens: 131072
+      supports_function_calling: true
+      supports_prompt_caching: true
+    litellm_params:
+      model: openai/glm-5.2
+      api_base: https://api.z.ai/api/coding/paas/v4
+      api_key: os.environ/ZAI_API_KEY
+
+  - model_name: zai-glm-4.7
+    model_info:
+      mode: chat
+      max_input_tokens: 204800
+      max_output_tokens: 131072
+      supports_function_calling: true
+      supports_prompt_caching: true
+    litellm_params:
+      model: openai/glm-4.7
+      api_base: https://api.z.ai/api/coding/paas/v4
+      api_key: os.environ/ZAI_API_KEY
+
+  - model_name: zai-glm-5-turbo
+    model_info:
+      mode: chat
+      max_input_tokens: 204800
+      max_output_tokens: 131072
+      supports_function_calling: true
+      supports_prompt_caching: true
+    litellm_params:
+      model: openai/glm-5-turbo
+      api_base: https://api.z.ai/api/coding/paas/v4
+      api_key: os.environ/ZAI_API_KEY
+
 general_settings:
   health_check_endpoint: /v1/health
 
@@ -148,6 +185,7 @@ router_settings:
     - MiniMax-M3: ["go-minimax-m3"]
     - MiniMax-M2.7: ["go-minimax-m2.7"]
     - dsv4f: ["go-minimax-m3"]
+    - zai-glm-5.2: ["zai-glm-4.7"]
 
 litellm_settings:
   callbacks: ["prometheus"]
@@ -169,5 +207,6 @@ litellm_settings:
 environment:
   - MINIMAX_API_KEY
   - OPENCODE_API_KEY
+  - ZAI_API_KEY
   - REDIS_HOST
   - REDIS_PORT
