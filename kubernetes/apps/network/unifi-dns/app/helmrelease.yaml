@@ -11,6 +11,10 @@ spec:
   interval: 1h
   values:
     fullnameOverride: *app
+    logLevel: info
+    extraArgs:
+      - --webhook-provider-read-timeout=30s
+      - --webhook-provider-write-timeout=60s
     provider:
       name: webhook
       webhook:
