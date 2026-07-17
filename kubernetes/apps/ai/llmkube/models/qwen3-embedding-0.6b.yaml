@@ -34,10 +34,10 @@ spec:
       operator: Equal
       value: ai
       effect: NoSchedule
-  contextSize: 4096
+  contextSize: 2048
   parallelSlots: 1
-  batchSize: 4096
-  uBatchSize: 4096
+  batchSize: 1024
+  uBatchSize: 1024
   resources:
     gpu: 1
     cpu: 100m
