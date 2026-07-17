@@ -26,8 +26,9 @@ spec:
           flags:
             migStrategy: none
           sharing:
-            mps:
+            timeSlicing:
               renameByDefault: false
+              failRequestsGreaterThanOne: false
               resources:
                 - name: nvidia.com/gpu
                   replicas: 4
