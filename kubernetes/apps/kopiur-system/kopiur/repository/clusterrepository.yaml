@@ -1,0 +1,38 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kopiur.home-operations.com/clusterrepository_v1alpha1.json
+apiVersion: kopiur.home-operations.com/v1alpha1
+kind: ClusterRepository
+metadata:
+  name: nas
+spec:
+  allowedNamespaces:
+    all: true
+  backend:
+    filesystem:
+      path: /mnt/repository
+      volume:
+        nfs:
+          server: funkstation.internal
+          path: /volume1/Kopiur
+  encryption:
+    passwordSecretRef:
+      name: kopiur-repository-secret
+      namespace: kopiur-system
+      key: KOPIA_PASSWORD
+  create:
+    enabled: true
+  identityDefaults:
+    hostnameExpr: "namespace"
+    usernameExpr: "namespace + '-' + policyName"
+  scheduleDefaults:
+    timezone: Europe/Paris
+  moverDefaults:
+    securityContext:
+      runAsUser: 1024
+      runAsGroup: 100
+    podSecurityContext:
+      runAsNonRoot: true
+      fsGroup: 100
+  server: {}
+  deletionProtection:
+    threshold: 25
