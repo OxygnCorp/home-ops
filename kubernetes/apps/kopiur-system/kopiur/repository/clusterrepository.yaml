@@ -19,20 +19,36 @@ spec:
       name: kopiur-repository-secret
       namespace: kopiur-system
       key: KOPIA_PASSWORD
+  catalog:
+    fallbackNamespace: kopiur-system
+    periodicRefresh: true
+    refreshInterval: 1h
   create:
     enabled: true
+  credentialProjection:
+    allowed: true
   identityDefaults:
     hostnameExpr: "namespace"
     usernameExpr: "namespace + '-' + policyName"
   scheduleDefaults:
     timezone: Europe/Paris
+  maintenance:
+    enabled: true
+    namespace: kopiur-system
+    schedule:
+      full:
+        cron: "0 3 * * *"
+        jitter: 1h
+      quick:
+        cron: "0 */6 * * *"
+        jitter: 30m
+      timezone: Europe/Paris
+    takeoverPolicy: Force
+  mode: ReadWrite
   moverDefaults:
     securityContext:
       runAsUser: 1024
       runAsGroup: 100
     podSecurityContext:
-      runAsNonRoot: true
       fsGroup: 100
-  server: {}
-  deletionProtection:
-    threshold: 25
+      fsGroupChangePolicy: OnRootMismatch
