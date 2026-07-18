@@ -38,15 +38,22 @@ spec:
               MAX_ASYNC_LLM: "2"
               LLM_TIMEOUT: "480"
               CHUNK_SIZE: "800"
-              # Embeddings via local TEI (OpenAI-compatible)
+              # Embeddings via llmkube qwen3-embedding-0.6b (OpenAI-compatible, GPU shared with memini)
               EMBEDDING_BINDING: openai
-              EMBEDDING_BINDING_HOST: http://embeddings.ai.svc.cluster.local:80
-              EMBEDDING_MODEL: BAAI/bge-m3
+              EMBEDDING_BINDING_HOST: http://qwen3-embedding-0-6b.ai.svc.cluster.local:8080
+              EMBEDDING_MODEL: qwen3-embedding-0.6b
               EMBEDDING_DIM: "1024"
-              EMBEDDING_TOKEN_LIMIT: "8192"
+              # qwen3 expects asymmetric prefixes (instruct on query, none on doc);
+              # EMBEDDING_DOCUMENT_PREFIX=NO_PREFIX is LightRag's sentinel for "no doc prefix".
+              EMBEDDING_ASYMMETRIC: "true"
+              EMBEDDING_QUERY_PREFIX: "Instruct: Given a user message, retrieve relevant past memories\nQuery: "
+              EMBEDDING_DOCUMENT_PREFIX: "NO_PREFIX"
+              # qwen3 ctx=2048; keep headroom for prefix + special tokens
+              EMBEDDING_TOKEN_LIMIT: "1800"
               EMBEDDING_BINDING_API_KEY: not-required
-              EMBEDDING_BATCH_NUM: "16"
-              EMBEDDING_FUNC_MAX_ASYNC: "2"
+              # Shared GTX 1050 Ti (time-slicing, parallelSlots=1): keep batches small
+              EMBEDDING_BATCH_NUM: "4"
+              EMBEDDING_FUNC_MAX_ASYNC: "1"
               EMBEDDING_TIMEOUT: "120"
 
             envFrom:
