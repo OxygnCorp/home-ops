@@ -10,6 +10,11 @@ spec:
     name: kopiur
   interval: 1h
   values:
+    features:
+      credentialProjection:
+        enabled: true
+      kopiaUI:
+        enabled: true
     monitoring:
       dashboards:
         enabled: true
