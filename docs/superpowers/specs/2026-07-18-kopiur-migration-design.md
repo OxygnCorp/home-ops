@@ -331,7 +331,7 @@ spec:
     mediaType: application/vnd.cncf.helm.chart.content.v1.tar+gzip
     operation: copy
   ref:
-    tag: 0.7.5   # à valider au moment de l'implémentation : dernière version dispo sur oci://ghcr.io/home-operations/charts/kopiur
+    tag: 0.7.5   # dernière version dispo au 2026-07-18 sur oci://ghcr.io/home-operations/charts/kopiur
   url: oci://ghcr.io/home-operations/charts/kopiur
 ```
 
@@ -353,7 +353,7 @@ spec:
         grafanaOperator:
           enabled: true
           matchLabels:
-            dashboards: grafana   # à valider : labels effectifs du GrafanaOperator local
+            grafana.internal/instance: grafana   # convention dominante du repo (cf apps/observability/grafana/instance/grafanadashboard.yaml)
       prometheusRule:
         enabled: true
       serviceMonitor:
@@ -551,9 +551,9 @@ Validation : tests Phase 2 (1-10).
 | KOPIA_PASSWORD perdu | Faible | Critique | 1Password item dédié `kopiur`, backup du Secret Kubernetes |
 | Webhook kopiur (`failurePolicy: Fail`) bloque les CR kopiur en cas d'indispo | Faible | Bloquant | PDB activé (1 replica + PDB) — acceptable en phase pilote |
 | Mauvaise config CEL `identityDefaults` | Faible | Bloquant | Webhook valide à l'admission ; testé d'abord sur convertx |
-| Incompatibilité chart version 0.7.5 avec API server 1.32+ | Faible | Bloquant | Vérifier compat Kubernetes >= 1.32 (kopiur requiert 1.24+, WatchList GA en 1.34) |
+| Incompatibilité chart version 0.7.5 avec API server 1.32+ | Faible | Bloquant | Vérifié : chart version 0.7.5 est la dernière dispo sur `oci://ghcr.io/home-operations/charts/kopiur`, kopiur requiert Kubernetes >= 1.24 |
 | Conflit `dataSourceRef` PVC convertx | Faible | Cosmétique | `dataSourceRef` est immutable, Flux reporte un diff mais ne recrée pas la PVC |
-| Grafana dashboard non détectée par grafana-operator | Moyenne | Mineur | Vérifier les `matchLabels` du Grafana local avant merge |
+| Grafana dashboard non détectée par grafana-operator | Faible | Mineur | MatchLabel `grafana.internal/instance: grafana` vérifié contre la convention repo (apps/observability/grafana/instance/grafanadashboard.yaml) |
 | Snapshot schedule `H * * * *` syntaxe non supportée | Faible | Bloquant | Vérifier doc kopiur SnapshotSchedule au moment de l'implémentation |
 
 ## Décommissionnement volsync (hors scope initial)
