@@ -34,7 +34,7 @@ spec:
       value: '["mise"]'
     - name: RENOVATE_PLATFORM_COMMIT_ENABLED
       value: "true"
-  image: ghcr.io/renovatebot/renovate:43.268.4
+  image: ghcr.io/renovatebot/renovate:43.269.1
   parallelism: 5
   resources:
     requests:
