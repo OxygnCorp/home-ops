@@ -7,6 +7,8 @@ metadata:
 spec:
   identity:
     username: ${APP} # pin volsync fork identity (fork records sanitized metadata.name; kopiur default would be <namespace>-<app>)
+  credentialProjection:
+    enabled: true # project the ClusterRepository's credentials Secret into the workload namespace for the mover Job's envFrom
   compression:
     compressor: zstd
   mover:
