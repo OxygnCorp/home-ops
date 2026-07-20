@@ -5,6 +5,8 @@ kind: SnapshotPolicy
 metadata:
   name: ${APP}
 spec:
+  identity:
+    username: ${APP} # pin volsync fork identity (fork records sanitized metadata.name; kopiur default would be <namespace>-<app>)
   compression:
     compressor: zstd
   mover:
@@ -23,4 +25,5 @@ spec:
   sources:
     - pvc:
         name: ${APP}
+      sourcePathOverride: /data # pin volsync fork mount path (kopiur default is /pvc/<name>)
   volumeSnapshotClassName: ${KOPIUR_SNAPSHOTCLASS:=csi-ceph-blockpool}
