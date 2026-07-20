@@ -1,9 +1,15 @@
 # Design : Adoption du repo kopia volsync par kopiur
 
 **Date** : 2026-07-20
-**Statut** : Validé (design approuvé), en cours d'implémentation
+**Statut** : Validé et éprouvé (migration pilote `convertx` réussie end-to-end)
 **Auteur** : Puchu (agent IA)
-**Scope** : Repointer le `ClusterRepository` kopiur existant vers le repo kopia du fork volsync (`/volume1/Volsync`) en mode adoption (`create.enabled: false`), et pinner l'identité dans le component `kopiur/backup` pour que les snapshots fork existants soient découverts et adoptés automatiquement. La bascule effective des ~22 apps volsync → kopiur se fera progressivement, app-par-app, dans des PRs ultérieures.
+**Scope** : Repointer le `ClusterRepository` kopiur existant vers le repo kopia du fork volsync (`/volume1/Volsync`) en mode adoption (`create.enabled: false`), et pinner l'identité dans le component `kopiur/backup` pour que les snapshots fork existants soient découverts et que l'historique kopia soit continu (dé-duplication). La bascule effective des ~22 apps volsync → kopiur se fera progressivement, app-par-app, dans des PRs ultérieures.
+
+## Note importante sur la version kopiur 0.7.5
+
+Les docs officielles (`docs/scenarios/adopt-existing-repo.md`, `docs/repositories.md`) décrivent une feature d'**auto-adoption** des snapshots discovered (`origin: discovered` → `origin: adopted` via `catalog.adoption: Adopt`). Cette feature **n'existe pas encore en kopiur 0.7.5** (notre version) : le champ `catalog.adoption` est absent du schéma CRD, ainsi que `SnapshotPolicy.spec.adoption`.
+
+Le critère de succès d'une migration n'est donc pas l'adoption CR-side, mais **l'identity continuity kopia-side** : nouveaux snapshots écrits sous l'identité fork `<app>@<namespace>:/data`, déduplication automatique contre les snapshots fork existants. Les snapshots fork restent visibles comme `origin: discovered` et sont restorables via `Restore.source.identity`. Lors d'une future montée de version kopiur (≥ version qui ajoute `catalog.adoption`), les snapshots discovered seront auto-adoptés sans action de notre part.
 
 ## Contexte
 
@@ -82,12 +88,47 @@ spec:
 
 ## Bascule progressive (procédure documentée, pas d'action dans ce PR)
 
-Pour chaque app voulue, après merge de ce PR infra :
+Pour chaque app voulue, après merge de ce PR infra, **procédure éprouvée sur convertx** :
 
-1. `ks.yaml` : remplacer `- ../../../../components/volsync` → `- ../../../../components/kopiur/backup`, ajuster `VOLSYNC_CAPACITY` → `KOPIUR_CAPACITY` (même unité), et `dependsOn: volsync/volsync-system` → `kopiur/kopiur-system`.
-2. `kubectl -n <ns> delete replicationsource <app>` (suspend le fork ; garder le Secret volsync — kopiur le référence in place pour le password via l'ExternalSecret clé `kopiur`, qui pointe le même 1Password vault item).
-3. `flux reconcile kustomization <app> -n flux-system` → kopiur crée la `SnapshotPolicy` (identité pinnée `${APP}@<namespace>:/data`) → découvre snapshots fork (`origin: discovered`) → adopte automatiquement (`origin: adopted`).
-4. Dernier PR post-bascule complète : réactiver `maintenance.enabled: true` sur le ClusterRepository `nas` + supprimer `KopiaMaintenance daily` fork + décommissionner l'install volsync.
+1. **`ks.yaml`** : remplacer `- ../../../../components/volsync` → `- ../../../../components/kopiur/backup`, ajuster `VOLSYNC_CAPACITY` → `KOPIUR_CAPACITY` (même unité), et `dependsOn: volsync/volsync-system` → `kopiur/kopiur-system`.
+2. **Scale down** le workload pour éviter tout accès concurrent à la PVC :
+   ```bash
+   kubectl -n <ns> scale deploy <app> --replicas=0
+   kubectl -n <ns> wait pod -l app.kubernetes.io/name=<app> --for=delete --timeout=60s
+   ```
+3. **Supprimer les CRs volsync** (suspend le fork pour cette app) :
+   ```bash
+   kubectl -n <ns> delete replicationsource <app>
+   kubectl -n <ns> delete replicationdestination <app>-dst
+   kubectl -n <ns> delete externalsecret <app>-volsync
+   ```
+4. **Supprimer la PVC data + cache** (la donnée est safe dans le repo kopia `/volume1/Volsync`) :
+   ```bash
+   kubectl -n <ns> delete pvc <app>                          # data PVC
+   # la cache PVC volsync-src-<app>-cache est normalement auto-supprimée par volsync
+   ```
+5. **Force Flux reconcile** :
+   ```bash
+   flux reconcile kustomization <app> -n <ns> --with-source
+   ```
+   Flux crée : `SnapshotPolicy` (identity pinnée `${APP}@<ns>:/data`), `SnapshotSchedule`, `Restore` (avec `credentialProjection.enabled: true` → credentials projetés dans le ns), `PVC` (avec `dataSourceRef: Restore/<app>`).
+6. **Attendre Restore Completed + PVC Bound** (kopiur résout automatiquement l'identity et restore le dernier snapshot kopia correspondant — pas besoin d'adoption CR-side en 0.7.5) :
+   ```bash
+   kubectl -n <ns> wait restore <app> --for=jsonpath='{.status.phase}'=Completed --timeout=10m
+   kubectl -n <ns> wait pvc <app> --for=jsonpath='{.status.phase}'=Bound --timeout=2m
+   ```
+7. **Scale up** le workload :
+   ```bash
+   kubectl -n <ns> scale deploy <app> --replicas=1
+   kubectl -n <ns> wait pod -l app.kubernetes.io/name=<app> --for=condition=ready --timeout=120s
+   ```
+8. **Valider** que le prochain snapshot schedule déduplique (history continuity) :
+   ```bash
+   # prochain cron H * * * * (dans <1h), ou trigger manuel via Snapshot create
+   kubectl -n <ns> get snapshots -l kopiur.home-operations.com/config=<app> -o custom-columns=NAME:.metadata.name,PHASE:.status.phase,NEW_FILES:.status.stats.filesNew,NEW_BYTES:.status.stats.bytesNew
+   # Succès : filesNew=N (fichiers modifiés depuis dernier fork), bytesNew vide ou petit (dé-dup)
+   ```
+9. **Dernier PR post-bascule complète (toutes les apps)** : réactiver `maintenance.enabled: true` sur le ClusterRepository `nas` + supprimer `KopiaMaintenance daily` fork + décommissionner l'install volsync.
 
 Filet de sécurité : `kubectl kopiur migrate volsync -f ./kubernetes/apps/<ns>/<app> --repository nas --out-dir /tmp/migrated` peut être utilisé en mode offline GitOps pour vérifier que l'identité pinnée matche exactement ce que le CLI calcule.
 
@@ -95,18 +136,18 @@ Filet de sécurité : `kubectl kopiur migrate volsync -f ./kubernetes/apps/<ns>/
 
 ```bash
 # Le ClusterRepository adopte le repo existant
-kubectl get repository nas -n kopiur-system                                   # Ready
+kubectl get clusterrepository nas -o jsonpath='phase={.status.phase} discovered={.status.catalog.discoveredBackupCount}{"\n"}'
+# Attendu : phase=Ready, discovered=808+ (tous les snapshots fork materialisés)
 
-# Les snapshots fork apparaissent comme discovered
-kubectl get snapshots -A -l kopiur.home-operations.com/origin=discovered      # rows pour les apps fork
+# Snapshots fork visibles comme discovered (restorables via Restore.source.identity)
+kubectl get snapshots -A -l kopiur.home-operations.com/origin=discovered
 
-# convertx — premier cas test automatique (son ks.yaml référence déjà components/kopiur/backup)
-kubectl -n self-hosted get snapshotpolicy convertx -o jsonpath='{.spec.identity}{"\n"}'
-# Attendu : {"username":"convertx"} (hostname résolu = self-hosted via hostnameExpr)
-kubectl -n self-hosted get snapshots -l kopiur.home-operations.com/origin=discovered
-# Attendu : rows pour convertx (snapshots fork découverts)
-flux reconcile kustomization convertx -n self-hosted
-# Dernier snapshot nouveau liste sous la même identité que les discovered (continuité d'historique)
+# convertx — pilote éprouvé (7+ snapshots schedule réussis sous identity fork)
+kubectl -n self-hosted get snapshotpolicy convertx -o jsonpath='{.status.resolved.identity}{"\n"}'
+# Attendu : {"hostname":"self-hosted","sourcePath":"/data","username":"convertx"}
+
+kubectl -n self-hosted get snapshots -l kopiur.home-operations.com/config=convertx -o custom-columns=NAME:.metadata.name,PHASE:.status.phase,FILES_NEW:.status.stats.filesNew
+# Attendu : filesNew faible (3-5) sur le 1er schedule = dédup contre historique fork prouvée
 ```
 
 ## Risques
@@ -117,3 +158,21 @@ flux reconcile kustomization convertx -n self-hosted
 | Deux processes maintenance en parallèle pendant bascule | Faible | `maintenance.enabled: false` côté kopiur, fork garde seul le lease |
 | Snapshots fork non découverts | Faible | `catalog.periodicRefresh: true` sur le ClusterRepository ; `force-sync` annotation disponible |
 | `usernameExpr` du ClusterRepository match pas fork | N/A | Neutralisé par le pin `identity.username: ${APP}` au niveau du component |
+| Credentials Secret absent du ns du workload | Moyenne | `credentialProjection.enabled: true` sur policy + restore (gate à 3 parties : owner `allowed`, operator RBAC, consumer `enabled`) — les 3 sont en place après PR 2 |
+| Race restore avant 1er snapshot | Faible | kopiur 0.7.5 résout automatiquement l'identity et restore le dernier snapshot kopia correspondant (observé sur convertx) — `onMissingSnapshot: Continue` ne reste pas vide en pratique |
+| Adoption CR-side (origin discovered → adopted) | N/A en 0.7.5 | Feature non implémentée dans cette version. Les discovered rows restent mais sont restoreables via `Restore.source.identity`. L'identity continuity kopia-side est le critère de succès réel. |
+
+## Historique de réalisation
+
+| Commit | Date | Sujet |
+|---|---|---|
+| `13fd95803` | 2026-07-20 | `feat(kopiur): adopt existing volsync kopia repo` — repoint ClusterRepository + pin identity component |
+| `4b45d8904` | 2026-07-20 | `feat(kopiur): opt consumer into credential projection` — gate consumer sur SnapshotPolicy + Restore |
+
+## Pilote convertx — résultat éprouvé (2026-07-20, 12:24 UTC → 18:50 UTC)
+
+- ✅ Migration end-to-end réussie (scale down → delete volsync CRs + PVC → Flux apply → Restore depuis kopia → scale up)
+- ✅ Convertx Running 1/1, données préservées (jobId continue à 3044438)
+- ✅ 7 snapshots schedule réussis sous identity `convertx@self-hosted:/data` (12:50, 13:50, 14:50, 15:50, 16:50, 17:50, 18:50 UTC)
+- ✅ Premier snapshot post-migration : `filesNew=3, bytesNew=<empty>` — kopia a dédupliqué contre l'historique fork (aucun byte ré-uploadé)
+- ⚠️ 37 discovered rows fork restent en `origin: discovered` (normal en 0.7.5, auto-adoption pas encore implémentée)
