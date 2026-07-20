@@ -12,6 +12,12 @@ spec:
   compression:
     compressor: zstd
   mover:
+    securityContext:
+      runAsUser: ${KOPIUR_PUID:=1024}
+      runAsGroup: ${KOPIUR_PGID:=100}
+    podSecurityContext:
+      fsGroup: ${KOPIUR_PGID:=100}
+      fsGroupChangePolicy: OnRootMismatch
     cache:
       capacity: ${KOPIUR_CAPACITY:=5Gi}
       mode: Persistent
