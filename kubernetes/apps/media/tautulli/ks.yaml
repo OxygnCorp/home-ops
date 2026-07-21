@@ -10,19 +10,19 @@ spec:
       app.kubernetes.io/name: tautulli
   components:
     - ../../../../components/zeroscaler
-    - ../../../../components/volsync
+    - ../../../../components/kopiur/backup
   dependsOn:
     - name: rook-ceph-cluster
       namespace: rook-ceph
-    - name: volsync
-      namespace: volsync-system
+    - name: kopiur
+      namespace: kopiur-system
 
   interval: 1h
   path: ./kubernetes/apps/media/tautulli/app
   postBuild:
     substitute:
       APP: tautulli
-      VOLSYNC_CAPACITY: 1Gi
+      KOPIUR_CAPACITY: 1Gi
   prune: true
   sourceRef:
     kind: GitRepository
