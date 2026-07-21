@@ -9,7 +9,7 @@ spec:
     - name: envoy-internal
       namespace: network
   hostnames:
-    - kopia-ui.oxygn.dev
+    - kopia.oxygn.dev
   rules:
     - matches:
         - path:

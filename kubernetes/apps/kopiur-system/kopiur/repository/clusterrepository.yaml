@@ -47,7 +47,7 @@ spec:
   scheduleDefaults:
     timezone: Europe/Paris
   maintenance:
-    enabled: false # fork KopiaMaintenance keeps the repo healthy during the progressive cutover; re-enable once the fork is decommissioned
+    enabled: true
     namespace: kopiur-system
     schedule:
       full:
@@ -57,7 +57,6 @@ spec:
         cron: "0 */6 * * *"
         jitter: 30m
       timezone: Europe/Paris
-    takeoverPolicy: Force
   mode: ReadWrite
   moverDefaults:
     securityContext:
