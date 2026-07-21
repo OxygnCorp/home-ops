@@ -10,7 +10,7 @@ spec:
     kind: OCIRepository
     name: trivy-operator
   values:
-    excludeNamespaces: "kube-system,flux-system,cert-manager,volsync-system"
+    excludeNamespaces: "kube-system,flux-system,cert-manager"
 
     # Operator Configuration
     # The operator is a lightweight controller that watches for changes
@@ -114,8 +114,7 @@ spec:
 
 
     trivyOperator:
-      excludeImages: "quay.io/backube/*"
-      skipResourceByLabels: "app.kubernetes.io/created-by=volsync"
+      skipResourceByLabels: "app.kubernetes.io/managed-by=kopiur"
 
       # Fix for race condition in multi-container scan jobs:
       # When a pod has multiple containers (e.g. app + sidecar), they all share
