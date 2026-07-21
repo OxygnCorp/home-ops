@@ -9,7 +9,7 @@ spec:
     labels:
       app.kubernetes.io/name: lightrag
   components:
-    - ../../../../components/volsync
+    - ../../../../components/kopiur/backup
   dependsOn:
     - name: onepassword
       namespace: external-secrets
@@ -19,16 +19,16 @@ spec:
       namespace: ai
     - name: embeddings
       namespace: ai
-    - name: volsync
-      namespace: volsync-system
+    - name: kopiur
+      namespace: kopiur-system
   interval: 1h
   path: ./kubernetes/apps/ai/lightrag/app
   postBuild:
     substitute:
       APP: lightrag
-      VOLSYNC_CAPACITY: "20Gi"
-      VOLSYNC_PUID: "1000"
-      VOLSYNC_PGID: "1000"
+      KOPIUR_CAPACITY: "20Gi"
+      KOPIUR_PUID: "1000"
+      KOPIUR_PGID: "1000"
   prune: true
   sourceRef:
     kind: GitRepository
