@@ -41,7 +41,7 @@ gum = "0.17.0"
 "aqua:helmfile/helmfile" = "1.7.1"
 
 # Talos Stuff
-"talosctl" = "1.13.6"
+"talosctl" = "1.13.7"
 "aqua:budimanjojo/talhelper" = "3.1.13"
 
 # Misc Tools
