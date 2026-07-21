@@ -25,6 +25,20 @@ spec:
     refreshInterval: 1h
   create:
     enabled: false # adopt the existing volsync kopia repository, never re-initialize
+  server:
+    namespace: kopiur-system
+    auth:
+      generate:
+        username: admin
+    readOnly: true
+    service:
+      type: ClusterIP
+      port: 51515
+    podSecurityContext:
+      runAsUser: 1024
+      runAsGroup: 100
+      fsGroup: 100
+      fsGroupChangePolicy: OnRootMismatch
   credentialProjection:
     allowed: true
   identityDefaults:
