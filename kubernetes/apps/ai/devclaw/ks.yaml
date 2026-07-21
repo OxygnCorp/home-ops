@@ -21,6 +21,7 @@ spec:
     substitute:
       APP: devclaw
       KOPIUR_CAPACITY: 10Gi
+      KOPIUR_PUID: "1000"
   prune: true
   sourceRef:
     kind: GitRepository
