@@ -24,7 +24,7 @@ metadata:
 spec:
   modelRef: qwen3-reranker-0.6b
   runtime: llamacpp
-  image: ghcr.io/ggml-org/llama.cpp:server-cuda@sha256:3578c65dc3a58db544f68aa7e7ecce35ebfab981472dd4c8d820972464aa60d2
+  image: ghcr.io/ggml-org/llama.cpp:server-cuda@sha256:4df27e919b6eac39e2c6caffdcc735c2d855921f0fdeb9cba1aed9e47a50a21d
   runtimeClassName: nvidia
   replicas: 1
   nodeSelector:
