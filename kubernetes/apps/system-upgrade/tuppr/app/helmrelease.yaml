@@ -14,3 +14,16 @@ spec:
     monitoring:
       serviceMonitor:
         enabled: true
+      prometheusRule:
+        enabled: true
+      dashboards:
+        enabled: true
+        grafanaOperator:
+          enabled: true
+          matchLabels:
+            dashboards: grafana
+    notification:
+      enabled: true
+      secretName: tuppr-notifications
+      titleTemplate: "🚀 Talos upgrade — {{ .Node }}"
+      messageTemplate: "{{ .Node }} → Talos {{ .TargetVersion }} (plan {{ .Plan }})"
