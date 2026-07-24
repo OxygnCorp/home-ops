@@ -88,12 +88,7 @@ spec:
                       values:
                         - app
                 topologyKey: kubernetes.io/hostname
-        securityContext:
-          runAsUser: 82
-          runAsGroup: 82
         successfulJobsHistoryLimit: 1
-        failedJobsHistoryLimit: 1
-
     httpRoute:
       enabled: true
       hostnames:
