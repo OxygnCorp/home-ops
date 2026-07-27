@@ -14,8 +14,8 @@ spec:
       name: mosquitto
       namespace: automation
   dependsOn:
-    - name: rook-ceph-cluster
-      namespace: rook-ceph
+    - name: miroir-config
+      namespace: miroir-system
   interval: 1h
   path: ./kubernetes/apps/automation/mosquitto/app
   prune: true
