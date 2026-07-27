@@ -34,4 +34,4 @@ spec:
     - pvc:
         name: ${APP}
       sourcePathOverride: /data # pin volsync fork mount path (kopiur default is /pvc/<name>)
-  volumeSnapshotClassName: ${KOPIUR_SNAPSHOTCLASS:=csi-ceph-blockpool}
+  volumeSnapshotClassName: ${KOPIUR_SNAPSHOTCLASS:=miroir}
