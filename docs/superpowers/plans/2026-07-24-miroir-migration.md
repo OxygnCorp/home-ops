@@ -6,7 +6,7 @@
 
 **Architecture:** Miroir controller + agent DaemonSet deployed in a privileged `miroir-system` namespace. LVM thin backend on partition `r-miroir-slow` (created via Talos `RawVolumeConfig`) on the 3 control-plane nodes. DRBD9 replicas:2 with `quorum: freeze` over InternalIP. The 23 kopiur-backed apps restore from kopia repository; the ~6 non-kopiur apps start fresh. k8s-3 remains client-only.
 
-**Tech Stack:** Miroir chart 0.11.11 (`oci://ghcr.io/home-operations/charts/miroir`), Talos 1.13.5 with `siderolabs/drbd` extension, Flux GitOps, kustomize components, kopiur restore.
+**Tech Stack:** Miroir chart 0.11.11 (`oci://ghcr.io/home-operations/charts/miroir`), Talos 1.13.7 with `siderolabs/drbd` extension, Flux GitOps, kustomize components, kopiur restore.
 
 ## Global Constraints
 
@@ -27,7 +27,7 @@ These apply to every task implicitly; copy values verbatim, do not invent:
 - **kernel modules to add**: `dm_thin_pool`, `drbd` (with `usermode_helper=disabled`), `drbd_transport_tcp`
 - **kubelet shutdownGracePeriod**: `90s`
 - **kubelet shutdownGracePeriodCriticalPods**: `60s`
-- **Talos version**: `v1.13.5` (already deployed; meets miroir >= 1.13.0 requirement)
+- **Talos version**: `v1.13.7` (already deployed; meets miroir >= 1.13.0 requirement)
 - **Grafana matchLabel**: `dashboards: grafana` (verified against existing dashboards)
 - **kopiur StorageClass default**: `miroir-slow` (replaces `ceph-block`)
 - **kopiur VolumeSnapshotClass default**: `miroir` (replaces `csi-ceph-blockpool`)
@@ -619,28 +619,42 @@ git push
 
 ### Task B3: Upgrade Talos nodes (sequential reboots)
 
-This task applies the new Talos config to each control-plane node sequentially. Each node reboot causes brief pod rescheduling but no data loss (Ceph still has 3 OSDs).
+This task upgrades each control-plane node to the new schematic (adds `siderolabs/drbd` extension) and applies the new machineconfig (DRBD kernel modules, graceful shutdown, RawVolumeConfig). Each node is processed sequentially. Ceph still has 3 OSDs, so no data loss.
+
+> **CRITICAL**: The upgrade must happen BEFORE `apply-node`. The `siderolabs/drbd` extension is part of the Talos image (schematic), not the machineconfig. Without upgrading the image first, the DRBD kernel modules won't exist and cannot be loaded.
 
 - [ ] **Step 1: Verify disk selector on k8s-0**
 
 Before applying, verify the `RawVolumeConfig` disk selector matches the right disk:
 
 ```bash
-talosctl -n k8s-0 disks
+talosctl -n k8s-0 get disks
 ```
 
-Confirm the Ceph data disk matches the selector and the OS disk does NOT match (it has `system_disk` flag).
+Confirm the Ceph data disk (`sdb`, virtio transport) matches the selector and the OS disk (`sda`, `system_disk` flag) does NOT match.
 
 > **WARNING**: If the `RawVolumeConfig` would select the OS disk, DO NOT proceed. Fix the selector first.
 
-- [ ] **Step 2: Apply config and reboot k8s-0**
+- [ ] **Step 2: Upgrade Talos image on k8s-0 (adds siderolabs/drbd extension)**
+
+```bash
+just talos upgrade-node k8s-0
+```
+
+This pulls the new schematic image (with `siderolabs/drbd`) and reboots the node.
+
+Wait for k8s-0 to be `Ready`:
+```bash
+kubectl wait node k8s-0 --for condition=Ready --timeout=10m
+```
+
+- [ ] **Step 3: Apply new machineconfig on k8s-0 (DRBD modules, graceful shutdown, RawVolumeConfig)**
 
 ```bash
 just talos apply-node k8s-0
-just talos reboot-node k8s-0
 ```
 
-Wait for k8s-0 to be `Ready`:
+The apply-config in auto mode may trigger a reboot for kernel module changes. Wait for Ready again:
 ```bash
 kubectl wait node k8s-0 --for condition=Ready --timeout=10m
 ```
@@ -650,7 +664,7 @@ Wait for all pods to reschedule:
 kubectl get pods -A --field-selector spec.nodeName=k8s-0 | grep -v Running | grep -v Completed
 ```
 
-- [ ] **Step 3: Verify modules loaded on k8s-0**
+- [ ] **Step 4: Verify modules loaded on k8s-0**
 
 ```bash
 talosctl -n k8s-0 lsmod | grep -E 'drbd|dm_thin_pool'
@@ -658,25 +672,27 @@ talosctl -n k8s-0 lsmod | grep -E 'drbd|dm_thin_pool'
 
 Expected: `drbd`, `drbd_transport_tcp`, `dm_thin_pool` all listed.
 
-- [ ] **Step 4: Repeat for k8s-1**
+- [ ] **Step 5: Repeat for k8s-1**
 
 ```bash
+just talos upgrade-node k8s-1
+kubectl wait node k8s-1 --for condition=Ready --timeout=10m
 just talos apply-node k8s-1
-just talos reboot-node k8s-1
 kubectl wait node k8s-1 --for condition=Ready --timeout=10m
 talosctl -n k8s-1 lsmod | grep -E 'drbd|dm_thin_pool'
 ```
 
-- [ ] **Step 5: Repeat for k8s-2**
+- [ ] **Step 6: Repeat for k8s-2**
 
 ```bash
+just talos upgrade-node k8s-2
+kubectl wait node k8s-2 --for condition=Ready --timeout=10m
 just talos apply-node k8s-2
-just talos reboot-node k8s-2
 kubectl wait node k8s-2 --for condition=Ready --timeout=10m
 talosctl -n k8s-2 lsmod | grep -E 'drbd|dm_thin_pool'
 ```
 
-- [ ] **Step 6: Verify RawVolumeConfig partition was NOT created**
+- [ ] **Step 7: Verify RawVolumeConfig partition was NOT created**
 
 At this point, Ceph is still active on `/dev/sdb`. The `RawVolumeConfig` should have been skipped or deferred because the disk is in use by Ceph. Verify:
 
