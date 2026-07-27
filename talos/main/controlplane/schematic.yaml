@@ -6,3 +6,4 @@ customization:
   systemExtensions:
     officialExtensions:
       - siderolabs/qemu-guest-agent # Proxmox
+      - siderolabs/drbd # Miroir DRBD9 Replication
