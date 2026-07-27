@@ -32,6 +32,10 @@ spec:
       app.kubernetes.io/name: miroir
   dependsOn:
     - name: miroir
+  healthChecks:
+    - apiVersion: miroir.home-operations.com/v1alpha1
+      kind: MiroirNodeGroup
+      name: default
   interval: 1h
   path: ./kubernetes/apps/miroir-system/miroir/config
   prune: true

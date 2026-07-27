@@ -57,10 +57,12 @@ machine:
     modules:
       - name: nbd
       - name: dm_thin_pool
+      {% if ENV.MACHINE_TYPE == "controlplane" %}
       - name: drbd
         parameters:
           - usermode_helper=disabled
       - name: drbd_transport_tcp
+      {% endif %}
   kubelet:
     defaultRuntimeSeccompProfileEnabled: true
     disableManifestsDirectory: true
@@ -195,6 +197,7 @@ apiVersion: v1alpha1
 kind: WatchdogTimerConfig
 device: /dev/watchdog0
 timeout: 5m
+{% if ENV.MACHINE_TYPE == "controlplane" %}
 ---
 apiVersion: v1alpha1
 kind: RawVolumeConfig
@@ -202,4 +205,5 @@ name: miroir-slow
 provisioning:
   diskSelector:
     match: disk.transport == "virtio" && !system_disk
-  minSize: 1TB
+  minSize: 200GB
+{% endif %}
