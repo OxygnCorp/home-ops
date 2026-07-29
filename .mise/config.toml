@@ -11,7 +11,7 @@ experimental = true
 
 [tools]
 # Runtimes
-node = "24.18.0"
+node = "24.18.1"
 python = "3.14.6"
 uv = "0.12.0"
 go = "1.26.5"
