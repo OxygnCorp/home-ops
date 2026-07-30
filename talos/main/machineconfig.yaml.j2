@@ -51,16 +51,25 @@ machine:
         wsize=1048576
   install:
     disk: /dev/sdb
-    image: factory.talos.dev/nocloud-installer/{{ ENV.SCHEMATIC }}:v1.13.5
+    image: factory.talos.dev/nocloud-installer/{{ ENV.SCHEMATIC }}:v1.13.7
     wipe: false
   kernel:
     modules:
       - name: nbd
+      - name: dm_thin_pool
+      {% if ENV.MACHINE_TYPE == "controlplane" %}
+      - name: drbd
+        parameters:
+          - usermode_helper=disabled
+      - name: drbd_transport_tcp
+      {% endif %}
   kubelet:
     defaultRuntimeSeccompProfileEnabled: true
     disableManifestsDirectory: true
     extraConfig:
       serializeImagePulls: false
+      shutdownGracePeriod: 90s
+      shutdownGracePeriodCriticalPods: 60s
     extraMounts:
       - destination: /var/openebs/local
         type: bind
@@ -188,3 +197,13 @@ apiVersion: v1alpha1
 kind: WatchdogTimerConfig
 device: /dev/watchdog0
 timeout: 5m
+{% if ENV.MACHINE_TYPE == "controlplane" %}
+---
+apiVersion: v1alpha1
+kind: RawVolumeConfig
+name: miroir-slow
+provisioning:
+  diskSelector:
+    match: disk.transport == "virtio" && !system_disk
+  minSize: 200GB
+{% endif %}

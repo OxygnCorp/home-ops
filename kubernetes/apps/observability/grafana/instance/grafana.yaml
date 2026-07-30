@@ -76,5 +76,5 @@ spec:
       resources:
         requests:
           storage: 10Gi
-      storageClassName: ceph-block
+      storageClassName: miroir-slow
   disableDefaultSecurityContext: All

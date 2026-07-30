@@ -52,9 +52,16 @@ jobs:
           FLATE_PATH: ./kubernetes/flux/cluster
           FLATE_OUTPUT: github
         run: |-
-          echo 'diff<<EOF' >> $GITHUB_OUTPUT
-          flate diff ${{ matrix.resource }} >> $GITHUB_OUTPUT
-          echo 'EOF' >> $GITHUB_OUTPUT
+          diff_output=$(flate diff ${{ matrix.resource }})
+          diff_len=${#diff_output}
+          if [ "$diff_len" -gt 48000 ]; then
+            diff_output="${diff_output:0:48000}
+
+          ... (diff truncated: ${diff_len} bytes total — too large for PR comment)"
+          fi
+          echo "diff<<EOF" >> $GITHUB_OUTPUT
+          echo "$diff_output" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - if: ${{ steps.flate.outputs.diff != '' }}
         name: Generate Token

@@ -13,8 +13,8 @@ spec:
   dependsOn:
     - name: onepassword
       namespace: external-secrets
-    - name: rook-ceph-cluster
-      namespace: rook-ceph
+    - name: miroir-config
+      namespace: miroir-system
     - name: litellm
       namespace: ai
     - name: embeddings
