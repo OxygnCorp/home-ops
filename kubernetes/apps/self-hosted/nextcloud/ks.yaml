@@ -28,8 +28,8 @@ spec:
     substitute:
       APP: nextcloud
       KOPIUR_CAPACITY: 10Gi
-      KOPIUR_MOVER_UID: "0"
-      KOPIUR_MOVER_GID: "82"
+      KOPIUR_PUID: "0"
+      KOPIUR_PGID: "82"
   prune: true
   sourceRef:
     kind: GitRepository
