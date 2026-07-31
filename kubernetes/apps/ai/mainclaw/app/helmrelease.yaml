@@ -157,12 +157,18 @@ spec:
         existingClaim: "{{ .Release.Name }}"
         globalMounts:
           - path: /home/node
-      data:
+      pictures:
         type: nfs
         server: funkstation.internal
-        path: /volume1/Agents/mainclaw
+        path: /volume1/Pictures
         globalMounts:
-          - path: /data
+          - path: /home/node/.openclaw/workspace/mnt/pictures
+      pellicule:
+        type: nfs
+        server: funkstation.internal
+        path: /volume1/Pellicule/Matt
+        globalMounts:
+          - path: /home/node/.openclaw/workspace/mnt/pellicule
       openclaw-config:
         type: secret
         name: "{{ .Release.Name }}-config"
