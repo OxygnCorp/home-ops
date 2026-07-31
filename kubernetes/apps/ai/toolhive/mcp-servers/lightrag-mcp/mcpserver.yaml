@@ -32,6 +32,10 @@ spec:
           command:
             - uvx
           args:
+            # mcp 2.0 (2026-07-28) removed mcp.server.fastmcp; mcp-lightrag 0.2.2
+            # declares mcp>=1.2.0 with no upper bound, so constrain to latest 1.x.
+            - --with
+            - mcp<2
             # renovate: datasource=pypi depName=mcp-lightrag
             - mcp-lightrag==0.2.2
           env:
