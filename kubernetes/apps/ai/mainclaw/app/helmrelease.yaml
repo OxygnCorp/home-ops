@@ -160,13 +160,13 @@ spec:
       pictures:
         type: nfs
         server: funkstation.internal
-        path: /volume1/Pictures
+        path: /volume2/Pictures
         globalMounts:
           - path: /home/node/.openclaw/workspace/mnt/pictures
       pellicule:
         type: nfs
         server: funkstation.internal
-        path: /volume1/Pellicule/Matt
+        path: /volume2/Pellicule/Matt
         globalMounts:
           - path: /home/node/.openclaw/workspace/mnt/pellicule
       openclaw-config:
