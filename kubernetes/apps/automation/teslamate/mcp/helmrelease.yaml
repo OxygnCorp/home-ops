@@ -33,7 +33,7 @@ spec:
             args:
               - >-
                 export DATABASE_URL="postgresql://${DB_USER}:${DB_PASS}@teslamate-ro.automation.svc.cluster.local:5432/${DB_NAME}"
-                && exec teslamate-mcp http --host 0.0.0.0 --port 8888 --json-response
+                && exec teslamate-mcp http --host 0.0.0.0 --port 8888
             env:
               DB_USER:
                 secretKeyRef:
