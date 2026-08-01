@@ -1,0 +1,95 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: teslamate-mcp
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: teslamate-mcp
+  install:
+    remediation:
+      retries: -1
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  values:
+    controllers:
+      teslamate-mcp:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: ghcr.io/cobanov/teslamate-mcp
+              tag: 0.3.1@sha256:8a13073e8c9729c93f23c9718e89452162b553dd3374b72fd187625f61d54e4d
+            # DATABASE_URL is composed at startup from the CloudNativePG
+            # teslamate-app secret and pointed at the read-only replicas
+            # service (teslamate-ro) for engine-level read-only access.
+            command: ["/bin/sh", "-c"]
+            args:
+              - >-
+                export DATABASE_URL="postgresql://${DB_USER}:${DB_PASS}@teslamate-ro.automation.svc.cluster.local:5432/${DB_NAME}"
+                && exec teslamate-mcp http --host 0.0.0.0 --port 8888 --json-response
+            env:
+              DB_USER:
+                secretKeyRef:
+                  name: teslamate-app
+                  key: username
+              DB_PASS:
+                secretKeyRef:
+                  name: teslamate-app
+                  key: password
+              DB_NAME:
+                secretKeyRef:
+                  name: teslamate-app
+                  key: dbname
+              HOME: /tmp
+            probes:
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /health
+                    port: 8888
+                  initialDelaySeconds: 5
+                  periodSeconds: 10
+              liveness:
+                enabled: false
+              startup:
+                enabled: false
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities:
+                drop:
+                  - ALL
+            resources:
+              requests:
+                cpu: 50m
+                memory: 128Mi
+              limits:
+                memory: 256Mi
+    defaultPodOptions:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+    service:
+      app:
+        controller: teslamate-mcp
+        type: ClusterIP
+        ports:
+          http:
+            port: 8888
+    persistence:
+      tmp:
+        type: emptyDir
+        globalMounts:
+          - path: /tmp
