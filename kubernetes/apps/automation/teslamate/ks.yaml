@@ -46,9 +46,6 @@ spec:
     - name: teslamate
   interval: 1h
   path: ./kubernetes/apps/automation/teslamate/mcp
-  postBuild:
-    substitute:
-      APP: *name
   prune: true
   sourceRef:
     kind: GitRepository
