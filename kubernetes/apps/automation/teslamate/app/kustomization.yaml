@@ -8,3 +8,18 @@ resources:
   - ./externalsecret.yaml
   - ./grafanadatasource.yaml
   - ./grafanadashboard.yaml
+patches:
+  - target:
+      kind: Cluster
+      name: ${APP}
+    patch: |
+      apiVersion: postgresql.cnpg.io/v1
+      kind: Cluster
+      metadata:
+        name: ${APP}
+      spec:
+        resources:
+          requests:
+            memory: 768Mi
+          limits:
+            memory: 1Gi
