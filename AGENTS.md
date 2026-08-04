@@ -167,8 +167,8 @@ just talos reset-node <node>      # ⚠️ Wipes STATE/EPHEMERAL — destructive
 just talos shutdown-node <node>   # Graceful shutdown
 just talos render-config <node>   # Render the machineconfig for inspection
 just talos schematic-id           # Print the current schematic ID
-just talos upgrade-k8s 1.32.4     # Upgrade Kubernetes to a specific version
-just talos download-image v1.13.4 # Download the Talos ISO with custom schematic
+just talos upgrade-k8s 1.32.6     # Upgrade Kubernetes to a specific version
+just talos download-image v1.13.8 # Download the Talos ISO with custom schematic
 
 # Bootstrap (bootstrap/mod.just)
 just bootstrap cluster            # Full cluster bootstrap (Talos → k8s → kubeconfig → apps)
