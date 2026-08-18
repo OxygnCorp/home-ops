@@ -40,7 +40,6 @@ spec:
                 memory: 128Mi
               limits:
                 memory: 512Mi
-                cpu: 200m
             probes:
               liveness: &probes
                 enabled: true
@@ -51,8 +50,8 @@ spec:
                     port: &port 3000
                   initialDelaySeconds: 10
                   periodSeconds: 10
-                  timeoutSeconds: 10
-                  failureThreshold: 5
+                  timeoutSeconds: 5
+                  failureThreshold: 8
               readiness: *probes
     service:
       app:
