@@ -14,9 +14,13 @@ spec:
   upgrade:
     timeout: 15m
   values:
-    autoEvictAfter: 1h
+    # keep well above the longest planned reboot/upgrade window (rolling Talos upgrades span hours incl. resyncs)
+    autoEvictAfter: 24h
     drbd:
       alExtents: 6007
+      verify:
+        # weekly online verify of every replicated volume (crc32c default algorithm)
+        schedule: "0 4 * * 0"
     groupSnapshots:
       enabled: true
     monitoring:

@@ -30,6 +30,9 @@ spec:
     keepHourly: 24
     keepDaily: 7
     keepWeekly: 4
+  staging:
+    # stage backups unreplicated: a replicated staging PVC full-syncs (plus tie-breaker) for data deleted minutes later
+    storageClassName: ${KOPIUR_STAGING_STORAGECLASS:=miroir-slow-local}
   sources:
     - pvc:
         name: ${APP}
