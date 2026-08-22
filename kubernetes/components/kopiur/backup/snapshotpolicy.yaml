@@ -21,7 +21,9 @@ spec:
     cache:
       capacity: ${KOPIUR_CAPACITY:=5Gi}
       mode: Persistent
-      storageClassName: ${KOPIUR_CACHE_STORAGECLASS:=openebs-hostpath}
+      # replicated class: an unreplicated/local cache PVC pins the mover to one node and
+      # conflicts with the miroir-slow-local staging PVC's node affinity (unschedulable movers)
+      storageClassName: ${KOPIUR_CACHE_STORAGECLASS:=miroir-slow}
   repository:
     kind: ClusterRepository
     name: ${KOPIUR_REPOSITORY:=nas}
