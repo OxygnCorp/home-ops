@@ -19,3 +19,7 @@ spec:
       kind: Restore
       expr: |-
         !(status.phase in ['Resolving', 'Restoring'])
+    - apiVersion: miroir.home-operations.com/v1alpha1
+      kind: MiroirVolume
+      expr: |-
+        status.phase == 'Ready'
