@@ -15,10 +15,10 @@ spec:
       resources:
         requests:
           cpu: 10m
-          memory: 128Mi
+          memory: 256Mi
         limits:
           cpu: 500m
-          memory: 256Mi
+          memory: 512Mi
       gc:
-        gomemlimit: 230MiB
+        gomemlimit: 460MiB
         gogc: 75
