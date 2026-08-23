@@ -30,7 +30,7 @@ spec:
     auth:
       generate:
         username: admin
-    readOnly: true
+    readOnly: false # allow snapshot deletion/maintenance from the kopia web UI
     service:
       type: ClusterIP
       port: 51515
