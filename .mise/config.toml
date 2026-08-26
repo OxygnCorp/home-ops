@@ -42,7 +42,7 @@ gum = "2.0.0"
 
 # Talos Stuff
 "talosctl" = "1.13.9"
-"aqua:budimanjojo/talhelper" = "3.1.16"
+"aqua:budimanjojo/talhelper" = "3.1.17"
 
 # Misc Tools
 "aqua:cert-manager/cmctl" = "2.5.0"
