@@ -31,12 +31,28 @@ spec:
                 chown 1000:100 /home/node/.openclaw/openclaw.json
                 chmod 400 /home/node/.openclaw/openclaw.json
                 cp /kopiaignore/.kopiaignore /home/node/.kopiaignore
-
-                # Install Mise if not present on PVC
+                # Parent dir for the mise config subPath mount (install-tools needs it)
+                mkdir -p /home/node/.config/mise
+          install-tools:
+            image:
+              repository: ghcr.io/openclaw/openclaw
+              tag: 2026.7.1@sha256:6a31d44b2944e7adcd2b582bf6fb463111264ebca97a0201795b799135bd102c
+            env:
+              HOME: /home/node
+              PATH: /home/node/.local/bin:/home/node/.local/share/mise/shims:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+              MISE_YES: "1"
+            command:
+              - /bin/sh
+              - -c
+              - |
+                set -euo pipefail
+                # Reinstall mise after a PVC restore; skip when present (normal restarts stay offline)
                 if [ ! -f /home/node/.local/bin/mise ]; then
                   echo "Installing Mise..."
-                  curl https://mise.run | MISE_INSTALL_PATH=/home/node/.local/bin/mise sh
+                  curl -fsSL https://mise.run | MISE_INSTALL_PATH=/home/node/.local/bin/mise sh
                 fi
+                # Install every tool declared in the shadowed global config; idempotent
+                mise install
         containers:
           app:
             image:
@@ -176,3 +192,9 @@ spec:
         globalMounts:
           - path: /tmp/openclaw.json
             subPath: openclaw.json
+      mise-config:
+        type: configMap
+        name: mainclaw-mise
+        globalMounts:
+          - path: /home/node/.config/mise/config.toml
+            subPath: config.toml
