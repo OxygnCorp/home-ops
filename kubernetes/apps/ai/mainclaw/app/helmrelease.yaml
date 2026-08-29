@@ -45,14 +45,16 @@ spec:
               - /bin/sh
               - -c
               - |
-                set -euo pipefail
+                # NOTE: /bin/sh in the openclaw image is dash — no `set -o pipefail`
+                set -eu
                 # Reinstall mise after a PVC restore; skip when present (normal restarts stay offline)
                 if [ ! -f /home/node/.local/bin/mise ]; then
                   echo "Installing Mise..."
                   curl -fsSL https://mise.run | MISE_INSTALL_PATH=/home/node/.local/bin/mise sh
                 fi
                 # Install every tool declared in the shadowed global config; idempotent
-                mise install
+                mise self-update -y
+                mise install -y
         containers:
           app:
             image:
