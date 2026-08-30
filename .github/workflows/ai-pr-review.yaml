@@ -55,9 +55,28 @@ jobs:
       - name: Setup review tooling
         # ARC runners lack helm/PyYAML (preinstalled on ubuntu-latest); the
         # upgrade-impact evidence provider needs them for chart-values drift.
+        # Best-effort: the provider degrades gracefully when they are absent,
+        # so this step must never fail the job — only warn.
         run: |
-          command -v helm >/dev/null 2>&1 || curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
-          python3 -c 'import yaml' 2>/dev/null || python3 -m pip install --user --break-system-packages pyyaml 2>/dev/null || python3 -m pip install --user pyyaml
+          if ! command -v helm >/dev/null 2>&1; then
+            curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash \
+              || echo "::warning::helm install failed — chart-values drift will be skipped"
+          fi
+          if ! python3 -c 'import yaml' >/dev/null 2>&1; then
+            python3 -m pip install --user --break-system-packages pyyaml >/dev/null 2>&1 \
+              || python3 -m pip install --user pyyaml >/dev/null 2>&1 \
+              || { python3 -m ensurepip --user >/dev/null 2>&1 \
+                   && python3 -m pip install --user pyyaml >/dev/null 2>&1; } \
+              || { sudo apt-get update -qq >/dev/null 2>&1 \
+                   && sudo apt-get install -y -qq python3-yaml >/dev/null 2>&1; } \
+              || true
+          fi
+          python3 -c 'import yaml' >/dev/null 2>&1 \
+            && echo "PyYAML OK" \
+            || echo "::warning::PyYAML unavailable — chart-values drift will be skipped (advisory-only)"
+          command -v helm >/dev/null 2>&1 \
+            && echo "helm OK" \
+            || echo "::warning::helm unavailable — chart-values drift will be skipped (advisory-only)"
 
       - name: Generate bot token
         id: app-token
