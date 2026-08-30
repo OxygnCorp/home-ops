@@ -1,0 +1,52 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: konflate
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: konflate
+  install:
+    remediation:
+      retries: -1
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  values:
+    deploymentAnnotations:
+      reloader.stakater.com/auto: "true"
+    config:
+      repo: github://OxygnCorp/home-ops
+      refreshInterval: 10m
+      appClientId: Iv23lizpdaSYJBX0uzo8
+      statusChecks: true
+      prComments: true
+      publicUrl: https://konflate.oxygn.dev
+      mcp: true
+      verifyImages: true
+    secret:
+      existingSecret: konflate
+    httpRoute:
+      enabled: true
+      parentRefs:
+        - name: envoy-internal
+          namespace: network
+          sectionName: https
+      hostnames:
+        - konflate.oxygn.dev
+    persistence:
+      enabled: true
+      size: 5Gi
+    monitoring:
+      serviceMonitor:
+        enabled: true
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi
+      limits:
+        memory: 2Gi
