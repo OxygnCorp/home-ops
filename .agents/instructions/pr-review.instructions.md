@@ -15,7 +15,7 @@ If a pattern is explicitly documented as intentional in `AGENTS.md` (or in the c
 
 ### Documented conventions to honour without flagging
 
-- **`metadata.namespace` is intentionally absent on `HelmRelease` and `Kustomization` resources.** The namespace is injected at build time by kustomize's `namespace:` directive in the per-app `kustomization.yaml` (e.g. `namespace: ai`). For Flux `Kustomization` resources, `spec.targetNamespace` is propagated automatically via the replacement component at `kubernetes/components/replacements/ks.yaml`. Do not flag the absence of `metadata.namespace` on these resources as an issue.
+- **`metadata.namespace` is intentionally absent on `HelmRelease` and `Kustomization` resources.** Namespaces are applied by Flux at reconciliation time: each app's Flux `Kustomization` sets `spec.targetNamespace` explicitly (e.g. `targetNamespace: ai` in `kubernetes/apps/ai/toolhive/ks.yaml`), and Flux `Kustomization` resources themselves are applied into the namespace of the parent kustomization that includes them. Do not flag the absence of `metadata.namespace` on these resources as an issue.
 
 - **OCI artifacts are pinned by tag/version, not by SHA digest.** The "Prefer `@sha256:` digests" policy in `AGENTS.md` applies to container images only. OCI artifacts pulled via `OCIRepository` (Helm charts in OCI registries) are pinned by tag or version, since OCI artifacts do not support SHA-tag references the same way container images do. Do not flag the absence of `@sha256:` on OCI artifact references.
 
