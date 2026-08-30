@@ -35,6 +35,7 @@ spec:
       parentRefs:
         - name: envoy-internal
           namespace: network
+          sectionName: https
       hostnames:
         - konflate.oxygn.dev
     persistence:
