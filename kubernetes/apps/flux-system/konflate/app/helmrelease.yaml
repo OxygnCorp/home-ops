@@ -21,7 +21,6 @@ spec:
       reloader.stakater.com/auto: "true"
     config:
       repo: github://OxygnCorp/home-ops
-      refreshInterval: 10m
       appClientId: Iv23lizpdaSYJBX0uzo8
       statusChecks: true
       prComments: true
@@ -32,8 +31,11 @@ spec:
       existingSecret: konflate
     httpRoute:
       enabled: true
+      annotations:
+        gatus.home-operations.com/endpoint: |-
+          conditions: ["[STATUS] == 200"]
       parentRefs:
-        - name: envoy-internal
+        - name: envoy-external
           namespace: network
           sectionName: https
       hostnames:
