@@ -44,3 +44,5 @@
 # Uncategorized
 - name: hold
   color: "ee0701"
+- name: ai-review
+  color: "5319e7"
