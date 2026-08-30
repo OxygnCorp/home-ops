@@ -112,6 +112,28 @@ spec:
   Helm (`retries: 3` en upgrade), et le write-back est best-effort (retry + re-post au
   prochain render).
 
+## Révision 2026-08-30 (n°2) — Alignement upstream (onedr0p)
+
+Après comparaison avec l'implémentation de référence de onedr0p (konflate déployé dans
+son home-ops), pivot validé par l'utilisateur :
+
+| Élément | Décision initiale | Révision |
+|---|---|---|
+| Exposition | interne (`envoy-internal`) | **publique** (`envoy-external`, via tunnel Cloudflare `*.oxygn.dev`) — repo public, rien de privé exposé |
+| Chart | `0.3.0` | **`0.6.2`** (la découverte initiale de tag était faussée par le tri lexical de l'API registry) |
+| Webhook | aucun (UI interne) | **`KONFLATE_WEBHOOK_SECRET`** (item 1Password dédié `konflate`) → renders instantanés sur push GitHub |
+| `refreshInterval` | `10m` | défaut `30m` (le webhook gère l'immédiateté) |
+| Workflow CI `flate.yaml` | conservé | **supprimé** — konflate assume commentaires de diff + status checks (write-back déjà activé) ; `image-pull.yaml` conservé (CLI flate indépendant) |
+| Gatus | — | annotation `gatus.home-operations.com/endpoint` sur la HTTPRoute (comme onedr0p et seerr) |
+
+Prérequis manuels :
+1. Item 1Password `konflate` avec champ `KONFLATE_WEBHOOK_SECRET`.
+2. Après merge : webhook GitHub `https://konflate.oxygn.dev/hooks` (content-type json,
+   même secret) — créable via `gh api`.
+
+Conservé malgré la divergence upstream : persistence 5Gi, resources relevées,
+`reloader.stakater.com/auto` — strictement meilleurs que le setup de référence.
+
 ## Validation
 
 - `mise exec -- flate test ks --path ./kubernetes/apps/flux-system`

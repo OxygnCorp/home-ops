@@ -271,7 +271,7 @@ mise exec -- flate diff hr --path ./kubernetes/apps --path-orig /tmp/baseline/ku
 git worktree remove /tmp/baseline --force
 ```
 
-CI also runs `flate test` on every PR via `.github/workflows/flate.yaml`. A green local run is necessary but not sufficient — CI may catch environment-specific schema differences. See the `flate-validator` skill for the full workflow.
+PR diffs are reviewed as **rendered Flux diffs** by [konflate](https://github.com/home-operations/konflate) (`https://konflate.oxygn.dev`): it posts a summary comment and a status check on each PR, and exposes an MCP endpoint consumed by the AI agent. Local `flate` remains the pre-push validation guard; `image-pull.yaml` still uses the flate CLI to pre-pull changed images. See the `flate-validator` skill for the full local workflow.
 
 ## Known Failure Modes
 
