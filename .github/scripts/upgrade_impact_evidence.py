@@ -29,6 +29,8 @@ MAX_NOTES_BYTES = 3500
 MAX_VALUES_BYTES = 4000
 MAX_TOTAL_BYTES = 19000
 
+_ALLOWED_REGISTRY_PREFIXES = ("ghcr.io/", "registry.k8s.io/", "docker.io/", "quay.io/")
+
 _FILE_RE = re.compile(r"^\+\+\+ b/(.+)$")
 _TAG_RE = re.compile(r"^([-+ ])\s*tag: (\S+)")
 _URL_RE = re.compile(r"^[-+ ]\s*url: oci://(\S+)")
@@ -42,6 +44,21 @@ def _emit(findings, severity="info"):
 
 def _clean_tag(tag):
     return tag.split("@", 1)[0].strip().strip('"')
+
+
+def _safe_repo_path(path):
+    """Reject absolute paths, backslashes, and `..`/`.` segments; resolve and
+    require the path to stay inside the repo root. Guards open() against
+    paths injected via `+++ b/` diff lines (untrusted PR content)."""
+    if not path or path.startswith("/") or "\\" in path:
+        return None
+    if any(p in ("", ".", "..") for p in path.split("/")):
+        return None
+    root = os.path.realpath(os.getcwd())
+    real = os.path.realpath(path)
+    if not real.startswith(root + os.sep):
+        return None
+    return real
 
 
 def parse_bumps(diff_text):
@@ -313,10 +330,13 @@ def compute_chart_drift(bump, hr_text):
     """
     try:
         import yaml
+        artifact = bump["artifact"] or ""
+        if not artifact.startswith(_ALLOWED_REGISTRY_PREFIXES):
+            raise ValueError(f"chart registry not allowlisted: {artifact[:60]}")
         defaults = {}
         for ver in (bump["old"], bump["new"]):
             defaults[ver] = parse_helm_show_values(_run(
-                ["helm", "show", "values", f"oci://{bump['artifact']}",
+                ["helm", "show", "values", f"oci://{artifact}",
                  "--version", ver], timeout=60))
         ours = (yaml.safe_load(hr_text) or {}).get("spec", {}).get("values", {})
         return values_drift(defaults[bump["old"]], defaults[bump["new"]], ours)
@@ -341,21 +361,25 @@ def main():
         ctxs = []
         for b in bumps:
             if b["artifact"] is None and b["kind"] == "chart":
-                try:
-                    with open(b["path"], encoding="utf-8") as f:
-                        m = re.search(r"url: oci://(\S+)", f.read())
-                    if m:
-                        b["artifact"] = m.group(1)
-                except OSError:
-                    pass
+                safe_path = _safe_repo_path(b["path"])
+                if safe_path:
+                    try:
+                        with open(safe_path, encoding="utf-8") as f:
+                            m = re.search(r"url: oci://(\S+)", f.read())
+                        if m:
+                            b["artifact"] = m.group(1)
+                    except OSError:
+                        pass
             ctx = {"bump": b, "repo_slug": None}
             hr_path = os.path.join(os.path.dirname(b["path"]), "helmrelease.yaml")
-            try:
-                with open(hr_path, encoding="utf-8") as f:
-                    ctx["hr_text"] = f.read()
-                ctx["hr_path"] = hr_path
-            except OSError:
-                pass
+            safe_hr = _safe_repo_path(hr_path)
+            if safe_hr:
+                try:
+                    with open(safe_hr, encoding="utf-8") as f:
+                        ctx["hr_text"] = f.read()
+                    ctx["hr_path"] = hr_path
+                except OSError:
+                    pass
             for slug in resolve_repo_candidates(b["artifact"], pr_body):
                 try:
                     selected, skipped = select_releases(
