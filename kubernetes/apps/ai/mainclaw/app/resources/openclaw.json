@@ -4,33 +4,20 @@
       "compaction": {
         "memoryFlush": {
           "enabled": true,
-          "prompt": "Extract key decisions, state changes, lessons, blockers to memory/YYYY-MM-DD.md. Format: ## [HH:MM] Topic. Skip routine work. NO_FLUSH if nothing important.",
-          "softThresholdTokens": 12000,
-          "systemPrompt": "Compacting session context. Extract only what's worth remembering. No fluff."
+          "softThresholdTokens": 12000
         },
-        "mode": "safeguard",
-        "reserveTokensFloor": 24000
+        "mode": "safeguard"
       },
       "contextPruning": {
         "hardClear": {
           "enabled": true,
           "placeholder": "[Old tool result content cleared]"
         },
-        "hardClearRatio": 0.5,
-        "keepLastAssistants": 4,
-        "minPrunableToolChars": 50000,
         "mode": "cache-ttl",
-        "softTrim": {
-          "headChars": 1500,
-          "maxChars": 4000,
-          "tailChars": 1500
-        },
-        "softTrimRatio": 0.3,
         "ttl": "6h"
       },
       "heartbeat": {
         "directPolicy": "allow",
-        "includeReasoning": true,
         "lightContext": true
       },
       "imageModel": {
@@ -40,24 +27,6 @@
         ]
       },
       "maxConcurrent": 4,
-      "memorySearch": {
-        "provider": "local",
-        "local": {
-          "modelPath": "hf:ggml-org/embeddinggemma-300m-qat-q8_0-GGUF/embeddinggemma-300m-qat-Q8_0.gguf"
-        },
-        "query": {
-          "hybrid": {
-            "enabled": true,
-            "textWeight": 0.3,
-            "mmr": {
-              "enabled": true
-            },
-            "temporalDecay": {
-              "enabled": true
-            }
-          }
-        }
-      },
       "model": {
         "primary": "litellm/MiniMax-M3",
         "fallbacks": [
@@ -464,50 +433,6 @@
         "name": "Lycos",
         "workspace": "/home/node/.openclaw/workspace-lycos",
         "agentDir": "/home/node/.openclaw/agents/lycos/agent",
-        "memorySearch": {
-          "extraPaths": [
-            "/home/node/.openclaw/workspace-finance/MEMORY.md",
-            "/home/node/.openclaw/workspace-finance/memory/",
-            "/home/node/.openclaw/workspace-family/MEMORY.md",
-            "/home/node/.openclaw/workspace-family/memory/",
-            "/home/node/.openclaw/workspace-coach/MEMORY.md",
-            "/home/node/.openclaw/workspace-coach/memory/",
-            "/home/node/.openclaw/workspace-nova/MEMORY.md",
-            "/home/node/.openclaw/workspace-nova/memory/",
-            "/home/node/.openclaw/workspace-shopping/MEMORY.md",
-            "/home/node/.openclaw/workspace-shopping/memory/",
-            "/home/node/.openclaw/workspace/MEMORY.md",
-            "/home/node/.openclaw/workspace/memory/"
-          ],
-          "qmd": {
-            "extraCollections": [
-              {
-                "path": "/home/node/.openclaw/workspace-finance/memory/",
-                "name": "finance-memory"
-              },
-              {
-                "path": "/home/node/.openclaw/workspace-family/memory/",
-                "name": "family-memory"
-              },
-              {
-                "path": "/home/node/.openclaw/workspace-coach/memory/",
-                "name": "coach-memory"
-              },
-              {
-                "path": "/home/node/.openclaw/workspace-nova/memory/",
-                "name": "nova-memory"
-              },
-              {
-                "path": "/home/node/.openclaw/workspace/memory/",
-                "name": "claw-memory"
-              },
-              {
-                "path": "/home/node/.openclaw/workspace-shopping/memory/",
-                "name": "shopping-memory"
-              }
-            ]
-          }
-        },
         "heartbeat": {
           "directPolicy": "allow",
           "every": "6h",
@@ -817,17 +742,9 @@
     ],
     "native": "auto",
     "nativeSkills": "auto",
-    "ownerDisplay": "raw",
     "restart": false
   },
   "cron": {
-    "maxConcurrentRuns": 8,
-    "failureDestination": {
-      "channel": "discord",
-      "to": "channel:{{ .DISCORD_CLAW_CHANNEL_ID }}",
-      "accountId": "default",
-      "mode": "announce"
-    },
     "failureAlert": {
       "enabled": true,
       "after": 2,
@@ -867,9 +784,7 @@
   },
   "logging": {
     "consoleLevel": "trace",
-    "consoleStyle": "compact",
-    "level": "trace",
-    "redactSensitive": "tools"
+    "level": "trace"
   },
   "messages": {
     "ackReactionScope": "group-mentions",
@@ -1064,11 +979,9 @@
       "memory-wiki",
       "memini",
       "searxng",
-      "thread-ownership",
       "tokenjuice",
       "workboard"
     ],
-    "bundledDiscovery": "compat",
     "entries": {
       "active-memory": {
         "enabled": true,
@@ -1091,10 +1004,7 @@
           "promptStyle": "balanced",
           "thinking": "off",
           "logging": true,
-          "persistTranscripts": true,
-          "qmd": {
-            "searchMode": "inherit"
-          }
+          "persistTranscripts": true
         }
       },
       "browser": {
@@ -1133,7 +1043,6 @@
             "agent:*:subagent:**"
           ],
           "skipStatelessSessions": true,
-          "transcriptGcEnabled": false,
           "proactiveThresholdCompactionMode": "deferred",
           "cacheAwareCompaction": {
             "enabled": true
@@ -1205,10 +1114,6 @@
           "recall_limit": 3,
           "expose_tools": true
         }
-      },
-      "thread-ownership": {
-        "enabled": true,
-        "config": {}
       },
       "tokenjuice": {
         "enabled": true,
