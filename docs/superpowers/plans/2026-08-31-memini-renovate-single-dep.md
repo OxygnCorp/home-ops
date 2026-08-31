@@ -125,8 +125,8 @@ Single Renovate dependency for memini: core chart + openclaw plugin pins.
 
 - Re-pin `MEMINI_PLUGIN_VERSION` in mainclaw/devclaw to the same docker depName as the core OCIRepository (`registry.erwanleboucher.dev/eleboucher/charts/memini`); drops the independent `github-tags depName=eleboucher/memini` dep
 - `${MEMINI_PLUGIN_VERSION#v}` strips the chart tag prefix; `.clawver` format unchanged, so no redundant plugin reinstall on first boot
-- Renovate now updates all three locations in one atomic PR, eliminating the plugins-only vs core-only PR race (#4072/#4074, #3994/#3996). Supersedes #4114 (Renovate will close it once the github-tags dep is gone)
-- Version stays at v0.7.22 here; Renovate opens the bump PR under the new scheme
+- Renovate now updates all three locations in one atomic PR, eliminating the plugins-only vs core-only PR race (#4072/#4074, #3994/#3996). PR #4114 was merged before this refactor; this PR makes the grouping race-proof
+- Version stays at v0.7.22 here; Renovate opens the next bump PR under the new scheme
 
 Design: docs/superpowers/specs/2026-08-31-memini-renovate-single-dep-design.md
 EOF
