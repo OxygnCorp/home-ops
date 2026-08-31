@@ -69,13 +69,13 @@ Expected: `MAINCLAW_SH_OK` and `DEVCLAW_SH_OK`, exit code 0. Any `sh: syntax err
 
 - [ ] **Step 4: Validate HelmReleases with flate**
 
+Per-app paths cannot resolve cross-tree `dependsOn` (e.g. kopiur in `kopiur-system`) — validate the whole tree:
+
 Run:
 ```bash
-mise exec -- flate test hr --path ./kubernetes/apps/ai/mainclaw
-mise exec -- flate test hr --path ./kubernetes/apps/ai/devclaw
-mise exec -- flate test hr --path ./kubernetes/apps/ai/memini
+mise exec -- flate test hr --path ./kubernetes/apps
 ```
-Expected: exit code 0 for each, no error output. `memini` validates too even though untouched, proving the three-location pairing still renders.
+Expected: exit code 0, all HelmReleases pass (includes mainclaw, devclaw, memini).
 
 - [ ] **Step 5: Verify the single-dependency invariant**
 
