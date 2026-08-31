@@ -138,6 +138,6 @@ Expected: PR URL printed. Leave review/merge to the human.
 
 Run:
 ```bash
-gh pr diff --patch | rg -c '^\+[^+]'
+gh pr diff --patch | rg '^\+[^+]' | rg -c 'helmrelease|ocirepository'
 ```
-Expected output: `10` (5 replaced lines per file). `2` would mean only one file changed; anything else — re-inspect `gh pr diff` manually before asking for review.
+The branch also carries docs/ files, so a raw `^\+[^+]` count includes them; scoping to k8s manifest filenames yields the expected `10` (5 replaced lines per helmrelease). `5` would mean only one file changed; anything else — re-inspect `gh pr diff` manually before asking for review.

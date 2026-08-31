@@ -101,6 +101,8 @@ defends against reintroducing a similarly named dep later.
 
 ## Transition / Rollout
 
+> **Superseded note (2026-08-31):** Renovate PR #4114 merged before implementation began; the branch was rebased on the v0.7.22 baseline and the steps below describe the original (pre-merge) sequence.
+
 1. Implement the refactor on the current `main` state (pin stays `v0.7.21`).
 2. Merge via PR. Open PR #4114 becomes obsolete: its `github-tags` dep no longer exists on
    main, so Renovate closes it automatically.
