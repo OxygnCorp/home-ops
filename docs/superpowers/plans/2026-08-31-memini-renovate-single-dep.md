@@ -13,12 +13,12 @@
 ## Global Constraints
 
 - Work on existing branch `memini-renovate-single-dep` (already contains the design doc, commit `25a6cc9f0`). Do NOT create a new branch.
-- Version pin stays `v0.7.21` everywhere in this PR — do NOT bump any version; Renovate will open the bump PR itself.
-- `.clawver` content format stays stripped (`0.7.21`, no `v`).
+- Version pin stays `v0.7.22` everywhere in this PR — do NOT bump any version; Renovate will open the bump PR itself.
+- `.clawver` content format stays stripped (`0.7.22`, no `v`).
 - Do NOT touch: `.renovate/groups.json5`, `.renovate/customManagers.json5`, `kubernetes/apps/ai/memini/app/ocirepository.yaml`.
 - Shell code must be POSIX sh (`${MEMINI_PLUGIN_VERSION#v}` is valid; no bashisms).
 - The YAML block-scalar indentation is 16 spaces for script lines inside `command:` — preserve exactly.
-- ClawHub always receives the stripped form (`0.7.21`), never `v0.7.21`.
+- ClawHub always receives the stripped form (`0.7.22`), never `v0.7.22`.
 
 ---
 
@@ -30,7 +30,7 @@
 
 **Interfaces:**
 - Consumes: nothing (standalone config edit).
-- Produces: three Renovate matches for one dependency — `datasource=docker`, `depName=registry.erwanleboucher.dev/eleboucher/charts/memini`, `currentValue=v0.7.21` — in `mainclaw/app/helmrelease.yaml`, `devclaw/app/helmrelease.yaml`, and `memini/app/ocirepository.yaml` (untouched, already matching). Later tasks and Renovate rely on this exact depName/currentValue pairing.
+- Produces: three Renovate matches for one dependency — `datasource=docker`, `depName=registry.erwanleboucher.dev/eleboucher/charts/memini`, `currentValue=v0.7.22` — in `mainclaw/app/helmrelease.yaml`, `devclaw/app/helmrelease.yaml`, and `memini/app/ocirepository.yaml` (untouched, already matching). Later tasks and Renovate rely on this exact depName/currentValue pairing.
 
 - [ ] **Step 1: Edit mainclaw helmrelease**
 
@@ -39,7 +39,7 @@ Use the Edit tool on `kubernetes/apps/ai/mainclaw/app/helmrelease.yaml` with exa
 oldString:
 ```
                 # renovate: datasource=github-tags depName=eleboucher/memini
-                MEMINI_PLUGIN_VERSION=0.7.21
+                MEMINI_PLUGIN_VERSION=0.7.22
                 if [ "$(cat "$HOME/.openclaw/extensions/memini/.clawver" 2>/dev/null)" != "$MEMINI_PLUGIN_VERSION" ]; then
                   if node dist/index.js plugins install "clawhub:@eleboucher/memini@$MEMINI_PLUGIN_VERSION" --pin --force; then
                     printf '%s' "$MEMINI_PLUGIN_VERSION" > "$HOME/.openclaw/extensions/memini/.clawver"
@@ -48,7 +48,7 @@ oldString:
 newString:
 ```
                 # renovate: datasource=docker depName=registry.erwanleboucher.dev/eleboucher/charts/memini
-                MEMINI_PLUGIN_VERSION=v0.7.21
+                MEMINI_PLUGIN_VERSION=v0.7.22
                 if [ "$(cat "$HOME/.openclaw/extensions/memini/.clawver" 2>/dev/null)" != "${MEMINI_PLUGIN_VERSION#v}" ]; then
                   if node dist/index.js plugins install "clawhub:@eleboucher/memini@${MEMINI_PLUGIN_VERSION#v}" --pin --force; then
                     printf '%s' "${MEMINI_PLUGIN_VERSION#v}" > "$HOME/.openclaw/extensions/memini/.clawver"
@@ -84,13 +84,13 @@ Run:
 rg -n "renovate: datasource" kubernetes/apps/ai/mainclaw/app/helmrelease.yaml kubernetes/apps/ai/devclaw/app/helmrelease.yaml
 rg -n "MEMINI_PLUGIN_VERSION=" kubernetes/apps/ai/mainclaw/app/helmrelease.yaml kubernetes/apps/ai/devclaw/app/helmrelease.yaml
 rg -n "depName=eleboucher/memini" kubernetes/ && echo "FAIL: stale github-tags dep" || echo "NO_STALE_DEP"
-rg -c "v0\.7\.21" kubernetes/apps/ai/mainclaw/app/helmrelease.yaml kubernetes/apps/ai/devclaw/app/helmrelease.yaml kubernetes/apps/ai/memini/app/ocirepository.yaml
+rg -c "v0\.7\.22" kubernetes/apps/ai/mainclaw/app/helmrelease.yaml kubernetes/apps/ai/devclaw/app/helmrelease.yaml kubernetes/apps/ai/memini/app/ocirepository.yaml
 ```
 Expected:
 1. Both files show `renovate: datasource=docker depName=registry.erwanleboucher.dev/eleboucher/charts/memini`.
-2. Both files show `MEMINI_PLUGIN_VERSION=v0.7.21`.
+2. Both files show `MEMINI_PLUGIN_VERSION=v0.7.22`.
 3. `NO_STALE_DEP`.
-4. `v0.7.21` count: 1 occurrence per file (3 files listed).
+4. `v0.7.22` count: 1 occurrence per file (3 files listed).
 
 - [ ] **Step 6: Commit**
 
@@ -126,7 +126,7 @@ Single Renovate dependency for memini: core chart + openclaw plugin pins.
 - Re-pin `MEMINI_PLUGIN_VERSION` in mainclaw/devclaw to the same docker depName as the core OCIRepository (`registry.erwanleboucher.dev/eleboucher/charts/memini`); drops the independent `github-tags depName=eleboucher/memini` dep
 - `${MEMINI_PLUGIN_VERSION#v}` strips the chart tag prefix; `.clawver` format unchanged, so no redundant plugin reinstall on first boot
 - Renovate now updates all three locations in one atomic PR, eliminating the plugins-only vs core-only PR race (#4072/#4074, #3994/#3996). Supersedes #4114 (Renovate will close it once the github-tags dep is gone)
-- Version stays at v0.7.21 here; Renovate opens the bump PR under the new scheme
+- Version stays at v0.7.22 here; Renovate opens the bump PR under the new scheme
 
 Design: docs/superpowers/specs/2026-08-31-memini-renovate-single-dep-design.md
 EOF
