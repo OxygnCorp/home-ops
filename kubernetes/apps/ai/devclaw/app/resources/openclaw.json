@@ -5,33 +5,17 @@
       "bootstrapTotalMaxChars": 100000,
       "compaction": {
         "mode": "default",
-        "reserveTokensFloor": 30000,
-        "memoryFlush": { "enabled": true, "softThresholdTokens": 80000, "prompt": "Extract key decisions, state changes, lessons, blockers to memory/YYYY-MM-DD.md. Format: ## [HH:MM] Topic. Skip routine work. NO_FLUSH if nothing important.", "systemPrompt": "Compacting session context. Extract only what's worth remembering. No fluff." }
+        "memoryFlush": { "enabled": true, "softThresholdTokens": 80000 }
       },
       "contextInjection": "always",
       "contextPruning": { "mode": "off" },
       "heartbeat": {
         "model": "litellm/MiniMax-M3",
         "directPolicy": "allow",
-        "includeReasoning": false,
         "isolatedSession": true,
         "lightContext": true
       },
       "maxConcurrent": 4,
-      "memorySearch": {
-        "provider": "local",
-        "local": {
-          "modelPath": "hf:ggml-org/embeddinggemma-300m-qat-q8_0-GGUF/embeddinggemma-300m-qat-Q8_0.gguf"
-        },
-        "query": {
-          "hybrid": {
-            "enabled": true,
-            "textWeight": 0.3,
-            "mmr": { "enabled": true },
-            "temporalDecay": { "enabled": true }
-          }
-        }
-      },
       "model": {
         "primary": "litellm/zai-glm-5.2",
         "fallbacks": [
@@ -193,17 +177,9 @@
     "ownerAllowFrom": [
       "discord:{{ .DISCORD_MATT_USER_ID }}"
     ],
-    "ownerDisplay": "raw",
     "restart": false
   },
   "cron": {
-    "maxConcurrentRuns": 8,
-    "failureDestination": {
-      "channel": "discord",
-      "to": "channel:{{ .DISCORD_DEVOPS_CHANNEL_ID }}",
-      "accountId": "default",
-      "mode": "announce"
-    },
     "failureAlert": {
       "enabled": true,
       "after": 2,
@@ -296,11 +272,9 @@
       "memini",
       "oc-path",
       "searxng",
-      "thread-ownership",
       "tokenjuice",
       "web-readability"
     ],
-    "bundledDiscovery": "compat",
     "entries": {
       "browser": { "enabled": true },
       "active-memory": {
@@ -317,10 +291,7 @@
           "promptStyle": "balanced",
           "thinking": "off",
           "logging": true,
-          "persistTranscripts": true,
-          "qmd": {
-            "searchMode": "inherit"
-          }
+          "persistTranscripts": true
         }
       },
       "litellm": { "enabled": true },
@@ -346,7 +317,6 @@
             "agent:*:subagent:**"
           ],
           "skipStatelessSessions": true,
-          "transcriptGcEnabled": false,
           "proactiveThresholdCompactionMode": "deferred",
           "cacheAwareCompaction": {
             "enabled": true
@@ -419,7 +389,6 @@
           "expose_tools": true
         }
       },
-      "thread-ownership": { "enabled": true },
       "tokenjuice": { "enabled": true },
       "web-readability": { "enabled": true }
     },
