@@ -71,9 +71,12 @@ After:
 ```sh
 # renovate: datasource=docker depName=registry.erwanleboucher.dev/eleboucher/charts/memini
 MEMINI_PLUGIN_VERSION=v0.7.21
-if [ "$(cat "$HOME/.openclaw/extensions/memini/.clawver" 2>/dev/null)" != "${MEMINI_PLUGIN_VERSION#v}" ]; then
-  if node dist/index.js plugins install "clawhub:@eleboucher/memini@${MEMINI_PLUGIN_VERSION#v}" --pin --force; then
-    printf '%s' "${MEMINI_PLUGIN_VERSION#v}" > "$HOME/.openclaw/extensions/memini/.clawver"
+# Strip the chart tag prefix at runtime; braced shell expansion does not survive
+# the Flux postBuild variable substitution
+MEMINI_PLUGIN_REL=$(printf '%s' "$MEMINI_PLUGIN_VERSION" | sed 's/^v//')
+if [ "$(cat "$HOME/.openclaw/extensions/memini/.clawver" 2>/dev/null)" != "$MEMINI_PLUGIN_REL" ]; then
+  if node dist/index.js plugins install "clawhub:@eleboucher/memini@$MEMINI_PLUGIN_REL" --pin --force; then
+    printf '%s' "$MEMINI_PLUGIN_REL" > "$HOME/.openclaw/extensions/memini/.clawver"
   else
     echo "WARN: memini plugin install failed; starting with whatever is present"
   fi
@@ -82,8 +85,13 @@ fi
 
 Notes:
 
-- `${MEMINI_PLUGIN_VERSION#v}` is POSIX parameter expansion — valid in `/bin/sh` and inert
-  for the Helm template renderer (`${` is not Helm syntax).
+- The stripped form is derived at runtime through unbraced shell variables only
+  (`$MEMINI_PLUGIN_VERSION`, `$MEMINI_PLUGIN_REL`). The Flux `Kustomization`
+  `postBuild.substitute` pass defined in each app's `ks.yaml` (envsubst-style) replaces
+  braced `${...}` references with the value of that name — empty for unknown names — so an
+  earlier draft using a braced strip rendered to an empty string in konflate's diff.
+  Unbraced references to undefined variables survive the substitution (`$HOME` proves it
+  in production).
 - ClawHub keeps receiving the stripped form (`0.7.21`), and `.clawver` keeps storing the
   stripped form, so existing installs do not trigger a redundant reinstall on first boot
   after this change.
@@ -117,6 +125,11 @@ defends against reintroducing a similarly named dep later.
 - Visual check of the final rendered files: annotation depName, `v` prefix handling, and the
   three locations staying byte-consistent (`v0.7.x` everywhere Renovate writes, stripped
   form only inside clawhub calls / `.clawver`).
+- Rendered Flux output: `flux build kustomization mainclaw --namespace ai --path
+  <worktree>/kubernetes/apps/ai/mainclaw/app` (and `devclaw`) must keep the assignment line
+  `MEMINI_PLUGIN_REL=$(printf '%s' "$MEMINI_PLUGIN_VERSION" | sed 's/^v//')` intact and show
+  `clawhub:@eleboucher/memini@$MEMINI_PLUGIN_REL` — the gate that catches postBuild
+  substitution damage, invisible to schema-only checks (`flate`).
 
 ## Risks
 

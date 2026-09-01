@@ -49,9 +49,12 @@ newString:
 ```
                 # renovate: datasource=docker depName=registry.erwanleboucher.dev/eleboucher/charts/memini
                 MEMINI_PLUGIN_VERSION=v0.7.22
-                if [ "$(cat "$HOME/.openclaw/extensions/memini/.clawver" 2>/dev/null)" != "${MEMINI_PLUGIN_VERSION#v}" ]; then
-                  if node dist/index.js plugins install "clawhub:@eleboucher/memini@${MEMINI_PLUGIN_VERSION#v}" --pin --force; then
-                    printf '%s' "${MEMINI_PLUGIN_VERSION#v}" > "$HOME/.openclaw/extensions/memini/.clawver"
+                # Strip the chart tag prefix at runtime; braced shell expansion does not survive
+                # the Flux postBuild variable substitution
+                MEMINI_PLUGIN_REL=$(printf '%s' "$MEMINI_PLUGIN_VERSION" | sed 's/^v//')
+                if [ "$(cat "$HOME/.openclaw/extensions/memini/.clawver" 2>/dev/null)" != "$MEMINI_PLUGIN_REL" ]; then
+                  if node dist/index.js plugins install "clawhub:@eleboucher/memini@$MEMINI_PLUGIN_REL" --pin --force; then
+                    printf '%s' "$MEMINI_PLUGIN_REL" > "$HOME/.openclaw/extensions/memini/.clawver"
 ```
 
 - [ ] **Step 2: Edit devclaw helmrelease**
@@ -67,7 +70,7 @@ sed -n '47,55p' kubernetes/apps/ai/devclaw/app/helmrelease.yaml | sh -n && echo 
 ```
 Expected: `MAINCLAW_SH_OK` and `DEVCLAW_SH_OK`, exit code 0. Any `sh: syntax error` means the edit broke quoting — fix before continuing. (Line counts are unchanged by the edit, so ranges stay valid.)
 
-- [ ] **Step 4: Validate HelmReleases with flate**
+- [ ] **Step 4: Validate HelmReleases with flate and rendered Flux output**
 
 Per-app paths cannot resolve cross-tree `dependsOn` (e.g. kopiur in `kopiur-system`) — validate the whole tree:
 
@@ -76,6 +79,13 @@ Run:
 mise exec -- flate test hr --path ./kubernetes/apps
 ```
 Expected: exit code 0, all HelmReleases pass (includes mainclaw, devclaw, memini).
+
+Rendered check (the gate that catches postBuild substitution damage):
+```bash
+flux build kustomization mainclaw --namespace ai --path ./kubernetes/apps/ai/mainclaw/app | rg 'MEMINI_|clawhub'
+flux build kustomization devclaw --namespace ai --path ./kubernetes/apps/ai/devclaw/app | rg 'MEMINI_|clawhub'
+```
+Expected: assignment line `MEMINI_PLUGIN_REL=$(printf '%s' "$MEMINI_PLUGIN_VERSION" | sed 's/^v//')` intact, no empty-string artifacts (`!= ""`, `memini@"`), pin refs unbraced.
 
 - [ ] **Step 5: Verify the single-dependency invariant**
 
