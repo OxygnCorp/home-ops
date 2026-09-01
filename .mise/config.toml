@@ -14,7 +14,7 @@ experimental = true
 node = "24.20.0"
 python = "3.14.7"
 uv = "0.12.8"
-go = "1.27.0"
+go = "1.27.1"
 gum = "2.0.0"
 
 # Mise
