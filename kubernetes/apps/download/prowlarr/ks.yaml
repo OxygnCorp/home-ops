@@ -21,7 +21,7 @@ spec:
   postBuild:
     substitute:
       APP: prowlarr
-      KOPIUR_CAPACITY: 1Gi
+      KOPIUR_CAPACITY: 5Gi
   prune: true
   sourceRef:
     kind: GitRepository

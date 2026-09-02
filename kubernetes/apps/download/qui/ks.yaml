@@ -21,7 +21,7 @@ spec:
   postBuild:
     substitute:
       APP: qui
-      KOPIUR_CAPACITY: 2Gi
+      KOPIUR_CAPACITY: 5Gi
   prune: true
   sourceRef:
     kind: GitRepository
