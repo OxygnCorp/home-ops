@@ -59,6 +59,13 @@ spec:
       timezone: Europe/Paris
   mode: ReadWrite
   moverDefaults:
+    cache:
+      # Local (non-replicated) class for the mover kopia caches: replicated
+      # staging churns DRBD on every backup run (snapshot/freeze/teardown) and
+      # was the trigger for the LINBIT/drbd#137 teardown wedge (see
+      # home-operations/miroir#262). Cache loss on node failure is acceptable:
+      # it rebuilds from the repository on the next mover run.
+      storageClassName: miroir-slow-local
     securityContext:
       runAsUser: 1024
       runAsGroup: 100
