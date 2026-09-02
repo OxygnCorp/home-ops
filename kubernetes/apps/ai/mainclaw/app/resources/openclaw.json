@@ -1,23 +1,28 @@
 {
   "agents": {
     "defaults": {
+      "bootstrapMaxChars": 16384,
+      "bootstrapTotalMaxChars": 49152,
       "compaction": {
+        "mode": "default",
+        "timeoutSeconds": 600,
+        "reserveTokensFloor": 40000,
         "memoryFlush": {
           "enabled": true,
-          "softThresholdTokens": 12000
-        },
-        "mode": "safeguard"
+          "softThresholdTokens": 80000,
+          "prompt": "Extract key decisions, state changes, lessons, blockers to memory/YYYY-MM-DD.md. Format: ## [HH:MM] Topic. Skip routine work. NO_FLUSH if nothing important.",
+          "systemPrompt": "Compacting session context. Extract only what's worth remembering. No fluff."
+        }
       },
+      "contextInjection": "continuation-skip",
       "contextPruning": {
-        "hardClear": {
-          "enabled": true,
-          "placeholder": "[Old tool result content cleared]"
-        },
-        "mode": "cache-ttl",
-        "ttl": "6h"
+        "mode": "off"
       },
       "heartbeat": {
         "directPolicy": "allow",
+        "every": "60m",
+        "includeReasoning": false,
+        "isolatedSession": true,
         "lightContext": true
       },
       "imageModel": {
@@ -108,7 +113,7 @@
         "delegationMode": "prefer",
         "maxSpawnDepth": 1,
         "maxChildrenPerAgent": 3,
-        "maxConcurrent": 4,
+        "maxConcurrent": 3,
         "runTimeoutSeconds": 900,
         "announceTimeoutMs": 180000,
         "model": {
@@ -117,11 +122,12 @@
             "litellm/dsv4f"
           ]
         },
-        "thinking": "low"
+        "thinking": "high"
       },
+      "thinkingDefault": "high",
       "typingMode": "instant",
       "typingIntervalSeconds": 6,
-      "timeoutSeconds": 600,
+      "timeoutSeconds": 1800,
       "userTimezone": "Europe/Paris",
       "workspace": "/home/node/.openclaw/workspace"
     },
@@ -813,7 +819,7 @@
           "id": "LITELLM_API_KEY"
         },
         "api": "openai-completions",
-        "timeoutSeconds": 600,
+        "timeoutSeconds": 1800,
         "models": [
           {
             "id": "MiniMax-M3",
