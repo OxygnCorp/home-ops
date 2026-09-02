@@ -1,17 +1,26 @@
 {
   "agents": {
     "defaults": {
-      "bootstrapMaxChars": 50000,
-      "bootstrapTotalMaxChars": 100000,
+      "bootstrapMaxChars": 16384,
+      "bootstrapTotalMaxChars": 49152,
       "compaction": {
         "mode": "default",
-        "memoryFlush": { "enabled": true, "softThresholdTokens": 80000 }
+        "timeoutSeconds": 600,
+        "reserveTokensFloor": 40000,
+        "memoryFlush": {
+          "enabled": true,
+          "softThresholdTokens": 80000,
+          "prompt": "Extract key decisions, state changes, lessons, blockers to memory/YYYY-MM-DD.md. Format: ## [HH:MM] Topic. Skip routine work. NO_FLUSH if nothing important.",
+          "systemPrompt": "Compacting session context. Extract only what's worth remembering. No fluff."
+        }
       },
-      "contextInjection": "always",
+      "contextInjection": "continuation-skip",
       "contextPruning": { "mode": "off" },
       "heartbeat": {
         "model": "litellm/MiniMax-M3",
         "directPolicy": "allow",
+        "every": "60m",
+        "includeReasoning": false,
         "isolatedSession": true,
         "lightContext": true
       },
@@ -48,7 +57,7 @@
         "archiveAfterMinutes": 120,
         "maxSpawnDepth": 1,
         "maxChildrenPerAgent": 3,
-        "maxConcurrent": 4,
+        "maxConcurrent": 3,
         "model": {
           "primary": "litellm/MiniMax-M3",
           "fallbacks": [
@@ -56,9 +65,11 @@
           ]
         },
         "runTimeoutSeconds": 900,
-        "announceTimeoutMs": 180000
+        "announceTimeoutMs": 180000,
+        "thinking": "high"
       },
-      "timeoutSeconds": 1200,
+      "thinkingDefault": "high",
+      "timeoutSeconds": 1800,
       "typingMode": "instant",
       "typingIntervalSeconds": 6,
       "userTimezone": "Europe/Paris"
@@ -239,7 +250,7 @@
         "apiKey": { "source": "env", "provider": "default", "id": "LITELLM_API_KEY" },
         "api": "openai-completions",
         "request": { "allowPrivateNetwork": true },
-        "timeoutSeconds": 600,
+        "timeoutSeconds": 1800,
         "models": [
           { "id": "MiniMax-M3", "name": "MiniMax M3", "reasoning": true, "input": ["text", "image"], "cost": { "input": 15, "output": 60, "cacheRead": 2, "cacheWrite": 0 }, "contextWindow": 1000000, "maxTokens": 131072 },
           { "id": "MiniMax-M2.7", "name": "MiniMax M2.7", "reasoning": true, "input": ["text"], "cost": { "input": 15, "output": 60, "cacheRead": 2, "cacheWrite": 0 }, "contextWindow": 204800, "maxTokens": 131072 },
