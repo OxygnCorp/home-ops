@@ -983,7 +983,7 @@
       "lossless-claw",
       "memory-wiki",
       "memini",
-      "searxng",
+      "minimax",
       "tokenjuice",
       "workboard"
     ],
@@ -1094,12 +1094,11 @@
           }
         }
       },
-      "searxng": {
+      "minimax": {
         "enabled": true,
         "config": {
           "webSearch": {
-            "baseUrl": "https://search.oxygn.dev",
-            "language": "fr"
+            "region": "global"
           }
         }
       },
@@ -1341,7 +1340,7 @@
       },
       "search": {
         "enabled": true,
-        "provider": "searxng",
+        "provider": "minimax",
         "openaiCodex": {}
       }
     }
