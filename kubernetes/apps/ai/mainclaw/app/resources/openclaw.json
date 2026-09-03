@@ -778,6 +778,7 @@
     },
     "mode": "local",
     "port": 18789,
+    "publicOrigin": "https://mainclaw.oxygn.dev",
     "tools": {
       "allow": [
         "sessions_send"
