@@ -68,7 +68,7 @@ spec:
                 # only fetches when the pinned version differs from what's on the
                 # persistent volume, so normal restarts stay offline.
                 # renovate: datasource=docker depName=registry.erwanleboucher.dev/eleboucher/charts/memini
-                MEMINI_PLUGIN_VERSION=v0.7.22
+                MEMINI_PLUGIN_VERSION=v0.7.23
                 # Strip the chart tag prefix at runtime; braced shell expansion does not survive
                 # the Flux postBuild variable substitution
                 MEMINI_PLUGIN_REL=$(printf '%s' "$MEMINI_PLUGIN_VERSION" | sed 's/^v//')
