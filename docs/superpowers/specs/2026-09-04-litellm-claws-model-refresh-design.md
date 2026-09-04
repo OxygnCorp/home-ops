@@ -84,9 +84,9 @@ request quotas drive the assignment.
 | subagents (defaults) | `MiniMax-M3` | `dsv4f` | unchanged |
 | plugins (active-memory, lossless-claw) | `dsv4f` | `MiniMax-M2.7` | unchanged |
 
-Quota concentration check: `qwen3.8-max` (810/mo) → lycos only; `glm-5.3` (1,080/mo oc) →
-devclaw FB1 only; `zai-glm-5.3` → devclaw primary + lycos FB1; everything high-volume lands on
-≥5k/mo quotas or the MiniMax pool.
+Quota concentration check: `qwen3.8-max` (810/mo) → lycos primary only (fallback-only for
+finance); `glm-5.3` (1,080/mo oc) → devclaw FB1 only; `zai-glm-5.3` → devclaw primary +
+lycos FB1; everything high-volume lands on ≥5k/mo quotas or the MiniMax pool.
 
 ### Available via `/model`, unassigned
 
