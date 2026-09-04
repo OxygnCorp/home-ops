@@ -14,7 +14,6 @@ spec:
       openclaw:
         annotations:
           secret.reloader.stakater.com/reload: "mainclaw-secret, mainclaw-config"
-          configmap.reloader.stakater.com/reload: "mainclaw-configmap"
         initContainers:
           init:
             image:
