@@ -1123,6 +1123,7 @@
     "allow": [
       "active-memory",
       "browser",
+      "device-pair",
       "discord",
       "litellm",
       "llm-task",
