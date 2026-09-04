@@ -261,12 +261,14 @@
           { "id": "go-minimax-m3", "name": "OpenCode Go MiniMax M3", "reasoning": true, "input": ["text"], "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }, "contextWindow": 1000000, "maxTokens": 32768 },
           { "id": "go-minimax-m2.7", "name": "OpenCode Go MiniMax M2.7", "reasoning": true, "input": ["text"], "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }, "contextWindow": 204800, "maxTokens": 16384 },
           { "id": "mimo-v2.5-pro", "name": "OpenCode Go MiMo V2.5 Pro", "reasoning": true, "input": ["text"], "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }, "contextWindow": 262144, "maxTokens": 16384 },
+          { "id": "mimo-v2.5", "name": "OpenCode Go MiMo V2.5", "reasoning": true, "input": ["text"], "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }, "contextWindow": 262144, "maxTokens": 16384 },
           { "id": "zai-glm-5.2", "name": "z.ai GLM 5.2", "reasoning": true, "input": ["text"], "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }, "contextWindow": 1000000, "maxTokens": 131072 },
           { "id": "zai-glm-5.3", "name": "z.ai GLM 5.3", "reasoning": true, "input": ["text"], "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }, "contextWindow": 1000000, "maxTokens": 131072 },
           { "id": "zai-glm-5.3-flash", "name": "z.ai GLM 5.3 Flash", "reasoning": true, "input": ["text", "image"], "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }, "contextWindow": 1000000, "maxTokens": 32768 },
           { "id": "go-glm-5.3", "name": "OpenCode Go GLM 5.3", "reasoning": true, "input": ["text"], "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }, "contextWindow": 1000000, "maxTokens": 131072 },
           { "id": "go-glm-5.3-flash", "name": "OpenCode Go GLM 5.3 Flash", "reasoning": true, "input": ["text", "image"], "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }, "contextWindow": 1000000, "maxTokens": 32768 },
-          { "id": "go-qwen3.8-flash", "name": "OpenCode Go Qwen3.8 Flash", "reasoning": true, "input": ["text"], "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }, "contextWindow": 262144, "maxTokens": 16384 }
+          { "id": "go-qwen3.8-flash", "name": "OpenCode Go Qwen3.8 Flash", "reasoning": true, "input": ["text"], "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }, "contextWindow": 262144, "maxTokens": 16384 },
+          { "id": "qwen3.7-plus", "name": "OpenCode Go Qwen3.7 Plus", "reasoning": true, "input": ["text"], "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }, "contextWindow": 1000000, "maxTokens": 16384 }
         ]
       }
     }

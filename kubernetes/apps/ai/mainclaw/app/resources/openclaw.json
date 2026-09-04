@@ -998,6 +998,22 @@
             "maxTokens": 16384
           },
           {
+            "id": "mimo-v2.5",
+            "name": "OpenCode Go MiMo V2.5",
+            "reasoning": true,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 262144,
+            "maxTokens": 16384
+          },
+          {
             "id": "zai-glm-5.3",
             "name": "z.ai GLM 5.3",
             "reasoning": true,
@@ -1079,6 +1095,22 @@
             },
             "contextWindow": 262144,
             "maxTokens": 16384
+          },
+          {
+            "id": "qwen3.7-plus",
+            "name": "OpenCode Go Qwen3.7 Plus",
+            "reasoning": true,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1000000,
+            "maxTokens": 16384
           }
         ],
         "request": {
@@ -1091,6 +1123,7 @@
     "allow": [
       "active-memory",
       "browser",
+      "device-pair",
       "discord",
       "litellm",
       "llm-task",
