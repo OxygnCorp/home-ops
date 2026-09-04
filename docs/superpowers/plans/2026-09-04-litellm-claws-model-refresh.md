@@ -191,7 +191,7 @@ Replace the whole `fallbacks:` list under `router_settings` with:
 - [ ] **Step 4: Validate**
 
 ```bash
-mise exec -- flate test hr --path ./kubernetes/apps/ai/litellm
+mise exec -- flate test hr --path ./kubernetes/apps
 python3 -c "import yaml; d=yaml.safe_load(open('kubernetes/apps/ai/litellm/app/resources/config.yaml')); names=[m['model_name'] for m in d['model_list']]; assert len(names)==len(set(names)), 'dupes'; assert 'glm-5.1' not in names and 'zai-glm-4.7' not in names and 'zai-glm-5-turbo' not in names and 'go-kimi-k2.6' not in names; assert 'zai-glm-5.3' in names and 'go-glm-5.3-flash' in names; print('OK', len(names), 'models')"
 ```
 
@@ -300,7 +300,7 @@ In `models.providers.litellm.models`, delete the entries with `"id": "glm-5.1"`,
 ```bash
 jq -e '.agents.defaults.model.primary == "litellm/zai-glm-5.3" and .agents.defaults.model.fallbacks == ["litellm/go-glm-5.3", "litellm/MiniMax-M3"] and .agents.defaults.imageModel.fallbacks == ["litellm/go-glm-5.3-flash"]' kubernetes/apps/ai/devclaw/app/resources/openclaw.json
 jq -e '([.models.providers.litellm.models[].id] | index("glm-5.1") == null) and ([.models.providers.litellm.models[].id] | index("zai-glm-4.7") == null) and ([.models.providers.litellm.models[].id] | index("go-kimi-k2.6") == null) and ([.models.providers.litellm.models[].id] | index("zai-glm-5.3") != null)' kubernetes/apps/ai/devclaw/app/resources/openclaw.json
-mise exec -- flate test hr --path ./kubernetes/apps/ai/devclaw
+mise exec -- flate test hr --path ./kubernetes/apps
 ```
 
 Expected: both `jq` calls print config and exit 0; flate passes.
@@ -592,7 +592,7 @@ jq -e '.agents.list | map(select(.id == "nova"))[0].model.primary == "litellm/za
 jq -e '.agents.list | map(select(.id == "lycos"))[0].model.primary == "litellm/go-qwen3.8-max"' kubernetes/apps/ai/mainclaw/app/resources/openclaw.json
 jq -e '.agents.list | map(select(.id == "main"))[0].model == null' kubernetes/apps/ai/mainclaw/app/resources/openclaw.json
 jq -e '([.models.providers.litellm.models[].id] | index("glm-5.1") == null) and ([.models.providers.litellm.models[].id] | index("go-kimi-k2.6") == null) and ([.models.providers.litellm.models[].id] | index("go-qwen3.8-max") != null)' kubernetes/apps/ai/mainclaw/app/resources/openclaw.json
-mise exec -- flate test hr --path ./kubernetes/apps/ai/mainclaw
+mise exec -- flate test hr --path ./kubernetes/apps
 ```
 
 Expected: all `jq` calls exit 0; flate passes.
@@ -709,7 +709,7 @@ Only if Task 5 Step 2 showed `go-gpt-5.6-luna` failing:
 
 ```bash
 # Remove the go-gpt-5.6-luna block from config.yaml, then:
-mise exec -- flate test hr --path ./kubernetes/apps/ai/litellm
+mise exec -- flate test hr --path ./kubernetes/apps
 git add kubernetes/apps/ai/litellm/app/resources/config.yaml
 git commit -m "fix(ai/litellm): remove dormant go-gpt-5.6-luna (persistent upstream 500)"
 git push
