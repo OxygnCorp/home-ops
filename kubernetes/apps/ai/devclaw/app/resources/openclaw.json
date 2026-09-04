@@ -6,12 +6,9 @@
       "compaction": {
         "mode": "default",
         "timeoutSeconds": 600,
-        "reserveTokensFloor": 40000,
         "memoryFlush": {
           "enabled": true,
-          "softThresholdTokens": 80000,
-          "prompt": "Extract key decisions, state changes, lessons, blockers to memory/YYYY-MM-DD.md. Format: ## [HH:MM] Topic. Skip routine work. NO_FLUSH if nothing important.",
-          "systemPrompt": "Compacting session context. Extract only what's worth remembering. No fluff."
+          "softThresholdTokens": 80000
         }
       },
       "contextInjection": "continuation-skip",
@@ -20,7 +17,6 @@
         "model": "litellm/MiniMax-M3",
         "directPolicy": "allow",
         "every": "60m",
-        "includeReasoning": false,
         "isolatedSession": true,
         "lightContext": true
       },
