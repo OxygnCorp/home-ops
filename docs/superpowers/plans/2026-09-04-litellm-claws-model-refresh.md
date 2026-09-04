@@ -14,7 +14,7 @@
 
 - Branch: `litellm-claws-model-refresh` (already exists, spec committed). Never commit on `main`.
 - Model names must match the spec exactly (`zai-glm-5.3`, `go-glm-5.3-flash`, `go-qwen3.8-max`, `go-qwen3.8-flash`, `go-dsv4f-vision`, `MiniMax-M2.7-highspeed`, etc.).
-- `mise exec -- flate test hr --path ./kubernetes/apps/ai/<app>` must pass before each commit.
+- `mise exec -- flate test hr --path ./kubernetes/apps` must pass before each commit (per-app paths fail pre-existing on cross-tree dependsOn).
 - No plain-text secrets; API keys stay as `os.environ/...` references.
 - Do NOT add `metadata.namespace` to any resource (injected by kustomize).
 - Excluded models (never reference): `grok-4.6`, `omen-alpha`, `longcat-2.0`, `glm-5.1`, `zai-glm-4.7`, `zai-glm-5-turbo`, `go-kimi-k2.6`.
