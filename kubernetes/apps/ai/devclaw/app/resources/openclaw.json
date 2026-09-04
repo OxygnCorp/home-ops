@@ -26,16 +26,16 @@
       },
       "maxConcurrent": 4,
       "model": {
-        "primary": "litellm/zai-glm-5.2",
+        "primary": "litellm/zai-glm-5.3",
         "fallbacks": [
-          "litellm/zai-glm-4.7",
+          "litellm/go-glm-5.3",
           "litellm/MiniMax-M3"
         ]
       },
       "imageModel": {
         "primary": "litellm/MiniMax-M3",
         "fallbacks": [
-          "litellm/go-kimi-k2.6"
+          "litellm/go-glm-5.3-flash"
         ]
       },
       "models": {
@@ -43,10 +43,12 @@
         "litellm/MiniMax-M2.7": { "alias": "minimax-m2.7", "params": { "cacheRetention": "short" } },
         "litellm/dsv4f": { "alias": "dsv4f", "params": { "cache_prompt": true } },
         "litellm/dsv4p": { "alias": "dsv4p", "params": { "cache_prompt": true } },
-        "litellm/glm-5.1": { "alias": "glm-5.1", "params": { "cache_prompt": true } },
         "litellm/zai-glm-5.2": { "alias": "glm-5.2", "params": { "cache_prompt": true } },
-        "litellm/zai-glm-4.7": { "alias": "glm-4.7", "params": { "cache_prompt": true } },
-        "litellm/go-kimi-k2.6": { "alias": "go-kimi-2.6", "params": { "cache_prompt": true } },
+        "litellm/zai-glm-5.3": { "alias": "glm-5.3", "params": { "cache_prompt": true } },
+        "litellm/zai-glm-5.3-flash": { "alias": "glm-5.3-flash", "params": { "cache_prompt": true } },
+        "litellm/go-glm-5.3": { "alias": "go-glm-5.3", "params": { "cache_prompt": true } },
+        "litellm/go-glm-5.3-flash": { "alias": "go-glm-5.3-flash", "params": { "cache_prompt": true } },
+        "litellm/go-qwen3.8-flash": { "alias": "qwen-flash", "params": { "cache_prompt": true } },
         "litellm/go-minimax-m3": { "alias": "go-minimax-m3", "params": { "cache_prompt": true } },
         "litellm/go-minimax-m2.7": { "alias": "go-minimax-m2.7", "params": { "cache_prompt": true } },
         "litellm/mimo-v2.5-pro": { "alias": "mimo-agent", "params": { "cache_prompt": true } },
@@ -260,13 +262,15 @@
           { "id": "MiniMax-M2.7", "name": "MiniMax M2.7", "reasoning": true, "input": ["text"], "cost": { "input": 15, "output": 60, "cacheRead": 2, "cacheWrite": 0 }, "contextWindow": 204800, "maxTokens": 131072 },
           { "id": "dsv4f", "name": "OpenCode Go DeepSeek V4 Flash", "reasoning": true, "input": ["text"], "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }, "contextWindow": 1000000, "maxTokens": 16384 },
           { "id": "dsv4p", "name": "OpenCode Go DeepSeek V4 Pro", "reasoning": true, "input": ["text"], "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }, "contextWindow": 1000000, "maxTokens": 16384 },
-          { "id": "glm-5.1", "name": "OpenCode Go GLM 5.1", "reasoning": true, "input": ["text"], "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }, "contextWindow": 203000, "maxTokens": 16384 },
-          { "id": "go-kimi-k2.6", "name": "OpenCode Go Kimi K2.6", "reasoning": true, "input": ["text"], "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }, "contextWindow": 262144, "maxTokens": 16384 },
           { "id": "go-minimax-m3", "name": "OpenCode Go MiniMax M3", "reasoning": true, "input": ["text"], "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }, "contextWindow": 1000000, "maxTokens": 32768 },
           { "id": "go-minimax-m2.7", "name": "OpenCode Go MiniMax M2.7", "reasoning": true, "input": ["text"], "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }, "contextWindow": 204800, "maxTokens": 16384 },
           { "id": "mimo-v2.5-pro", "name": "OpenCode Go MiMo V2.5 Pro", "reasoning": true, "input": ["text"], "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }, "contextWindow": 262144, "maxTokens": 16384 },
           { "id": "zai-glm-5.2", "name": "z.ai GLM 5.2", "reasoning": true, "input": ["text"], "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }, "contextWindow": 1000000, "maxTokens": 131072 },
-          { "id": "zai-glm-4.7", "name": "z.ai GLM 4.7", "reasoning": true, "input": ["text"], "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }, "contextWindow": 204800, "maxTokens": 131072 }
+          { "id": "zai-glm-5.3", "name": "z.ai GLM 5.3", "reasoning": true, "input": ["text"], "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }, "contextWindow": 1000000, "maxTokens": 131072 },
+          { "id": "zai-glm-5.3-flash", "name": "z.ai GLM 5.3 Flash", "reasoning": true, "input": ["text", "image"], "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }, "contextWindow": 1000000, "maxTokens": 32768 },
+          { "id": "go-glm-5.3", "name": "OpenCode Go GLM 5.3", "reasoning": true, "input": ["text"], "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }, "contextWindow": 1000000, "maxTokens": 131072 },
+          { "id": "go-glm-5.3-flash", "name": "OpenCode Go GLM 5.3 Flash", "reasoning": true, "input": ["text", "image"], "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }, "contextWindow": 1000000, "maxTokens": 32768 },
+          { "id": "go-qwen3.8-flash", "name": "OpenCode Go Qwen3.8 Flash", "reasoning": true, "input": ["text"], "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }, "contextWindow": 262144, "maxTokens": 16384 }
         ]
       }
     }
