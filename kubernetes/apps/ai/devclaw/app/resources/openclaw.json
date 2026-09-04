@@ -218,6 +218,9 @@
     "mode": "local",
     "port": 18789,
     "publicOrigin": "https://devclaw.oxygn.dev",
+    "remote": {
+      "url": "https://devclaw.oxygn.dev"
+    },
     "tools": {
       "allow": [
         "sessions_send"
