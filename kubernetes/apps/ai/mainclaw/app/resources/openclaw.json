@@ -578,6 +578,64 @@
           ]
         },
         "thinkingDefault": "high"
+      },
+      {
+        "id": "elina",
+        "name": "Elina",
+        "workspace": "/home/node/.openclaw/workspace-elina",
+        "agentDir": "/home/node/.openclaw/agents/elina/agent",
+        "identity": {
+          "name": "Elina"
+        },
+        "groupChat": {
+          "mentionPatterns": [
+            "@elina"
+          ]
+        },
+        "tools": {
+          "profile": "full",
+          "alsoAllow": [
+            "memory_recall",
+            "memory_list",
+            "memory_remember",
+            "message",
+            "agents_list",
+            "wiki_status",
+            "wiki_search",
+            "wiki_lint",
+            "wiki_apply",
+            "wiki_get"
+          ]
+        }
+      },
+      {
+        "id": "elliot",
+        "name": "Elliot",
+        "workspace": "/home/node/.openclaw/workspace-elliot",
+        "agentDir": "/home/node/.openclaw/agents/elliot/agent",
+        "identity": {
+          "name": "Elliot"
+        },
+        "groupChat": {
+          "mentionPatterns": [
+            "@elliot"
+          ]
+        },
+        "tools": {
+          "profile": "full",
+          "alsoAllow": [
+            "memory_recall",
+            "memory_list",
+            "memory_remember",
+            "message",
+            "agents_list",
+            "wiki_status",
+            "wiki_search",
+            "wiki_lint",
+            "wiki_apply",
+            "wiki_get"
+          ]
+        }
       }
     ]
   },
@@ -719,7 +777,9 @@
           "shopping",
           "media",
           "lycos",
-          "legal"
+          "legal",
+          "elina",
+          "elliot"
         ],
         "approvers": [
           "{{ .DISCORD_MATT_USER_ID }}",
