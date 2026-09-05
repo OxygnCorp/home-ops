@@ -8,6 +8,29 @@ data:
     # can be reinstalled via mise install
     .local/share/
 
-    #npm cache
-    .npm/_cacache/
+    # npm cache (cacache, npx, logs)
+    .npm/
+
+    # dependency trees, restored via npm install / plugin reinstall
+    node_modules/
+
+    # tool caches (playwright browsers, pip downloads)
+    .cache/
+
+    # openclaw downloaded control-ui assets
+    .openclaw/cache/
+
+    # transient temp dirs
+    .openclaw/tmp/
+    .openclaw/workspace/.openclaw/tmp/
+
+    # internal sqlite backups / one-off repair snapshots
+    *.sqlite.bak-*
+    .openclaw/.repair-backup-*/
+
+    # logs
+    .openclaw/logs/
+
+    # memini version marker: absent after restore -> startup guard reinstalls the plugin
+    .openclaw/extensions/memini/.clawver
 
