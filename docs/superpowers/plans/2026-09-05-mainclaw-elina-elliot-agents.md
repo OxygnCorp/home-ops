@@ -12,7 +12,7 @@
 
 ## Global Constraints
 
-- Branch `feat/mainclaw-elina-elliot` already exists, **stacked on the rebuilt `feat/mainclaw-legal-agent` branch (head `c7fb75b4e`)** — the original legal docs commits were redacted and rebuilt in a worktree; the branch was rebased onto `c7fb75b4e` (docs commits now `563a1463d` spec + `37269d566` plan). Do all work there. **Never commit to main.**
+- Branch `feat/mainclaw-elina-elliot` already exists, **stacked on the rebuilt `feat/mainclaw-legal-agent` branch (head `c7fb75b4e`)** — the original legal docs commits were redacted and rebuilt in a worktree; the branch was rebased onto `c7fb75b4e` (docs commits: spec `563a1463d` + the plan commit on this branch, amended in place twice after the rebase). Do all work there. **Never commit to main.**
 - `openclaw.json` is strict-schema-checked by openclaw 2026.9.1 on boot — use **only** keys already present on existing agents (verified in the spec). No new keys invented.
 - **No `model`, `heartbeat`, or per-agent `exec` keys** on the two new agents: model inherits `agents.defaults` (`litellm/MiniMax-M3`, fallbacks `go-minimax-m3` → `dsv4f` — user-confirmed), no proactive behavior, and exec inherits the instance-global `tools.exec: {security: "allowlist", ask: "on-miss"}` (openclaw.json:1529-1533).
 - **No emoji** in `identity` — name only (user picks icons later).

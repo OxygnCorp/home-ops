@@ -186,8 +186,12 @@ approved design for elina/elliot includes it.
 
 ### 6. `openclaw.json` — `tools.agentToAgent.allow` (add `"elina"`, `"elliot"`)
 
-Allows main/nova (and the others already in the list) to delegate to the two new
-agents — e.g. "demande à Elina ce qu'on a proposé la semaine dernière".
+Allows the other agents to reach the two new agents through the global
+agent-to-agent gate — e.g. "demande à Elina ce qu'on a proposé la semaine
+dernière". Note: `nova` additionally carries a per-agent
+`subagents.allowAgents` list that does not include `elina`/`elliot`; if
+nova-side subagent delegation is wanted later, that list must be extended too
+(user decision — nova is Agnès's agent, out of this change's scope).
 
 ### 7. `externalsecret.yaml` — `mainclaw` ExternalSecret `template.data` (add after `DISCORD_LEGAL_CHANNEL_ID`)
 
