@@ -430,7 +430,7 @@ with:
 - [ ] **Step 4: Verify agentToAgent**
 
 Run: `jq -e '.tools.agentToAgent.allow | index("elina"), index("elliot")' kubernetes/apps/ai/mainclaw/app/resources/openclaw.json`
-Expected output: `9` and `10` (array indices; any non-null numbers are fine).
+Expected output: `8` and `9` (array indices; any non-null numbers are fine — note this list has 8 pre-existing entries: unlike active-memory, `legal` was deliberately never added to it).
 
 - [ ] **Step 5: Commit**
 
