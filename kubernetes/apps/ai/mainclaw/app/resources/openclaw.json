@@ -1305,7 +1305,9 @@
             "media",
             "nova",
             "lycos",
-            "legal"
+            "legal",
+            "elina",
+            "elliot"
           ],
           "model": "litellm/dsv4f",
           "modelFallback": "litellm/MiniMax-M2.7",
@@ -1615,7 +1617,9 @@
         "shopping",
         "media",
         "nova",
-        "lycos"
+        "lycos",
+        "elina",
+        "elliot"
       ],
       "enabled": true
     },
