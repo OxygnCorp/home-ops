@@ -1204,7 +1204,8 @@
             "coach",
             "media",
             "nova",
-            "lycos"
+            "lycos",
+            "legal"
           ],
           "model": "litellm/dsv4f",
           "modelFallback": "litellm/MiniMax-M2.7",
