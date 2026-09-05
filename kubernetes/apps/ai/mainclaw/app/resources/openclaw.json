@@ -669,6 +669,17 @@
         },
         "guildId": "{{ .DISCORD_GUILD_ID }}"
       }
+    },
+    {
+      "agentId": "legal",
+      "match": {
+        "channel": "discord",
+        "peer": {
+          "kind": "channel",
+          "id": "{{ .DISCORD_LEGAL_CHANNEL_ID }}"
+        },
+        "guildId": "{{ .DISCORD_GUILD_ID }}"
+      }
     }
   ],
   "channels": {
@@ -793,6 +804,15 @@
                 "docs"
               ],
               "systemPrompt": "Tu es l'assistant recherche. Sois précis, indique tes sources, fait des tableaux comparatifs."
+            },
+            "{{ .DISCORD_LEGAL_CHANNEL_ID }}": {
+              "enabled": true,
+              "requireMention": false,
+              "skills": [
+                "search",
+                "docs"
+              ],
+              "systemPrompt": "Tu es Harvey, mon assistant juridique pour le droit français. Sois factuel, précis et intelligible."
             },
             "{{ .DISCORD_CLAW_PROJECT_FORUM }}": {
               "enabled": true,
