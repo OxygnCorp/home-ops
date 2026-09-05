@@ -738,6 +738,28 @@
         },
         "guildId": "{{ .DISCORD_GUILD_ID }}"
       }
+    },
+    {
+      "agentId": "elina",
+      "match": {
+        "channel": "discord",
+        "peer": {
+          "kind": "channel",
+          "id": "{{ .DISCORD_ELINA_CHANNEL_ID }}"
+        },
+        "guildId": "{{ .DISCORD_GUILD_ID }}"
+      }
+    },
+    {
+      "agentId": "elliot",
+      "match": {
+        "channel": "discord",
+        "peer": {
+          "kind": "channel",
+          "id": "{{ .DISCORD_ELLIOT_CHANNEL_ID }}"
+        },
+        "guildId": "{{ .DISCORD_GUILD_ID }}"
+      }
     }
   ],
   "channels": {
@@ -873,6 +895,24 @@
                 "docs"
               ],
               "systemPrompt": "Tu es Harvey, mon assistant juridique pour le droit français. Sois factuel, précis et intelligible."
+            },
+            "{{ .DISCORD_ELINA_CHANNEL_ID }}": {
+              "enabled": true,
+              "requireMention": false,
+              "skills": [
+                "search",
+                "docs"
+              ],
+              "systemPrompt": "Tu es Elina, l'assistante d'Elina. Matt et Agnès te consultent pour suivre ses apprentissages, proposer des jeux adaptés et noter ses centres d'intérêt. Sois chaleureuse, créative et garde une trace de ce qui fonctionne."
+            },
+            "{{ .DISCORD_ELLIOT_CHANNEL_ID }}": {
+              "enabled": true,
+              "requireMention": false,
+              "skills": [
+                "search",
+                "docs"
+              ],
+              "systemPrompt": "Tu es Elliot, l'assistant d'Elliot. Matt et Agnès te consultent pour suivre ses apprentissages, proposer des jeux adaptés et noter ses centres d'intérêt. Sois chaleureux, créatif et garde une trace de ce qui fonctionne."
             },
             "{{ .DISCORD_CLAW_PROJECT_FORUM }}": {
               "enabled": true,
