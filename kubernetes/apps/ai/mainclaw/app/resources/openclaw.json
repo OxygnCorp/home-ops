@@ -542,6 +542,42 @@
           }
         },
         "thinkingDefault": "medium"
+      },
+      {
+        "id": "legal",
+        "name": "Harvey",
+        "workspace": "/home/node/.openclaw/workspace-legal",
+        "agentDir": "/home/node/.openclaw/agents/legal/agent",
+        "model": {
+          "primary": "litellm/MiniMax-M3",
+          "fallbacks": ["litellm/go-qwen3.8-max", "litellm/zai-glm-5.3"]
+        },
+        "identity": {
+          "name": "Harvey",
+          "emoji": "⚖️"
+        },
+        "groupChat": {
+          "mentionPatterns": [
+            "@harvey",
+            "@legal"
+          ]
+        },
+        "tools": {
+          "profile": "full",
+          "alsoAllow": [
+            "memory_recall",
+            "memory_list",
+            "memory_remember",
+            "message",
+            "agents_list",
+            "wiki_status",
+            "wiki_search",
+            "wiki_lint",
+            "wiki_apply",
+            "wiki_get"
+          ]
+        },
+        "thinkingDefault": "high"
       }
     ]
   },
@@ -633,6 +669,17 @@
         },
         "guildId": "{{ .DISCORD_GUILD_ID }}"
       }
+    },
+    {
+      "agentId": "legal",
+      "match": {
+        "channel": "discord",
+        "peer": {
+          "kind": "channel",
+          "id": "{{ .DISCORD_LEGAL_CHANNEL_ID }}"
+        },
+        "guildId": "{{ .DISCORD_GUILD_ID }}"
+      }
     }
   ],
   "channels": {
@@ -671,7 +718,8 @@
           "finance",
           "shopping",
           "media",
-          "lycos"
+          "lycos",
+          "legal"
         ],
         "approvers": [
           "{{ .DISCORD_MATT_USER_ID }}",
@@ -756,6 +804,15 @@
                 "docs"
               ],
               "systemPrompt": "Tu es l'assistant recherche. Sois précis, indique tes sources, fait des tableaux comparatifs."
+            },
+            "{{ .DISCORD_LEGAL_CHANNEL_ID }}": {
+              "enabled": true,
+              "requireMention": false,
+              "skills": [
+                "search",
+                "docs"
+              ],
+              "systemPrompt": "Tu es Harvey, mon assistant juridique pour le droit français. Sois factuel, précis et intelligible."
             },
             "{{ .DISCORD_CLAW_PROJECT_FORUM }}": {
               "enabled": true,
@@ -1147,7 +1204,8 @@
             "coach",
             "media",
             "nova",
-            "lycos"
+            "lycos",
+            "legal"
           ],
           "model": "litellm/dsv4f",
           "modelFallback": "litellm/MiniMax-M2.7",
