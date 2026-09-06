@@ -1,0 +1,77 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: &app opencode
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: *app
+  interval: 15m
+  values:
+    defaultPodOptions:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 100
+        fsGroup: 100
+        fsGroupChangePolicy: OnRootMismatch
+    controllers:
+      opencode:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: ghcr.io/joryirving/opencode
+              tag: 1.18.27@sha256:7dd7abf269cf0d350c7214fb5fb033c1c0ba224f5c9007d412826f75950dcb28
+            command: ["/etc/opencode/entrypoint.sh"]
+            env:
+              HOME: &homepath /home/opencode
+              OPENCODE_CONFIG: /etc/opencode/opencode.json
+              TZ: Europe/Paris
+            envFrom:
+              - secretRef:
+                  name: *app
+            probes:
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  tcpSocket:
+                    port: &port 4096
+                  initialDelaySeconds: 30
+                  periodSeconds: 30
+                  failureThreshold: 5
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  tcpSocket:
+                    port: *port
+                  initialDelaySeconds: 15
+                  periodSeconds: 15
+                  failureThreshold: 6
+            resources:
+              requests:
+                cpu: 100m
+                memory: 512Mi
+              limits:
+                memory: 8Gi
+    service:
+      app:
+        ports:
+          http:
+            port: *port
+    persistence:
+      home:
+        existingClaim: *app
+        globalMounts:
+          - path: *homepath
+      config:
+        type: configMap
+        name: opencode-config
+        defaultMode: 0755
+        globalMounts:
+          - path: /etc/opencode

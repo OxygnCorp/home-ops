@@ -11,6 +11,9 @@ spec:
   interval: 1h
   dependsOn: []
   values:
+    blueprints:
+      configMaps:
+        - authentik-blueprint-opencode
     global:
       podAnnotations:
         reloader.stakater.com/auto: "true"
