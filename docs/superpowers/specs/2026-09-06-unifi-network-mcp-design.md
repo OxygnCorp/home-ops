@@ -11,7 +11,7 @@ Basé sur le déploiement de référence [joryirving/home-ops](https://github.co
 
 - `groupRef: mcp-devops` (référence : `mcp-tools`) — devclaw consomme `mcp-gateway-devops`
 - Contrôleur : `unifi.internal`, site `default`
-- Identifiants : item 1Password **`unifi`** (champs `username`/`password`) → un seul secret `toolhive-unifi-network` avec clés `UNIFI_NETWORK_USERNAME`/`UNIFI_NETWORK_PASSWORD` (référence : deux secrets séparés)
+- Identifiants : item 1Password **`unifi`** (champs `UNIFI_PUCHU_USERNAME`/`UNIFI_PUCHU_PASSWORD`) → deux secrets `toolhive-unifi-network-username`/`-password` — le CRD `MCPServer` impose des `name` uniques dans `spec.secrets` (liste à clé unique, cf. dry-run error du 2026-09-06)
 - Permissions lecture seule : `UNIFI_TOOL_REGISTRATION_MODE=meta_only`, `UNIFI_POLICY_{CREATE,UPDATE,DELETE}=false`, `UNIFI_TOOL_PERMISSION_MODE=confirm`
 - Image pin digest : `ghcr.io/sirkirby/unifi-network-mcp:0.29.7@sha256:3307ada7db311203ea1802993bf3fcc022d14966434c4b740e7d0a8e3351ca72`
 
@@ -20,7 +20,7 @@ Basé sur le déploiement de référence [joryirving/home-ops](https://github.co
 | Fichier | Action |
 |---|---|
 | `kubernetes/apps/ai/toolhive/mcp-servers/unifi-network-mcp/mcpserver.yaml` | Nouveau — `MCPServer` `unifi-network`, `streamable-http`, port 3000, resources 100m/128Mi → 200m/256Mi |
-| `kubernetes/apps/ai/toolhive/mcp-servers/unifi-network-mcp/externalsecret.yaml` | Nouveau — `ExternalSecret` `toolhive-unifi-network` (ClusterSecretStore `onepassword`, extract `unifi`) |
+| `kubernetes/apps/ai/toolhive/mcp-servers/unifi-network-mcp/externalsecret.yaml` | Nouveau — deux `ExternalSecret` `toolhive-unifi-network-{username,password}` (ClusterSecretStore `onepassword`, extract `unifi`) |
 | `kubernetes/apps/ai/toolhive/mcp-servers/unifi-network-mcp/kustomization.yaml` | Nouveau |
 | `kubernetes/apps/ai/toolhive/ks.yaml` | Ajout Kustomization `unifi-network-mcp` (dependsOn `toolhive`, targetNamespace `ai`) |
 | `kubernetes/apps/ai/toolhive/config/mcpgroup-devops.yaml` | Description du groupe mise à jour |
