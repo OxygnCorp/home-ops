@@ -13,7 +13,7 @@ spec:
   values:
     blueprints:
       configMaps:
-        - authentik-blueprint-opencode
+        - opencode-blueprint
     global:
       podAnnotations:
         reloader.stakater.com/auto: "true"

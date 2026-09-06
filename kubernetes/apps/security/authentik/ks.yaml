@@ -21,6 +21,8 @@ spec:
   dependsOn:
     - name: dragonfly-operator
       namespace: database
+    - name: opencode-blueprint
+      namespace: ai
   interval: 1h
   path: ./kubernetes/apps/security/authentik/app
   postBuild:
