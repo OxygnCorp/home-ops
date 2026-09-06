@@ -9,16 +9,20 @@ data:
     metadata:
       name: OpenCode OIDC
     entries:
-      - model: authentik_providers_oauth2.oauth2provider
+      - id: opencode
+        model: authentik_providers_oauth2.oauth2provider
         identifiers:
           name: opencode
         attrs:
           name: opencode
-          client_id: !Environment OPENCODE_CLIENT_ID
-          client_secret: !Environment OPENCODE_CLIENT_SECRET
+          client_id: !Env OPENCODE_CLIENT_ID
+          client_secret: !Env OPENCODE_CLIENT_SECRET
           client_type: confidential
           redirect_uris:
-            - https://opencode.oxygn.dev/oauth2/callback
+            - url: https://opencode.oxygn.dev/oauth2/callback
+              matching_mode: strict
+          authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-explicit-consent]]
+          invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
           property_mappings:
             - !Find [authentik_providers_oauth2.scopemapping, [scope_name, openid]]
             - !Find [authentik_providers_oauth2.scopemapping, [scope_name, email]]
@@ -27,7 +31,7 @@ data:
           access_code_validity: hours=1
           token_validity: hours=24
           refresh_token_validity: days=30
-          signing_key: !Find [authentik_crypto.certificatekeypair, [name], {}]
+          signing_key: !Find [authentik_crypto.certificatekeypair, [name, "authentik Self-signed Certificate"]]
       - model: authentik_core.application
         identifiers:
           slug: opencode
