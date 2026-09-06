@@ -1,0 +1,10 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+kind: Kustomization
+namespace: security
+components:
+  - ../../components/alerts
+
+resources:
+  - ./namespace.yaml
+  - ./authentik/ks.yaml
