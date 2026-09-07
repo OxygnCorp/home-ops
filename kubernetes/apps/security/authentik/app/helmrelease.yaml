@@ -13,6 +13,7 @@ spec:
   values:
     blueprints:
       configMaps:
+        - mainclaw-blueprint
         - opencode-blueprint
     global:
       podAnnotations:
