@@ -12,5 +12,6 @@ configMapGenerator:
   - name: litellm-configmap
     files:
       - config.yaml=./resources/config.yaml
+      - session_hook.py=./resources/session_hook.py
 generatorOptions:
   disableNameSuffixHash: true
