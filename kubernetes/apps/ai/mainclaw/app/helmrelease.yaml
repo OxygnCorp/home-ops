@@ -59,6 +59,18 @@ spec:
             image:
               repository: ghcr.io/openclaw/openclaw
               tag: 2026.9.2@sha256:a8604855b76cd613cbaa45d6db093dc017b09a2faea5dc9cee023fb7ac262250
+            # The gateway only listens on 18789 after a slow doctor/migration
+            # phase (~8 min); keep the pod NotReady until then so Envoy does
+            # not route to a dead upstream during rollouts
+            probes:
+              readiness:
+                custom: true
+                spec:
+                  tcpSocket:
+                    port: 18789
+                  periodSeconds: 15
+                  timeoutSeconds: 5
+                  failureThreshold: 60
             command:
               - /bin/sh
               - -c
@@ -72,17 +84,17 @@ spec:
                 # the Flux postBuild variable substitution
                 MEMINI_PLUGIN_REL=$(printf '%s' "$MEMINI_PLUGIN_VERSION" | sed 's/^v//')
                 if [ "$(cat "$HOME/.openclaw/extensions/memini/.clawver" 2>/dev/null)" != "$MEMINI_PLUGIN_REL" ]; then
-                  if node dist/index.js plugins install "clawhub:@eleboucher/memini@$MEMINI_PLUGIN_REL" --pin --force; then
+                  if node /app/openclaw.mjs plugins install "clawhub:@eleboucher/memini@$MEMINI_PLUGIN_REL" --force; then
                     printf '%s' "$MEMINI_PLUGIN_REL" > "$HOME/.openclaw/extensions/memini/.clawver"
                   else
                     echo "WARN: memini plugin install failed; starting with whatever is present"
                   fi
                 fi
                 # Doctor check and fix any issues with the OpenClaw installation, then start the gateway
-                node dist/index.js doctor --fix
+                node /app/openclaw.mjs doctor --fix
                 # Start gateway
                 echo "Starting OpenClaw gateway..."
-                exec node dist/index.js gateway
+                exec node /app/openclaw.mjs gateway
             env:
               OPENCLAW_LOG_LEVEL: debug
               GOPATH: /home/node/go
