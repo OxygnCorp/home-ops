@@ -21,6 +21,8 @@ spec:
   dependsOn:
     - name: dragonfly-operator
       namespace: database
+    - name: mainclaw-blueprint
+      namespace: ai
     - name: opencode-blueprint
       namespace: ai
   interval: 1h

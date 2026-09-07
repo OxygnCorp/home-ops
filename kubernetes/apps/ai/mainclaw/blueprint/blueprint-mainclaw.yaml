@@ -1,0 +1,46 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mainclaw-blueprint
+data:
+  mainclaw.yaml: |
+    version: 1
+    metadata:
+      name: MainClaw OIDC
+    entries:
+      - id: mainclaw
+        model: authentik_providers_oauth2.oauth2provider
+        identifiers:
+          name: mainclaw
+        attrs:
+          name: mainclaw
+          client_id: !Env MAINCLAW_CLIENT_ID
+          client_secret: !Env MAINCLAW_CLIENT_SECRET
+          client_type: confidential
+          grant_types:
+            - authorization_code
+            - refresh_token
+          redirect_uris:
+            - url: https://mainclaw.oxygn.dev/oauth2/callback
+              matching_mode: strict
+          authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-explicit-consent]]
+          invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
+          property_mappings:
+            - !Find [authentik_providers_oauth2.scopemapping, [scope_name, openid]]
+            - !Find [authentik_providers_oauth2.scopemapping, [scope_name, email]]
+            - !Find [authentik_providers_oauth2.scopemapping, [scope_name, profile]]
+          sub_mode: hashed_user_id
+          access_code_validity: hours=1
+          token_validity: hours=24
+          refresh_token_validity: days=30
+          signing_key: !Find [authentik_crypto.certificatekeypair, [name, "authentik Self-signed Certificate"]]
+      - model: authentik_core.application
+        identifiers:
+          slug: mainclaw
+        attrs:
+          name: MainClaw
+          slug: mainclaw
+          provider: !KeyOf mainclaw
+          meta_launch_url: https://mainclaw.oxygn.dev
+          policy_engine_mode: all
