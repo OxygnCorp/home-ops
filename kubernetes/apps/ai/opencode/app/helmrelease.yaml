@@ -61,6 +61,7 @@ spec:
                 memory: 8Gi
     service:
       app:
+        forceRename: opencode-server
         ports:
           http:
             port: *port

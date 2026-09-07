@@ -15,5 +15,5 @@ spec:
       namespace: network
   rules:
     - backendRefs:
-        - name: opencode
+        - name: opencode-server
           port: 4096
