@@ -49,7 +49,7 @@ spec:
                 # the Flux postBuild variable substitution
                 MEMINI_PLUGIN_REL=$(printf '%s' "$MEMINI_PLUGIN_VERSION" | sed 's/^v//')
                 if [ "$(cat "$HOME/.openclaw/extensions/memini/.clawver" 2>/dev/null)" != "$MEMINI_PLUGIN_REL" ]; then
-                  if node dist/index.js plugins install "clawhub:@eleboucher/memini@$MEMINI_PLUGIN_REL" --pin --force; then
+                  if node dist/index.js plugins install "clawhub:@eleboucher/memini@$MEMINI_PLUGIN_REL" --force; then
                     printf '%s' "$MEMINI_PLUGIN_REL" > "$HOME/.openclaw/extensions/memini/.clawver"
                   else
                     echo "WARN: memini plugin install failed; starting with whatever is present"
