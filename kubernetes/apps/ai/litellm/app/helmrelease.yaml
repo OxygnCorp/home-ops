@@ -111,6 +111,9 @@ spec:
           - path: /app/config.yaml
             subPath: config.yaml
             readOnly: true
+          - path: /app/hooks/session_hook.py
+            subPath: session_hook.py
+            readOnly: true
       cache:
         type: emptyDir
         advancedMounts:

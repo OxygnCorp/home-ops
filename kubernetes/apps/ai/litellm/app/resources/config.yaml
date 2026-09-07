@@ -224,7 +224,7 @@ router_settings:
     - go-qwen3.8-max: ["dsv4p"]
 
 litellm_settings:
-  callbacks: ["prometheus"]
+  callbacks: ["prometheus", "hooks.session_hook.service_session_injector"]
   success_callback: ["prometheus"]
   failure_callback: ["prometheus"]
   prometheus_adapter: true
@@ -240,17 +240,13 @@ litellm_settings:
   num_retries: 1
   set_verbose: false
   model_group_settings:
-    # OpenCode Go requires a per-conversation x-opencode-session for routing
-    # and prompt-cache affinity. Forward the client-sent header instead of
-    # injecting a static one; clients that send no session identity (openclaw)
-    # rely on the router fallbacks to z.ai/MiniMax
+    # Forward client x-* session headers for every model group (not just the
+    # OpenCode Go ones): litellm applies the gate to the originally requested
+    # model, so a fallback chain (zai-* -> go-*) would otherwise lose the
+    # client's session header mid-chain. Unknown x-* headers are ignored by
+    # the z.ai/MiniMax endpoints.
     forward_client_headers_to_llm_api:
-      - go-*
-      - dsv4f
-      - dsv4p
-      - mimo-v2.5
-      - mimo-v2.5-pro
-      - qwen3.7-plus
+      - "*"
 
 environment:
   - MINIMAX_API_KEY
