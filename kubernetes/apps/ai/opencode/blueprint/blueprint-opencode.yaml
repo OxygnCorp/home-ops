@@ -18,6 +18,9 @@ data:
           client_id: !Env OPENCODE_CLIENT_ID
           client_secret: !Env OPENCODE_CLIENT_SECRET
           client_type: confidential
+          grant_types:
+            - authorization_code
+            - refresh_token
           redirect_uris:
             - url: https://opencode.oxygn.dev/oauth2/callback
               matching_mode: strict
