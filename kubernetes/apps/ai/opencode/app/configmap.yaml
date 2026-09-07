@@ -8,8 +8,8 @@ data:
     #!/bin/bash
     set -euo pipefail
 
-    git config --global user.name "oxygn-admin"
-    git config --global user.email "90065365+oxygn-admin@users.noreply.github.com"
+    git config --global user.name "puchu-ai"
+    git config --global user.email "266989594+puchu-ai@users.noreply.github.com"
     git config --global init.defaultBranch main
     git config --global credential.helper store
     git config --global --add safe.directory '*'
@@ -74,7 +74,7 @@ data:
       "mcp": {
         "toolhive": {
           "type": "remote",
-          "url": "http://vmcp-mcp-gateway-internal.ai:4483/mcp",
+          "url": "http://vmcp-mcp-gateway-devops.ai:4483/mcp",
           "enabled": true
         }
       }
