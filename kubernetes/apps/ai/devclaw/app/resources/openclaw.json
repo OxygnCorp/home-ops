@@ -251,7 +251,7 @@
         "baseUrl": "http://litellm.ai:4000/v1",
         "apiKey": { "source": "env", "provider": "default", "id": "LITELLM_API_KEY" },
         "api": "openai-completions",
-        "request": { "allowPrivateNetwork": true },
+        "request": { "allowPrivateNetwork": true, "headers": { "x-opencode-session": "openclaw-devclaw" } },
         "timeoutSeconds": 1800,
         "models": [
           { "id": "MiniMax-M3", "name": "MiniMax M3", "reasoning": true, "input": ["text", "image"], "cost": { "input": 15, "output": 60, "cacheRead": 2, "cacheWrite": 0 }, "contextWindow": 1000000, "maxTokens": 131072 },

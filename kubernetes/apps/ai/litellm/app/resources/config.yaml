@@ -239,6 +239,18 @@ litellm_settings:
   request_timeout: 3600
   num_retries: 1
   set_verbose: false
+  model_group_settings:
+    # OpenCode Go requires a per-conversation x-opencode-session for routing
+    # and prompt-cache affinity. Forward the client-sent header instead of
+    # injecting a static one; clients that send no session identity (openclaw)
+    # rely on the router fallbacks to z.ai/MiniMax
+    forward_client_headers_to_llm_api:
+      - go-*
+      - dsv4f
+      - dsv4p
+      - mimo-v2.5
+      - mimo-v2.5-pro
+      - qwen3.7-plus
 
 environment:
   - MINIMAX_API_KEY
