@@ -41,7 +41,6 @@ spec:
   resources:
     gpu: 1
     cpu: 100m
-    memory: 1Gi
   extraArgs:
     - --embeddings
     - --pooling
