@@ -1,0 +1,130 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: &app n8n
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: *app
+  dependsOn: []
+  interval: 30m
+  values:
+    global:
+      fullnameOverride: *app
+    controllers:
+      main:
+        strategy: Recreate
+        pod:
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1024
+            runAsGroup: 100
+            fsGroup: 100
+            fsGroupChangePolicy: OnRootMismatch
+        containers:
+          main:
+            image:
+              repository: docker.io/n8nio/n8n
+              tag: 2.38.4@sha256:5d9f0cc5672b83d438c465f718077af463828c15563a480ef5c7c5fdfa2eae9c
+            env:
+              GENERIC_TIMEZONE: Europe/Paris
+              TZ: Europe/Paris
+              N8N_HOST: n8n.oxygn.dev
+              N8N_PROTOCOL: https
+              N8N_EDITOR_BASE_URL: https://n8n.oxygn.dev/
+              WEBHOOK_URL: https://n8n.oxygn.dev/
+              N8N_PROXY_HOPS: "1"
+              N8N_DIAGNOSTICS_ENABLED: "false"
+              N8N_VERSION_NOTIFICATIONS_ENABLED: "false"
+              N8N_METRICS: "true"
+              N8N_ENCRYPTION_KEY:
+                valueFrom:
+                  secretKeyRef:
+                    name: *app
+                    key: N8N_ENCRYPTION_KEY
+              DB_TYPE: postgresdb
+              DB_POSTGRESDB_HOST: n8n-rw.ai.svc
+              DB_POSTGRESDB_PORT: "5432"
+              DB_POSTGRESDB_DATABASE: *app
+              DB_POSTGRESDB_USER: *app
+              DB_POSTGRESDB_PASSWORD:
+                valueFrom:
+                  secretKeyRef:
+                    name: n8n-app
+                    key: password
+            probes:
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /healthz
+                    port: 5678
+                  periodSeconds: 10
+                  failureThreshold: 30
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /healthz
+                    port: 5678
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 5
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /healthz
+                    port: 5678
+                  periodSeconds: 30
+                  timeoutSeconds: 5
+                  failureThreshold: 5
+            resources:
+              requests:
+                cpu: 50m
+                memory: 256Mi
+              limits:
+                memory: 1Gi
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities:
+                drop:
+                  - ALL
+    persistence:
+      data:
+        existingClaim: *app
+        advancedMounts:
+          main:
+            main:
+              - path: /home/node/.n8n
+      tmp:
+        type: emptyDir
+        advancedMounts:
+          main:
+            main:
+              - path: /tmp
+    service:
+      app:
+        ports:
+          http:
+            port: 5678
+    serviceMonitor:
+      main:
+        endpoints:
+          - interval: 30s
+            path: /metrics
+            port: http
+            scrapeTimeout: 10s
+    route:
+      app:
+        hostnames:
+          - n8n.oxygn.dev
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
