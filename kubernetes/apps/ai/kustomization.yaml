@@ -16,6 +16,7 @@ resources:
   - ./mainclaw/ks-blueprint.yaml
   - ./mainclaw/ks.yaml
   - ./memini/ks.yaml
+  - ./n8n/ks.yaml
   - ./opencode/ks-blueprint.yaml
   - ./opencode/ks.yaml
   - ./searxng/ks.yaml
