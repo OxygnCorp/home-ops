@@ -44,6 +44,8 @@ jobs:
       - name: Setup Mise
         uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
         with:
+          # renovate: datasource=github-releases depName=jdx/mise
+          version: v2026.9.2
           cache: false
           tool_versions: |
             github:home-operations/flate 0.2.12
@@ -69,6 +71,8 @@ jobs:
       - name: Setup Mise
         uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
         with:
+          # renovate: datasource=github-releases depName=jdx/mise
+          version: v2026.9.2
           cache: false
           tool_versions: |
             talosctl latest
