@@ -41,4 +41,12 @@
       datasourceTemplate: "{{#if datasource}}{{{datasource}}}{{else}}npm{{/if}}",
     },
   ],
+  packageRules: [
+    {
+      description: "Delay mise updates to let release assets propagate",
+      matchDatasources: ["github-releases"],
+      matchPackageNames: ["jdx/mise"],
+      minimumReleaseAge: "3 days",
+    },
+  ],
 }
