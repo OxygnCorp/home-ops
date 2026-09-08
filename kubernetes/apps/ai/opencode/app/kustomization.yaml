@@ -7,5 +7,6 @@ resources:
   - ./externalsecret.yaml
   - ./helmrelease.yaml
   - ./httproute.yaml
+  - ./kopiaignore.yaml
   - ./ocirepository.yaml
   - ./securitypolicy.yaml

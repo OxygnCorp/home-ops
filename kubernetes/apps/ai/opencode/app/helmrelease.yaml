@@ -21,6 +21,15 @@ spec:
       opencode:
         annotations:
           reloader.stakater.com/auto: "true"
+        initContainers:
+          init:
+            image:
+              repository: docker.io/library/alpine
+              tag: "3.24"
+            command:
+              - sh
+              - -c
+              - cp /kopiaignore/.kopiaignore /home/opencode/.kopiaignore
         containers:
           app:
             image:
@@ -70,6 +79,11 @@ spec:
         existingClaim: *app
         globalMounts:
           - path: *homepath
+      kopiaignore:
+        type: configMap
+        name: opencode-kopiaignore
+        globalMounts:
+          - path: /kopiaignore
       config:
         type: configMap
         name: opencode-config

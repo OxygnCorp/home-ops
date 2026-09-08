@@ -1,0 +1,12 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: opencode-kopiaignore
+data:
+  .kopiaignore: |
+    # git partial-clone promisor pack placeholders (projects/*/.git/objects/pack/):
+    # root-owned read-only on the source volume, unreadable by the kopiur mover
+    # (uid 1024) -> fatal errors while snapshotting. git re-fetches the blobs on
+    # demand, so excluding them loses nothing
+    *.promisor
