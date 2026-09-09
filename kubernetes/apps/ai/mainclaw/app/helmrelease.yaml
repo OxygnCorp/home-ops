@@ -90,6 +90,13 @@ spec:
                     echo "WARN: memini plugin install failed; starting with whatever is present"
                   fi
                 fi
+                # Re-sync the config from the secret mount before doctor/gateway:
+                # the init container may have copied a stale secret version when
+                # the pod is created right after a secret update (kubelet cache
+                # propagation race) — the mount settles during init/tools phase.
+                cp -f /tmp/openclaw.json /home/node/.openclaw/openclaw.json
+                chown 1000:100 /home/node/.openclaw/openclaw.json
+                chmod 400 /home/node/.openclaw/openclaw.json
                 # Doctor check and fix any issues with the OpenClaw installation, then start the gateway
                 node /app/openclaw.mjs doctor --fix
                 # Start gateway
