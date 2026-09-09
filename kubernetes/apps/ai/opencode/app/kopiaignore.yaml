@@ -10,3 +10,7 @@ data:
     # (uid 1024) -> fatal errors while snapshotting. git re-fetches the blobs on
     # demand, so excluding them loses nothing
     *.promisor
+
+    # tool caches, re-creatable (flate pre-pull blob cache holds root-owned
+    # entries the kopiur mover cannot traverse -> 434+ fatal errors per run)
+    .cache/
