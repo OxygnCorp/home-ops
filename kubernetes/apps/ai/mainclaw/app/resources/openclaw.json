@@ -207,10 +207,6 @@
         "name": "Family",
         "workspace": "/home/node/.openclaw/workspace-family",
         "agentDir": "/home/node/.openclaw/agents/family/agent",
-        "model": {
-          "primary": "litellm/go-qwen3.8-flash",
-          "fallbacks": ["litellm/go-minimax-m2.7", "litellm/MiniMax-M2.7"]
-        },
         "heartbeat": {
           "directPolicy": "allow",
           "every": "6h",
@@ -255,10 +251,6 @@
         "name": "Mentor",
         "workspace": "/home/node/.openclaw/workspace-coach",
         "agentDir": "/home/node/.openclaw/agents/coach/agent",
-        "model": {
-          "primary": "litellm/go-glm-5.3-flash",
-          "fallbacks": ["litellm/dsv4p", "litellm/MiniMax-M3"]
-        },
         "heartbeat": {
           "directPolicy": "allow",
           "every": "6h",
@@ -303,10 +295,6 @@
         "name": "Finance Expert",
         "workspace": "/home/node/.openclaw/workspace-finance",
         "agentDir": "/home/node/.openclaw/agents/finance/agent",
-        "model": {
-          "primary": "litellm/dsv4p",
-          "fallbacks": ["litellm/go-qwen3.8-max", "litellm/MiniMax-M3"]
-        },
         "heartbeat": {
           "directPolicy": "allow",
           "every": "6h",
@@ -351,10 +339,6 @@
         "name": "Shopping Assistant",
         "workspace": "/home/node/.openclaw/workspace-shopping",
         "agentDir": "/home/node/.openclaw/agents/shopping/agent",
-        "model": {
-          "primary": "litellm/go-qwen3.8-flash",
-          "fallbacks": ["litellm/dsv4f", "litellm/go-minimax-m2.7"]
-        },
         "heartbeat": {
           "directPolicy": "allow",
           "every": "6h",
@@ -398,10 +382,6 @@
         "name": "Media",
         "workspace": "/home/node/.openclaw/workspace-media",
         "agentDir": "/home/node/.openclaw/agents/media/agent",
-        "model": {
-          "primary": "litellm/dsv4f",
-          "fallbacks": ["litellm/go-qwen3.8-flash", "litellm/go-minimax-m2.7"]
-        },
         "heartbeat": {
           "directPolicy": "allow",
           "every": "1h",
@@ -442,10 +422,6 @@
         "name": "Nova",
         "workspace": "/home/node/.openclaw/workspace-nova",
         "agentDir": "/home/node/.openclaw/agents/nova/agent",
-        "model": {
-          "primary": "litellm/zai-glm-5.3-flash",
-          "fallbacks": ["litellm/go-glm-5.3-flash", "litellm/MiniMax-M3"]
-        },
         "heartbeat": {
           "directPolicy": "allow",
           "every": "6h",
@@ -494,10 +470,6 @@
         "name": "Lycos",
         "workspace": "/home/node/.openclaw/workspace-lycos",
         "agentDir": "/home/node/.openclaw/agents/lycos/agent",
-        "model": {
-          "primary": "litellm/go-qwen3.8-max",
-          "fallbacks": ["litellm/zai-glm-5.3", "litellm/MiniMax-M3"]
-        },
         "heartbeat": {
           "directPolicy": "allow",
           "every": "6h",
@@ -548,10 +520,6 @@
         "name": "Harvey",
         "workspace": "/home/node/.openclaw/workspace-legal",
         "agentDir": "/home/node/.openclaw/agents/legal/agent",
-        "model": {
-          "primary": "litellm/MiniMax-M3",
-          "fallbacks": ["litellm/go-qwen3.8-max", "litellm/zai-glm-5.3"]
-        },
         "identity": {
           "name": "Harvey",
           "emoji": "⚖️"

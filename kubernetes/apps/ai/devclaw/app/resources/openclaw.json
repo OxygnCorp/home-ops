@@ -22,10 +22,10 @@
       },
       "maxConcurrent": 4,
       "model": {
-        "primary": "litellm/zai-glm-5.3",
+        "primary": "litellm/MiniMax-M3",
         "fallbacks": [
           "litellm/go-glm-5.3",
-          "litellm/MiniMax-M3"
+          "litellm/dsv4f"
         ]
       },
       "imageModel": {
