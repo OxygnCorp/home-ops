@@ -12,8 +12,10 @@
 
 - Ne **jamais** mettre `metadata.namespace` inline sur `HelmRelease` ou `Kustomization` (injecté par kustomize / `spec.targetNamespace`).
 - Le ConfigMap blueprint doit vivre dans le namespace `security` (c'est là qu'authentik le monte) — il est dans la même Kustomization qu'authentik, donc c'est automatique.
-- Validation locale obligatoire avant push : `mise exec -- flate test ks --path ./kubernetes/apps` (exit 0).
+- Validation locale obligatoire avant push : `mise exec -- flate test ks --path ./kubernetes/apps` (exit 0). ⚠️ `flate test hr` par-app ÉCHOUE PRÉ-EXISTANT (dependsOn cross-tree authentik → blueprints `ai`) — ne pas l'utiliser.
 - Workflow branche + PR : jamais committer directement sur `main` pour les manifests.
+- ⚠️ Les docs superpowers (spec/plan) ne partent **pas** dans les PRs : créer la branche depuis `origin/main` (les 2 commits docs restent sur `main` local, jamais poussés).
+- ⚠️ `gh` nécessite `env -u GITHUB_TOKEN` (variable héritée casse l'auth).
 - Messages de commit en style conventional (`feat:`, `fix:`, `docs:`).
 - Durées exactes validées dans le spec : `session_duration: days=7`, `remember_me_offset: days=30`, flow `default-provider-authorization-implicit-consent`.
 
@@ -30,10 +32,10 @@
 - Consumes: stage par défaut authentik identifié `default-authentication-login` (modèle `authentik_stages_user_login.userloginstage`, présent en base via le blueprint par défaut d'authentik).
 - Produces: ConfigMap `authentik-blueprint` référencé dans `blueprints.configMaps` du HelmRelease — Task 2 dépend du fait que ce mécanisme fonctionne (reloader redémarre authentik quand le ConfigMap change).
 
-- [ ] **Step 1: Créer la branche**
+- [ ] **Step 1: Créer la branche depuis origin/main** (les commits docs restent sur `main` local, jamais poussés)
 
 ```bash
-git checkout -b feat/authentik-session-sso
+git checkout -b feat/authentik-session-sso origin/main
 ```
 
 - [ ] **Step 2: Créer le fichier blueprint**
@@ -102,23 +104,15 @@ par :
         - opencode-blueprint
 ```
 
-- [ ] **Step 5: Valider l'app avec flate**
-
-```bash
-mise exec -- flate test hr --path ./kubernetes/apps/security/authentik/app
-```
-
-Expected: succès (exit 0, aucune erreur de schema/référence). Si le ConfigMap manquait dans `blueprints.configMaps`, flate le signalerait — pas le cas ici.
-
-- [ ] **Step 6: Validation globale**
+- [ ] **Step 5: Validation tree-wide** (le `flate test hr` par-app échoue pré-existant — dependsOn cross-tree — ne pas l'utiliser)
 
 ```bash
 mise exec -- flate test ks --path ./kubernetes/apps
 ```
 
-Expected: exit 0, toutes les Kustomizations validées.
+Expected: exit 0, toutes les Kustomizations validées. Si le ConfigMap manquait dans `blueprints.configMaps`, le rendu le signalerait — pas le cas ici.
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
 git add kubernetes/apps/security/authentik/app/blueprint.yaml \
@@ -215,11 +209,11 @@ Expected: les seules différences sont (a) le ConfigMap `authentik-blueprint` da
 git worktree remove /tmp/baseline --force
 ```
 
-- [ ] **Step 4: Push et PR**
+- [ ] **Step 4: Push et PR** (`env -u GITHUB_TOKEN` requis pour `gh`)
 
 ```bash
 git push -u origin feat/authentik-session-sso
-gh pr create --title "feat(authentik): persistent sessions + transparent SSO" --body "Sessions persistantes (7j, remember-me 30j) via blueprint + implicit consent sur mainclaw/opencode. Spec: docs/superpowers/specs/2026-09-09-authentik-session-sso-design.md"
+env -u GITHUB_TOKEN gh pr create --title "feat(authentik): persistent sessions + transparent SSO" --body "Sessions persistantes (7j, remember-me 30j) via blueprint + implicit consent sur mainclaw/opencode. Diagnostic: session_duration=0 (fin de session à la fermeture du navigateur) et flow de consentement explicite. Fix: blueprint patchant default-authentication-login (days=7 / remember days=30) + passage des 2 providers au flow implicit consent."
 ```
 
 Expected: PR créée ; vérifier que le check konflate et la CI passent.
