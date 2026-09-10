@@ -47,7 +47,8 @@ spec:
     - last
     - --cache-ram
     - "0"
-    - --no-mmap
+    - --load-mode
+    - none
     - --alias
     - qwen3-embedding-0.6b
     - --metrics

@@ -13,5 +13,11 @@
       matchPackageNames: ["/factory\\.talos\\.dev/"],
       overridePackageName: "ghcr.io/siderolabs/installer",
     },
+    {
+      description: "Cadence Weekly For llama.cpp Digests (Frequent Upstream Builds, Breaking CLI Changes)",
+      matchDatasources: ["docker"],
+      matchPackageNames: ["ghcr.io/ggml-org/llama.cpp"],
+      schedule: ["before 6am on monday"],
+    },
   ],
 }
