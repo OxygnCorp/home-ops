@@ -34,7 +34,7 @@ spec:
       value: '["mise"]'
     - name: RENOVATE_PLATFORM_COMMIT
       value: disabled
-  image: ghcr.io/renovatebot/renovate:44.74.0
+  image: ghcr.io/renovatebot/renovate:44.74.1
   parallelism: 5
   resources:
     requests:
