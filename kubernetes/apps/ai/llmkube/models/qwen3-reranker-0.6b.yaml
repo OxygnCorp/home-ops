@@ -47,7 +47,8 @@ spec:
     - rank
     - --cache-ram
     - "0"
-    - --no-mmap
+    - --load-mode
+    - none
     - --alias
     - qwen3-reranker-0.6b
     - --metrics
