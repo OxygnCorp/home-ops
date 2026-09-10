@@ -14,4 +14,4 @@ data:
         model: authentik_stages_user_login.userloginstage
         attrs:
           session_duration: days=7
-          remember_me_offset: days=30
+          remember_me_offset: days=23
