@@ -6,6 +6,8 @@ metadata:
   name: opencode
   annotations:
     gatus.home-operations.com/endpoint: |
+      client:
+        ignore-redirect: true
       conditions: ["[STATUS] == 302"]
 spec:
   hostnames:
