@@ -1,0 +1,17 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: authentik-blueprint
+data:
+  authentik.yaml: |
+    version: 1
+    metadata:
+      name: Authentik Session
+    entries:
+      - identifiers:
+          name: default-authentication-login
+        model: authentik_stages_user_login.userloginstage
+        attrs:
+          session_duration: days=7
+          remember_me_offset: days=23
