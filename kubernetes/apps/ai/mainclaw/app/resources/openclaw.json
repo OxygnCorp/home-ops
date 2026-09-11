@@ -48,6 +48,12 @@
             "cacheRetention": "short"
           }
         },
+        "litellm/dsv41f": {
+          "alias": "dsv41f",
+          "params": {
+            "cache_prompt": true
+          }
+        },
         "litellm/dsv4f": {
           "alias": "dsv4f",
           "params": {
@@ -1028,6 +1034,22 @@
             },
             "contextWindow": 204800,
             "maxTokens": 131072
+          },
+          {
+            "id": "dsv41f",
+            "name": "OpenCode Go DeepSeek V4.1 Flash",
+            "reasoning": true,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1000000,
+            "maxTokens": 16384
           },
           {
             "id": "dsv4f",
