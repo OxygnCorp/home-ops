@@ -176,33 +176,6 @@ model_list:
       api_base: https://opencode.ai/zen/go/v1
       api_key: os.environ/OPENCODE_API_KEY
 
-  # z.ai GLM Coding Lite plan (direct, dedicated endpoint)
-  - model_name: zai-glm-5.2
-    model_info:
-      mode: chat
-      max_input_tokens: 1000000
-      max_output_tokens: 131072
-      supports_function_calling: true
-      supports_prompt_caching: true
-    litellm_params:
-      model: openai/glm-5.2
-      api_base: https://api.z.ai/api/coding/paas/v4
-      api_key: os.environ/ZAI_API_KEY
-
-  - model_name: zai-glm-5.3
-    model_info: {mode: chat, max_input_tokens: 1000000, max_output_tokens: 131072, supports_function_calling: true, supports_vision: false, supports_prompt_caching: true}
-    litellm_params:
-      model: openai/glm-5.3
-      api_base: https://api.z.ai/api/coding/paas/v4
-      api_key: os.environ/ZAI_API_KEY
-
-  - model_name: zai-glm-5.3-flash
-    model_info: {mode: chat, max_input_tokens: 1000000, max_output_tokens: 32768, supports_function_calling: true, supports_vision: true, supports_prompt_caching: true}
-    litellm_params:
-      model: openai/glm-5.3-flash
-      api_base: https://api.z.ai/api/coding/paas/v4
-      api_key: os.environ/ZAI_API_KEY
-
 general_settings:
   health_check_endpoint: /v1/health
 
@@ -216,11 +189,8 @@ router_settings:
     - MiniMax-M3: ["go-minimax-m3"]
     - MiniMax-M2.7: ["go-minimax-m2.7"]
     - dsv4f: ["go-minimax-m3"]
-    - zai-glm-5.2: ["zai-glm-5.3-flash"]
-    - zai-glm-5.3: ["zai-glm-5.3-flash"]
-    - zai-glm-5.3-flash: ["go-glm-5.3-flash"]
     - go-glm-5.3: ["MiniMax-M3"]
-    - go-glm-5.3-flash: ["go-glm-5.3"]
+    - go-glm-5.3-flash: ["dsv4f"]
     - go-qwen3.8-max: ["dsv4p"]
 
 litellm_settings:
@@ -242,15 +212,14 @@ litellm_settings:
   model_group_settings:
     # Forward client x-* session headers for every model group (not just the
     # OpenCode Go ones): litellm applies the gate to the originally requested
-    # model, so a fallback chain (zai-* -> go-*) would otherwise lose the
-    # client's session header mid-chain. Unknown x-* headers are ignored by
-    # the z.ai/MiniMax endpoints.
+    # model, so a fallback chain split across providers would otherwise lose
+    # the client's session header mid-chain. Unknown x-* headers are ignored
+    # by the OpenCode/MiniMax endpoints.
     forward_client_headers_to_llm_api:
       - "*"
 
 environment:
   - MINIMAX_API_KEY
   - OPENCODE_API_KEY
-  - ZAI_API_KEY
   - REDIS_HOST
   - REDIS_PORT

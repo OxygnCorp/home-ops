@@ -80,10 +80,7 @@ data:
             "go-minimax-m2.7": { "name": "MiniMax M2.7 (Zen Go)", "limit": { "context": 204800, "output": 16384 } },
             "mimo-v2.5-pro": { "name": "MiMo v2.5 Pro", "limit": { "context": 262144, "output": 16384 } },
             "mimo-v2.5": { "name": "MiMo v2.5", "limit": { "context": 262144, "output": 16384 } },
-            "qwen3.7-plus": { "name": "Qwen3.7 Plus", "limit": { "context": 1000000, "output": 16384 } },
-            "zai-glm-5.2": { "name": "GLM 5.2 (z.ai Coding)", "limit": { "context": 1000000, "output": 131072 } },
-            "zai-glm-5.3": { "name": "GLM 5.3 (z.ai Coding)", "limit": { "context": 1000000, "output": 131072 } },
-            "zai-glm-5.3-flash": { "name": "GLM 5.3 Flash (z.ai Coding)", "limit": { "context": 1000000, "output": 32768 } }
+            "qwen3.7-plus": { "name": "Qwen3.7 Plus", "limit": { "context": 1000000, "output": 16384 } }
           }
         }
       },
