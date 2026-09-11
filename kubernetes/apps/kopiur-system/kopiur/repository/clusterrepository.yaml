@@ -46,6 +46,15 @@ spec:
     usernameExpr: "namespace + '-' + policyName"
   scheduleDefaults:
     timezone: Europe/Paris
+  parameters:
+    epoch:
+      # kopia default is 24h: an epoch cannot close before it is older than
+      # minDuration and compaction trails two epochs behind, so hourly snapshot
+      # schedules accumulate thousands of uncompacted index blobs (6180 and
+      # climbing) no matter how often maintenance runs. 6h lets epochs close
+      # and full maintenance compact them. See docs/maintenance.md
+      # ("index-blob health") in the kopiur repo.
+      minDuration: 6h
   maintenance:
     enabled: true
     namespace: kopiur-system
