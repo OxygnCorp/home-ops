@@ -14,3 +14,9 @@ data:
     # tool caches, re-creatable (flate pre-pull blob cache holds root-owned
     # entries the kopiur mover cannot traverse -> 434+ fatal errors per run)
     .cache/
+
+    # plaintext GitHub token written by the entrypoint with `umask 077`
+    # (0600, uid 1000) -> unreadable by the kopiur mover (uid 1024) -> fatal
+    # error per run. Also kept out of backups on purpose: it is a credential,
+    # regenerated at container start
+    .git-credentials
