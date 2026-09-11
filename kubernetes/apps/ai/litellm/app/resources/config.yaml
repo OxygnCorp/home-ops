@@ -219,8 +219,8 @@ router_settings:
     - zai-glm-5.2: ["zai-glm-5.3-flash"]
     - zai-glm-5.3: ["zai-glm-5.3-flash"]
     - zai-glm-5.3-flash: ["go-glm-5.3-flash"]
-    - go-glm-5.3: ["zai-glm-5.3"]
-    - go-glm-5.3-flash: ["zai-glm-5.3-flash"]
+    - go-glm-5.3: ["MiniMax-M3"]
+    - go-glm-5.3-flash: ["go-glm-5.3"]
     - go-qwen3.8-max: ["dsv4p"]
 
 litellm_settings:
