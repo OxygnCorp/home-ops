@@ -107,18 +107,6 @@
           "params": {
             "cache_prompt": true
           }
-        },
-        "litellm/zai-glm-5.3": {
-          "alias": "glm-5.3",
-          "params": {
-            "cache_prompt": true
-          }
-        },
-        "litellm/zai-glm-5.3-flash": {
-          "alias": "glm-5.3-flash",
-          "params": {
-            "cache_prompt": true
-          }
         }
       },
       "modelPolicy": {
@@ -134,9 +122,7 @@
           "litellm/go-qwen3.8-max",
           "litellm/mimo-v2.5-pro",
           "litellm/mimo-v2.5",
-          "litellm/qwen3.7-plus",
-          "litellm/zai-glm-5.3",
-          "litellm/zai-glm-5.3-flash"
+          "litellm/qwen3.7-plus"
         ]
       },
       "subagents": {
@@ -1136,39 +1122,6 @@
             },
             "contextWindow": 262144,
             "maxTokens": 16384
-          },
-          {
-            "id": "zai-glm-5.3",
-            "name": "z.ai GLM 5.3",
-            "reasoning": true,
-            "input": [
-              "text"
-            ],
-            "cost": {
-              "input": 0,
-              "output": 0,
-              "cacheRead": 0,
-              "cacheWrite": 0
-            },
-            "contextWindow": 1000000,
-            "maxTokens": 131072
-          },
-          {
-            "id": "zai-glm-5.3-flash",
-            "name": "z.ai GLM 5.3 Flash",
-            "reasoning": true,
-            "input": [
-              "text",
-              "image"
-            ],
-            "cost": {
-              "input": 0,
-              "output": 0,
-              "cacheRead": 0,
-              "cacheWrite": 0
-            },
-            "contextWindow": 1000000,
-            "maxTokens": 32768
           },
           {
             "id": "go-glm-5.3-flash",
