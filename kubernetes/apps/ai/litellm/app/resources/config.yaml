@@ -59,6 +59,19 @@ model_list:
       api_base: https://opencode.ai/zen/go/v1
       api_key: os.environ/OPENCODE_API_KEY
 
+  # DeepSeek V4.1 Flash - new generation flash (32.5k req/mo, peak pricing 01-04 & 06-10 UTC Mon-Fri)
+  - model_name: dsv41f
+    model_info:
+      mode: chat
+      max_input_tokens: 1000000
+      max_output_tokens: 16384
+      supports_function_calling: true
+      supports_prompt_caching: true
+    litellm_params:
+      model: openai/deepseek-v4.1-flash
+      api_base: https://opencode.ai/zen/go/v1
+      api_key: os.environ/OPENCODE_API_KEY
+
   # OpenCode Zen Go (subscription) - new generation
   - model_name: go-kimi-k3
     model_info: {mode: chat, max_input_tokens: 1000000, max_output_tokens: 32768, supports_function_calling: true, supports_vision: true, supports_prompt_caching: true}
