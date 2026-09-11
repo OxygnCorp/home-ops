@@ -150,6 +150,25 @@
       "userTimezone": "Europe/Paris",
       "systemAgent": {
         "agentId": "main"
+      },
+      "modelPolicy": {
+        "allow": [
+          "litellm/MiniMax-M3",
+          "litellm/MiniMax-M2.7",
+          "litellm/dsv4f",
+          "litellm/dsv4p",
+          "litellm/zai-glm-5.2",
+          "litellm/zai-glm-5.3",
+          "litellm/zai-glm-5.3-flash",
+          "litellm/go-glm-5.3",
+          "litellm/go-glm-5.3-flash",
+          "litellm/go-qwen3.8-flash",
+          "litellm/go-minimax-m3",
+          "litellm/go-minimax-m2.7",
+          "litellm/mimo-v2.5-pro",
+          "litellm/mimo-v2.5",
+          "litellm/qwen3.7-plus"
+        ]
       }
     },
     "entries": {
@@ -613,7 +632,11 @@
         "enabled": true
       },
       "llm-task": {
-        "enabled": true
+        "enabled": true,
+        "llm": {
+          "allowModelOverride": true,
+          "allowAuthProfileOverride": true
+        }
       },
       "lossless-claw": {
         "enabled": true,
@@ -908,6 +931,11 @@
   "browser": {
     "extensionRelay": {
       "allowLegacyAuth": false
+    }
+  },
+  "meta": {
+    "migrations": {
+      "modelPolicyAllowlist": true
     }
   }
 }
