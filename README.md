@@ -45,7 +45,7 @@ _... managed with Flux, Renovate, and GitHub Actions_ 🤖
 
 ## 📖 Overview
 
-This is a mono repository for my home infrastructure and Kubernetes cluster. I try to adhere to Infrastructure as Code (IaC) and GitOps practices using tools like [Ansible](https://www.ansible.com/), [Terraform](https://www.terraform.io/), [Kubernetes](https://kubernetes.io/), [Flux](https://github.com/fluxcd/flux2), [Renovate](https://github.com/renovatebot/renovate), and [GitHub Actions](https://github.com/features/actions).
+This is a mono repository for my home infrastructure and Kubernetes cluster. I try to adhere to Infrastructure as Code (IaC) and GitOps practices using tools like [Talos](https://www.talos.dev/), [Kubernetes](https://kubernetes.io/), [Flux](https://github.com/fluxcd/flux2), [Renovate](https://github.com/renovatebot/renovate), and [GitHub Actions](https://github.com/features/actions).
 
 ---
 
@@ -55,58 +55,64 @@ There is a template over at [onedr0p/flux-cluster-template](https://github.com/o
 
 ### ⚙️ Installation
 
-My cluster is a 4-node [talos](https://talos.dev/) cluster overtop VMs provisioned in a 2-nodes PromoxVE 8 cluster: 3 control-plane nodes (`k8s-0/1/2`, semi-hyper-converged — workloads and Ceph block storage share the same resources) plus 1 dedicated GPU worker node (`k8s-3`, tainted `workload=ai:NoSchedule` and reserved for AI workloads). I also have a separate server for (NFS) file storage.
+My cluster is a 4-node [talos](https://talos.dev/) cluster overtop VMs provisioned in a 2-nodes Proxmox VE 8 cluster: 3 control-plane nodes (`k8s-0/1/2`, semi-hyper-converged — workloads and storage share the same resources) plus 1 dedicated GPU worker node (`k8s-3`, tainted `workload=ai:NoSchedule` and reserved for AI workloads). Storage is [OpenEBS](https://openebs.io/) local-path for fast local volumes and [Miroir](https://github.com/home-operations) (DRBD-replicated) for replicated block storage, both co-located on the control-plane nodes. I also have a separate server for (NFS) file storage.
+
+See [talos/README.md](./talos/README.md) for the Talos machine configuration and [bootstrap/README.md](./bootstrap/README.md) for the cluster bootstrap procedure.
 
 ### 🔧 Core Components
 
 - [actions-runner-controller](https://github.com/actions/actions-runner-controller): self-hosted Github runners
 - [cert-manager](https://cert-manager.io/docs/): creates SSL certificates for services in my cluster
-- [cilium](https://github.com/cilium/cilium): internal Kubernetes networking plugin
+- [cilium](https://github.com/cilium/cilium): internal Kubernetes networking plugin (eBPF, BGP, L2 announcements)
 - [cloudflared](https://github.com/cloudflare/cloudflared): Enables Cloudflare secure access to certain routes.
+- [cloudnative-pg](https://github.com/cloudnative-pg/cloudnative-pg): Postgres operator, default database for apps (see [components/postgres](./kubernetes/components/postgres/README.md))
+- [envoy-gateway](https://github.com/envoyproxy/gateway): L7 ingress via Gateway API (`envoy-internal` / `envoy-external`)
 - [external-dns](https://github.com/kubernetes-sigs/external-dns): automatically syncs DNS records from my cluster routes to a DNS provider
-- [external-secrets](https://github.com/external-secrets/external-secrets): Managed Kubernetes secrets using [Bitwarden Secrets Manager](https://bitwarden.com/products/secrets-manager/).
-- [rook](https://github.com/rook/rook): distributed block storage for persistent storage
+- [external-secrets](https://github.com/external-secrets/external-secrets): Managed Kubernetes secrets using [1Password Connect](https://developer.1password.com/docs/connect/).
+- `kopiur`: backup and recovery of persistent volume claims (volsync fork, Kopia backend over NFS — see [components/kopiur](./kubernetes/components/kopiur/README.md))
+- `miroir`: DRBD-replicated block storage (`miroir-slow` storage class)
+- [openebs](https://github.com/openebs/openebs): local-path host storage for fast ephemeral volumes
 - [spegel](https://github.com/spegel-org/spegel): Stateless cluster local OCI registry mirror.
-- [volsync](https://github.com/backube/volsync) and [snapscheduler](https://github.com/backube/snapscheduler): backup and recovery of persistent volume claims
 
 ### 🤖 GitOps
 
-[Flux](https://github.com/fluxcd/flux2) watches the clusters in my [kubernetes](./kubernetes/) folder (see Directories below) and makes the changes to my cluster based on the state of my Git repository.
+[Flux](https://github.com/fluxcd/flux2) is installed by the `flux-operator` / `flux-instance` Helm releases during bootstrap. A single root Flux `Kustomization` ([`cluster-apps`](./kubernetes/flux/cluster/ks.yaml)) watches the `kubernetes/apps` folder and recursively builds every `kustomization.yaml` it finds — one namespace per directory, one Flux `Kustomization` per app (`ks.yaml`), and under each app path a `HelmRelease` (or raw resources) plus its `OCIRepository` chart source. The root `Kustomization` injects cluster-wide defaults into all children (deletion policy, HelmRelease install/upgrade/rollback strategies) via patches.
 
-The way Flux works for me here is it will recursively search the `kubernetes/${cluster}/apps` folder until it finds the most top level `kustomization.yaml` per directory and then apply all the resources listed in it. That aforementioned `kustomization.yaml` will generally only have a namespace resource and one or many Flux kustomizations. Those Flux kustomizations will generally have a `HelmRelease` or other resources related to the application underneath it which will be applied.
+Shared, reusable patterns live in [kubernetes/components](./kubernetes/components/) (Postgres, Dragonfly cache, PVC backups, alerts, scale-to-zero) and are referenced from an app's `ks.yaml` via the `components:` field. Each component has its own README.
 
 [Renovate](https://github.com/renovatebot/renovate) watches my **entire** repository looking for dependency updates, when they are found a PR is automatically created. When some PRs are merged [Flux](https://github.com/fluxcd/flux2) applies the changes to my cluster.
 
 
 ### Directories
 
-This Git repository contains the following directories under [Kubernetes](./kubernetes/).
+This Git repository is structured as follows:
 
 ```sh
+📁 .github             # GitHub workflows (PR automation, labels, codeql)
+📁 bootstrap           # one-time cluster bootstrap (helmfile + kustomize)
 📁 kubernetes
-├── 📁 main            # main cluster
-│   ├── 📁 apps           # applications
-│   ├── 📁 bootstrap      # bootstrap procedures
-│   ├── 📁 flux           # core flux configuration
-│   └── 📁 templates      # re-useable components
-└── 📁 ...             # other clusters
+├── 📁 apps            # applications (one directory per namespace)
+├── 📁 components      # reusable kustomize components
+├── 📁 flux            # root Flux Kustomization
+└── 📜 mod.just        # day-2 kubernetes just recipes
+📁 talos               # Talos Linux machine configurations
 ```
 
 ### Flux Workflow
 
-This is a high-level look how Flux deploys my applications with dependencies. Below there are 3 Flux kustomizations `postgres`, `postgres-cluster`, and `atuin`. `postgres` is the first app that needs to be running and healthy before `postgres-cluster` and once `postgres-cluster` is healthy `atuin` will be deployed.
+This is a high-level look how Flux deploys applications with dependencies, using the real `toolhive` chain: the CRDs must be healthy before the operator, and the operator before the config (which brings its Dragonfly cache).
 
 ```mermaid
 graph TD;
   id1>Kustomization: cluster] -->|Creates| id2>Kustomization: cluster-apps];
-  id2>Kustomization: cluster-apps] -->|Creates| id3>Kustomization: postgres];
-  id2>Kustomization: cluster-apps] -->|Creates| id5>Kustomization: postgres-cluster]
-  id2>Kustomization: cluster-apps] -->|Creates| id8>Kustomization: atuin]
-  id3>Kustomization: postgres] -->|Creates| id4[HelmRelease: postgres];
-  id5>Kustomization: postgres-cluster] -->|Depends on| id3>Kustomization: postgres];
-  id5>Kustomization: postgres-cluster] -->|Creates| id10[Postgres Cluster];
-  id8>Kustomization: atuin] -->|Creates| id9(HelmRelease: atuin);
-  id8>Kustomization: atuin] -->|Depends on| id5>Kustomization: postgres-cluster];
+  id2>Kustomization: cluster-apps] -->|Creates| id3>Kustomization: toolhive-crds];
+  id2>Kustomization: cluster-apps] -->|Creates| id5>Kustomization: toolhive];
+  id2>Kustomization: cluster-apps] -->|Creates| id8>Kustomization: toolhive-config];
+  id5>Kustomization: toolhive] -->|Depends on| id3>Kustomization: toolhive-crds];
+  id8>Kustomization: toolhive-config] -->|Depends on| id5>Kustomization: toolhive];
+  id3>Kustomization: toolhive-crds] -->|Creates| id4[HelmRelease: toolhive-operator-crds];
+  id5>Kustomization: toolhive] -->|Creates| id7[HelmRelease: toolhive-operator];
+  id8>Kustomization: toolhive-config] -->|Creates| id10[Dragonfly cluster];
 ```
 
 ---
