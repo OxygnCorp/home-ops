@@ -29,7 +29,10 @@ spec:
             command:
               - sh
               - -c
-              - cp /kopiaignore/.kopiaignore /home/opencode/.kopiaignore
+              - |
+                cp /kopiaignore/.kopiaignore /home/opencode/.kopiaignore
+                mkdir -p /home/opencode/.config/opencode
+                cp /etc/opencode/AGENTS.md /home/opencode/.config/opencode/AGENTS.md
         containers:
           app:
             image:

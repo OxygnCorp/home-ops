@@ -26,6 +26,22 @@ data:
 
     cd "$${HOME}/projects"
     exec opencode serve --hostname 0.0.0.0 --port 4096
+  AGENTS.md: |
+    # Global rules (toutes sessions, tous projets)
+
+    ## Git isolation — sessions parallèles
+
+    - Si la tâche implique de créer ou modifier des fichiers, ne travaille JAMAIS
+      directement dans le checkout principal du repo.
+    - Avant la première modification de fichier, vérifie que tu es dans un worktree
+      dédié (répertoire distinct du clone principal, sur une branche dédiée).
+      Sinon, crée-en un d'abord et continue là-bas :
+
+          git worktree add ../<repo>-<sujet> -b <type>/<sujet>
+
+    - Les tâches en lecture seule (questions, exploration) n'exigent pas de worktree.
+    - Ne stage/committe QUE les fichiers que tu as toi-même créés ou modifiés —
+      jamais de `git add -A` ni `git add .`.
   opencode.json: |
     {
       "$schema": "https://opencode.ai/config.json",
