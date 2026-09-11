@@ -16,7 +16,8 @@ spec:
   components:
     - ../../../../components/dragonfly
   dependsOn:
-    - name: toolhive
+    - name: dragonfly-operator
+      namespace: database
   healthCheckExprs:
     - apiVersion: dragonflydb.io/v1alpha1
       kind: Dragonfly

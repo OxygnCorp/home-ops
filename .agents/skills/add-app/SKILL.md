@@ -1,6 +1,6 @@
 ---
 name: add-app
-description: Scaffold a new app-template Helm chart application
+description: Use when adding a new application to the cluster — scaffolds the app-template skeleton (ks.yaml, OCIRepository, HelmRelease, ExternalSecret) under kubernetes/apps/<namespace>/<app>
 ---
 
 # Add New Application
@@ -11,14 +11,19 @@ This skill scaffolds a new application in your home-ops repository based on the 
 
 ### Step 1: Collect Application Details
 
-Use the `question` tool to gather:
+Use the `question` tool (or ask directly in chat if unavailable) to gather:
 
 1. **App name** - the Kubernetes resource name (e.g., `autobrr`, `sonarr`)
 2. **Namespace** - the target Kubernetes namespace (e.g., `downloads`, `media`, `system`)
 3. **Image repository** - full container image URL (e.g., `ghcr.io/autobrr/autobrr`)
 4. **Image tag** - version tag (e.g., `v1.76.0`)
 5. **Port** - application port number (e.g., `7474`)
-6. **Dependencies** - any Flux Kustomization dependencies (e.g., `rook-ceph-cluster`)
+6. **Components** - optional reusable components to include (see `kubernetes/components/<name>/README.md` for each one's substitution variables and usage):
+   - `kopiur/backup` — PVC + automated hourly backups (stateful apps with local data)
+   - `postgres` — CloudNativePG database (read its README for the `cnpg=init` label on net-new DBs)
+   - `dragonfly` — Redis-compatible cache
+   - `zeroscaler` — scale-to-zero on idle
+   - `alerts` — Flux notification wiring (usually already present per namespace)
 7. **Has secrets** - whether to create an ExternalSecret (yes/no)
 
 ### Step 2: Create Directory Structure
@@ -39,15 +44,12 @@ apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
   name: <app-name>
+  # labels:
+  #   components.postgres/cnpg: init   # uncomment when using the postgres component for a NET-NEW database (no Barman backup yet); remove after the first backup lands
 spec:
   commonMetadata:
     labels:
       app.kubernetes.io/name: <app-name>
-  components:
-    - ../../../../components/volsync
-  dependsOn:
-    - name: rook-ceph-cluster
-      namespace: rook-ceph
   interval: 1h
   path: "./kubernetes/apps/<namespace>/<app-name>/app"
   postBuild:
@@ -63,7 +65,24 @@ spec:
   wait: false
 ```
 
-Only include `dependsOn` if user specified dependencies.
+Fill `components` / `dependsOn` from the user's Step 1 answers — omit both keys entirely when empty:
+
+```yaml
+  components:
+    - ../../../../components/kopiur/backup
+    - ../../../../components/dragonfly
+  dependsOn:
+    - name: kopiur
+      namespace: kopiur-system
+    - name: miroir-config
+      namespace: miroir-system
+    - name: dragonfly-operator
+      namespace: database
+```
+
+- kopiur consumers also depend on `kopiur @ kopiur-system` and usually on `miroir-config @ miroir-system` (storage availability for backups) — check a similar existing app.
+- dragonfly consumers add `dragonfly-operator @ database` even though the component already patches the HelmRelease.
+- Component READMEs list their substitution variables and the `healthCheckExprs` snippet to add (required for postgres/dragonfly).
 
 ---
 
@@ -177,7 +196,7 @@ spec:
   refreshInterval: 12h
   secretStoreRef:
     kind: ClusterSecretStore
-    name: onepassword-connect
+    name: onepassword
   target:
     name: <app-name>-secret
     creationPolicy: Owner
@@ -206,7 +225,9 @@ Run `find kubernetes/apps/<namespace>/<app-name> -type f` to confirm all files w
 
 ## Notes
 
-- Default app-template version is `5.0.0`
+- app-template version: copy the tag from a recently updated app's `ocirepository.yaml` (currently `5.1.0`) — Renovate keeps these current, don't hardcode an older version
+- Mirror the closest existing app for repo-wide conventions not templated here: `@sha256:` image digest pinning (see AGENTS.md Image & Digest Policy), HelmRelease remediation blocks, and the `postgres-init` initContainer for postgres-connected apps
 - Security context defaults: runAsUser/runAsGroup 2000, readOnlyRootFilesystem true, drop ALL caps
 - If the namespace directory doesn't exist, ask user to create it first
 - Always ask for confirmation before writing files
+- After scaffolding, validate with `mise exec -- flate test hr --path ./kubernetes/apps/<namespace>/<app-name>`
