@@ -1273,7 +1273,10 @@
       },
       "llm-task": {
         "enabled": true,
-        "config": {}
+        "llm": {
+          "allowModelOverride": true,
+          "allowAuthProfileOverride": true
+        }
       },
       "lossless-claw": {
         "enabled": true,
@@ -1604,5 +1607,10 @@
   },
   "talk": {
     "agentId": "main"
+  },
+  "meta": {
+    "migrations": {
+      "modelPolicyAllowlist": true
+    }
   }
 }
