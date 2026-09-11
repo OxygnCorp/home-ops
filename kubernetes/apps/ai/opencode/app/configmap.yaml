@@ -24,7 +24,10 @@ data:
         || echo "WARN: home-ops clone failed; clone it from a session instead"
     fi
 
-    cd "$${HOME}/projects"
+    # Serve from the home-ops project so the UI lands on its sessions by
+    # default (opencode scopes sessions per directory); fall back to the
+    # projects root if the clone failed so the server still starts.
+    cd "$${HOME}/projects/home-ops" 2>/dev/null || cd "$${HOME}/projects"
     exec opencode serve --hostname 0.0.0.0 --port 4096
   AGENTS.md: |
     # Global rules (toutes sessions, tous projets)
