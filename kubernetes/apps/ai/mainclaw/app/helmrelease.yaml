@@ -103,7 +103,7 @@ spec:
                 echo "Starting OpenClaw gateway..."
                 exec node /app/openclaw.mjs gateway
             env:
-              OPENCLAW_LOG_LEVEL: debug
+              OPENCLAW_LOG_LEVEL: info
               GOPATH: /home/node/go
               HOME: /home/node
               OPENCLAW_GATEWAY_PORT: 18789
@@ -154,10 +154,7 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
     service:
       app:
-        type: LoadBalancer
-        annotations:
-          lbipam.cilium.io/ips: 10.10.98.191
-        externalTrafficPolicy: Cluster
+        type: ClusterIP
         ports:
           http:
             port: 18789

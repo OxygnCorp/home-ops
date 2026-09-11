@@ -160,12 +160,13 @@
       "typingIntervalSeconds": 6,
       "timeoutSeconds": 1800,
       "userTimezone": "Europe/Paris",
-      "workspace": "/home/node/.openclaw/workspace"
+      "workspace": "/home/node/.openclaw/workspace",
+      "systemAgent": {
+        "agentId": "main"
+      }
     },
-    "list": [
-      {
-        "id": "main",
-        "default": true,
+    "entries": {
+      "main": {
         "name": "Claw",
         "workspace": "/home/node/.openclaw/workspace",
         "agentDir": "/home/node/.openclaw/agents/main/agent",
@@ -202,8 +203,7 @@
           }
         }
       },
-      {
-        "id": "family",
+      "family": {
         "name": "Family",
         "workspace": "/home/node/.openclaw/workspace-family",
         "agentDir": "/home/node/.openclaw/agents/family/agent",
@@ -246,8 +246,7 @@
           }
         }
       },
-      {
-        "id": "coach",
+      "coach": {
         "name": "Mentor",
         "workspace": "/home/node/.openclaw/workspace-coach",
         "agentDir": "/home/node/.openclaw/agents/coach/agent",
@@ -290,8 +289,7 @@
           }
         }
       },
-      {
-        "id": "finance",
+      "finance": {
         "name": "Finance Expert",
         "workspace": "/home/node/.openclaw/workspace-finance",
         "agentDir": "/home/node/.openclaw/agents/finance/agent",
@@ -334,8 +332,7 @@
           }
         }
       },
-      {
-        "id": "shopping",
+      "shopping": {
         "name": "Shopping Assistant",
         "workspace": "/home/node/.openclaw/workspace-shopping",
         "agentDir": "/home/node/.openclaw/agents/shopping/agent",
@@ -377,8 +374,7 @@
           }
         }
       },
-      {
-        "id": "media",
+      "media": {
         "name": "Media",
         "workspace": "/home/node/.openclaw/workspace-media",
         "agentDir": "/home/node/.openclaw/agents/media/agent",
@@ -417,8 +413,7 @@
           }
         }
       },
-      {
-        "id": "nova",
+      "nova": {
         "name": "Nova",
         "workspace": "/home/node/.openclaw/workspace-nova",
         "agentDir": "/home/node/.openclaw/agents/nova/agent",
@@ -465,8 +460,7 @@
           }
         }
       },
-      {
-        "id": "lycos",
+      "lycos": {
         "name": "Lycos",
         "workspace": "/home/node/.openclaw/workspace-lycos",
         "agentDir": "/home/node/.openclaw/agents/lycos/agent",
@@ -515,8 +509,7 @@
         },
         "thinkingDefault": "medium"
       },
-      {
-        "id": "legal",
+      "legal": {
         "name": "Harvey",
         "workspace": "/home/node/.openclaw/workspace-legal",
         "agentDir": "/home/node/.openclaw/agents/legal/agent",
@@ -547,8 +540,7 @@
         },
         "thinkingDefault": "high"
       },
-      {
-        "id": "elina",
+      "elina": {
         "name": "Elina",
         "workspace": "/home/node/.openclaw/workspace-elina",
         "agentDir": "/home/node/.openclaw/agents/elina/agent",
@@ -576,8 +568,7 @@
           ]
         }
       },
-      {
-        "id": "elliot",
+      "elliot": {
         "name": "Elliot",
         "workspace": "/home/node/.openclaw/workspace-elliot",
         "agentDir": "/home/node/.openclaw/agents/elliot/agent",
@@ -605,7 +596,8 @@
           ]
         }
       }
-    ]
+    },
+    "ownership": "explicit"
   },
   "bindings": [
     {
@@ -727,6 +719,13 @@
           "id": "{{ .DISCORD_ELLIOT_CHANNEL_ID }}"
         },
         "guildId": "{{ .DISCORD_GUILD_ID }}"
+      }
+    },
+    {
+      "agentId": "main",
+      "match": {
+        "channel": "discord",
+        "accountId": "*"
       }
     }
   ],
@@ -976,8 +975,8 @@
     ]
   },
   "logging": {
-    "consoleLevel": "trace",
-    "level": "trace"
+    "level": "info",
+    "consoleLevel": "info"
   },
   "messages": {
     "ackReactionScope": "group-mentions",
@@ -1249,7 +1248,6 @@
   },
   "plugins": {
     "allow": [
-      "active-memory",
       "browser",
       "device-pair",
       "discord",
@@ -1259,37 +1257,9 @@
       "memory-wiki",
       "memini",
       "minimax",
-      "tokenjuice",
       "workboard"
     ],
     "entries": {
-      "active-memory": {
-        "enabled": true,
-        "config": {
-          "enabled": true,
-          "agents": [
-            "main",
-            "finance",
-            "family",
-            "shopping",
-            "coach",
-            "media",
-            "nova",
-            "lycos",
-            "legal",
-            "elina",
-            "elliot"
-          ],
-          "model": "litellm/dsv4f",
-          "modelFallback": "litellm/MiniMax-M2.7",
-          "timeoutMs": 30000,
-          "queryMode": "recent",
-          "promptStyle": "balanced",
-          "thinking": "off",
-          "logging": true,
-          "persistTranscripts": true
-        }
-      },
       "browser": {
         "enabled": true,
         "config": {}
@@ -1396,10 +1366,6 @@
           "recall_limit": 3,
           "expose_tools": true
         }
-      },
-      "tokenjuice": {
-        "enabled": true,
-        "config": {}
       },
       "workboard": {
         "enabled": true,
@@ -1603,9 +1569,8 @@
       "enabled": true
     },
     "exec": {
-      "ask": "on-miss",
-      "security": "allowlist",
-      "strictInlineEval": false
+      "strictInlineEval": false,
+      "mode": "ask"
     },
     "fs": {
       "workspaceOnly": true
@@ -1631,5 +1596,13 @@
     "auto": {
       "enabled": false
     }
+  },
+  "browser": {
+    "extensionRelay": {
+      "allowLegacyAuth": false
+    }
+  },
+  "talk": {
+    "agentId": "main"
   }
 }
