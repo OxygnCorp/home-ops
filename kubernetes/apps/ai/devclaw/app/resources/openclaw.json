@@ -12,7 +12,9 @@
         }
       },
       "contextInjection": "continuation-skip",
-      "contextPruning": { "mode": "off" },
+      "contextPruning": {
+        "mode": "off"
+      },
       "heartbeat": {
         "model": "litellm/MiniMax-M3",
         "directPolicy": "allow",
@@ -35,21 +37,96 @@
         ]
       },
       "models": {
-        "litellm/MiniMax-M3": { "alias": "minimax-m3", "params": { "cacheRetention": "short" } },
-        "litellm/MiniMax-M2.7": { "alias": "minimax-m2.7", "params": { "cacheRetention": "short" } },
-        "litellm/dsv4f": { "alias": "dsv4f", "params": { "cache_prompt": true } },
-        "litellm/dsv4p": { "alias": "dsv4p", "params": { "cache_prompt": true } },
-        "litellm/zai-glm-5.2": { "alias": "glm-5.2", "params": { "cache_prompt": true } },
-        "litellm/zai-glm-5.3": { "alias": "glm-5.3", "params": { "cache_prompt": true } },
-        "litellm/zai-glm-5.3-flash": { "alias": "glm-5.3-flash", "params": { "cache_prompt": true } },
-        "litellm/go-glm-5.3": { "alias": "go-glm-5.3", "params": { "cache_prompt": true } },
-        "litellm/go-glm-5.3-flash": { "alias": "go-glm-5.3-flash", "params": { "cache_prompt": true } },
-        "litellm/go-qwen3.8-flash": { "alias": "qwen-flash", "params": { "cache_prompt": true } },
-        "litellm/go-minimax-m3": { "alias": "go-minimax-m3", "params": { "cache_prompt": true } },
-        "litellm/go-minimax-m2.7": { "alias": "go-minimax-m2.7", "params": { "cache_prompt": true } },
-        "litellm/mimo-v2.5-pro": { "alias": "mimo-agent", "params": { "cache_prompt": true } },
-        "litellm/mimo-v2.5": { "alias": "mimo-v2.5", "params": { "cache_prompt": true } },
-        "litellm/qwen3.7-plus": { "alias": "qwen-plus", "params": { "cache_prompt": true } }
+        "litellm/MiniMax-M3": {
+          "alias": "minimax-m3",
+          "params": {
+            "cacheRetention": "short"
+          }
+        },
+        "litellm/MiniMax-M2.7": {
+          "alias": "minimax-m2.7",
+          "params": {
+            "cacheRetention": "short"
+          }
+        },
+        "litellm/dsv4f": {
+          "alias": "dsv4f",
+          "params": {
+            "cache_prompt": true
+          }
+        },
+        "litellm/dsv4p": {
+          "alias": "dsv4p",
+          "params": {
+            "cache_prompt": true
+          }
+        },
+        "litellm/zai-glm-5.2": {
+          "alias": "glm-5.2",
+          "params": {
+            "cache_prompt": true
+          }
+        },
+        "litellm/zai-glm-5.3": {
+          "alias": "glm-5.3",
+          "params": {
+            "cache_prompt": true
+          }
+        },
+        "litellm/zai-glm-5.3-flash": {
+          "alias": "glm-5.3-flash",
+          "params": {
+            "cache_prompt": true
+          }
+        },
+        "litellm/go-glm-5.3": {
+          "alias": "go-glm-5.3",
+          "params": {
+            "cache_prompt": true
+          }
+        },
+        "litellm/go-glm-5.3-flash": {
+          "alias": "go-glm-5.3-flash",
+          "params": {
+            "cache_prompt": true
+          }
+        },
+        "litellm/go-qwen3.8-flash": {
+          "alias": "qwen-flash",
+          "params": {
+            "cache_prompt": true
+          }
+        },
+        "litellm/go-minimax-m3": {
+          "alias": "go-minimax-m3",
+          "params": {
+            "cache_prompt": true
+          }
+        },
+        "litellm/go-minimax-m2.7": {
+          "alias": "go-minimax-m2.7",
+          "params": {
+            "cache_prompt": true
+          }
+        },
+        "litellm/mimo-v2.5-pro": {
+          "alias": "mimo-agent",
+          "params": {
+            "cache_prompt": true
+          }
+        },
+        "litellm/mimo-v2.5": {
+          "alias": "mimo-v2.5",
+          "params": {
+            "cache_prompt": true
+          }
+        },
+        "litellm/qwen3.7-plus": {
+          "alias": "qwen-plus",
+          "params": {
+            "cache_prompt": true
+          }
+        }
       },
       "subagents": {
         "archiveAfterMinutes": 120,
@@ -70,12 +147,13 @@
       "timeoutSeconds": 1800,
       "typingMode": "instant",
       "typingIntervalSeconds": 6,
-      "userTimezone": "Europe/Paris"
+      "userTimezone": "Europe/Paris",
+      "systemAgent": {
+        "agentId": "main"
+      }
     },
-    "list": [
-      {
-        "default": true,
-        "id": "main",
+    "entries": {
+      "main": {
         "name": "Puchu",
         "workspace": "/home/node/.openclaw/workspace",
         "agentDir": "/home/node/.openclaw/agents/main/agent",
@@ -101,7 +179,8 @@
           ]
         }
       }
-    ]
+    },
+    "ownership": "explicit"
   },
   "bindings": [
     {
@@ -177,7 +256,11 @@
         "maxAgeHours": 0,
         "spawnSessions": true
       },
-      "token": { "source": "env", "provider": "default", "id": "DISCORD_BOT_TOKEN" }
+      "token": {
+        "source": "env",
+        "provider": "default",
+        "id": "DISCORD_BOT_TOKEN"
+      }
     }
   },
   "commands": {
@@ -249,69 +332,289 @@
     "providers": {
       "litellm": {
         "baseUrl": "http://litellm.ai:4000/v1",
-        "apiKey": { "source": "env", "provider": "default", "id": "LITELLM_API_KEY" },
+        "apiKey": {
+          "source": "env",
+          "provider": "default",
+          "id": "LITELLM_API_KEY"
+        },
         "api": "openai-completions",
-        "request": { "allowPrivateNetwork": true, "headers": { "x-opencode-session": "openclaw-devclaw" } },
+        "request": {
+          "allowPrivateNetwork": true,
+          "headers": {
+            "x-opencode-session": "openclaw-devclaw"
+          }
+        },
         "timeoutSeconds": 1800,
         "models": [
-          { "id": "MiniMax-M3", "name": "MiniMax M3", "reasoning": true, "input": ["text", "image"], "cost": { "input": 15, "output": 60, "cacheRead": 2, "cacheWrite": 0 }, "contextWindow": 1000000, "maxTokens": 131072 },
-          { "id": "MiniMax-M2.7", "name": "MiniMax M2.7", "reasoning": true, "input": ["text"], "cost": { "input": 15, "output": 60, "cacheRead": 2, "cacheWrite": 0 }, "contextWindow": 204800, "maxTokens": 131072 },
-          { "id": "dsv4f", "name": "OpenCode Go DeepSeek V4 Flash", "reasoning": true, "input": ["text"], "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }, "contextWindow": 1000000, "maxTokens": 16384 },
-          { "id": "dsv4p", "name": "OpenCode Go DeepSeek V4 Pro", "reasoning": true, "input": ["text"], "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }, "contextWindow": 1000000, "maxTokens": 16384 },
-          { "id": "go-minimax-m3", "name": "OpenCode Go MiniMax M3", "reasoning": true, "input": ["text"], "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }, "contextWindow": 1000000, "maxTokens": 32768 },
-          { "id": "go-minimax-m2.7", "name": "OpenCode Go MiniMax M2.7", "reasoning": true, "input": ["text"], "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }, "contextWindow": 204800, "maxTokens": 16384 },
-          { "id": "mimo-v2.5-pro", "name": "OpenCode Go MiMo V2.5 Pro", "reasoning": true, "input": ["text"], "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }, "contextWindow": 262144, "maxTokens": 16384 },
-          { "id": "mimo-v2.5", "name": "OpenCode Go MiMo V2.5", "reasoning": true, "input": ["text"], "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }, "contextWindow": 262144, "maxTokens": 16384 },
-          { "id": "zai-glm-5.2", "name": "z.ai GLM 5.2", "reasoning": true, "input": ["text"], "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }, "contextWindow": 1000000, "maxTokens": 131072 },
-          { "id": "zai-glm-5.3", "name": "z.ai GLM 5.3", "reasoning": true, "input": ["text"], "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }, "contextWindow": 1000000, "maxTokens": 131072 },
-          { "id": "zai-glm-5.3-flash", "name": "z.ai GLM 5.3 Flash", "reasoning": true, "input": ["text", "image"], "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }, "contextWindow": 1000000, "maxTokens": 32768 },
-          { "id": "go-glm-5.3", "name": "OpenCode Go GLM 5.3", "reasoning": true, "input": ["text"], "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }, "contextWindow": 1000000, "maxTokens": 131072 },
-          { "id": "go-glm-5.3-flash", "name": "OpenCode Go GLM 5.3 Flash", "reasoning": true, "input": ["text", "image"], "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }, "contextWindow": 1000000, "maxTokens": 32768 },
-          { "id": "go-qwen3.8-flash", "name": "OpenCode Go Qwen3.8 Flash", "reasoning": true, "input": ["text"], "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }, "contextWindow": 262144, "maxTokens": 16384 },
-          { "id": "qwen3.7-plus", "name": "OpenCode Go Qwen3.7 Plus", "reasoning": true, "input": ["text"], "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }, "contextWindow": 1000000, "maxTokens": 16384 }
+          {
+            "id": "MiniMax-M3",
+            "name": "MiniMax M3",
+            "reasoning": true,
+            "input": [
+              "text",
+              "image"
+            ],
+            "cost": {
+              "input": 15,
+              "output": 60,
+              "cacheRead": 2,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1000000,
+            "maxTokens": 131072
+          },
+          {
+            "id": "MiniMax-M2.7",
+            "name": "MiniMax M2.7",
+            "reasoning": true,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 15,
+              "output": 60,
+              "cacheRead": 2,
+              "cacheWrite": 0
+            },
+            "contextWindow": 204800,
+            "maxTokens": 131072
+          },
+          {
+            "id": "dsv4f",
+            "name": "OpenCode Go DeepSeek V4 Flash",
+            "reasoning": true,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1000000,
+            "maxTokens": 16384
+          },
+          {
+            "id": "dsv4p",
+            "name": "OpenCode Go DeepSeek V4 Pro",
+            "reasoning": true,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1000000,
+            "maxTokens": 16384
+          },
+          {
+            "id": "go-minimax-m3",
+            "name": "OpenCode Go MiniMax M3",
+            "reasoning": true,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1000000,
+            "maxTokens": 32768
+          },
+          {
+            "id": "go-minimax-m2.7",
+            "name": "OpenCode Go MiniMax M2.7",
+            "reasoning": true,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 204800,
+            "maxTokens": 16384
+          },
+          {
+            "id": "mimo-v2.5-pro",
+            "name": "OpenCode Go MiMo V2.5 Pro",
+            "reasoning": true,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 262144,
+            "maxTokens": 16384
+          },
+          {
+            "id": "mimo-v2.5",
+            "name": "OpenCode Go MiMo V2.5",
+            "reasoning": true,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 262144,
+            "maxTokens": 16384
+          },
+          {
+            "id": "zai-glm-5.2",
+            "name": "z.ai GLM 5.2",
+            "reasoning": true,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1000000,
+            "maxTokens": 131072
+          },
+          {
+            "id": "zai-glm-5.3",
+            "name": "z.ai GLM 5.3",
+            "reasoning": true,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1000000,
+            "maxTokens": 131072
+          },
+          {
+            "id": "zai-glm-5.3-flash",
+            "name": "z.ai GLM 5.3 Flash",
+            "reasoning": true,
+            "input": [
+              "text",
+              "image"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1000000,
+            "maxTokens": 32768
+          },
+          {
+            "id": "go-glm-5.3",
+            "name": "OpenCode Go GLM 5.3",
+            "reasoning": true,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1000000,
+            "maxTokens": 131072
+          },
+          {
+            "id": "go-glm-5.3-flash",
+            "name": "OpenCode Go GLM 5.3 Flash",
+            "reasoning": true,
+            "input": [
+              "text",
+              "image"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1000000,
+            "maxTokens": 32768
+          },
+          {
+            "id": "go-qwen3.8-flash",
+            "name": "OpenCode Go Qwen3.8 Flash",
+            "reasoning": true,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 262144,
+            "maxTokens": 16384
+          },
+          {
+            "id": "qwen3.7-plus",
+            "name": "OpenCode Go Qwen3.7 Plus",
+            "reasoning": true,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1000000,
+            "maxTokens": 16384
+          }
         ]
       }
     }
   },
   "plugins": {
     "allow": [
-      "active-memory",
       "browser",
-      "device-pair",
       "discord",
-      "document-extract",
       "file-transfer",
       "litellm",
       "llm-task",
       "lossless-claw",
       "memory-wiki",
       "memini",
-      "minimax",
-      "oc-path",
-      "tokenjuice",
-      "web-readability"
+      "minimax"
     ],
     "entries": {
-      "browser": { "enabled": true },
-      "active-memory": {
-        "enabled": true,
-        "config": {
-          "enabled": true,
-          "agents": [
-            "main"
-          ],
-          "model": "litellm/dsv4f",
-          "modelFallback": "litellm/MiniMax-M2.7",
-          "timeoutMs": 30000,
-          "queryMode": "recent",
-          "promptStyle": "balanced",
-          "thinking": "off",
-          "logging": true,
-          "persistTranscripts": true
-        }
+      "browser": {
+        "enabled": true
       },
-      "litellm": { "enabled": true },
-      "llm-task": { "enabled": true },
+      "litellm": {
+        "enabled": true
+      },
+      "llm-task": {
+        "enabled": true
+      },
       "lossless-claw": {
         "enabled": true,
         "config": {
@@ -403,9 +706,7 @@
           "recall_limit": 3,
           "expose_tools": true
         }
-      },
-      "tokenjuice": { "enabled": true },
-      "web-readability": { "enabled": true }
+      }
     },
     "slots": {
       "contextEngine": "lossless-claw",
@@ -429,64 +730,155 @@
   },
   "skills": {
     "entries": {
-      "1password": { "enabled": false },
-      "apple-notes": { "enabled": false },
-      "apple-reminders": { "enabled": false },
-      "bear-notes": { "enabled": false },
-      "blogwatcher": { "enabled": false },
-      "blucli": { "enabled": false },
-      "camsnap": { "enabled": false },
-      "clawhub": { "enabled": false },
-      "coding-agent": { "enabled": false },
-      "discord": { "enabled": false },
-      "eightctl": { "enabled": false },
-      "gemini": { "enabled": false },
-      "gifgrep": { "enabled": false },
-      "gog": { "enabled": false },
-      "goplaces": { "enabled": false },
-      "himalaya": { "enabled": false },
-      "imsg": { "enabled": false },
-      "mcporter": { "enabled": false },
-      "model-usage": { "enabled": false },
-      "nano-pdf": { "enabled": false },
-      "obsidian": { "enabled": false },
-      "openai-whisper": { "enabled": false },
-      "openai-whisper-api": { "enabled": false },
-      "openhue": { "enabled": false },
-      "oracle": { "enabled": false },
-      "ordercli": { "enabled": false },
-      "peekaboo": { "enabled": false },
-      "sag": { "enabled": false },
-      "sherpa-onnx-tts": { "enabled": false },
-      "slack": { "enabled": false },
-      "songsee": { "enabled": false },
-      "sonoscli": { "enabled": false },
-      "spotify-player": { "enabled": false },
-      "summarize": { "enabled": false },
-      "things-mac": { "enabled": false },
-      "tmux": { "enabled": false },
-      "trello": { "enabled": false },
-      "video-frames": { "enabled": false },
-      "voice-call": { "enabled": false },
-      "wacli": { "enabled": false },
-      "xurl": { "enabled": false }
+      "1password": {
+        "enabled": false
+      },
+      "apple-notes": {
+        "enabled": false
+      },
+      "apple-reminders": {
+        "enabled": false
+      },
+      "bear-notes": {
+        "enabled": false
+      },
+      "blogwatcher": {
+        "enabled": false
+      },
+      "blucli": {
+        "enabled": false
+      },
+      "camsnap": {
+        "enabled": false
+      },
+      "clawhub": {
+        "enabled": false
+      },
+      "coding-agent": {
+        "enabled": false
+      },
+      "discord": {
+        "enabled": false
+      },
+      "eightctl": {
+        "enabled": false
+      },
+      "gemini": {
+        "enabled": false
+      },
+      "gifgrep": {
+        "enabled": false
+      },
+      "gog": {
+        "enabled": false
+      },
+      "goplaces": {
+        "enabled": false
+      },
+      "himalaya": {
+        "enabled": false
+      },
+      "imsg": {
+        "enabled": false
+      },
+      "mcporter": {
+        "enabled": false
+      },
+      "model-usage": {
+        "enabled": false
+      },
+      "nano-pdf": {
+        "enabled": false
+      },
+      "obsidian": {
+        "enabled": false
+      },
+      "openai-whisper": {
+        "enabled": false
+      },
+      "openai-whisper-api": {
+        "enabled": false
+      },
+      "openhue": {
+        "enabled": false
+      },
+      "oracle": {
+        "enabled": false
+      },
+      "ordercli": {
+        "enabled": false
+      },
+      "peekaboo": {
+        "enabled": false
+      },
+      "sag": {
+        "enabled": false
+      },
+      "sherpa-onnx-tts": {
+        "enabled": false
+      },
+      "slack": {
+        "enabled": false
+      },
+      "songsee": {
+        "enabled": false
+      },
+      "sonoscli": {
+        "enabled": false
+      },
+      "spotify-player": {
+        "enabled": false
+      },
+      "summarize": {
+        "enabled": false
+      },
+      "things-mac": {
+        "enabled": false
+      },
+      "tmux": {
+        "enabled": false
+      },
+      "trello": {
+        "enabled": false
+      },
+      "video-frames": {
+        "enabled": false
+      },
+      "voice-call": {
+        "enabled": false
+      },
+      "wacli": {
+        "enabled": false
+      },
+      "xurl": {
+        "enabled": false
+      }
     }
   },
   "tools": {
-    "agentToAgent": { "enabled": true },
+    "agentToAgent": {
+      "enabled": true
+    },
     "elevated": {
       "enabled": true,
       "allowFrom": {
-        "discord": ["{{ .DISCORD_MATT_USER_ID }}"]
+        "discord": [
+          "{{ .DISCORD_MATT_USER_ID }}"
+        ]
       }
     },
     "exec": {
-      "security": "full",
-      "ask": "off",
-      "strictInlineEval": false
+      "strictInlineEval": false,
+      "mode": "full"
     },
-    "media": { "image": { "timeoutSeconds": 180 } },
-    "sessions": { "visibility": "all" },
+    "media": {
+      "image": {
+        "timeoutSeconds": 180
+      }
+    },
+    "sessions": {
+      "visibility": "all"
+    },
     "web": {
       "search": {
         "enabled": true,
@@ -496,7 +888,9 @@
           "mode": "cached"
         }
       },
-      "fetch": { "enabled": true }
+      "fetch": {
+        "enabled": true
+      }
     }
   },
   "secrets": {
@@ -509,6 +903,11 @@
           "LITELLM_API_KEY"
         ]
       }
+    }
+  },
+  "browser": {
+    "extensionRelay": {
+      "allowLegacyAuth": false
     }
   }
 }
