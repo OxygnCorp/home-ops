@@ -606,6 +606,17 @@
       }
     },
     {
+      "agentId": "main",
+      "match": {
+        "channel": "discord",
+        "peer": {
+          "kind": "channel",
+          "id": "{{ .DISCORD_CLAW_PROJECT_FORUM }}"
+        },
+        "guildId": "{{ .DISCORD_GUILD_ID }}"
+      }
+    },
+    {
       "agentId": "family",
       "match": {
         "channel": "discord",
@@ -656,6 +667,17 @@
         "peer": {
           "kind": "channel",
           "id": "{{ .DISCORD_NOVA_CHANNEL_ID }}"
+        },
+        "guildId": "{{ .DISCORD_GUILD_ID }}"
+      }
+    },
+    {
+      "agentId": "nova",
+      "match": {
+        "channel": "discord",
+        "peer": {
+          "kind": "channel",
+          "id": "{{ .DISCORD_NOVA_PROJECT_FORUM }}"
         },
         "guildId": "{{ .DISCORD_GUILD_ID }}"
       }
