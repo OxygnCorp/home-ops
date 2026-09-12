@@ -25,7 +25,7 @@ gum = "2.0.1"
 "gh" = "2.100.0"
 
 # 1Password
-"vals" = "0.46.0"
+"vals" = "0.46.1"
 
 # Flux Stuff
 "aqua:fluxcd/flux2" = "2.9.5"
