@@ -1,0 +1,17 @@
+---
+apiVersion: litellm.home-operations.com/v1alpha1
+kind: LiteLLMModel
+metadata:
+  name: qwen3-embedding-0.6b
+spec:
+  # Name MUST stay identical to the direct llmkube endpoint name: memini tracks
+  # the embedding model name and a rename triggers a full re-embed.
+  modelName: qwen3-embedding-0.6b
+  proxyRef: litellm
+  params:
+    model: openai/qwen3-embedding-0.6b
+    apiBase: http://qwen3-embedding-0-6b.ai.svc.cluster.local:8080/v1
+    apiKey: sk-llmkube-noauth
+  info:
+    mode: embed
+    maxInputTokens: 2048
