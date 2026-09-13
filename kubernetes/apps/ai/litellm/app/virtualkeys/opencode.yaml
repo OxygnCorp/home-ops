@@ -15,6 +15,7 @@ kind: PushSecret
 metadata:
   name: opencode
 spec:
+  refreshInterval: 1h
   secretStoreRefs:
     - name: onepassword
       kind: ClusterSecretStore
