@@ -36,6 +36,20 @@ spec:
       memory: 256Mi
     limits:
       memory: 2Gi
+  podAnnotations:
+    reloader.stakater.com/auto: "true"
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    fsGroupChangePolicy: OnRootMismatch
+  securityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
   livenessProbe:
     httpGet:
       path: /
