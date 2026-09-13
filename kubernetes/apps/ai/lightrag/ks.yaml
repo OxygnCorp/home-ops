@@ -17,8 +17,6 @@ spec:
       namespace: miroir-system
     - name: litellm
       namespace: ai
-    - name: embeddings
-      namespace: ai
     - name: kopiur
       namespace: kopiur-system
   interval: 1h
