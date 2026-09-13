@@ -75,6 +75,12 @@ spec:
       # home-operations/miroir#262). Cache loss on node failure is acceptable:
       # it rebuilds from the repository on the next mover run.
       storageClassName: miroir-slow-local
+      # Kopia's own defaults are 5000 MiB per budget, larger than the whole
+      # cache PVC (KOPIUR_CAPACITY default 5Gi), so the sweeper never runs and
+      # the cache fills the volume. The metadata budget applies twice: kopia
+      # caps the index-blobs cache at the same size.
+      contentCacheSizeMb: 512
+      metadataCacheSizeMb: 1024
     securityContext:
       runAsUser: 1024
       runAsGroup: 100
