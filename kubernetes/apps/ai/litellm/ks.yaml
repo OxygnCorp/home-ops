@@ -4,6 +4,8 @@ apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
   name: litellm
+  labels:
+    components.postgres/cnpg: init
 spec:
   commonMetadata:
     labels:
@@ -11,12 +13,17 @@ spec:
   dependsOn:
     - name: litellm-operator
   components:
+    - ../../../../components/postgres
     - ../../../../components/dragonfly
   healthCheckExprs:
     - apiVersion: dragonflydb.io/v1alpha1
       kind: Dragonfly
       failed: status.phase != 'ready'
       current: status.phase == 'ready'
+    - apiVersion: postgresql.cnpg.io/v1
+      kind: Cluster
+      failed: status.conditions.filter(e, e.type == 'Ready').all(e, e.status == 'False')
+      current: status.conditions.filter(e, e.type == 'Ready').all(e, e.status == 'True')
   interval: 1h
   path: "./kubernetes/apps/ai/litellm/app"
   postBuild:
