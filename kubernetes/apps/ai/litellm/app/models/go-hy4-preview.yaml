@@ -1,0 +1,19 @@
+---
+apiVersion: litellm.home-operations.com/v1alpha1
+kind: LiteLLMModel
+metadata:
+  name: go-hy4-preview
+spec:
+  modelName: go-hy4-preview
+  proxyRef: litellm
+  params:
+    model: openai/hy4-preview
+    apiBase: https://opencode.ai/zen/go/v1
+    apiKey: os.environ/OPENCODE_API_KEY
+  info:
+    mode: chat
+    maxInputTokens: 131072
+    maxOutputTokens: 16384
+    supportsFunctionCalling: true
+    supportsVision: false
+    supportsPromptCaching: true

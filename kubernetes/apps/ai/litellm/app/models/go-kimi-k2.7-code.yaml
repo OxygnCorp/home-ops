@@ -1,0 +1,19 @@
+---
+apiVersion: litellm.home-operations.com/v1alpha1
+kind: LiteLLMModel
+metadata:
+  name: go-kimi-k2.7-code
+spec:
+  modelName: go-kimi-k2.7-code
+  proxyRef: litellm
+  params:
+    model: openai/kimi-k2.7-code
+    apiBase: https://opencode.ai/zen/go/v1
+    apiKey: os.environ/OPENCODE_API_KEY
+  info:
+    mode: chat
+    maxInputTokens: 262144
+    maxOutputTokens: 16384
+    supportsFunctionCalling: true
+    supportsVision: true
+    supportsPromptCaching: true

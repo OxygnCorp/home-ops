@@ -8,6 +8,8 @@ spec:
   commonMetadata:
     labels:
       app.kubernetes.io/name: litellm
+  dependsOn:
+    - name: litellm-operator
   components:
     - ../../../../components/dragonfly
   healthCheckExprs:

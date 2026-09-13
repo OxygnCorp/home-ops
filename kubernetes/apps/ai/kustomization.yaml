@@ -11,6 +11,7 @@ resources:
   - ./devclaw/ks.yaml
   - ./embeddings/ks.yaml
   - ./lightrag/ks.yaml
+  - ./litellm-operator/ks.yaml
   - ./litellm/ks.yaml
   - ./llmkube/ks.yaml
   - ./mainclaw/ks-blueprint.yaml

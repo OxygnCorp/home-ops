@@ -1,0 +1,19 @@
+---
+apiVersion: litellm.home-operations.com/v1alpha1
+kind: LiteLLMModel
+metadata:
+  name: minimax-m3
+spec:
+  modelName: MiniMax-M3
+  proxyRef: litellm
+  params:
+    model: minimax/MiniMax-M3
+    apiBase: https://api.minimax.io/v1
+    apiKey: os.environ/MINIMAX_API_KEY
+  info:
+    mode: chat
+    maxInputTokens: 1000000
+    maxOutputTokens: 131072
+    supportsFunctionCalling: true
+    supportsVision: true
+    supportsPromptCaching: true

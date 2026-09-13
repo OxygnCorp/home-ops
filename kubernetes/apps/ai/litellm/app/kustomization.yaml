@@ -3,15 +3,15 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-  - ./ocirepository.yaml
-  - ./helmrelease.yaml
   - ./externalsecret.yaml
+  - ./litellmproxy.yaml
+  - ./servicemonitor.yaml
+  - ./models
   - ./dashboard
   - ./grafanadashboard.yaml
 configMapGenerator:
   - name: litellm-configmap
     files:
-      - config.yaml=./resources/config.yaml
       - session_hook.py=./resources/session_hook.py
 generatorOptions:
   disableNameSuffixHash: true

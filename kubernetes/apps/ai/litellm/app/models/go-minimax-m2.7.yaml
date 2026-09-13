@@ -1,0 +1,19 @@
+---
+apiVersion: litellm.home-operations.com/v1alpha1
+kind: LiteLLMModel
+metadata:
+  name: go-minimax-m2.7
+spec:
+  modelName: go-minimax-m2.7
+  proxyRef: litellm
+  params:
+    model: openai/minimax-m2.7
+    apiBase: https://opencode.ai/zen/go/v1
+    apiKey: os.environ/OPENCODE_API_KEY
+  info:
+    mode: chat
+    maxInputTokens: 204800
+    maxOutputTokens: 16384
+    supportsFunctionCalling: true
+    supportsVision: false
+    supportsPromptCaching: true
