@@ -45,6 +45,18 @@ data:
     - Les tâches en lecture seule (questions, exploration) n'exigent pas de worktree.
     - Ne stage/committe QUE les fichiers que tu as toi-même créés ou modifiés —
       jamais de `git add -A` ni `git add .`.
+
+    ## QUALITY PASS (avant de déclarer un travail terminé)
+
+    - Après tout changement substantiel, dispatche un subagent `reviewer`
+      fresh-context pour une passe critique complète sur le diff (bugs restants,
+      cas limites, gestion d'erreurs, petites victoires QoL).
+    - Donne-lui les fichiers modifiés et l'objectif — pas ton raisonnement ; un
+      relecteur quasi-sans-contexte est plus critique et attrape ce que tu as
+      rationalisé.
+    - Agis sur ses constats, puis re-vérifie. Skip uniquement pour du travail
+      trivial ou en lecture seule.
+
   opencode.json: |
     {
       "$schema": "https://opencode.ai/config.json",
@@ -56,6 +68,14 @@ data:
         ["@eleboucher/opencode-memini@0.7.28", { "base_url": "http://memini.ai:8080", "namespace": "opencode", "auto_update": false }]
       ],
       "enabled_providers": ["litellm"],
+      "agent": {
+        "reviewer": {
+          "description": "Revise critique fresh-context d'un diff (bugs, cas limites, gestion d'erreurs, QoL). Famille GLM — à dispatcher après un changement substantiel (QUALITY PASS).",
+          "mode": "subagent",
+          "model": "litellm/go-glm-5.3-flash",
+          "prompt": "Tu es un relecteur de code indépendant. On te donne des fichiers modifiés et l'objectif du changement — jamais le raisonnement de l'auteur. Relis le diff complet (git diff de la branche) et cherche : bugs réels, cas limites non gérés, erreurs avalées, incohérences avec le reste du repo, et petites améliorations QoL évidentes. Signale chaque constat avec fichier:ligne, ce qui ne va pas, et pourquoi ça compte. Pas de compliments, pas de reformulation du but : uniquement les constats, triés par gravité (bloquant / devrait corriger / mineur). Si rien à signaler, dis-le explicitement."
+        }
+      },
       "provider": {
         "litellm": {
           "npm": "@ai-sdk/openai-compatible",
