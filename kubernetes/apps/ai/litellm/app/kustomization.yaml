@@ -6,6 +6,7 @@ resources:
   - ./externalsecret.yaml
   - ./litellmproxy.yaml
   - ./servicemonitor.yaml
+  - ./virtualkeys
   - ./models
   - ./dashboard
   - ./grafanadashboard.yaml

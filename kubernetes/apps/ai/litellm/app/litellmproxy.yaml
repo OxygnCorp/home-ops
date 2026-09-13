@@ -27,6 +27,11 @@ spec:
       value: litellm-dragonfly
     - name: REDIS_PORT
       value: "6379"
+    - name: DATABASE_URL
+      valueFrom:
+        secretKeyRef:
+          key: uri
+          name: litellm-app
   envFrom:
     - secretRef:
         name: litellm-secret
@@ -125,6 +130,7 @@ spec:
         - "*"
   generalSettings:
     health_check_endpoint: /v1/health
+    store_model_in_db: false
   extraConfig:
     environment:
       - MINIMAX_API_KEY
