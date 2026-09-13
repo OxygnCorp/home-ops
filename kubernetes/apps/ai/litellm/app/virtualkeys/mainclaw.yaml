@@ -26,5 +26,5 @@ spec:
     - match:
         secretKey: api-key
         remoteRef:
-          remoteKey: litellm
-          property: LITELLM_MAINCLAW_API_KEY
+          remoteKey: litellm-key-mainclaw
+          property: credential
