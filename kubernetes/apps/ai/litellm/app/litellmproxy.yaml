@@ -78,12 +78,16 @@ spec:
             path: session_hook.py
     - name: cache
       emptyDir: {}
+    - name: tmp
+      emptyDir: {}
   volumeMounts:
     - name: session-hook
       mountPath: /app/hooks
       readOnly: true
     - name: cache
       mountPath: /app/cache
+    - name: tmp
+      mountPath: /tmp
   routerSettings:
     redis_host: os.environ/REDIS_HOST
     redis_port: os.environ/REDIS_PORT
