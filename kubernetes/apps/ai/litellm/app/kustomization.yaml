@@ -6,7 +6,7 @@ resources:
   - ./externalsecret.yaml
   - ./litellmproxy.yaml
   - ./servicemonitor.yaml
-  - ./../models
+  - ./models
   - ./dashboard
   - ./grafanadashboard.yaml
 configMapGenerator:
