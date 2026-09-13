@@ -14,5 +14,10 @@ spec:
     apiBase: http://qwen3-reranker-0-6b.ai.svc.cluster.local:8080
     apiKey: sk-llmkube-noauth
   info:
-    mode: rerank
+    # NO `mode: rerank` here: the operator controller normalizes rerank-mode
+    # models (provider → openai/, apiBase +/v1, default tokens), which litellm
+    # then rejects at /rerank ("Unsupported provider: openai"). Without a mode
+    # the CR is rendered verbatim and the infinity/ provider works (verified
+    # E2E: POST /rerank 200, correct ranking). mode is informational in litellm;
+    # the /rerank endpoint routes by model name.
     maxInputTokens: 2048
