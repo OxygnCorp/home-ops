@@ -15,6 +15,7 @@ kind: PushSecret
 metadata:
   name: mainclaw
 spec:
+  refreshInterval: 1h
   secretStoreRefs:
     - name: onepassword
       kind: ClusterSecretStore
