@@ -6,6 +6,9 @@ configMapGenerator:
   - name: litellm
     files:
       - litellm.json
+  - name: litellm-routing
+    files:
+      - litellm-routing.json
 generatorOptions:
   disableNameSuffixHash: true
   annotations:
