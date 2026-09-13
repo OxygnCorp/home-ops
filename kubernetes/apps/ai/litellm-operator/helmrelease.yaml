@@ -15,7 +15,12 @@ spec:
       leaderElection:
         enabled: true
     llmkube:
-      autoRegister: true
+      # The projection mirrors llmkube InferenceServices into LiteLLMModel CRs
+      # (provider openai/, apiBase trimmed from the ISvc endpoint). Our two
+      # ISvcs (qwen3-embedding-0.6b, qwen3-reranker-0.6b) are managed in Git
+      # under the same names — the projection would fight Flux and its openai/
+      # rerank rendering is rejected by litellm (no openai rerank provider).
+      autoRegister: false
     resources:
       requests:
         cpu: 25m
