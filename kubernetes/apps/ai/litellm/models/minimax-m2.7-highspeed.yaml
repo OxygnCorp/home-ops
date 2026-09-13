@@ -1,0 +1,19 @@
+---
+apiVersion: litellm.home-operations.com/v1alpha1
+kind: LiteLLMModel
+metadata:
+  name: minimax-m2.7-highspeed
+spec:
+  modelName: MiniMax-M2.7-highspeed
+  proxyRef: litellm
+  params:
+    model: minimax/MiniMax-M2.7-highspeed
+    apiBase: https://api.minimax.io/v1
+    apiKey: os.environ/MINIMAX_API_KEY
+  info:
+    mode: chat
+    maxInputTokens: 204800
+    maxOutputTokens: 131072
+    supportsFunctionCalling: true
+    supportsVision: false
+    supportsPromptCaching: true

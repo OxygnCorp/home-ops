@@ -1,0 +1,19 @@
+---
+apiVersion: litellm.home-operations.com/v1alpha1
+kind: LiteLLMModel
+metadata:
+  name: go-qwen3.8-flash
+spec:
+  modelName: go-qwen3.8-flash
+  proxyRef: litellm
+  params:
+    model: openai/qwen3.8-flash
+    apiBase: https://opencode.ai/zen/go/v1
+    apiKey: os.environ/OPENCODE_API_KEY
+  info:
+    mode: chat
+    maxInputTokens: 262144
+    maxOutputTokens: 16384
+    supportsFunctionCalling: true
+    supportsVision: false
+    supportsPromptCaching: true
