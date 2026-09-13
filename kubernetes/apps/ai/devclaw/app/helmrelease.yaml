@@ -59,7 +59,7 @@ spec:
                 # (`openclaw plugins search memini`) — the ClawHub plugin
                 # versions and the memini app OCI chart versions drift, so a
                 # renovate-marker here caused a failed install lookup on every boot.
-                MEMINI_PLUGIN_VERSION=v0.7.28
+                MEMINI_PLUGIN_VERSION=v0.7.29
                 # Strip the chart tag prefix at runtime; braced shell expansion does not survive
                 # the Flux postBuild variable substitution
                 MEMINI_PLUGIN_REL=$(printf '%s' "$MEMINI_PLUGIN_VERSION" | sed 's/^v//')
