@@ -12,6 +12,8 @@ spec:
   components:
     - ../../../../components/kopiur/backup
   dependsOn:
+    - name: authentik
+      namespace: security
     - name: litellm
     - name: kopiur
       namespace: kopiur-system
