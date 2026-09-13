@@ -194,6 +194,11 @@ apiVersion: v1alpha1
 kind: WatchdogTimerConfig
 device: /dev/watchdog0
 timeout: 5m
+---
+apiVersion: v1alpha1
+kind: ResolverConfig
+searchDomains:
+  domains: []
 {% if ENV.MACHINE_TYPE == "controlplane" %}
 ---
 apiVersion: v1alpha1
