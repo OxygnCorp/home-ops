@@ -1,0 +1,18 @@
+---
+apiVersion: litellm.home-operations.com/v1alpha1
+kind: LiteLLMModel
+metadata:
+  name: qwen3-reranker-0.6b
+spec:
+  # Name matches MEMINI_RERANK_MODEL. `infinity/` provider posts the cohere
+  # format to {api_base}/rerank — verified against llama-server in-cluster
+  # (200, results[].relevance_score + usage present).
+  modelName: qwen3-reranker-0.6b
+  proxyRef: litellm
+  params:
+    model: infinity/qwen3-reranker-0.6b
+    apiBase: http://qwen3-reranker-0-6b.ai.svc.cluster.local:8080
+    apiKey: sk-llmkube-noauth
+  info:
+    mode: rerank
+    maxInputTokens: 2048
