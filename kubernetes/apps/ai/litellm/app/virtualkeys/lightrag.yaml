@@ -1,0 +1,30 @@
+---
+apiVersion: litellm.home-operations.com/v1alpha1
+kind: LiteLLMVirtualKey
+metadata:
+  name: lightrag
+spec:
+  proxyRef: litellm
+  keyAlias: Lightrag
+  secretName: litellm-key-lightrag
+  secretKey: api-key
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/external-secrets.io/pushsecret_v1alpha1.json
+apiVersion: external-secrets.io/v1alpha1
+kind: PushSecret
+metadata:
+  name: lightrag
+spec:
+  refreshInterval: 1h
+  secretStoreRefs:
+    - name: onepassword
+      kind: ClusterSecretStore
+  selector:
+    secret:
+      name: litellm-key-lightrag
+  data:
+    - match:
+        secretKey: api-key
+        remoteRef:
+          remoteKey: litellm-key-lightrag
+          property: credential
