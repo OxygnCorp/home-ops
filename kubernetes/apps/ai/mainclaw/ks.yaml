@@ -11,6 +11,8 @@ spec:
   components:
     - ../../../../components/kopiur/backup
   dependsOn:
+    - name: authentik
+      namespace: security
     - name: kopiur
       namespace: kopiur-system
     - name: miroir-config
