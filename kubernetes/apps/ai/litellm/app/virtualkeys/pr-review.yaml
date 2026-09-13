@@ -1,0 +1,30 @@
+---
+apiVersion: litellm.home-operations.com/v1alpha1
+kind: LiteLLMVirtualKey
+metadata:
+  name: pr-review
+spec:
+  proxyRef: litellm
+  keyAlias: PrReview
+  secretName: litellm-key-pr-review
+  secretKey: api-key
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/external-secrets.io/pushsecret_v1alpha1.json
+apiVersion: external-secrets.io/v1alpha1
+kind: PushSecret
+metadata:
+  name: pr-review
+spec:
+  refreshInterval: 1h
+  secretStoreRefs:
+    - name: onepassword
+      kind: ClusterSecretStore
+  selector:
+    secret:
+      name: litellm-key-pr-review
+  data:
+    - match:
+        secretKey: api-key
+        remoteRef:
+          remoteKey: litellm-key-pr-review
+          property: credential
