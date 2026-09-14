@@ -34,7 +34,7 @@ spec:
               MEMINI_WRITE_DEDUP_SCORE: "0.80"
               MEMINI_WRITE_DEDUP_ACTION: coalesce
               MEMINI_LLM_BASE_URL: http://litellm.ai:4000/v1
-              MEMINI_LLM_MODEL: dsv4f
+              MEMINI_LLM_MODEL: dsv41f
               MEMINI_LLM_API_KEY:
                 valueFrom:
                   secretKeyRef:
