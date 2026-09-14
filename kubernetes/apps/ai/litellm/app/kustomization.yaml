@@ -10,6 +10,7 @@ resources:
   - ./models
   - ./dashboard
   - ./grafanadashboard.yaml
+  - ./prometheusrule.yaml
 configMapGenerator:
   - name: litellm-configmap
     files:
