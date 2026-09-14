@@ -1,0 +1,16 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ./ocirepository.yaml
+  - ./externalsecret.yaml
+  - ./helmrelease.yaml
+configMapGenerator:
+  - name: repo-wiki-configmap
+    files:
+      - ./resources/repos.txt
+      - ./resources/mkdocs.yml
+      - ./resources/generate.py
+generatorOptions:
+  disableNameSuffixHash: true

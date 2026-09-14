@@ -9,3 +9,4 @@ resources:
   - ./pr-review.yaml
   - ./memini.yaml
   - ./lightrag.yaml
+  - ./repo-wiki.yaml
