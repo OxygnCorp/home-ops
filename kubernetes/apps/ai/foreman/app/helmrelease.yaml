@@ -1,0 +1,61 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: foreman
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: foreman
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  values:
+    operator:
+      # Audit-record ConfigMaps (foreman.llmkube.dev/audit) accumulate one per
+      # task and are only GC'd by the operator's reaper — a homelab does not
+      # need the default week of audit trail.
+      audit:
+        retention: 48h
+    # Defaults every entry in `agents` merges over (LLMKube#994).
+    agent:
+      mode: native
+      taskNamespace: ai
+      image:
+        repository: ghcr.io/misospace/llmkube-coder
+        tag: 0.9.25@sha256:63a72021c626f15d76a1c605c7617f1337f87181dc674513480fc670a664a03e
+      # No gate/verifier Agent in this deployment (repo CI + the AI PR review
+      # workflow are the verifiers), so the 20Gi build-cache PVC would sit
+      # unused — the chart docs say to disable it when the node never hosts
+      # the gate Agent.
+      gateCache:
+        enabled: false
+    agents:
+      default:
+        enabled: true
+        # replicaCount caps in-process work only (the reviewer); Job-mode
+        # coder tasks select a node without reserving it (LLMKube#1496) and
+        # are not bounded by this.
+        replicaCount: 1
+        roles:
+          - worker
+          - coder
+          - reviewer
+        githubToken:
+          secretName: foreman-agent
+          secretKey: GITHUB_TOKEN
+        # Update to the bot's GitHub identity if attribution should link to
+        # an account; DCO sign-off uses these.
+        commitAuthorName: Puchu
+        commitAuthorEmail: puchu@oxygn.dev
+        gateCache:
+          enabled: false
+    coder:
+      gitCredentialsSecret: foreman-agent
+      gitCredentialsSecretKey: GITHUB_TOKEN
