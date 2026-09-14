@@ -3,23 +3,23 @@
 apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: SecurityPolicy
 metadata:
-  name: opencode-oidc
+  name: ${APP}-oidc
 spec:
   targetRefs:
     - group: gateway.networking.k8s.io
       kind: HTTPRoute
-      name: opencode
+      name: ${OIDC_ROUTE_NAME}
   oidc:
     provider:
-      issuer: https://authentik.oxygn.dev/application/o/opencode/
+      issuer: https://authentik.${DOMAIN:=oxygn.dev}/application/o/${APP}/
     clientIDRef:
       group: ""
       kind: Secret
-      name: opencode-oidc
+      name: ${APP}-oidc
     clientSecret:
       group: ""
       kind: Secret
-      name: opencode-oidc
-    redirectURL: https://opencode.oxygn.dev/oauth2/callback
+      name: ${APP}-oidc
+    redirectURL: https://${SUBDOMAIN}.${DOMAIN:=oxygn.dev}${OIDC_CALLBACK:=/oauth2/callback}
     logoutPath: /logout
     scopes: ["openid", "email", "profile"]
