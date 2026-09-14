@@ -19,5 +19,6 @@ resources:
   - ./n8n/ks.yaml
   - ./opencode/ks-blueprint.yaml
   - ./opencode/ks.yaml
+  - ./repo-wiki/ks.yaml
   - ./searxng/ks.yaml
   - ./toolhive/ks.yaml

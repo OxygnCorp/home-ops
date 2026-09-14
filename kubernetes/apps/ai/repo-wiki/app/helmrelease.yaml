@@ -1,0 +1,118 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: repo-wiki
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: repo-wiki
+  interval: 15m
+  values:
+    defaultPodOptions:
+      securityContext:
+        fsGroup: 33
+        fsGroupChangePolicy: OnRootMismatch
+
+    controllers:
+      mkdocs:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: docker.io/squidfunk/mkdocs-material
+              tag: 9.7.7@sha256:51b87149d227691486b5f08993d28c65ca7e4990010664b697265b8e6fcd5287
+            command: ["mkdocs"]
+            args:
+              [
+                "serve",
+                "--dirty",
+                "-f",
+                "/config/mkdocs.yml",
+                "-a",
+                "0.0.0.0:8000",
+              ]
+            resources:
+              requests:
+                cpu: 50m
+              limits:
+                memory: 512Mi
+
+      repo-wiki-gen:
+        type: cronjob
+        pod:
+          # The generator and mkdocs share one RWO PVC (kopiur ${APP}) — co-schedule
+          # the CronJob on whatever node currently runs mkdocs or it stays Pending.
+          affinity:
+            podAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchExpressions:
+                      - key: app.kubernetes.io/name
+                        operator: In
+                        values: ["repo-wiki"]
+                  topologyKey: kubernetes.io/hostname
+        cronjob:
+          schedule: "0 */12 * * *"
+          timeZone: Europe/Paris
+          concurrencyPolicy: Forbid
+          successfulJobsHistory: 1
+          failedJobsHistory: 1
+        containers:
+          app:
+            image:
+              repository: docker.io/library/python
+              tag: "3.14@sha256:e06cc1111ed84189e91866447f562b89faadbfbbb9937cd67e6bf4172cdb45df"
+            command: ["python3", "/config/generate.py"]
+            env:
+              OPENAI_BASE_URL: http://litellm.ai:4000/v1
+              WIKI_MODEL: dsv41f
+              MAX_REPOS_PER_RUN: "1"
+              MAX_PAGES_PER_REPO: "10"
+              LLM_TIMEOUT: "1800"
+              WIKI_REPO: /app-data/repository
+            envFrom:
+              - secretRef:
+                  name: "{{ .Release.Name }}"
+            resources:
+              requests:
+                cpu: 100m
+              limits:
+                memory: 2Gi
+
+    persistence:
+      data:
+        existingClaim: "{{ .Release.Name }}"
+        advancedMounts:
+          mkdocs:
+            app:
+              - path: /app-data
+          repo-wiki-gen:
+            app:
+              - path: /app-data
+      config:
+        type: configMap
+        name: repo-wiki-configmap
+        globalMounts:
+          - path: /config
+
+    route:
+      app:
+        hostnames:
+          - wikis.oxygn.dev
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
+        rules:
+          - backendRefs:
+              - identifier: app
+                port: &port 8000
+
+    service:
+      app:
+        controller: mkdocs
+        ports:
+          http:
+            port: *port
