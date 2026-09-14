@@ -64,6 +64,15 @@ data:
       "small_model": "litellm/MiniMax-M2.7-highspeed",
       "compaction": { "auto": true, "prune": true, "preserve_recent_tokens": 20000, "reserved": 16384 },
       "tool_output": { "max_lines": 800, "max_bytes": 16384 },
+      "permission": {
+        "edit": "allow",
+        "bash": "allow",
+        "external_directory": {
+          "*": "ask",
+          "~/projects/**": "allow",
+          "/tmp/opencode/**": "allow"
+        }
+      },
       "plugin": [
         ["@eleboucher/opencode-memini@0.7.29", { "base_url": "http://memini.ai:8080", "namespace": "opencode", "auto_update": false }]
       ],
