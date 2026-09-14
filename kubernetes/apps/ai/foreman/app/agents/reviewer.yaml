@@ -13,8 +13,10 @@ spec:
     apiKeySecretRef:
       name: foreman-agent
       key: LITELLM_API_KEY
-  # Read-only whitelist: no write_file / str_replace. The reviewer describes
-  # needed changes in its verdict, it does not edit the branch.
+  # No file-editing tools (no write_file / str_replace): the reviewer
+  # describes needed changes in its verdict instead of making them. bash stays
+  # for git navigation and diffing only — bounded by prompt instruction, not
+  # by tooling (same trade-off as upstream).
   tools:
     - read_file
     - grep
