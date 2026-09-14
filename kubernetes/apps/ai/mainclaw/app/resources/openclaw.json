@@ -119,6 +119,7 @@
         "allow": [
           "litellm/MiniMax-M3",
           "litellm/MiniMax-M2.7",
+          "litellm/dsv41f",
           "litellm/dsv4f",
           "litellm/dsv4p",
           "litellm/go-glm-5.3-flash",
@@ -285,6 +286,14 @@
         "name": "Finance Expert",
         "workspace": "/home/node/.openclaw/workspace-finance",
         "agentDir": "/home/node/.openclaw/agents/finance/agent",
+        "model": {
+          "primary": "litellm/dsv41f",
+          "fallbacks": [
+            "litellm/MiniMax-M3",
+            "litellm/go-minimax-m3",
+            "litellm/dsv4f"
+          ]
+        },
         "heartbeat": {
           "directPolicy": "allow",
           "every": "6h",
