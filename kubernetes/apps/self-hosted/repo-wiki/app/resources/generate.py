@@ -49,14 +49,13 @@ def expand(entry):
     return [r["full_name"] for r in list_repos(owner)
             if r["full_name"].startswith(owner + "/") and not r["archived"] and not r["fork"]]
 
-def clone_url(repo):
-    return f"https://x-access-token:{TOKEN}@github.com/{repo}.git" if TOKEN \
-        else f"https://github.com/{repo}.git"
-
 def head_sha(repo):
-    out = subprocess.run(["git", "ls-remote", clone_url(repo), "HEAD"],
-                         capture_output=True, text=True).stdout
-    return out.split()[0] if out else ""
+    # GitHub API instead of `git ls-remote` — the token stays in the
+    # Authorization header, never in a process argument or URL.
+    try:
+        return gh(f"/repos/{repo}/commits?per_page=1")[0]["sha"]
+    except Exception:
+        return ""
 
 def fetch_files(repo):
     req = urllib.request.Request(f"https://api.github.com/repos/{repo}/tarball",
@@ -154,7 +153,9 @@ for repo, sha in stale:
         base.mkdir(parents=True, exist_ok=True)
         index = [f"# {repo}\n", "_AI-generated wiki._\n", "## Pages\n"]
         for pg in pages:
-            slug = pg.get("slug") or slugify(pg.get("title", "page"))
+            # Always sanitize: LLM output is semi-trusted (repo content is
+            # prompt-injectable), and an unsanitized slug is a path traversal.
+            slug = slugify(pg.get("slug") or pg.get("title", "page"))
             print(f"  page: {pg.get('title')} ({slug})", flush=True)
             (base / f"{slug}.md").write_text(write_page(repo, pg, files))
             index.append(f"- [{pg.get('title', slug)}]({slug}.md)")
