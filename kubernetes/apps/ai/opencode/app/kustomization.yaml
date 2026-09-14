@@ -6,6 +6,7 @@ resources:
   - ./configmap.yaml
   - ./externalsecret.yaml
   - ./helmrelease.yaml
+  - ./httproute-health.yaml
   - ./httproute.yaml
   - ./kopiaignore.yaml
   - ./ocirepository.yaml

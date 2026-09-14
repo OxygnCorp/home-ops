@@ -1,0 +1,44 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/gateway.networking.k8s.io/httproute_v1.json
+# Unauthenticated paths for opencode. The OIDC SecurityPolicy targets the main
+# `opencode` HTTPRoute only: every unauthenticated request it redirects mints a
+# uniquely-named OauthNonce/CodeVerifier cookie pair that accumulates in the
+# browser (never cleaned up for abandoned flows) until the callback request
+# exceeds Envoy's http2 header limit and fails with a 502. Serving health paths
+# and the favicon from this separate route stops that minting at the source.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: opencode-health
+  annotations:
+    external-dns.kubernetes.io/controller: none
+    gatus.home-operations.com/endpoint: |
+      conditions: ["[STATUS] == 200"]
+spec:
+  hostnames:
+    - opencode.oxygn.dev
+  parentRefs:
+    - name: envoy-external
+      namespace: network
+  rules:
+    - matches:
+        - path:
+            type: Exact
+            value: /api/health
+      backendRefs:
+        - name: opencode-server
+          port: 4096
+    - matches:
+        - path:
+            type: Exact
+            value: /global/health
+      backendRefs:
+        - name: opencode-server
+          port: 4096
+    - matches:
+        - path:
+            type: Exact
+            value: /favicon.ico
+      backendRefs:
+        - name: opencode-server
+          port: 4096
