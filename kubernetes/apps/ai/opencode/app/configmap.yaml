@@ -74,7 +74,7 @@ data:
         }
       },
       "plugin": [
-        ["@eleboucher/opencode-memini@0.7.29", { "base_url": "http://memini.ai:8080", "namespace": "opencode", "auto_update": false }]
+        ["@eleboucher/opencode-memini@0.7.29", { "base_url": "http://memini.ai:8080", "auto_update": false }]
       ],
       "enabled_providers": ["litellm"],
       "agent": {
