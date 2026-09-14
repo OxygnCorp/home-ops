@@ -4,13 +4,20 @@ apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
   name: mainclaw-blueprint
-  namespace: ai
 spec:
   commonMetadata:
     labels:
       app.kubernetes.io/name: mainclaw
   interval: 1h
-  path: ./kubernetes/apps/ai/mainclaw/blueprint
+  path: ./kubernetes/components/oidc/blueprint
+  postBuild:
+    substitute:
+      APP: mainclaw
+      OIDC_DISPLAY_NAME: MainClaw
+      OIDC_ENV_PREFIX: MAINCLAW
+      DOMAIN: ${DOMAIN:=oxygn.dev}
+      SUBDOMAIN: ${SUBDOMAIN:=mainclaw}
+      OIDC_CALLBACK: ${OIDC_CALLBACK:=/oauth2/callback}
   prune: true
   sourceRef:
     kind: GitRepository
