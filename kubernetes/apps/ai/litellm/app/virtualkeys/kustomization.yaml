@@ -5,6 +5,7 @@ kind: Kustomization
 resources:
   - ./mainclaw.yaml
   - ./devclaw.yaml
+  - ./foreman.yaml
   - ./opencode.yaml
   - ./pr-review.yaml
   - ./memini.yaml
