@@ -10,6 +10,7 @@ resources:
   - ./namespace.yaml
   - ./devclaw/ks.yaml
   - ./foreman/ks.yaml
+  - ./foreman/ks-agents.yaml
   - ./lightrag/ks.yaml
   - ./litellm-operator/ks.yaml
   - ./litellm/ks.yaml
