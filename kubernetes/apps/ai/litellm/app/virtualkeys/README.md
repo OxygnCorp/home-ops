@@ -9,6 +9,9 @@ All API credentials live in the vault `home-ops`:
 - **Category**: items holding API keys/tokens MUST be of type **API Credential** (not "Password"/"Login"). The 1Password Connect API refuses to update or rename items of category `PASSWORD` that have an empty password field (`Password item requires ps value`), which blocks any later automated change.
 - **Field naming**: `ABC_DEF` uppercase with underscores (e.g. `MINIMAX_API_KEY`, `KEY_MAINCLAW`), never kebab-case.
 - **Centralization**: related keys for the same service are grouped as fields of a single item (e.g. `litellm`) instead of one item per app, and pushed by the `PushSecret` in each `virtualkeys/<app>.yaml` (`remoteKey: litellm`, `property: KEY_<APP>`).
+- **Generated items**: two items are upserted by `PushSecret`s and must also be **API Credential** (pre-created empty to avoid ESO creating them in another category):
+  - `kubernetes` — kubeconfig pushed during bootstrap
+  - `oxygn-dev-tls` — `tls.crt`/`tls.key` exported from cert-manager (`kubernetes/apps/network/certificates/export`)
 - **Sections** in the `litellm` item:
   - `providers` — upstream provider API keys (`MINIMAX_API_KEY`, `OPENCODE_API_KEY`, `ZAI_API_KEY`)
   - `virtual keys` — the per-app virtual key fields (`KEY_*`)
