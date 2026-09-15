@@ -1,0 +1,25 @@
+---
+apiVersion: litellm.home-operations.com/v1alpha1
+kind: LiteLLMModel
+metadata:
+  name: dsv41f-max
+spec:
+  modelName: dsv41f-max
+  proxyRef: litellm
+  params:
+    model: openai/deepseek-v4.1-flash
+    apiBase: https://opencode.ai/zen/go/v1
+    apiKey: os.environ/OPENCODE_API_KEY
+    # Same upstream as dsv41f, with the reasoning effort pinned so the
+    # foreman escalation coder (which sends no per-request param) always runs
+    # at the strongest mode. OpenCode Go serves a single model id — the
+    # provider accepts reasoning_effort on chat completions (verified 200).
+    additional:
+      reasoning_effort: high
+  info:
+    mode: chat
+    maxInputTokens: 1000000
+    maxOutputTokens: 16384
+    supportsFunctionCalling: true
+    supportsVision: false
+    supportsPromptCaching: true

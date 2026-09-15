@@ -9,7 +9,7 @@ spec:
   provider: cloud-proxy
   providerConfig:
     baseURL: http://litellm.ai:4000/v1
-    model: dsv4p
+    model: dsv41f-max
     apiKeySecretRef:
       name: foreman-agent
       key: LITELLM_API_KEY

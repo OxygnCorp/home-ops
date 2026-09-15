@@ -9,6 +9,7 @@ resources:
   - ./dsv4f.yaml
   - ./dsv4p.yaml
   - ./dsv41f.yaml
+  - ./dsv41f-max.yaml
   - ./go-kimi-k3.yaml
   - ./go-kimi-k2.7-code.yaml
   - ./go-glm-5.3.yaml
