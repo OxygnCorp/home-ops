@@ -24,23 +24,10 @@ runtime, and Workloads are created per issue (see below) — ephemeral runtime s
 
 1. File/label the GitHub issue on `OxygnCorp/home-ops` (a clear imperative ask plus
    expected file paths — the reviewer's deterministic rails quote the issue verbatim).
-2. Apply a Workload (template — `kubectl apply -f` it, or make a `just` recipe later):
-
-   ```yaml
-   apiVersion: foreman.llmkube.dev/v1alpha1
-   kind: Workload
-   metadata:
-     name: fix-<issue>-<slug>
-     namespace: ai
-   spec:
-     intent: "<one-sentence summary of the ask>"
-     repo: OxygnCorp/home-ops
-     issues: [<issue number>]
-     coderAgentRef:
-       name: coder
-     reviewerAgentRefs:
-       - name: reviewer
-   ```
+2. Create the Workload with the `just foreman-work <issue-number> <name>` recipe
+   (in `kubernetes/mod.just`): it applies a Workload named `<name>` in the
+   `ai` namespace with the intent taken verbatim from the GitHub issue title,
+   wired to the `coder` agent for coding and the `reviewer` agent for review.
 
 3. Watch it run: `kubectl get workload,agentictask -n ai -w`
 4. On review GO, foreman opens a PR (`Fixes #<n>`) from branch
