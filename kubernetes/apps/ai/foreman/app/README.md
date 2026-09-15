@@ -56,8 +56,25 @@ runtime, and Workloads are created per issue (see below) — ephemeral runtime s
 - **PRs are never auto-merged.** The token is a fine-grained PAT scoped to
   `contents:read+write` on `OxygnCorp/home-ops` only (1Password item `foreman`).
 
-## Phase 2 (planned, separate PR)
+## Phase 2 — the label watcher (`../watcher/`)
 
-A small label-watcher CronJob (`foreman/ready` label → Workload CRs, bounded
-concurrency, one escalation tier to a stronger model) replacing manual application —
-no Dispatch/bridge stack.
+The `foreman-watcher` CronJob (own Flux Kustomization `ai/foreman-watcher`,
+`dependsOn: foreman-agents`) runs every 15 min:
+
+- GitHub issues labeled **`foreman/ready`** (open, non-PR) → `Workload/wx-<n>` CRs
+- Concurrency capped by `MAX_IN_PROGRESS` (in-flight Workloads)
+- The **Workload CRs are the state** — nothing is stored on disk:
+  - in flight → skipped and counted toward the cap
+  - Completed + open PR on the branch → comment with the PR link,
+    label dropped, Workload CR deleted (re-labeling re-dispatches cleanly)
+  - Failed with `attempt < MAX_ATTEMPTS` → remote branch cleared (the harness
+    cannot force-push), Workload recreated on attempt N+1; the final attempt
+    runs `coder-escalation` (`dsv4p`)
+  - Failed at `MAX_ATTEMPTS` → comment for human triage, label dropped
+- Label cleanup and comments are best-effort: the PAT must have
+  **issues:read+write** for them (add "Issues: Read and write" to the
+  1Password item `foreman`); without it the pipeline still works, only the
+  issue reporting degrades.
+- After rotating the `foreman` PAT: restart `deploy/foreman-default-agent`
+  (the in-process reviewer holds the token since pod start) — the watcher and
+  coder Jobs read the secret fresh each run.
