@@ -11,6 +11,7 @@ resources:
   - ./devclaw/ks.yaml
   - ./foreman/ks.yaml
   - ./foreman/ks-agents.yaml
+  - ./foreman/ks-watcher.yaml
   - ./lightrag/ks.yaml
   - ./litellm-operator/ks.yaml
   - ./litellm/ks.yaml

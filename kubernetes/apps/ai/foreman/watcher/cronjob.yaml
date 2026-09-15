@@ -1,0 +1,61 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/batch/v1/cronjob.json
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: foreman-watcher
+spec:
+  schedule: "*/15 * * * *"
+  timeZone: Europe/Paris
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      template:
+        spec:
+          serviceAccountName: foreman-watcher
+          restartPolicy: Never
+          containers:
+            - name: app
+              image: docker.io/library/python:3.14@sha256:e06cc1111ed84189e91866447f562b89faadbfbbb9937cd67e6bf4172cdb45df
+              command: ["python3", "/config/watcher.py"]
+              env:
+                - name: REPO
+                  value: OxygnCorp/home-ops
+                - name: WORKLOAD_NS
+                  value: ai
+                - name: LABEL
+                  value: foreman/ready
+                - name: MAX_IN_PROGRESS
+                  value: "2"
+                - name: MAX_ATTEMPTS
+                  value: "2"
+              envFrom:
+                - secretRef:
+                    name: foreman-watcher
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 64Mi
+                limits:
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop:
+                    - ALL
+              volumeMounts:
+                - name: config
+                  mountPath: /config
+                  readOnly: true
+                - name: tmp
+                  mountPath: /tmp
+          volumes:
+            - name: config
+              configMap:
+                name: foreman-watcher-config
+            - name: tmp
+              emptyDir: {}
