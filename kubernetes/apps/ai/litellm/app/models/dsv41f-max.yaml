@@ -12,10 +12,11 @@ spec:
     apiKey: os.environ/OPENCODE_API_KEY
     # Same upstream as dsv41f, with the reasoning effort pinned so the
     # foreman escalation coder (which sends no per-request param) always runs
-    # at the strongest mode. OpenCode Go serves a single model id — the
-    # provider accepts reasoning_effort on chat completions (verified 200).
+    # at the strongest mode. OpenCode Go serves a single model id but honours
+    # reasoning_effort (probe-tested: max accepted, none disables reasoning);
+    # litellm passes it through unchanged (verified 200 end-to-end).
     additional:
-      reasoning_effort: high
+      reasoning_effort: max
   info:
     mode: chat
     maxInputTokens: 1000000
