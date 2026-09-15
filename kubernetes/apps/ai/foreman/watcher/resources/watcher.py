@@ -80,7 +80,8 @@ def report(issue, text):
 
 def drop_label(issue):
     try:
-        gh(f"/repos/{REPO}/issues/{issue}/labels/{LABEL}", method="DELETE")
+        label = urllib.parse.quote(LABEL, safe="")
+        gh(f"/repos/{REPO}/issues/{issue}/labels/{label}", method="DELETE")
     except urllib.error.HTTPError as e:
         if e.code != 404:
             print(f"  label drop failed on #{issue}: HTTP {e.code} (issues:write?)", flush=True)

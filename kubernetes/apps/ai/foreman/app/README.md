@@ -69,7 +69,8 @@ The `foreman-watcher` CronJob (own Flux Kustomization `ai/foreman-watcher`,
     label dropped, Workload CR deleted (re-labeling re-dispatches cleanly)
   - Failed with `attempt < MAX_ATTEMPTS` → remote branch cleared (the harness
     cannot force-push), Workload recreated on attempt N+1; the final attempt
-    runs `coder-escalation` (`dsv4p`)
+    runs `coder-escalation` (`dsv41f` with reasoning effort pinned to `max`
+    via the `dsv41f-max` litellm route)
   - Failed at `MAX_ATTEMPTS` → comment for human triage, label dropped
 - Label cleanup and comments are best-effort: the PAT must have
   **issues:read+write** for them (add "Issues: Read and write" to the
