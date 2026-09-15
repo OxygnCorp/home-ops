@@ -26,6 +26,25 @@ debug-node node:
 delete-ks ns ks:
     just kube render-local-ks "{{ ns }}" "{{ ks }}" | kubectl delete -f -
 
+[doc('Create a Foreman Workload for a GitHub issue')]
+[script]
+foreman-work issue name:
+    kubectl apply -n ai -f - <<EOF
+    apiVersion: foreman.llmkube.dev/v1alpha1
+    kind: Workload
+    metadata:
+      name: {{ name }}
+      namespace: ai
+    spec:
+      intent: "$(gh issue view {{ issue }} --repo OxygnCorp/home-ops --json title --jq .title)"
+      repo: OxygnCorp/home-ops
+      issues: [{{ issue }}]
+      coderAgentRef:
+        name: coder
+      reviewerAgentRefs:
+        - name: reviewer
+    EOF
+
 [doc('Prune pods in Failed, Pending, or Succeeded state')]
 [script]
 prune-pods:
