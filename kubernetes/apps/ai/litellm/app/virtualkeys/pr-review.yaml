@@ -26,5 +26,5 @@ spec:
     - match:
         secretKey: api-key
         remoteRef:
-          remoteKey: litellm-key-pr-review
-          property: credential
+          remoteKey: litellm
+          property: key-pr-review
