@@ -27,4 +27,4 @@ spec:
         secretKey: api-key
         remoteRef:
           remoteKey: litellm
-          property: key-pr-review
+          property: KEY_PR_REVIEW
