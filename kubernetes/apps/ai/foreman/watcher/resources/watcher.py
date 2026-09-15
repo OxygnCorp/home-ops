@@ -117,8 +117,7 @@ for wl in wl_list:
     name = wl["metadata"].get("name", "")
     if not name.startswith("wx-"):
         continue
-    issue = int(name[3:])
-    by_issue[issue] = wl
+    by_issue[name] = wl
     if (wl.get("status") or {}).get("phase") not in TERMINAL:
         active += 1
 
