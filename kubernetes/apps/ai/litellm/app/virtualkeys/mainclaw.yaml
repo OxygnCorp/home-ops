@@ -27,4 +27,4 @@ spec:
         secretKey: api-key
         remoteRef:
           remoteKey: litellm
-          property: key-mainclaw
+          property: KEY_MAINCLAW
