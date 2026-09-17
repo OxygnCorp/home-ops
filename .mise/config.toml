@@ -45,7 +45,7 @@ gum = "2.0.1"
 "aqua:budimanjojo/talhelper" = "3.1.17"
 
 # Misc Tools
-"aqua:cert-manager/cmctl" = "2.5.0"
+"aqua:cert-manager/cmctl" = "2.6.0"
 "aqua:cloudflare/cloudflared" = "2026.9.1"
 "asdf:carnei-ro/asdf-cilium-cli" = "0.18.2"
 "aqua:cilium/hubble" = "1.19.4"
