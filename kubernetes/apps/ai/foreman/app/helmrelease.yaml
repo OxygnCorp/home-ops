@@ -29,7 +29,7 @@ spec:
       taskNamespace: ai
       image:
         repository: ghcr.io/misospace/llmkube-coder
-        tag: 0.9.29@sha256:d94c37fcf9ed60fd13af7e4165eeb0415215e68453f693c56e86abd1cf174f05
+        tag: 0.9.29@sha256:958bc9a0cd6208e0baaf2e31b3460099aa180dcc76c7bb9afcc6627a9a5063cb
       # No gate/verifier Agent in this deployment (repo CI + the AI PR review
       # workflow are the verifiers), so the 20Gi build-cache PVC would sit
       # unused — the chart docs say to disable it when the node never hosts
