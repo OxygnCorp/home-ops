@@ -108,6 +108,16 @@
       minimumGroupSize: 2,
     },
     {
+      description: "LLMKube Group",
+      groupName: "llmkube",
+      matchDatasources: ["docker"],
+      matchPackageNames: ["/charts/foreman$", "/charts/llmkube$", "/llmkube-coder$"],
+      group: {
+        commitMessageTopic: "{{{groupName}}} group",
+      },
+      minimumGroupSize: 2,
+    },
+    {
       description: "Memini Group",
       groupName: "memini",
       matchPackageNames: ["/eleboucher/memini$/", "/charts/memini$/"],
