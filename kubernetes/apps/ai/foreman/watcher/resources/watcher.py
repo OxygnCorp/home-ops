@@ -9,6 +9,7 @@
 import json
 import os
 import ssl
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -31,11 +32,22 @@ def req(url, *, data=None, method=None, headers=None, ctx=None):
         url, headers=headers or {},
         data=json.dumps(data).encode() if data is not None else None,
         method=method or ("POST" if data is not None else "GET"))
-    with urllib.request.urlopen(req, timeout=30, context=ctx) as resp:
+    for attempt in range(4):
         try:
-            return json.load(resp)
-        except json.JSONDecodeError:
-            return None
+            with urllib.request.urlopen(req, timeout=30, context=ctx) as resp:
+                try:
+                    return json.load(resp)
+                except json.JSONDecodeError:
+                    return None
+        except urllib.error.HTTPError as e:
+            if e.code not in (429, 502, 503, 504) or attempt == 3:
+                raise
+            try:
+                delay = float(e.headers.get("Retry-After") or 0) or 2 ** attempt
+            except ValueError:
+                delay = 2 ** attempt
+            print(f"  HTTP {e.code} — retry {attempt + 1}/3 in {delay}s", flush=True)
+            time.sleep(delay)
 
 
 def gh(path, data=None, method=None):
