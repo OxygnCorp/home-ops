@@ -70,3 +70,39 @@ view-secret ns secret:
 [private]
 render-local-ks ns ks:
     flate build ks --namespace "{{ ns }}" --output yaml "{{ ks }}"
+
+[doc('Create/update Forgejo pull-mirrors for every OxygnCorp repo (1P item forgejo: GITHUB_TOKEN + FORGEJO_TOKEN)')]
+[script]
+mirror-all org:
+    set -a; eval "$(op item get forgejo --fields label=env --reveal)" 2>/dev/null || true; set +a
+    : "${FORGEJO_URL:=https://git.oxygn.dev}"
+    FORGEJO_TOKEN=$(op item get forgejo --fields FORGEJO_TOKEN --reveal)
+    GITHUB_TOKEN=$(op item get forgejo --fields GITHUB_TOKEN --reveal)
+    gh repo list "{{ org }}" --limit 200 --json name,sshUrl --jq -r ".[] | [.name, .sshUrl] | @tsv" |
+        while IFS=$'\t' read -r name ssh; do
+            clone_addr="https://github.com/{{ org }}/${name}.git"
+            if curl -sfo /dev/null -H "Authorization: token ${FORGEJO_TOKEN}" \
+                "${FORGEJO_URL}/api/v1/repos/{{ org }}/${name}"; then
+                just log info "mirror exists" repo "${name}"
+            else
+                body=$(jq -n --arg a "${clone_addr}" --arg t "${GITHUB_TOKEN}" \
+                    "{clone_addr: \$a, auth_token: \$t, mirror: true, mirror_interval: \"15m\", service: \"github\", repo_name: \"${name}\"}")
+                curl -sf -X POST -H "Authorization: token ${FORGEJO_TOKEN}" -H "Content-Type: application/json" \
+                    -d "${body}" "${FORGEJO_URL}/api/v1/repos/migrate" >/dev/null \
+                    && just log info "mirror created" repo "${name}" \
+                    || just log warn "mirror failed" repo "${name}"
+            fi
+        done
+
+[doc('Force-sync all Forgejo pull-mirrors of an org')]
+[script]
+mirror-sync org:
+    set -a; eval "$(op item get forgejo --fields label=env --reveal)" 2>/dev/null || true; set +a
+    : "${FORGEJO_URL:=https://git.oxygn.dev}"
+    FORGEJO_TOKEN=$(op item get forgejo --fields FORGEJO_TOKEN --reveal)
+    for repo in $(curl -sf -H "Authorization: token ${FORGEJO_TOKEN}" \
+        "${FORGEJO_URL}/api/v1/orgs/{{ org }}/repos?limit=50" | jq -r ".[] | select(.mirror) | .name"); do
+        curl -sf -X POST -H "Authorization: token ${FORGEJO_TOKEN}" \
+            "${FORGEJO_URL}/api/v1/repos/{{ org }}/${repo}/mirror-sync" >/dev/null \
+            && just log info "sync triggered" repo "${repo}"
+    done

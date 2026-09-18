@@ -1,0 +1,83 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: &app forgejo
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: *app
+  interval: 30m
+  dependsOn: []
+  values:
+    gitea:
+      admin:
+        existingSecret: forgejo
+        email: noreply@oxygn.dev
+        passwordMode: initialOnlyRequireReset
+      additionalConfigFromEnvs:
+        - name: FORGEJO__DATABASE__HOST
+          valueFrom:
+            secretKeyRef:
+              name: &cnpg "{{ .Release.Name }}-app"
+              key: host
+        - name: FORGEJO__DATABASE__NAME
+          valueFrom:
+            secretKeyRef:
+              name: *cnpg
+              key: dbname
+        - name: FORGEJO__DATABASE__USER
+          valueFrom:
+            secretKeyRef:
+              name: *cnpg
+              key: username
+        - name: FORGEJO__DATABASE__PASSWD
+          valueFrom:
+            secretKeyRef:
+              name: *cnpg
+              key: password
+      config:
+        repository:
+          DEFAULT_REPO_UNITS: repo.code,repo.releases,repo.issues,repo.pulls
+          DISABLED_REPO_UNITS: repo.ext_wiki,repo.ext_issues
+          ROOT: /data/git/repositories
+        security:
+          REVERSE_PROXY_TRUSTED_PROXIES: 10.42.0.0/16
+        server:
+          DOMAIN: git.oxygn.dev
+          SSH_DOMAIN: git.oxygn.dev
+          DISABLE_SSH: "true"
+          ROOT_URL: https://git.oxygn.dev
+          APP_DATA_PATH: /data/gitea
+        service:
+          ALLOW_ONLY_EXTERNAL_REGISTRATION: false
+          DISABLE_REGISTRATION: true
+          REQUIRE_SIGNIN_VIEW: true
+          SHOW_REGISTRATION_BUTTON: false
+      metrics:
+        serviceMonitor:
+          enabled: true
+    containerSecurityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+    deployment:
+      annotations:
+        reloader.stakater.com/auto: "true"
+    httpRoute:
+      annotations:
+        gatus.home-operations.com/endpoint: |-
+          conditions: ["[STATUS] == 200"]
+          url: https://git.oxygn.dev
+      enabled: true
+      hostnames:
+        - git.oxygn.dev
+      parentRefs:
+        - name: envoy-internal
+          namespace: network
+          sectionName: https
+    persistence:
+      claimName: *app
+      create: false
