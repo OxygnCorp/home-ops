@@ -13,7 +13,7 @@ spec:
   values:
     gitea:
       admin:
-        username: admin
+        username: adm1n
         email: noreply@oxygn.dev
         passwordMode: initialOnlyRequireReset
       additionalConfigFromEnvs:
@@ -38,6 +38,8 @@ spec:
               name: *cnpg
               key: password
       config:
+        database:
+          DB_TYPE: postgres
         repository:
           DEFAULT_REPO_UNITS: repo.code,repo.releases,repo.issues,repo.pulls
           DISABLED_REPO_UNITS: repo.ext_wiki,repo.ext_issues
