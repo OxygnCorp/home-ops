@@ -13,7 +13,7 @@ spec:
   values:
     gitea:
       admin:
-        existingSecret: forgejo
+        username: admin
         email: noreply@oxygn.dev
         passwordMode: initialOnlyRequireReset
       additionalConfigFromEnvs:
