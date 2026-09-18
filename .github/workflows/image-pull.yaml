@@ -47,8 +47,10 @@ jobs:
           # renovate: datasource=github-releases depName=jdx/mise
           version: v2026.9.9
           cache: false
-          tool_versions: |
-            github:home-operations/flate 0.2.12
+          # Only install what this job needs (version pinned in .mise/config.toml).
+          # A bare `mise install` would pull every tool in .mise/config.toml and
+          # fail the job on any unrelated tool breaking upstream.
+          install_args: github:home-operations/flate
 
       - name: Extract Images
         id: extract
@@ -74,8 +76,11 @@ jobs:
           # renovate: datasource=github-releases depName=jdx/mise
           version: v2026.9.9
           cache: false
+          # No checkout in this job: pin the tool inline so it is activated
+          # (install_args alone installs the binary but leaves the shim unset).
           tool_versions: |
-            talosctl latest
+            # renovate: datasource=github-releases depName=siderolabs/talos
+            talosctl 1.14.1
 
       - name: Pull Image
         env:
