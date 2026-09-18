@@ -8,6 +8,7 @@ components:
 resources:
   - ./namespace.yaml
   - ./convertx/ks.yaml
+  - ./forgejo/ks.yaml
   - ./ghostfolio/ks.yaml
   - ./mealie/ks.yaml
   - ./omni-tools/ks.yaml
