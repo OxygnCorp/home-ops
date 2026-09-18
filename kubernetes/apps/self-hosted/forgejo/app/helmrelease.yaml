@@ -20,7 +20,7 @@ spec:
         - name: FORGEJO__DATABASE__HOST
           valueFrom:
             secretKeyRef:
-              name: &cnpg "{{ .Release.Name }}-app"
+              name: &cnpg forgejo-app
               key: host
         - name: FORGEJO__DATABASE__NAME
           valueFrom:
