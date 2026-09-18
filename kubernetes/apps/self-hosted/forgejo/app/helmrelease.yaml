@@ -72,7 +72,6 @@ spec:
       annotations:
         gatus.home-operations.com/endpoint: |-
           conditions: ["[STATUS] == 200"]
-          url: https://git.oxygn.dev
       enabled: true
       hostnames:
         - git.oxygn.dev
