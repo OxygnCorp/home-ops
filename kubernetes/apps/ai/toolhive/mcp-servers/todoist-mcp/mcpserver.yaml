@@ -35,7 +35,7 @@ spec:
             - -y
             - -p
             # renovate: datasource=npm depName=@doist/todoist-mcp
-            - "@doist/todoist-mcp@13.2.7"
+            - "@doist/todoist-mcp@13.3.0"
             - --
             - todoist-mcp
           volumeMounts:
