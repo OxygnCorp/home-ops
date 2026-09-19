@@ -55,11 +55,12 @@ spec:
                 # Install the memini memory plugin from ClawHub, version-guarded:
                 # only fetches when the pinned version differs from what's on the
                 # persistent volume, so normal restarts stay offline.
-                # Bump manually: check the real version on the plugin registry
-                # (`openclaw plugins search memini`) — the ClawHub plugin
-                # versions and the memini app OCI chart versions drift, so a
-                # renovate-marker here caused a failed install lookup on every boot.
-                MEMINI_PLUGIN_VERSION=v0.7.29
+                # Renovate tracks the plugin version against the ClawHub
+                # npm-compatible registry and groups it with the memini chart
+                # update so both stay aligned; the guard below keeps restarts
+                # offline and warns instead of failing on a transient drift.
+                # renovate: clawhub:@eleboucher/memini registryUrl=https://clawhub.ai/api/npm
+                MEMINI_PLUGIN_VERSION=v0.7.32
                 # Strip the chart tag prefix at runtime; braced shell expansion does not survive
                 # the Flux postBuild variable substitution
                 MEMINI_PLUGIN_REL=$(printf '%s' "$MEMINI_PLUGIN_VERSION" | sed 's/^v//')
