@@ -40,8 +40,29 @@
       ],
       datasourceTemplate: "{{#if datasource}}{{{datasource}}}{{else}}npm{{/if}}",
     },
+    {
+      customType: "regex",
+      description: "Track the memini ClawHub plugin version (npm-compatible registry endpoint)",
+      managerFilePatterns: [
+        "/\\.yaml(?:\\.j2)?$/",
+      ],
+      matchStrings: [
+        // # renovate: clawhub:@eleboucher/memini registryUrl=https://clawhub.ai/api/npm
+        // MEMINI_PLUGIN_VERSION=v0.7.32
+        "clawhub:(?<depName>@\\S+)\\s+registryUrl=(?<registryUrl>https://\\S+)\\n\\s*MEMINI_PLUGIN_VERSION=(?<currentValue>v\\S+)",
+      ],
+      datasourceTemplate: "npm",
+    },
   ],
   packageRules: [
+    {
+      description: "Update memini chart and ClawHub plugin together in one PR",
+      matchPackageNames: [
+        "@eleboucher/memini",
+        "registry.erwanleboucher.dev/eleboucher/charts/memini",
+      ],
+      groupName: "memini",
+    },
     {
       description: "Delay mise updates to let release assets propagate",
       matchDatasources: ["github-releases"],
