@@ -200,6 +200,17 @@ spec:
         sizeLimit: 1Gi
         globalMounts:
           - path: /home/node/.cache/openclaw
+      # The gateway buckets this staging cache per-uid and falls back to
+      # ~/.cache/openclaw-<uid> when the primary dir isn't owned by the
+      # runtime user (the tmpfs mount above is root-owned); stage that
+      # fallback root on tmpfs too or the snapshot copies land back on the
+      # DRBD-backed PVC (observed live).
+      openclaw-cache-uid:
+        type: emptyDir
+        medium: Memory
+        sizeLimit: 1Gi
+        globalMounts:
+          - path: /home/node/.cache/openclaw-1000
       kopiaignore:
         type: configMap
         name: mainclaw-kopiaignore

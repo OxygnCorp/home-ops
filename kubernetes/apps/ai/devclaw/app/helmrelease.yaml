@@ -271,6 +271,13 @@ spec:
         sizeLimit: 1Gi
         globalMounts:
           - path: /home/node/.cache/openclaw
+      # Same uid-fallback staging root as mainclaw (see comment there).
+      openclaw-cache-uid:
+        type: emptyDir
+        medium: Memory
+        sizeLimit: 1Gi
+        globalMounts:
+          - path: /home/node/.cache/openclaw-1000
       kopiaignore:
         type: configMap
         name: devclaw-kopiaignore
