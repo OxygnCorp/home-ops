@@ -19,6 +19,13 @@ spec:
             image:
               repository: docker.io/library/alpine
               tag: "3.24"
+            # Runs as root to chown the tmpfs staging mounts below:
+            # openclaw requires its temp dirs to be owned by the runtime uid
+            # (st_uid === euid check in managed-handoff-runtime), and kubelet
+            # creates emptyDir tmpfs root-owned — the gateway hard-fails with
+            # "Unsafe fallback OpenClaw temp dir" otherwise.
+            securityContext:
+              runAsUser: 0
             command:
               - sh
               - -c
@@ -32,6 +39,12 @@ spec:
                 cp /kopiaignore/.kopiaignore /home/node/.kopiaignore
                 # Parent dir for the mise config subPath mount (install-tools needs it)
                 mkdir -p /home/node/.config/mise
+                # Secure the tmpfs sqlite-snapshot staging roots (openclaw#153067 workaround)
+                for tmpdir in /home/node/.cache/openclaw /home/node/.cache/openclaw-1000; do
+                  mkdir -p "$tmpdir"
+                  chown 1000:100 "$tmpdir"
+                  chmod 700 "$tmpdir"
+                done
           install-tools:
             image:
               repository: ghcr.io/openclaw/openclaw
