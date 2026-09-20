@@ -69,9 +69,6 @@ spec:
       annotations:
         reloader.stakater.com/auto: "true"
     httpRoute:
-      annotations:
-        gatus.home-operations.com/endpoint: |-
-          conditions: ["[STATUS] == 200"]
       enabled: true
       hostnames:
         - git.oxygn.dev
