@@ -86,6 +86,34 @@ DATABASE_URL:
 
 The `uri` points at the cluster's read-write primary service `${APP}-rw`. There is no `Pooler` / PgBouncer in this component — apps connect directly. If transaction-mode pooling is ever needed (e.g. authentik at scale), add a `Pooler` CRD per cluster as a follow-up.
 
+## Node maintenance & the `*-primary` PDBs (expected Radar warnings)
+
+With `enablePDB: true` (the CRD default, kept here), CNPG manages **two** PodDisruptionBudgets per cluster:
+
+- `<cluster>` — covers the replicas; one replica stays evictable (`disruptionsAllowed: 1`), so draining a node hosting only replicas is normal.
+- `<cluster>-primary` — targets **only the primary pod** with `minAvailable: 1`, so voluntary eviction of the primary is **always blocked** (`disruptionsAllowed: 0`).
+
+This is intentional: CNPG protects the primary from being removed mid-write and prefers a controlled **switchover** to a replica over a hard eviction. Radar surfaces the `-primary` PDBs as `pdb_blocks_evictions` warnings; **do not "fix" them** by deleting the PDBs or setting `enablePDB: false` — that removes protection for both roles.
+
+### Draining a node that hosts a CNPG primary
+
+Because the primary pod is un-evictable, a plain `kubectl drain` fails on it. Before draining a node, switchover each affected cluster to a replica on another node, then drain:
+
+```sh
+# 1. Find clusters whose primary pod runs on the node to drain
+kubectl get pods -A --field-selector spec.nodeName=<node> -l cnpg.io/podRole=instance
+
+# 2. Switchover each affected cluster (instance names are `<cluster>-<serial>`;
+#    `promote` on the current primary is a no-op that prints "is already the primary")
+kubectl cnpg promote <cluster> <cluster>-<serial> -n <namespace>
+
+# 3. Wait for the promotion to settle (new primary Ready), then drain the node
+flux reconcile kustomization <cluster> -n <namespace>   # only if needed
+kubectl get cluster <cluster> -n <namespace> -o jsonpath='{.status.currentPrimary}'
+```
+
+CNPG recreates/schedules the old primary (now a replica) on another node, so the drain proceeds cleanly after the switchover.
+
 ## Health check expression
 
 ```yaml
