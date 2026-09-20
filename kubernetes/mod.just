@@ -78,7 +78,8 @@ mirror-all org:
     : "${FORGEJO_URL:=https://git.oxygn.dev}"
     FORGEJO_TOKEN=$(vals get "ref+op://${OP_VAULT}/forgejo/FORGEJO_TOKEN")
     GITHUB_TOKEN=$(vals get "ref+op://${OP_VAULT}/forgejo/GITHUB_TOKEN")
-    gh repo list "{{ org }}" --limit 200 --json name,sshUrl --jq -r ".[] | [.name, .sshUrl] | @tsv" |
+    gh repo list "{{ org }}" --limit 200 --json name,sshUrl |
+        jq -r ".[] | [.name, .sshUrl] | @tsv" |
         while IFS=$'\t' read -r name ssh; do
             clone_addr="https://github.com/{{ org }}/${name}.git"
             if curl -sfo /dev/null -H "Authorization: token ${FORGEJO_TOKEN}" \
