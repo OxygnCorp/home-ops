@@ -74,10 +74,10 @@ render-local-ks ns ks:
 [doc('Create/update Forgejo pull-mirrors for every OxygnCorp repo (1P item forgejo: GITHUB_TOKEN + FORGEJO_TOKEN)')]
 [script]
 mirror-all org:
-    set -a; eval "$(op item get forgejo --fields label=env --reveal)" 2>/dev/null || true; set +a
+    : "${OP_VAULT:=home-ops}"
     : "${FORGEJO_URL:=https://git.oxygn.dev}"
-    FORGEJO_TOKEN=$(op item get forgejo --fields FORGEJO_TOKEN --reveal)
-    GITHUB_TOKEN=$(op item get forgejo --fields GITHUB_TOKEN --reveal)
+    FORGEJO_TOKEN=$(vals get "ref+op://${OP_VAULT}/forgejo/FORGEJO_TOKEN")
+    GITHUB_TOKEN=$(vals get "ref+op://${OP_VAULT}/forgejo/GITHUB_TOKEN")
     gh repo list "{{ org }}" --limit 200 --json name,sshUrl --jq -r ".[] | [.name, .sshUrl] | @tsv" |
         while IFS=$'\t' read -r name ssh; do
             clone_addr="https://github.com/{{ org }}/${name}.git"
@@ -97,9 +97,9 @@ mirror-all org:
 [doc('Force-sync all Forgejo pull-mirrors of an org')]
 [script]
 mirror-sync org:
-    set -a; eval "$(op item get forgejo --fields label=env --reveal)" 2>/dev/null || true; set +a
+    : "${OP_VAULT:=home-ops}"
     : "${FORGEJO_URL:=https://git.oxygn.dev}"
-    FORGEJO_TOKEN=$(op item get forgejo --fields FORGEJO_TOKEN --reveal)
+    FORGEJO_TOKEN=$(vals get "ref+op://${OP_VAULT}/forgejo/FORGEJO_TOKEN")
     for repo in $(curl -sf -H "Authorization: token ${FORGEJO_TOKEN}" \
         "${FORGEJO_URL}/api/v1/orgs/{{ org }}/repos?limit=50" | jq -r ".[] | select(.mirror) | .name"); do
         curl -sf -X POST -H "Authorization: token ${FORGEJO_TOKEN}" \
