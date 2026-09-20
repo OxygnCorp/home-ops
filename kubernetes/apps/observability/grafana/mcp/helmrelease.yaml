@@ -20,17 +20,9 @@ spec:
               repository: mcp/grafana
               tag: latest
               pullPolicy: Always
-            args:
-              - "run"
-              - "--rm"
-              - "-i"
-              - "-e"
-              - "GRAFANA_URL"
-              - "-e"
-              - "GRAFANA_AUTH"
-              - "mcp/grafana"
-              - "-t"
-              - "sse"
+            args: # entrypoint = /app/mcp-grafana; flags are appended by the image (sse transport, :8000)
+              - "--allowed-hosts" # mcp-go DNS-rebinding protection: exact-match reject of any other Host header (403)
+              - "grafana-mcp.observability:8000,grafana-mcp.observability.svc,grafana-mcp.observability.svc.cluster.local,grafana-mcp.oxygn.dev,grafana-mcp.oxygn.dev:443"
             env:
               GRAFANA_URL: "http://grafana-service.observability:3000"
             envFrom:
