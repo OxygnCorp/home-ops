@@ -31,6 +31,7 @@ spec:
     substitute:
       APP: *app
       KOPIUR_CAPACITY: 30Gi
+      KOPIUR_PUID: "1000" # mover uid must match forgejo (git=1000): app data dirs are 0700 git:git, unreadable by the default 1024
   prune: true
   sourceRef:
     kind: GitRepository
