@@ -78,6 +78,16 @@ mirror-all org:
     : "${FORGEJO_URL:=https://git.oxygn.dev}"
     FORGEJO_TOKEN=$(vals get "ref+op://${OP_VAULT}/forgejo/FORGEJO_TOKEN")
     GITHUB_TOKEN=$(vals get "ref+op://${OP_VAULT}/forgejo/GITHUB_TOKEN")
+    if ! curl -sfo /dev/null -H "Authorization: token ${FORGEJO_TOKEN}" \
+        "${FORGEJO_URL}/api/v1/orgs/{{ org }}"; then
+        body=$(curl -sf -H "Authorization: token ${GITHUB_TOKEN}" \
+            "https://api.github.com/orgs/{{ org }}" | jq -r '.description // ""' |
+            jq -n -R --arg u "{{ org }}" --arg d "$(cat)" '{username: $u, visibility: "private", description: $d}')
+        curl -sf -X POST -H "Authorization: token ${FORGEJO_TOKEN}" -H "Content-Type: application/json" \
+            -d "${body}" "${FORGEJO_URL}/api/v1/orgs" >/dev/null \
+            && just log info "org created" org "{{ org }}" \
+            || { just log warn "org creation failed" org "{{ org }}"; exit 1; }
+    fi
     gh repo list "{{ org }}" --limit 200 --json name,sshUrl |
         jq -r ".[] | [.name, .sshUrl] | @tsv" |
         while IFS=$'\t' read -r name ssh; do
@@ -86,8 +96,8 @@ mirror-all org:
                 "${FORGEJO_URL}/api/v1/repos/{{ org }}/${name}"; then
                 just log info "mirror exists" repo "${name}"
             else
-                body=$(jq -n --arg a "${clone_addr}" --arg t "${GITHUB_TOKEN}" \
-                    "{clone_addr: \$a, auth_token: \$t, mirror: true, mirror_interval: \"15m\", service: \"github\", repo_name: \"${name}\"}")
+                body=$(jq -n --arg a "${clone_addr}" --arg t "${GITHUB_TOKEN}" --arg o "{{ org }}" \
+                    "{clone_addr: \$a, auth_token: \$t, mirror: true, mirror_interval: \"15m\", service: \"github\", repo_name: \"${name}\", repo_owner: \$o}")
                 curl -sf -X POST -H "Authorization: token ${FORGEJO_TOKEN}" -H "Content-Type: application/json" \
                     -d "${body}" "${FORGEJO_URL}/api/v1/repos/migrate" >/dev/null \
                     && just log info "mirror created" repo "${name}" \
