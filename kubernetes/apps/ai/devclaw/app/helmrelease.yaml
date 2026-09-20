@@ -19,6 +19,12 @@ spec:
             image:
               repository: docker.io/library/alpine
               tag: "3.24"
+            # Runs as root to chown the tmpfs staging mounts: openclaw requires
+            # its temp dirs to be owned by the runtime uid (st_uid === euid),
+            # kubelet creates emptyDir tmpfs root-owned → "Unsafe fallback
+            # OpenClaw temp dir" hard-fail otherwise. Same rationale as mainclaw.
+            securityContext:
+              runAsUser: 0
             command:
               - sh
               - -c
@@ -30,6 +36,12 @@ spec:
                 chown 1000:100 /home/node/.openclaw/openclaw.json
                 chmod 400 /home/node/.openclaw/openclaw.json
                 cp /kopiaignore/.kopiaignore /home/node/.kopiaignore
+                # Secure the tmpfs sqlite-snapshot staging roots (openclaw#153067 workaround)
+                for tmpdir in /home/node/.cache/openclaw /home/node/.cache/openclaw-1000; do
+                  mkdir -p "$tmpdir"
+                  chown 1000:100 "$tmpdir"
+                  chmod 700 "$tmpdir"
+                done
 
         containers:
           app:
