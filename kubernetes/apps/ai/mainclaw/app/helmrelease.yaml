@@ -188,6 +188,18 @@ spec:
     persistence:
       openclaw-home:
         type: emptyDir
+      # openclaw#153067 (fixed after 2026.9.5): in steady state the gateway
+      # re-copies the whole state DB (66 MB) into ~/.cache/openclaw every few
+      # seconds while catalog/auth refreshes run, hammering the DRBD-backed
+      # PVC (measured ~458 GB/day). Upstream's documented workaround is to
+      # stage that regenerable cache on tmpfs (−99.5% device writes).
+      # Remove once the post-2026.9.5 fix ships.
+      openclaw-cache:
+        type: emptyDir
+        medium: Memory
+        sizeLimit: 1Gi
+        globalMounts:
+          - path: /home/node/.cache/openclaw
       kopiaignore:
         type: configMap
         name: mainclaw-kopiaignore

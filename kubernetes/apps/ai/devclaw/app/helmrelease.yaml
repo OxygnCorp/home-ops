@@ -260,6 +260,17 @@ spec:
     persistence:
       openclaw-home:
         type: emptyDir
+      # Same workaround as mainclaw (openclaw#153067, post-2026.9.5 fix):
+      # stage the gateway's regenerable sqlite snapshot cache on tmpfs so the
+      # refresh-driven re-copy storms never hit the DRBD-backed PVC. devclaw
+      # is currently too idle to trigger the bug, but one active agent would
+      # reproduce it identically.
+      openclaw-cache:
+        type: emptyDir
+        medium: Memory
+        sizeLimit: 1Gi
+        globalMounts:
+          - path: /home/node/.cache/openclaw
       kopiaignore:
         type: configMap
         name: devclaw-kopiaignore
