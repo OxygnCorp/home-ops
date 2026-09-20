@@ -17,11 +17,16 @@ spec:
         containers:
           app:
             image:
-              repository: mcp/grafana
-              tag: latest
-              pullPolicy: Always
-            args: # entrypoint = /app/mcp-grafana; flags are appended by the image (sse transport, :8000)
-              - "--allowed-hosts" # mcp-go DNS-rebinding protection: exact-match reject of any other Host header (403)
+              # upstream image (Docker catalog's mcp/grafana lacks --allowed-hosts);
+              # pinned by digest per image policy, tags: 1.5.1 = stable release
+              repository: docker.io/grafana/mcp-grafana
+              tag: 1.5.1@sha256:07c6614a8f8b6477e572444874c8c07baf145473977f014497cb59262af1944c
+            args:
+              - "-transport"
+              - "sse"
+              - "-address"
+              - "0.0.0.0:8000"
+              - "-allowed-hosts" # DNS-rebinding protection: exact-match allowlist of Host header values
               - "grafana-mcp.observability:8000,grafana-mcp.observability.svc,grafana-mcp.observability.svc.cluster.local,grafana-mcp.oxygn.dev,grafana-mcp.oxygn.dev:443"
             env:
               GRAFANA_URL: "http://grafana-service.observability:3000"
@@ -48,9 +53,9 @@ spec:
                   - ALL
     defaultPodOptions:
       securityContext:
-        runAsNonRoot: false
-        runAsUser: 0
-        runAsGroup: 0
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 999
     service:
       app:
         ports:
