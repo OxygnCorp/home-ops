@@ -71,11 +71,6 @@ machine:
       serializeImagePulls: false
       shutdownGracePeriod: 90s
       shutdownGracePeriodCriticalPods: 60s
-    extraMounts:
-      - destination: /var/openebs/local
-        type: bind
-        source: /var/openebs/local
-        options: ["bind", "rshared", "rw"]
     image: ghcr.io/siderolabs/kubelet:v1.37.0
     nodeIP:
       validSubnets:
