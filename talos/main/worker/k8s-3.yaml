@@ -19,6 +19,11 @@ machine:
       - name: nvidia_uvm
       - name: nvidia_drm
       - name: nvidia_modeset
+      # Modules DRBD pour Miroir (même config que les controlplanes)
+      - name: drbd
+        parameters:
+          - usermode_helper=disabled
+      - name: drbd_transport_tcp
   kubelet:
     extraArgs:
       # Pose le taint workload=ai:NoSchedule au bootstrap via --register-with-taints.
@@ -54,3 +59,16 @@ up: true
 apiVersion: v1alpha1
 kind: DHCPv4Config
 name: bond0
+---
+# Volume brut pour le pool Miroir "slow" sur le NVMe dédié (adaptateur PCI).
+# Même nom que les controlplanes -> même partlabel r-miroir-slow, donc le
+# device /dev/disk/by-partlabel/r-miroir-slow du MiroirNodeGroup fonctionne tel quel.
+# Le transport nvme est unique sur ce nœeud (le disque de boot est SATA), et
+# nvme0n1 n'est pas sujet au renumbering sda/sdb documenté plus haut.
+apiVersion: v1alpha1
+kind: RawVolumeConfig
+name: miroir-slow
+provisioning:
+  diskSelector:
+    match: disk.transport == "nvme" && !system_disk
+  minSize: 200GB
