@@ -26,6 +26,24 @@ spec:
       memory: 256Mi
   podTemplateSpec:
     spec:
+      # Prefer the dedicated AI worker (k8s-3) — same node as the lightrag
+      # service it proxies — but stay schedulable on any node if it is
+      # unavailable; the toleration unlocks the workload=ai:NoSchedule taint
+      # on k8s-3 (other nodes are untainted).
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              preference:
+                matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values: [k8s-3]
+      tolerations:
+        - key: workload
+          operator: Equal
+          value: ai
+          effect: NoSchedule
       containers:
         - name: mcp
           image: ghcr.io/astral-sh/uv:python3.12-alpine
