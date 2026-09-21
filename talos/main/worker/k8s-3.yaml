@@ -49,10 +49,19 @@ selector:
   match: mac(link.permanent_addr) == "a0:36:9f:53:3c:da"
 ---
 apiVersion: v1alpha1
+kind: LinkAliasConfig
+name: net1
+selector:
+  match: mac(link.permanent_addr) == "a0:36:9f:53:3c:db"
+---
+apiVersion: v1alpha1
 kind: BondConfig
 name: bond0
-links: [net0]
-bondMode: active-backup
+# LACP 802.3ad sur les 2 jambes de la carte 2x1Gbps (switch UniFi en mode LACP,
+# LAG dédié vers k8s-3). Equipement physique = balance-xor en secours (bondMode:
+# balance-xor) sans config de LAG côté switch.
+links: [net0, net1]
+bondMode: 802.3ad
 # Jumbo frames end-to-end (switch + vSwitch Proxmox) : aligne k8s-3 sur les
 # controlplanes (MTU 9000) pour que bigTCP Cilium (enableIPv4BIGTCP) ne soit
 # pas annulé sur les chemins CP <-> worker.
