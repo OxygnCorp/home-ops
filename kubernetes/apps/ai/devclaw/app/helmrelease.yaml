@@ -143,6 +143,23 @@ spec:
                 memory: 1Gi
     defaultPodOptions:
       automountServiceAccountToken: true
+      # Prefer the dedicated AI worker (k8s-3) but stay schedulable on any
+      # node if it is unavailable; the toleration unlocks the
+      # workload=ai:NoSchedule taint on k8s-3 (other nodes are untainted).
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              preference:
+                matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values: [k8s-3]
+      tolerations:
+        - key: workload
+          operator: Equal
+          value: ai
+          effect: NoSchedule
       securityContext:
         runAsUser: 1000
         runAsGroup: 100
