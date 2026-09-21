@@ -46,6 +46,24 @@ spec:
           cpu: 200m
         limits:
           memory: 1Gi
+      # probes hit the DB (django-tenants query) — tolerate brief CNPG
+      # maintenance windows (rolling restarts, primary shutdown) instead of
+      # killing the server container on every 503
+      livenessProbe:
+        httpGet:
+          path: /-/health/live/
+          port: http
+        initialDelaySeconds: 20
+        timeoutSeconds: 10
+        periodSeconds: 15
+        failureThreshold: 6
+      readinessProbe:
+        httpGet:
+          path: /-/health/ready/
+          port: http
+        timeoutSeconds: 10
+        periodSeconds: 15
+        failureThreshold: 3
       metrics:
         prometheus:
           serviceMonitor:
