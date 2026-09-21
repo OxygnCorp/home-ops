@@ -21,7 +21,7 @@ spec:
       enabled: true
       mode: perService
       size: 10Gi
-      storageClass: openebs-hostpath
+      storageClass: miroir-slow-local
     prometheus:
       inferencePodMonitor:
         enabled: true
