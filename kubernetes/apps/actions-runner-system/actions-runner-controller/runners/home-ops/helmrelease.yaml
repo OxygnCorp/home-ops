@@ -44,6 +44,9 @@ spec:
                 name: talos
                 readOnly: true
         serviceAccountName: home-ops-runner
+        securityContext:
+          fsGroup: 1001
+          fsGroupChangePolicy: OnRootMismatch
         volumes:
           - name: talos
             secret:
