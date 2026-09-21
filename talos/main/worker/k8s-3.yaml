@@ -53,7 +53,10 @@ kind: BondConfig
 name: bond0
 links: [net0]
 bondMode: active-backup
-mtu: 1500
+# Jumbo frames end-to-end (switch + vSwitch Proxmox) : aligne k8s-3 sur les
+# controlplanes (MTU 9000) pour que bigTCP Cilium (enableIPv4BIGTCP) ne soit
+# pas annulé sur les chemins CP <-> worker.
+mtu: 9000
 up: true
 ---
 apiVersion: v1alpha1

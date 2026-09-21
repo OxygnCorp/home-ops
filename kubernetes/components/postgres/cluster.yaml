@@ -29,8 +29,10 @@ spec:
     size: 5Gi
   postgresql:
     parameters:
+      effective_cache_size: "512MB"
       max_connections: "300"
       max_wal_size: "5GB"
+      shared_buffers: "256MB"
       synchronous_commit: "on"
   bootstrap:
     recovery:
