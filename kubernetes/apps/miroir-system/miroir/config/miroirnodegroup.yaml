@@ -6,8 +6,10 @@ metadata:
   name: default
 spec:
   nodeSelector:
-    matchLabels:
-      node-role.kubernetes.io/control-plane: ""
+    matchExpressions:
+      - key: kubernetes.io/hostname
+        operator: In
+        values: [k8s-0, k8s-1, k8s-2, k8s-3]
   template:
     pools:
       - name: slow

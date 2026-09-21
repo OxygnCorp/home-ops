@@ -5,6 +5,7 @@ customization:
     - iommu=pt # PCI Passthrough
   systemExtensions:
     officialExtensions:
+      - siderolabs/drbd # Miroir DRBD9 Replication
       - siderolabs/nonfree-kmod-nvidia-lts # NVIDIA proprietary driver (Pascal support)
       - siderolabs/nvidia-container-toolkit-lts
       - siderolabs/intel-ucode
