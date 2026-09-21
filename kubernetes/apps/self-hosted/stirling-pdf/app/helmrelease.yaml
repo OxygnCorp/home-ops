@@ -28,6 +28,10 @@ spec:
               LANGS: "fr-FR"
               SYSTEM_DEFAULTLOCALE: fr-FR
               SYSTEM_ENABLEURLTOPDF: false
+              # Heap JVM bornée à 25% de la mémoire du conteneur en ergonomie par
+              # défaut ; 60% laisse plus de place aux traitements PDF volumineux
+              # (fusion/OCR) tout en gardant la marge pour le off-heap.
+              JAVA_TOOL_OPTIONS: -XX:MaxRAMPercentage=60
             probes:
               liveness: &probe
                 enabled: true
