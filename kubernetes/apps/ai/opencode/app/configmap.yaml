@@ -73,8 +73,9 @@ data:
           "/tmp/opencode/**": "allow"
         }
       },
-      "plugin": [
-        ["@eleboucher/opencode-memini@0.7.29", { "base_url": "http://memini.ai:8080", "auto_update": false }]
+      "plugins": [
+        # opencode v2 plugin contract — the v1 "@eleboucher/opencode-memini" does not load under v2.
+        { "package": "@eleboucher/opencode-memini-v2@0.7.32", "options": { "base_url": "http://memini.ai:8080", "auto_update": false } }
       ],
       "enabled_providers": ["litellm"],
       "agent": {
