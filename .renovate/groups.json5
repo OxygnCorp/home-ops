@@ -120,7 +120,7 @@
     {
       description: "Memini Group",
       groupName: "memini",
-      matchPackageNames: ["/eleboucher/memini$/", "/charts/memini$/"],
+      matchPackageNames: ["/eleboucher/memini$/", "/charts/memini$/", "/opencode-memini-v2$/"],
       group: {
         commitMessageTopic: "{{{groupName}}} group",
       },

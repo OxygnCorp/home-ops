@@ -75,6 +75,11 @@ data:
       },
       "plugins": [
         # opencode v2 plugin contract — the v1 "@eleboucher/opencode-memini" does not load under v2.
+        # Version is pinned in the "package" specifier below; grouped with the memini chart
+        # updates so every memini release lands as one PR across mainclaw, devclaw and opencode.
+        # The marker must stay on the line immediately above the entry. Keep "npm" bare —
+        # do NOT write "datasource=npm": the annotated-deps manager would double-capture this pin.
+        # renovate: npm depName=@eleboucher/opencode-memini-v2
         { "package": "@eleboucher/opencode-memini-v2@0.7.32", "options": { "base_url": "http://memini.ai:8080", "auto_update": false } }
       ],
       "enabled_providers": ["litellm"],
