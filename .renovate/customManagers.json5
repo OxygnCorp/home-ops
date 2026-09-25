@@ -53,10 +53,28 @@
       ],
       datasourceTemplate: "npm",
     },
+    {
+      customType: "regex",
+      description: "Track the memini opencode v2 plugin pin (npm)",
+      managerFilePatterns: [
+        "/\\.yaml(?:\\.j2)?$/",
+      ],
+      matchStrings: [
+        // # renovate: npm depName=@eleboucher/opencode-memini-v2
+        // { "package": "@eleboucher/opencode-memini-v2@0.7.32", "options": { ... } }
+        // The marker anchors the match and documents the dep; depName is captured from the
+        // "package" specifier itself so a drifted marker can never bump the wrong entry.
+        // RE2-compatible by design: no backreferences, no lookarounds. The marker must stay
+        // on the line immediately above the entry. Keep "npm" bare — do NOT write
+        // "datasource=npm": the annotated-deps manager would double-capture this pin.
+        "renovate:\\s*npm\\s+depName=\\S+\\n\\s*\\{\\s*\"package\":\\s*\"(?<depName>@[^\"@]+)@(?<currentValue>[0-9][^\"]*)\"",
+      ],
+      datasourceTemplate: "npm",
+    },
   ],
   packageRules: [
     {
-      description: "Update memini chart and ClawHub plugin together in one PR",
+      description: "Group memini chart and ClawHub plugin updates (opencode v2 plugin joins via the memini group in groups.json5)",
       matchPackageNames: [
         "@eleboucher/memini",
         "registry.erwanleboucher.dev/eleboucher/charts/memini",
