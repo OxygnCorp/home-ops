@@ -19,11 +19,6 @@ spec:
             image:
               repository: docker.io/library/alpine
               tag: "3.24"
-            # Runs as root to chown the tmpfs staging mounts below:
-            # openclaw requires its temp dirs to be owned by the runtime uid
-            # (st_uid === euid check in managed-handoff-runtime), and kubelet
-            # creates emptyDir tmpfs root-owned — the gateway hard-fails with
-            # "Unsafe fallback OpenClaw temp dir" otherwise.
             securityContext:
               runAsUser: 0
             command:
@@ -39,12 +34,6 @@ spec:
                 cp /kopiaignore/.kopiaignore /home/node/.kopiaignore
                 # Parent dir for the mise config subPath mount (install-tools needs it)
                 mkdir -p /home/node/.config/mise
-                # Secure the tmpfs sqlite-snapshot staging roots (openclaw#153067 workaround)
-                for tmpdir in /home/node/.cache/openclaw /home/node/.cache/openclaw-1000; do
-                  mkdir -p "$tmpdir"
-                  chown 1000:100 "$tmpdir"
-                  chmod 700 "$tmpdir"
-                done
           install-tools:
             image:
               repository: ghcr.io/openclaw/openclaw
@@ -137,7 +126,9 @@ spec:
                 memory: 512Mi
               limits:
                 cpu: 4000m
-                memory: 4Gi
+                # 2026-09-25 OOM (anon burst to 3.93 Gi, cgroup failcnt 3151 in 15h):
+                # steady-state grew ~2.2 Gi with 11 agents; 4Gi left no burst headroom.
+                memory: 6Gi
 
           codeserver:
             image:
@@ -218,29 +209,11 @@ spec:
     persistence:
       openclaw-home:
         type: emptyDir
-      # openclaw#153067 (fixed after 2026.9.5): in steady state the gateway
-      # re-copies the whole state DB (66 MB) into ~/.cache/openclaw every few
-      # seconds while catalog/auth refreshes run, hammering the DRBD-backed
-      # PVC (measured ~458 GB/day). Upstream's documented workaround is to
-      # stage that regenerable cache on tmpfs (−99.5% device writes).
-      # Remove once the post-2026.9.5 fix ships.
-      openclaw-cache:
-        type: emptyDir
-        medium: Memory
-        sizeLimit: 1Gi
-        globalMounts:
-          - path: /home/node/.cache/openclaw
-      # The gateway buckets this staging cache per-uid and falls back to
-      # ~/.cache/openclaw-<uid> when the primary dir isn't owned by the
-      # runtime user (the tmpfs mount above is root-owned); stage that
-      # fallback root on tmpfs too or the snapshot copies land back on the
-      # DRBD-backed PVC (observed live).
-      openclaw-cache-uid:
-        type: emptyDir
-        medium: Memory
-        sizeLimit: 1Gi
-        globalMounts:
-          - path: /home/node/.cache/openclaw-1000
+      # openclaw#153067 tmpfs staging workaround removed 2026-09-25: the fix
+      # ships in 2026.9.6 (issue closed upstream 2026-09-20); steady-state
+      # staging activity verified stopped in-cluster (0 staging files over
+      # 150 × 0.2s samples, cgroup shmem 0). ~/.cache/* now lives on the
+      # openclaw-home emptyDir.
       kopiaignore:
         type: configMap
         name: mainclaw-kopiaignore
