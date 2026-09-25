@@ -23,13 +23,11 @@ spec:
   rules:
     - matches:
         - path:
-            type: Exact
-            value: /api/health
-      backendRefs:
-        - name: opencode-server
-          port: 4096
-    - matches:
-        - path:
+            # opencode v2 removed /api/health; /global/health is the
+            # authentication-exempt health endpoint (served 200 without Basic
+            # auth) and is also the endpoint the gatus-sidecar probes (first
+            # exact match of this route) — it now returns 200 again instead of
+            # the 401 the removed v1-only /api/health produced.
             type: Exact
             value: /global/health
       backendRefs:
