@@ -1,0 +1,23 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/gateway.networking.k8s.io/httproute_v1.json
+# Internal route for programmatic clients (local `opencode --server`). No
+# SecurityPolicy: the v2 opencode server enforces Basic auth itself
+# (OPENCODE_SERVER_PASSWORD), and clients send the same credential as the
+# Authorization header — gateway-level OIDC here would break the CLI flow.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: opencode-api
+  annotations:
+    gatus.home-operations.com/endpoint: |
+      conditions: ["len([BODY]) == 0"]
+spec:
+  hostnames:
+    - opencode-api.oxygn.dev
+  parentRefs:
+    - name: envoy-internal
+      namespace: network
+  rules:
+    - backendRefs:
+        - name: opencode-server
+          port: 4096
