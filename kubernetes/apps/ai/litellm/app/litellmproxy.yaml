@@ -5,7 +5,7 @@ metadata:
   name: &app litellm
 spec:
   applyMode: file
-  image: ghcr.io/berriai/litellm-database:v1.102.1@sha256:c38fe5eff11874941a21f5630ceb842f640dee7d5d5cde440b60ed0a71798f33
+  image: ghcr.io/berriai/litellm-database:v1.103.0@sha256:f4f114b1996c5923c4d62a7bbdcecb2ccf9df17bdebce76050f609be97f75f5c
   # 2 replicas: one prefers the dedicated AI worker (k8s-3, closest to the
   # GPU embedding/reranker models it routes to), the other is forced onto a
   # different node by the hostname podAntiAffinity for HA.
