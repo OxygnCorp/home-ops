@@ -18,6 +18,7 @@ spec:
     substitute:
       APP: stirling-pdf
       KOPIUR_CAPACITY: 5Gi
+      KOPIUR_PUID: "1000" # mover uid must match stirling-pdf's data owner (ubuntu=1000): credential-encryption.key is 0640 1000:100 and is unreadable by the default mover uid 1024
   prune: true
   sourceRef:
     kind: GitRepository
