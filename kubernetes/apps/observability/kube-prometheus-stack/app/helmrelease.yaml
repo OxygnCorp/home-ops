@@ -49,6 +49,11 @@ spec:
             sourceLabels:
               - "__name__"
             regex: (apiserver_response_sizes_bucket|apiserver_watch_events_sizes_bucket)
+          # Drop high cardinality watch/storage histogram buckets (kept _sum/_count)
+          - action: drop
+            sourceLabels:
+              - "__name__"
+            regex: (apiserver_(watch_events_dispatch|storage_list|watch_list|watch_cache_read_wait|watch_cache_initialization)_duration_seconds_bucket|apiserver_request_body_size_bytes_bucket)
 
     kubeControllerManager:
       enabled: false
@@ -93,7 +98,7 @@ spec:
         serviceMonitorSelectorNilUsesHelmValues: false
         scrapeInterval: 1m # Must match interval in Grafana Helm chart
         retention: 30d
-        retentionSize: 45GB
+        retentionSize: 40GB
         resources:
           requests:
             cpu: 100m
