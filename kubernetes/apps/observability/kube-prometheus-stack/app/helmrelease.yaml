@@ -30,23 +30,23 @@ spec:
           parentRefs:
             - name: envoy-internal
               namespace: network
-        alertmanagerSpec:
-          # Make the AlertmanagerConfig below apply to every namespace. The
-          # default OnNamespace strategy scopes its routes to the CR's own
-          # namespace (observability), so alerts from other namespaces were
-          # falling through to the root "null" receiver and never notified.
-          alertmanagerConfigMatcherStrategy:
-            type: None
-          alertmanagerConfiguration:
-            name: alertmanager
-          externalUrl: https://alertmanager.oxygn.dev
-          storage:
-            volumeClaimTemplate:
-              spec:
-                storageClassName: miroir-slow
-                resources:
-                  requests:
-                    storage: 1Gi
+      alertmanagerSpec:
+        # Make the AlertmanagerConfig below apply to every namespace. The
+        # default OnNamespace strategy scopes its routes to the CR's own
+        # namespace (observability), so alerts from other namespaces were
+        # falling through to the root "null" receiver and never notified.
+        alertmanagerConfigMatcherStrategy:
+          type: None
+        alertmanagerConfiguration:
+          name: alertmanager
+        externalUrl: https://alertmanager.oxygn.dev
+        storage:
+          volumeClaimTemplate:
+            spec:
+              storageClassName: miroir-slow
+              resources:
+                requests:
+                  storage: 1Gi
 
     kubeApiServer:
       enabled: true
