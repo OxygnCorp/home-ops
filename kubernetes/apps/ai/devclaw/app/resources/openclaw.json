@@ -421,7 +421,7 @@
               "cacheWrite": 0
             },
             "contextWindow": 1000000,
-            "maxTokens": 16384
+            "maxTokens": 384000
           },
           {
             "id": "dsv4f",
@@ -437,7 +437,7 @@
               "cacheWrite": 0
             },
             "contextWindow": 1000000,
-            "maxTokens": 16384
+            "maxTokens": 384000
           },
           {
             "id": "dsv4p",
@@ -453,7 +453,7 @@
               "cacheWrite": 0
             },
             "contextWindow": 1000000,
-            "maxTokens": 16384
+            "maxTokens": 384000
           },
           {
             "id": "go-minimax-m3",
@@ -469,7 +469,7 @@
               "cacheWrite": 0
             },
             "contextWindow": 1000000,
-            "maxTokens": 32768
+            "maxTokens": 131072
           },
           {
             "id": "go-minimax-m2.7",
@@ -485,7 +485,7 @@
               "cacheWrite": 0
             },
             "contextWindow": 204800,
-            "maxTokens": 16384
+            "maxTokens": 131072
           },
           {
             "id": "mimo-v2.5-pro",
@@ -501,7 +501,7 @@
               "cacheWrite": 0
             },
             "contextWindow": 262144,
-            "maxTokens": 16384
+            "maxTokens": 128000
           },
           {
             "id": "mimo-v2.5",
@@ -517,7 +517,7 @@
               "cacheWrite": 0
             },
             "contextWindow": 262144,
-            "maxTokens": 16384
+            "maxTokens": 128000
           },
           {
             "id": "go-glm-5.3",
@@ -550,7 +550,7 @@
               "cacheWrite": 0
             },
             "contextWindow": 1000000,
-            "maxTokens": 32768
+            "maxTokens": 131072
           },
           {
             "id": "go-qwen3.8-flash",
@@ -566,7 +566,7 @@
               "cacheWrite": 0
             },
             "contextWindow": 262144,
-            "maxTokens": 16384
+            "maxTokens": 131072
           },
           {
             "id": "qwen3.7-plus",
@@ -582,7 +582,7 @@
               "cacheWrite": 0
             },
             "contextWindow": 1000000,
-            "maxTokens": 16384
+            "maxTokens": 65536
           }
         ]
       }

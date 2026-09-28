@@ -13,7 +13,7 @@ spec:
   info:
     mode: chat
     maxInputTokens: 204800
-    maxOutputTokens: 16384
+    maxOutputTokens: 131072
     supportsFunctionCalling: true
     supportsVision: false
     supportsPromptCaching: true
