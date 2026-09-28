@@ -20,35 +20,6 @@ spec:
       namespace: kopiur-system
   interval: 1h
   path: ./kubernetes/apps/ai/opencode/app
-  patches:
-    # mover security context inherited from the PVC's consumer workload (opencode
-    # pod pins pod-level runAsUser 1000) instead of a static PUID — the default
-    # 1024 mover cannot read opencode's data (PermissionDenied bursts on 2026-09-11):
-    # an explicit runAsUser would always win over the inheritance, so it is
-    # removed on both the SnapshotPolicy (pvcConsumer) and the Restore (recorded
-    # identity replay) — see kopiur docs "Combining inherit with an explicit context"
-  - patch: |-
-      - op: add
-        path: /spec/mover/inheritSecurityContextFrom
-        value:
-          pvcConsumer: {}
-      - op: remove
-        path: /spec/mover/securityContext
-    target:
-      group: kopiur.home-operations.com
-      kind: SnapshotPolicy
-      version: v1alpha1
-  - patch: |-
-      - op: add
-        path: /spec/mover/inheritSecurityContextFrom
-        value:
-          snapshot: {}
-      - op: remove
-        path: /spec/mover/securityContext
-    target:
-      group: kopiur.home-operations.com
-      kind: Restore
-      version: v1alpha1
   postBuild:
     substitute:
       APP: *app

@@ -47,38 +47,38 @@ The default mover runs as `1024:100`, which matches the NFS export's squash targ
 Two ways to align the mover with the data owner:
 
 1. **Static PUID override** (simple): set `KOPIUR_PUID` in the app's `postBuild.substitute` — see `forgejo` and `stirling-pdf`. Fine for apps whose UID is stable and documented.
-2. **Inherit from the workload** (systemic): patch the `SnapshotPolicy`/`Restore` in the app's `ks.yaml` to replace the explicit `securityContext` with `inheritSecurityContextFrom` — see `memini` (`runAsUser: 65532`) and `opencode` (`runAsUser: 1000`). The mover then runs as **whatever the app runs as**, tracked automatically if the app's UID ever changes:
+2. **Inherit from the workload** (systemic): patch the `SnapshotPolicy`/`Restore` in the app's **`kustomization.yaml`** to replace the explicit `securityContext` with `inheritSecurityContextFrom` — see `memini` (`runAsUser: 65532`) and `opencode` (`runAsUser: 1000`). The mover then runs as **whatever the app runs as**, tracked automatically if the app's UID ever changes:
 
    ```yaml
-   spec:
-     patches:
-       # SnapshotPolicy: derive the mover identity from the pod consuming the source PVC
-       - patch: |-
-           - op: add
-             path: /spec/mover/inheritSecurityContextFrom
-             value:
-               pvcConsumer: {}
-           - op: remove
-             path: /spec/mover/securityContext
-         target:
-           group: kopiur.home-operations.com
-           kind: SnapshotPolicy
-           version: v1alpha1
-       # Restore: replay the identity recorded on the backup (kopiur-meta tag)
-       - patch: |-
-           - op: add
-             path: /spec/mover/inheritSecurityContextFrom
-             value:
-               snapshot: {}
-           - op: remove
-             path: /spec/mover/securityContext
-         target:
-           group: kopiur.home-operations.com
-           kind: Restore
-           version: v1alpha1
+   # kubernetes/apps/<ns>/<app>/app/kustomization.yaml
+   patches:
+     # SnapshotPolicy: derive the mover identity from the pod consuming the source PVC
+     - target:
+         group: kopiur.home-operations.com
+         kind: SnapshotPolicy
+         version: v1alpha1
+       patch: |-
+         - op: add
+           path: /spec/mover/inheritSecurityContextFrom
+           value:
+             pvcConsumer: {}
+         - op: remove
+           path: /spec/mover/securityContext
+     # Restore: replay the identity recorded on the backup (kopiur-meta tag)
+     - target:
+         group: kopiur.home-operations.com
+         kind: Restore
+         version: v1alpha1
+       patch: |-
+         - op: add
+           path: /spec/mover/inheritSecurityContextFrom
+           value:
+             snapshot: {}
+         - op: remove
+           path: /spec/mover/securityContext
    ```
 
-   The contract: **the workload must pin `runAsUser`** (container or pod level) — inheritance cannot read the UID baked into an image's `USER` line and falls back to `65532` otherwise (condition `SecurityContextInherited=False` / `InheritPinnedNoUid`). Apps relying on image defaults (e.g. `forgejo`, `stirling-pdf`) must stay on the static PUID override. Removing the explicit `securityContext` is what makes inheritance effective: an explicit `runAsUser` **always wins** over an inherited one (kopiur raises `InheritOverridden`). If no pod consumes the PVC (scaled to zero), the run is held `Pending` (`SecurityContextResolved=False`) until the workload returns — covered by the `KopiurSnapshotHeldPending` alert in `kubernetes/apps/kopiur-system/kopiur/app/prometheusrule.yaml`. Target by `kind` only: the resource is named `${APP}` at build time, so a `name:` selector cannot match, and each app build contains exactly one policy and one restore.
+   The contract: **the workload must pin `runAsUser`** (container or pod level) — inheritance cannot read the UID baked into an image's `USER` line and falls back to `65532` otherwise (condition `SecurityContextInherited=False` / `InheritPinnedNoUid`). Apps relying on image defaults (e.g. `forgejo`, `stirling-pdf`) must stay on the static PUID override. Removing the explicit `securityContext` is what makes inheritance effective: an explicit `runAsUser` **always wins** over an inherited one (kopiur raises `InheritOverridden`). If no pod consumes the PVC (scaled to zero), the run is held `Pending` (`SecurityContextResolved=False`) until the workload returns — covered by the `KopiurSnapshotHeldPending` alert in `kubernetes/apps/kopiur-system/kopiur/app/prometheusrule.yaml`. Target by `kind` only: the resource is named `${APP}` at build time, so a `name:` selector cannot match, and each app build contains exactly one policy and one restore. **Do not put these patches in `spec.patches` on the ks.yaml** — the root `kubernetes/flux/cluster/ks.yaml` patches every app Kustomization with its own `spec.patches` (HelmRelease strategy), and a strategic-merge on that list replaces whatever an app declares there; kustomize-level patches in the app's `kustomization.yaml` apply to the component's resources injected via the Kustomization's `spec.components` and are unaffected.
 
 ## Usage
 
