@@ -44,4 +44,10 @@ spec:
         enabled: true
       prometheusRule:
         enabled: true
+        overrides:
+          # A diskless primary is an expected steady state for these cache
+          # volumes (and the alert is already inhibited by InfoInhibitor in
+          # Alertmanager). Disable it so it stops showing as firing.
+          MiroirVolumeRemoteConsumer:
+            disabled: true
     replicaCount: 2
