@@ -58,6 +58,7 @@ spec:
           REQUIRE_SIGNIN_VIEW: true
           SHOW_REGISTRATION_BUTTON: false
       metrics:
+        enabled: true
         serviceMonitor:
           enabled: true
     containerSecurityContext:
