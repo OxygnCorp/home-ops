@@ -123,6 +123,8 @@ spec:
     fallbacks:
       - MiniMax-M3:
           - go-minimax-m3
+      - MiniMax-M3.1-Flash-Preview:
+          - go-minimax-m3
       - MiniMax-M2.7:
           - go-minimax-m2.7
       - dsv4f:

@@ -42,6 +42,12 @@
             "cacheRetention": "short"
           }
         },
+        "litellm/MiniMax-M3.1-Flash-Preview": {
+          "alias": "minimax-m3.1-flash",
+          "params": {
+            "cacheRetention": "short"
+          }
+        },
         "litellm/MiniMax-M2.7": {
           "alias": "minimax-m2.7",
           "params": {
@@ -118,6 +124,7 @@
       "modelPolicy": {
         "allow": [
           "litellm/MiniMax-M3",
+          "litellm/MiniMax-M3.1-Flash-Preview",
           "litellm/MiniMax-M2.7",
           "litellm/dsv41f",
           "litellm/dsv4f",
@@ -1049,6 +1056,23 @@
             },
             "contextWindow": 1000000,
             "maxTokens": 131072
+          },
+          {
+            "id": "MiniMax-M3.1-Flash-Preview",
+            "name": "MiniMax M3.1 Flash Preview",
+            "reasoning": true,
+            "input": [
+              "text",
+              "image"
+            ],
+            "cost": {
+              "input": 15,
+              "output": 60,
+              "cacheRead": 2,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1000000,
+            "maxTokens": 32768
           },
           {
             "id": "MiniMax-M2.7",
