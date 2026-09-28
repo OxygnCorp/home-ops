@@ -170,16 +170,6 @@
         "name": "Claw",
         "workspace": "/home/node/.openclaw/workspace",
         "agentDir": "/home/node/.openclaw/agents/main/agent",
-        "heartbeat": {
-          "directPolicy": "allow",
-          "every": "1h",
-          "activeHours": {
-            "start": "06:00",
-            "end": "22:00"
-          },
-          "target": "discord",
-          "to": "channel:{{ .DISCORD_CLAW_CHANNEL_ID }}"
-        },
         "identity": {
           "name": "OpenClaw",
           "emoji": "🦞"
@@ -207,16 +197,6 @@
         "name": "Family",
         "workspace": "/home/node/.openclaw/workspace-family",
         "agentDir": "/home/node/.openclaw/agents/family/agent",
-        "heartbeat": {
-          "directPolicy": "allow",
-          "every": "6h",
-          "activeHours": {
-            "start": "06:00",
-            "end": "22:00"
-          },
-          "target": "discord",
-          "to": "channel:{{ .DISCORD_FAMILY_CHANNEL_ID }}"
-        },
         "identity": {
           "name": "Family Bot",
           "emoji": "🏠"
@@ -250,16 +230,6 @@
         "name": "Mentor",
         "workspace": "/home/node/.openclaw/workspace-coach",
         "agentDir": "/home/node/.openclaw/agents/coach/agent",
-        "heartbeat": {
-          "directPolicy": "allow",
-          "every": "6h",
-          "activeHours": {
-            "start": "06:00",
-            "end": "22:00"
-          },
-          "target": "discord",
-          "to": "channel:{{ .DISCORD_COACH_CHANNEL_ID }}"
-        },
         "identity": {
           "name": "Coach",
           "emoji": "🎓"
@@ -386,18 +356,6 @@
         "name": "Media",
         "workspace": "/home/node/.openclaw/workspace-media",
         "agentDir": "/home/node/.openclaw/agents/media/agent",
-        "heartbeat": {
-          "directPolicy": "allow",
-          "every": "1h",
-          "activeHours": {
-            "start": "06:00",
-            "end": "22:00"
-          },
-          "target": "discord",
-          "to": "channel:{{ .DISCORD_MEDIA_CHANNEL_ID }}",
-          "lightContext": true,
-          "isolatedSession": true
-        },
         "identity": {
           "name": "Media Bot",
           "emoji": "🎬"
@@ -425,16 +383,6 @@
         "name": "Nova",
         "workspace": "/home/node/.openclaw/workspace-nova",
         "agentDir": "/home/node/.openclaw/agents/nova/agent",
-        "heartbeat": {
-          "directPolicy": "allow",
-          "every": "6h",
-          "activeHours": {
-            "start": "06:00",
-            "end": "22:00"
-          },
-          "target": "discord",
-          "to": "channel:{{ .DISCORD_NOVA_CHANNEL_ID }}"
-        },
         "identity": {
           "name": "Nova",
           "emoji": "🌟"
@@ -474,18 +422,6 @@
         "name": "Lycos",
         "workspace": "/home/node/.openclaw/workspace-lycos",
         "agentDir": "/home/node/.openclaw/agents/lycos/agent",
-        "heartbeat": {
-          "directPolicy": "allow",
-          "every": "6h",
-          "activeHours": {
-            "start": "08:00",
-            "end": "22:00"
-          },
-          "target": "discord",
-          "to": "channel:{{ .DISCORD_LYCOS_CHANNEL_ID }}",
-          "lightContext": true,
-          "isolatedSession": true
-        },
         "identity": {
           "name": "Lycos",
           "emoji": "🕷"
@@ -991,6 +927,12 @@
         "source": "env",
         "provider": "default",
         "id": "OPENCLAW_GATEWAY_TOKEN"
+      },
+      "rateLimit": {
+        "maxAttempts": 30,
+        "windowMs": 60000,
+        "lockoutMs": 300000,
+        "exemptLoopback": true
       }
     },
     "bind": "lan",
@@ -1005,11 +947,6 @@
     "publicOrigin": "https://mainclaw.oxygn.dev",
     "remote": {
       "url": "https://mainclaw.oxygn.dev"
-    },
-    "tools": {
-      "allow": [
-        "sessions_send"
-      ]
     },
     "trustedProxies": [
       "10.42.0.0/16"
