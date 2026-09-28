@@ -34,6 +34,11 @@ spec:
                 cp /kopiaignore/.kopiaignore /home/node/.kopiaignore
                 # Parent dir for the mise config subPath mount (install-tools needs it)
                 mkdir -p /home/node/.config/mise
+                # Channel credential state: keep it owner-only (audit check
+                # fs.credentials_dir.perms_readable / _writable)
+                mkdir -p /home/node/.openclaw/credentials
+                chown 1000:100 /home/node/.openclaw/credentials
+                chmod 700 /home/node/.openclaw/credentials
           install-tools:
             image:
               repository: ghcr.io/openclaw/openclaw
