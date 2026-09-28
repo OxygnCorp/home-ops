@@ -53,7 +53,7 @@ spec:
           - action: drop
             sourceLabels:
               - "__name__"
-            regex: (apiserver_(watch_events_dispatch|storage_list|watch_list|watch_cache_read_wait|watch_cache_initialization)_duration_seconds_bucket|apiserver_request_body_size_bytes_bucket)
+            regex: (apiserver_(watch_events_dispatch|storage_list|watch_list)_duration_seconds_bucket|apiserver_watch_cache_(read_wait_seconds|initialization_duration_seconds)_bucket|apiserver_request_body_size_bytes_bucket)
 
     kubeControllerManager:
       enabled: false
