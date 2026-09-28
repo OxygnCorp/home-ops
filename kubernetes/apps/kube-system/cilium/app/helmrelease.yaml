@@ -42,7 +42,7 @@ spec:
           - dns:query;response
           - drop:source;destination;identity
           - flow:source;destination;identity;traffic-direction
-          - port-distribution
+          # - port-distribution  # disabled: ~99k series (per-destination-port cardinality)
           - tcp:flags
         serviceMonitor:
           enabled: true
