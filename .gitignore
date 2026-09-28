@@ -1,6 +1,7 @@
 .private
 .task
 .claude
+.superpowers
 *.crt
 *.key
 .decrypted~*
@@ -11,3 +12,5 @@ kubeconfig
 *.secrets.env
 talosconfig
 .worktrees
+__pycache__/
+*.pyc
