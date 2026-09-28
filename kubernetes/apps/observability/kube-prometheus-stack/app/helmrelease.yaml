@@ -16,6 +16,12 @@ spec:
       valuesKey: flux-metrics.yaml
   values:
     cleanPrometheusOperatorObjectNames: true
+    # KubeHpaMaxedOut false-positives on scale-to-zero HPAs (zeroscaler, min=0/max=1):
+    # a pod running means current==max, which the upstream rule treats as "stuck at max".
+    # Disable the upstream rule and re-declare a filtered copy (min_replicas > 0) below.
+    defaultRules:
+      disabled:
+        KubeHpaMaxedOut: true
     alertmanager:
       route:
         main:
@@ -165,3 +171,33 @@ spec:
                 expr: node_zfs_zpool_state{state!="online"} > 0
                 labels:
                   severity: critical
+      hpa-rules:
+        groups:
+          - name: hpa
+            rules:
+              # Patched copy of the upstream kubernetes-apps KubeHpaMaxedOut alert.
+              # Upstream rule is disabled via defaultRules.disabled; this adds the
+              # extra `min_replicas > 0` condition to skip scale-to-zero (zeroscaler) HPAs.
+              - alert: KubeHpaMaxedOut
+                annotations:
+                  description: HPA {{ $labels.namespace }}/{{ $labels.horizontalpodautoscaler }} has been running at max replicas for longer than 15 minutes on cluster {{ $labels.cluster }}.
+                  runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubehpamaxedout
+                  summary: HPA is running at max replicas
+                expr: |-
+                  (
+                    kube_horizontalpodautoscaler_status_current_replicas{job="kube-state-metrics", namespace=~".*"}
+                      ==
+                    kube_horizontalpodautoscaler_spec_max_replicas{job="kube-state-metrics", namespace=~".*"}
+                  )
+                  and on (namespace, horizontalpodautoscaler, cluster) (
+                    kube_horizontalpodautoscaler_spec_max_replicas{job="kube-state-metrics", namespace=~".*"}
+                      !=
+                    kube_horizontalpodautoscaler_spec_min_replicas{job="kube-state-metrics", namespace=~".*"}
+                  )
+                  and on (namespace, horizontalpodautoscaler, cluster) (
+                    kube_horizontalpodautoscaler_spec_min_replicas{job="kube-state-metrics", namespace=~".*"}
+                      > 0
+                  )
+                for: 15m
+                labels:
+                  severity: warning
