@@ -546,7 +546,10 @@
             "wiki_lint",
             "wiki_apply",
             "wiki_get"
-          ]
+          ],
+          "exec": {
+            "security": "full"
+          }
         },
         "thinkingDefault": "high"
       },
@@ -575,7 +578,10 @@
             "wiki_lint",
             "wiki_apply",
             "wiki_get"
-          ]
+          ],
+          "exec": {
+            "security": "full"
+          }
         }
       },
       "elliot": {
@@ -603,7 +609,10 @@
             "wiki_lint",
             "wiki_apply",
             "wiki_get"
-          ]
+          ],
+          "exec": {
+            "security": "full"
+          }
         }
       }
     },
@@ -1283,6 +1292,7 @@
       "browser",
       "device-pair",
       "discord",
+      "document-extract",
       "litellm",
       "llm-task",
       "lossless-claw",
@@ -1299,6 +1309,9 @@
       "discord": {
         "enabled": true,
         "config": {}
+      },
+      "document-extract": {
+        "enabled": true
       },
       "litellm": {
         "enabled": true
