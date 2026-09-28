@@ -1,0 +1,32 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/monitoring.coreos.com/prometheusrule_v1.json
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: kopiur-extra-rules
+spec:
+  groups:
+    - name: kopiur.extra
+      rules:
+        # A held run: a backup/restore whose mover security context could not be
+        # resolved (inheritSecurityContextFrom found no consumer pod and the
+        # recipe pins no fallback runAsUser). Kopiur parks it in Pending and
+        # re-checks every few minutes — silently forever if the workload never
+        # comes back. Gated (repository not Ready) and slot-queued runs are
+        # excluded: they have their own dedicated alerts.
+        - alert: KopiurSnapshotHeldPending
+          annotations:
+            message: >-
+              Snapshot {{ $labels.namespace }}/{{ $labels.name }} has been held
+              Pending for over 30m. Its mover security context could not be
+              resolved (SecurityContextResolved=False / InheritSourceMissing):
+              no workload pod currently consumes the source PVC, or the matched
+              pod pins no runAsUser. Bring the workload back up or pin
+              mover.securityContext.runAsUser as a fallback.
+          expr: |
+            kopiur_resource_phase{kind="Snapshot", phase="Pending"} == 1
+              unless on (namespace, policy) kopiur_snapshot_gated
+              unless on (namespace, name) kopiur_snapshot_waiting_for_slot
+          for: 30m
+          labels:
+            severity: warning
