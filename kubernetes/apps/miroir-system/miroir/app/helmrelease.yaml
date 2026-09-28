@@ -16,6 +16,16 @@ spec:
   values:
     # keep well above the longest planned reboot/upgrade window (rolling Talos upgrades span hours incl. resyncs)
     autoEvictAfter: 24h
+    agent:
+      # OOMKilled at the chart default 128Mi during hourly kopiur snapshot
+      # bursts (26 staging PVCs/h): p95 ~100Mi, spikes up to 125Mi observed.
+      resources:
+        requests:
+          cpu: 10m
+          memory: 256Mi
+        limits:
+          cpu: "4"
+          memory: 512Mi
     drbd:
       alExtents: 6007
       verify:
