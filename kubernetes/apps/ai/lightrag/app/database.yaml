@@ -1,0 +1,14 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: lightrag
+spec:
+  name: lightrag
+  owner: lightrag
+  cluster:
+    name: lightrag
+  extensions:
+    # pgvector is not a trusted extension; the operator creates it as superuser.
+    - name: vector
+      ensure: present

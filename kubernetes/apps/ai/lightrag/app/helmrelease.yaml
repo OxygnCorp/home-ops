@@ -5,6 +5,8 @@ kind: HelmRelease
 metadata:
   name: lightrag
 spec:
+  # Empty list: the postgres component appends its cloudnative-pg dependency here.
+  dependsOn: []
   chartRef:
     kind: OCIRepository
     name: lightrag
@@ -38,6 +40,35 @@ spec:
               MAX_ASYNC_LLM: "2"
               LLM_TIMEOUT: "480"
               CHUNK_SIZE: "800"
+              # Storage — production backend: PostgreSQL (pgvector for vectors,
+              # plain-table graph, no Apache AGE). Replaces the file-based
+              # Json/Nano/NetworkX defaults, which upstream marks test-only.
+              LIGHTRAG_KV_STORAGE: PGKVStorage
+              LIGHTRAG_VECTOR_STORAGE: PGVectorStorage
+              LIGHTRAG_GRAPH_STORAGE: PGTableGraphStorage
+              LIGHTRAG_DOC_STATUS_STORAGE: PGDocStatusStorage
+              POSTGRES_HOST: lightrag-rw
+              POSTGRES_WORKSPACE: lightrag
+              POSTGRES_PORT:
+                valueFrom:
+                  secretKeyRef:
+                    name: lightrag-app
+                    key: port
+              POSTGRES_USER:
+                valueFrom:
+                  secretKeyRef:
+                    name: lightrag-app
+                    key: username
+              POSTGRES_PASSWORD:
+                valueFrom:
+                  secretKeyRef:
+                    name: lightrag-app
+                    key: password
+              POSTGRES_DATABASE:
+                valueFrom:
+                  secretKeyRef:
+                    name: lightrag-app
+                    key: dbname
               # Embeddings via litellm → qwen3-embedding-0.6b model group (OpenAI-compatible, GPU shared with memini)
               EMBEDDING_BINDING: openai
               EMBEDDING_BINDING_HOST: http://litellm.ai:4000
