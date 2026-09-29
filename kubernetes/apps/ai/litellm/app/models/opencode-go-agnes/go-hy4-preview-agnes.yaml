@@ -2,18 +2,18 @@
 apiVersion: litellm.home-operations.com/v1alpha1
 kind: LiteLLMModel
 metadata:
-  name: go-minimax-m3
+  name: go-hy4-preview-agnes
 spec:
-  modelName: go-minimax-m3
+  modelName: go-hy4-preview-agnes
   proxyRef: litellm
   params:
-    model: openai/minimax-m3
+    model: openai/hy4-preview
     apiBase: https://opencode.ai/zen/go/v1
-    apiKey: os.environ/OPENCODE_API_KEY
+    apiKey: os.environ/OPENCODE_AGNES_API_KEY
   info:
     mode: chat
-    maxInputTokens: 1000000
-    maxOutputTokens: 131072
+    maxInputTokens: 131072
+    maxOutputTokens: 64000
     supportsFunctionCalling: true
-    supportsVision: true
+    supportsVision: false
     supportsPromptCaching: true

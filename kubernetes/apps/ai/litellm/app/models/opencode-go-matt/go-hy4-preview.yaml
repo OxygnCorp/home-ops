@@ -2,18 +2,18 @@
 apiVersion: litellm.home-operations.com/v1alpha1
 kind: LiteLLMModel
 metadata:
-  name: mimo-v2.5-pro
+  name: go-hy4-preview
 spec:
-  modelName: mimo-v2.5-pro
+  modelName: go-hy4-preview
   proxyRef: litellm
   params:
-    model: openai/mimo-v2.5-pro
+    model: openai/hy4-preview
     apiBase: https://opencode.ai/zen/go/v1
-    apiKey: os.environ/OPENCODE_API_KEY
+    apiKey: os.environ/OPENCODE_MATT_API_KEY
   info:
     mode: chat
-    maxInputTokens: 262144
-    maxOutputTokens: 128000
+    maxInputTokens: 131072
+    maxOutputTokens: 64000
     supportsFunctionCalling: true
     supportsVision: false
     supportsPromptCaching: true

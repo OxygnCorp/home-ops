@@ -2,14 +2,14 @@
 apiVersion: litellm.home-operations.com/v1alpha1
 kind: LiteLLMModel
 metadata:
-  name: dsv4f
+  name: dsv4p
 spec:
-  modelName: dsv4f
+  modelName: dsv4p
   proxyRef: litellm
   params:
-    model: openai/deepseek-v4-flash
+    model: openai/deepseek-v4-pro
     apiBase: https://opencode.ai/zen/go/v1
-    apiKey: os.environ/OPENCODE_API_KEY
+    apiKey: os.environ/OPENCODE_MATT_API_KEY
   info:
     mode: chat
     maxInputTokens: 1000000
