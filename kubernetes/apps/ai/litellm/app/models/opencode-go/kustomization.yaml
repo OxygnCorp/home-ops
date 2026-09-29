@@ -58,6 +58,8 @@ resources:
   - ./go-qwen3.8-flash-agnes.yaml
   - ./go-qwen3.8-max.yaml
   - ./go-qwen3.8-max-agnes.yaml
+  - ./longcat-2.5-free.yaml
+  - ./longcat-2.5-free-agnes.yaml
   - ./mimo-v2.5.yaml
   - ./mimo-v2.5-agnes.yaml
   - ./mimo-v2.5-pro.yaml
