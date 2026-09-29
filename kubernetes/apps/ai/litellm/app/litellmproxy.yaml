@@ -120,6 +120,16 @@ spec:
     routing_strategy: simple-shuffle
     cooldown_time: 30
     enable_pre_call_checks: true
+    # Pin each conversation to one OpenCode Go subscription so its upstream
+    # prompt cache stays coherent, instead of re-rolling the dice on every
+    # request. Requires a session id in `metadata.session_id`, which the
+    # session hook injects from the client's x-opencode-session header.
+    #
+    # Failover is unaffected: the pin only ever narrows the candidate list to
+    # deployments that are currently healthy, so a benched (429/5xx) deployment
+    # is skipped and the request is served by the other subscription.
+    optional_pre_call_checks:
+      - session_affinity
     fallbacks:
       - MiniMax-M3:
           - go-minimax-m3

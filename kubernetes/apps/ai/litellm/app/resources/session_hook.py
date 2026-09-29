@@ -1,18 +1,29 @@
-"""Inject a stable OpenCode Go session header for headless clients.
+"""Give every request a stable session identity.
 
-OpenCode Go (Console Go) requires a stable per-conversation `x-opencode-session`
-for routing and prompt-cache affinity. Agents (openclaw, opencode) always send
-one — forwarded as-is. Headless services (memini, lightrag, ...) have no
-conversation identity: they get one shared, stable routing identity so their
-calls and their litellm router fallbacks onto OpenCode Go succeed.
+Two consumers, one value:
+
+- **Upstream** — OpenCode Go (Console Go) wants a stable per-conversation
+  `x-opencode-session` header for its own prompt cache. Agents (openclaw,
+  opencode) always send one and it is forwarded as-is. Headless services
+  (memini, lightrag, ...) have no conversation identity, so they get one shared
+  value; the header is still injected so their calls behave upstream.
+- **Router** — litellm pins a conversation to one deployment of a model group
+  (`optional_pre_call_checks: [session_affinity]`), keyed on
+  `metadata.session_id`. Without it, `simple-shuffle` re-rolls the dice on
+  every request and a session alternates between the two OpenCode Go
+  subscriptions, splitting its upstream cache in half.
+
+The router only ever narrows the candidate list to deployments that are
+currently healthy, so this does not weaken the failover between subscriptions.
 """
 
 from typing import Any
 
 from litellm.integrations.custom_logger import CustomLogger
 
-_HEADER = "x-opencode-session"
-_SESSION_ID = "litellm-headless-services"
+# If the client sent any of these, that value is its conversation identity.
+_HEADERS = ("x-opencode-session", "x-session-affinity", "x-session-id")
+_FALLBACK = "litellm-headless-services"
 
 
 class ServiceSessionInjector(CustomLogger):
@@ -24,11 +35,23 @@ class ServiceSessionInjector(CustomLogger):
         call_type: Any,
     ) -> dict:
         headers = data.get("headers") or {}
-        lower = {k.lower() for k in headers}
-        # Clients carrying their own session identity win; only header-less
-        # calls (services) get the shared injected one.
-        if not lower & {_HEADER, "x-session-affinity", "x-session-id"}:
-            data["headers"] = {**headers, _HEADER: _SESSION_ID}
+        lowered = {k.lower(): v for k, v in headers.items()}
+
+        session_id = next((lowered[h] for h in _HEADERS if lowered.get(h)), None)
+        if session_id is None:
+            # Header-less call (a headless service): give it a stable identity
+            # rather than letting every request land on a different deployment.
+            session_id = _FALLBACK
+            data["headers"] = {**headers, _HEADERS[0]: session_id}
+
+        # Router-side affinity. A client that already declared its own
+        # session_id in the body keeps it.
+        metadata = data.get("metadata")
+        if not isinstance(metadata, dict):
+            metadata = {}
+            data["metadata"] = metadata
+        metadata.setdefault("session_id", session_id)
+
         return data
 
 
