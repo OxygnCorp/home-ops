@@ -34,12 +34,16 @@ spec:
       operator: Equal
       value: ai
       effect: NoSchedule
-  # batchSize must cover contextSize: llama.cpp pooling requires the whole
-  # sequence in one ubatch (same constraint as the sibling reranker).
+  # ⚠️ k8s-3 has a single GTX 1050 Ti (4 GiB) shared by time-slicing
+  # (replicas: 4): memory is physically shared, not partitioned. The
+  # reranker already reserves ~2 GiB with its 2048-token ubatch, so the
+  # embedding ubatch must stay at 1024 or it OOMs at model load
+  # (cudaMalloc compute buffers). 0 observed embed failures at 1024 —
+  # only the reranker needed the wider window.
   contextSize: 2048
   parallelSlots: 1
-  batchSize: 2048
-  uBatchSize: 2048
+  batchSize: 1024
+  uBatchSize: 1024
   resources:
     gpu: 1
     cpu: 100m
