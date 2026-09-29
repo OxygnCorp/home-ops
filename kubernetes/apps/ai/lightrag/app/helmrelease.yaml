@@ -37,9 +37,19 @@ spec:
               LLM_BINDING: openai
               LLM_BINDING_HOST: http://litellm.ai.svc.cluster.local:4000/v1
               LLM_MODEL: MiniMax-M3
-              MAX_ASYNC_LLM: "2"
+              # Indexing (high volume): fast, cheap-cache model, reasoning off.
+              EXTRACT_LLM_MODEL: dsv41f-nothink
+              KEYWORD_LLM_MODEL: dsv41f-nothink
+              # Query (low volume, quality-critical).
+              QUERY_LLM_MODEL: MiniMax-M3
+              MAX_ASYNC_LLM: "4"
               LLM_TIMEOUT: "480"
-              CHUNK_SIZE: "800"
+              ENTITY_EXTRACTION_USE_JSON: "true"
+              SUMMARY_LANGUAGE: French
+              # Chunking / parsing
+              CHUNK_SIZE: "1000"
+              CHUNK_OVERLAP_SIZE: "100"
+              LIGHTRAG_PARSER: "*:native-teP,*:legacy-R"
               # Storage — production backend: PostgreSQL (pgvector for vectors,
               # plain-table graph, no Apache AGE). Replaces the file-based
               # Json/Nano/NetworkX defaults, which upstream marks test-only.
@@ -77,7 +87,7 @@ spec:
               # qwen3 expects asymmetric prefixes (instruct on query, none on doc);
               # EMBEDDING_DOCUMENT_PREFIX=NO_PREFIX is LightRag's sentinel for "no doc prefix".
               EMBEDDING_ASYMMETRIC: "true"
-              EMBEDDING_QUERY_PREFIX: "Instruct: Given a user message, retrieve relevant past memories\nQuery: "
+              EMBEDDING_QUERY_PREFIX: "Instruct: Given a search query, retrieve relevant passages that answer the query\nQuery: "
               EMBEDDING_DOCUMENT_PREFIX: "NO_PREFIX"
               # qwen3 ctx=2048; keep headroom for prefix + special tokens
               EMBEDDING_TOKEN_LIMIT: "1800"
@@ -86,10 +96,21 @@ spec:
                   secretKeyRef:
                     name: lightrag-secret
                     key: EMBEDDING_BINDING_API_KEY
-              # Shared GTX 1050 Ti (time-slicing, parallelSlots=1): keep batches small
-              EMBEDDING_BATCH_NUM: "4"
-              EMBEDDING_FUNC_MAX_ASYNC: "1"
+              # Shared GTX 1050 Ti (time-slicing, parallelSlots=1); batch size is
+              # bounded by the model's maxInputTokens and the GPU's VRAM.
+              EMBEDDING_BATCH_NUM: "16"
+              EMBEDDING_FUNC_MAX_ASYNC: "2"
               EMBEDDING_TIMEOUT: "120"
+              # Reranker via litellm (Cohere-compatible endpoint; the host must
+              # be the full path, not the bare base URL).
+              RERANK_BINDING: cohere
+              RERANK_BINDING_HOST: http://litellm.ai:4000/v1/rerank
+              RERANK_MODEL: qwen3-reranker-0.6b
+              RERANK_BINDING_API_KEY:
+                valueFrom:
+                  secretKeyRef:
+                    name: lightrag-secret
+                    key: EMBEDDING_BINDING_API_KEY
 
             envFrom:
               - secretRef:
@@ -130,6 +151,8 @@ spec:
               requests:
                 cpu: 100m
                 memory: 512Mi
+              limits:
+                memory: 2Gi
             securityContext:
               allowPrivilegeEscalation: false
               capabilities:
