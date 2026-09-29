@@ -38,12 +38,17 @@ spec:
             severity: warning
         - alert: MeminiFactMintingHigh
           expr: |-
-            sum(increase(memini_store_upserts_total{op="insert",tier="semantic"}[1d])) > 30
+            sum(increase(memini_store_upserts_total{op="insert",tier="semantic"}[1d])) > 500
           for: 2h
           annotations:
             summary: >-
-              Memini minted {{ $value | printf "%.0f" }} durable facts in 24h — the distiller is
-              over-extracting (healthy baseline is 6-13/day)
+              Memini minted {{ $value | printf "%.0f" }} durable facts in 24h — 2-3x above the
+              current legitimate peak. Attribution (Sep 28): the memory namespace `nea0d`
+              (agent sessions) legitimately mints ~260/day, other namespaces 1-7/day — total
+              peaked at 332. The old threshold (>30) was calibrated on a light 6-13/day
+              baseline and fired on legitimate agent usage. Above 500/day, suspect a runaway
+              agent session or a distiller loop — check `GET /v1/activity` per memory
+              namespace (header `X-Memini-Namespace`) to attribute.
           labels:
             severity: warning
         - alert: MeminiLifecycleStalled

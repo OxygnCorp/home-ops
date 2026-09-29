@@ -31,10 +31,22 @@ spec:
               MEMINI_RERANK_MODEL: qwen3-reranker-0.6b
               MEMINI_RERANK_MAX_CONCURRENCY: "1"
               MEMINI_RERANK_TIMEOUT: 30s
-              MEMINI_WRITE_DEDUP_SCORE: "0.80"
+              # deep rerank pool: hand the reranker ~50 candidates before truncation to the
+              # recall limit (docs natural ceiling) so relevant memories buried past the
+              # limit can be rescued; cost is linear — trades recall latency for accuracy
+              MEMINI_RERANK_POOL: "50"
+              # HTTP payload guard (not a context guard): large enough that the 50-candidate
+              # pool is not sharded into serial requests that blow RERANK_TIMEOUT
+              MEMINI_RERANK_MAX_BATCH_CHARS: "32000"
+              # coalesce wants a high score (docs recommend ~0.9; the 0.625 default was
+              # calibrated for the hint action) — 0.80 collapsed legitimately distinct facts
+              MEMINI_WRITE_DEDUP_SCORE: "0.90"
               MEMINI_WRITE_DEDUP_ACTION: coalesce
               MEMINI_LLM_BASE_URL: http://litellm.ai:4000/v1
               MEMINI_LLM_MODEL: dsv41f
+              # dsv41f is DeepSeek-class: keep reasoning from eating the 4096 default token
+              # budget so distiller JSON answers never truncate (which silently drops calls)
+              MEMINI_LLM_EXTRA_BODY: '{"thinking":{"type":"disabled"}}'
               MEMINI_LLM_API_KEY:
                 valueFrom:
                   secretKeyRef:
