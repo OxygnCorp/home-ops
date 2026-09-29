@@ -169,7 +169,8 @@ spec:
   extraConfig:
     environment:
       - MINIMAX_API_KEY
-      - OPENCODE_API_KEY
+      - OPENCODE_MATT_API_KEY
+      - OPENCODE_AGNES_API_KEY
       - REDIS_HOST
       - REDIS_PORT
   apiAccess:

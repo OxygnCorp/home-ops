@@ -1,0 +1,42 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+# Upstream provider: opencode.ai/zen/go/v1 (OpenCode Go subscription).
+# Subscription key: OPENCODE_AGNES_API_KEY (1Password item `litellm`, providers section).
+#
+# Sticky-per-session load-balancing
+# ---------------------------------
+# This folder exists alongside ./opencode-go-matt/. Each model in this folder
+# uses `modelName: <canonical>-agnes` (e.g. `go-minimax-m3-agnes`) and a
+# different apiKey (OPENCODE_AGNES_API_KEY). Clients call the canonical names
+# (defined in opencode-go-matt/); the session hook in
+# `app/resources/session_hook.py` rewrites the request to `<canonical>-agnes`
+# for ~half of sessions (deterministic hash of `x-opencode-session`).
+#
+# Effect: each openclaw conversation is permanently pinned to one subscription,
+# keeping the upstream OpenCode Go prompt cache coherent, while the two
+# subscriptions share overall load roughly 50/50.
+#
+# Keep this folder and opencode-go-matt/ in lockstep: any new model added
+# here must also be added there AND listed in `_OPENCODE_GO_MODELS` in
+# session_hook.py.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ./dsv41f-agnes.yaml
+  - ./dsv41f-max-agnes.yaml
+  - ./dsv41f-nothink-agnes.yaml
+  - ./dsv4f-agnes.yaml
+  - ./dsv4p-agnes.yaml
+  - ./go-dsv4f-vision-agnes.yaml
+  - ./go-glm-5.3-agnes.yaml
+  - ./go-glm-5.3-flash-agnes.yaml
+  - ./go-hy4-preview-agnes.yaml
+  - ./go-kimi-k2.7-code-agnes.yaml
+  - ./go-kimi-k3-agnes.yaml
+  - ./go-minimax-m2.7-agnes.yaml
+  - ./go-minimax-m3-agnes.yaml
+  - ./go-qwen3.8-flash-agnes.yaml
+  - ./go-qwen3.8-max-agnes.yaml
+  - ./mimo-v2.5-agnes.yaml
+  - ./mimo-v2.5-pro-agnes.yaml
+  - ./qwen3.7-plus-agnes.yaml

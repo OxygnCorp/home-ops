@@ -2,18 +2,18 @@
 apiVersion: litellm.home-operations.com/v1alpha1
 kind: LiteLLMModel
 metadata:
-  name: go-dsv4f-vision
+  name: go-kimi-k3
 spec:
-  modelName: go-dsv4f-vision
+  modelName: go-kimi-k3
   proxyRef: litellm
   params:
-    model: openai/deepseek-v4-flash-vision-exp
+    model: openai/kimi-k3
     apiBase: https://opencode.ai/zen/go/v1
-    apiKey: os.environ/OPENCODE_API_KEY
+    apiKey: os.environ/OPENCODE_MATT_API_KEY
   info:
     mode: chat
     maxInputTokens: 1000000
-    maxOutputTokens: 384000
+    maxOutputTokens: 131072
     supportsFunctionCalling: true
     supportsVision: true
     supportsPromptCaching: true

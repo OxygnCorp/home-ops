@@ -2,14 +2,14 @@
 apiVersion: litellm.home-operations.com/v1alpha1
 kind: LiteLLMModel
 metadata:
-  name: dsv41f-max
+  name: dsv41f-max-agnes
 spec:
-  modelName: dsv41f-max
+  modelName: dsv41f-max-agnes
   proxyRef: litellm
   params:
     model: openai/deepseek-v4.1-flash
     apiBase: https://opencode.ai/zen/go/v1
-    apiKey: os.environ/OPENCODE_API_KEY
+    apiKey: os.environ/OPENCODE_AGNES_API_KEY
     # Same upstream as dsv41f, with the reasoning effort pinned so the
     # foreman escalation coder (which sends no per-request param) always runs
     # at the strongest mode. OpenCode Go serves a single model id but honours

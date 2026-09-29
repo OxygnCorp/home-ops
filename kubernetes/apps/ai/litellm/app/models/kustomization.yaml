@@ -1,29 +1,14 @@
 ---
 # yaml-language-server: $schema=https://json.schemastore.org/kustomization
+# Grouped by upstream provider:
+#   - opencode-go-matt/  : 18 OpenCode Go models using OPENCODE_MATT_API_KEY
+#   - opencode-go-agnes/ : same 18 modelNames, OPENCODE_AGNES_API_KEY (load-balances with matt via simple-shuffle)
+#   - minimax/           : 4 MiniMax models on api.minimax.io/v1 (MINIMAX_API_KEY)
+#   - internal/          : 2 in-cluster services (embedding + reranker)
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-  - ./minimax-m3.yaml
-  - ./minimax-m3.1-flash-preview.yaml
-  - ./minimax-m2.7.yaml
-  - ./minimax-m2.7-highspeed.yaml
-  - ./dsv4f.yaml
-  - ./dsv4p.yaml
-  - ./dsv41f.yaml
-  - ./dsv41f-max.yaml
-  - ./dsv41f-nothink.yaml
-  - ./go-kimi-k3.yaml
-  - ./go-kimi-k2.7-code.yaml
-  - ./go-glm-5.3.yaml
-  - ./go-glm-5.3-flash.yaml
-  - ./go-qwen3.8-max.yaml
-  - ./go-qwen3.8-flash.yaml
-  - ./go-hy4-preview.yaml
-  - ./go-dsv4f-vision.yaml
-  - ./go-minimax-m3.yaml
-  - ./go-minimax-m2.7.yaml
-  - ./mimo-v2.5-pro.yaml
-  - ./mimo-v2.5.yaml
-  - ./qwen3.7-plus.yaml
-  - ./qwen3-embedding-0.6b.yaml
-  - ./qwen3-reranker-0.6b.yaml
+  - ./opencode-go-matt
+  - ./opencode-go-agnes
+  - ./minimax
+  - ./internal
