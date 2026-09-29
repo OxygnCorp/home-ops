@@ -9,11 +9,6 @@ spec:
   transport: stdio
   proxyMode: streamable-http
   proxyPort: 8080
-  env:
-    - name: LIGHTRAG_HOST
-      value: lightrag.ai.svc.cluster.local
-    - name: LIGHTRAG_PORT
-      value: "9621"
   secrets:
     - name: toolhive-lightrag
       key: LIGHTRAG_API_KEY
@@ -48,14 +43,25 @@ spec:
         - name: mcp
           image: ghcr.io/astral-sh/uv:python3.12-alpine
           command:
-            - uvx
+            - sh
+            - -c
           args:
-            # mcp 2.0 (2026-07-28) removed mcp.server.fastmcp; mcp-lightrag 0.2.2
-            # declares mcp>=1.2.0 with no upper bound, so constrain to latest 1.x.
-            - --with
-            - mcp<2
-            # renovate: datasource=pypi depName=mcp-lightrag
-            - mcp-lightrag==0.2.2
+            # lightrag-mcp (shemhamforash23) is configured via CLI args only —
+            # no env fallback — so the API key is expanded at runtime from the
+            # secret-injected LIGHTRAG_API_KEY env var (never committed to git).
+            # mcp 2.0 (2026-07-28) removed mcp.server.fastmcp; lightrag-mcp
+            # declares mcp>=1.6.0 with no upper bound, so constrain to latest 1.x.
+            # The renovate marker lives inside the shell script because the
+            # annotated-deps regex requires the pinned spec (unquoted, at line
+            # end) on the line right below it; the shell ignores the comment
+            # line. Literal block (|) keeps real newlines — a folded scalar (>-)
+            # would collapse the script into one line and the # comment would
+            # swallow the whole command.
+            - |
+              # renovate: datasource=pypi depName=lightrag-mcp
+              exec uvx --with 'mcp<2' --from lightrag-mcp==0.1.1 lightrag-mcp \
+                --host lightrag.ai.svc.cluster.local --port 9621 \
+                --api-key "$LIGHTRAG_API_KEY"
           env:
             - name: HOME
               value: /tmp
