@@ -10,6 +10,12 @@ spec:
     model: openai/mimo-v2.5-pro
     apiBase: https://opencode.ai/zen/go/v1
     apiKey: os.environ/OPENCODE_MATT_API_KEY
+    additional:
+      # Real upstream pricing (USD/M ÷ 1M) — subscription only, tracking
+      # purposes, no max_budget set (would block requests)
+      input_cost_per_token: 0.000000435
+      output_cost_per_token: 0.00000087
+      cache_read_input_token_cost: 0.000000003625
   info:
     mode: chat
     maxInputTokens: 262144

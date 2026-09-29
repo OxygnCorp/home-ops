@@ -10,6 +10,13 @@ spec:
     model: openai/minimax-m2.7
     apiBase: https://opencode.ai/zen/go/v1
     apiKey: os.environ/OPENCODE_AGNES_API_KEY
+    additional:
+      # Real upstream pricing (USD/M ÷ 1M) — subscription only, tracking
+      # purposes, no max_budget set (would block requests)
+      input_cost_per_token: 0.0000003
+      output_cost_per_token: 0.0000012
+      cache_read_input_token_cost: 0.00000006
+      cache_creation_input_token_cost: 0.000000375
   info:
     mode: chat
     maxInputTokens: 204800
