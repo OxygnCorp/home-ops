@@ -49,7 +49,27 @@ spec:
               # Chunking / parsing
               CHUNK_SIZE: "1000"
               CHUNK_OVERLAP_SIZE: "100"
-              LIGHTRAG_PARSER: "*:native-teP,*:legacy-R"
+              # pdf:docling route les PDF (y compris scannés image-only) vers
+              # docling-serve pour OCR + extraction de structure. Les autres
+              # formats gardent le chunking Tree-sitter (native-teP) et le
+              # fallback legacy-R. L'ordre des règles est significatif :
+              # la première règle matchant gagne.
+              LIGHTRAG_PARSER: "pdf:docling,*:native-teP,*:legacy-R"
+              # Service interne (ClusterIP, aucune route) — cf. spec D4 :
+              # pas d'auth API key, isolation réseau uniquement.
+              DOCLING_ENDPOINT: "http://docling-serve.ai.svc.cluster.local:5001"
+              # OCR activé pour les pages image-only.
+              DOCLING_DO_OCR: "true"
+              # false = n'OCR que les pages sans couche texte. Évite le ×3 de
+              # temps de traitement sur un PDF mixte (contrats avec pages
+              # scannées ET pages textuelles) — cf. spec D7.
+              DOCLING_FORCE_OCR: "false"
+              # 2 conversions PDF en parallèle (default upstream = 1) pour
+              # réduire le temps total d'indexation d'un lot — cf. spec D8.
+              MAX_PARALLEL_PARSE_DOCLING: "2"
+              # 5 min : generous pour un PDF technique avec tableaux complexes
+              # au premier passage (warmup modèles).
+              DOCLING_TIMEOUT: "300"
               # Storage — production backend: PostgreSQL (pgvector for vectors,
               # plain-table graph, no Apache AGE). Replaces the file-based
               # Json/Nano/NetworkX defaults, which upstream marks test-only.
