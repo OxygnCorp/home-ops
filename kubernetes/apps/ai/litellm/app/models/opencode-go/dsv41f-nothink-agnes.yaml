@@ -15,6 +15,11 @@ spec:
     # honours reasoning_effort (none disables reasoning), same as dsv41f-max/max.
     additional:
       reasoning_effort: none
+      # Real upstream pricing (USD/M ÷ 1M) — subscription only, tracking
+      # purposes, no max_budget set (would block requests)
+      input_cost_per_token: 0.0000003
+      output_cost_per_token: 0.0000012
+      cache_read_input_token_cost: 0.000000006
   info:
     mode: chat
     maxInputTokens: 1000000

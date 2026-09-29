@@ -10,6 +10,13 @@ spec:
     model: openai/qwen3.8-flash
     apiBase: https://opencode.ai/zen/go/v1
     apiKey: os.environ/OPENCODE_AGNES_API_KEY
+    additional:
+      # Real upstream pricing (USD/M ÷ 1M) — subscription only, tracking
+      # purposes, no max_budget set (would block requests)
+      input_cost_per_token: 0.00000015
+      output_cost_per_token: 0.00000047
+      cache_read_input_token_cost: 0.000000016
+      cache_creation_input_token_cost: 0.0000002
   info:
     mode: chat
     maxInputTokens: 262144
