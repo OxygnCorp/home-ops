@@ -10,6 +10,12 @@ spec:
     model: openai/glm-5.3
     apiBase: https://opencode.ai/zen/go/v1
     apiKey: os.environ/OPENCODE_MATT_API_KEY
+    additional:
+      # Real upstream pricing (USD/M ÷ 1M) — subscription only, tracking
+      # purposes, no max_budget set (would block requests)
+      input_cost_per_token: 0.0000014
+      output_cost_per_token: 0.0000044
+      cache_read_input_token_cost: 0.00000026
   info:
     mode: chat
     maxInputTokens: 1000000
