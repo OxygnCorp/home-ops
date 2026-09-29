@@ -9,19 +9,26 @@ spec:
     labels:
       app.kubernetes.io/name: docling-serve
   components:
-    # Provisionne le PVC docling-serve (20Gi, miroir-slow-local) et le
+    # Provisionne le PVC docling-serve (20Gi, miroir-slow) et le
     # branche sur la sauvegarde kopiur horaire.
     - ../../../../components/kopiur/backup
   dependsOn:
     - name: kopiur
       namespace: kopiur-system
+    # Garantit l'existence de la StorageClass miroir-slow avant la
+    # création du PVC (miroir-slow = DRBD replicas 2, accessible
+    # cross-node ; miroir-slow-local épine le PV au node du premier
+    # consumer et deadlock le job populator sur un node tainté
+    # workload=ai, cf. PR #4705 post-merge).
+    - name: miroir-config
+      namespace: miroir-system
   interval: 1h
   path: ./kubernetes/apps/ai/docling-serve/app
   postBuild:
     substitute:
       APP: docling-serve
       KOPIUR_CAPACITY: 20Gi
-      KOPIUR_STORAGECLASS: miroir-slow-local
+      KOPIUR_STORAGECLASS: miroir-slow
       KOPIUR_PUID: "1000"
       KOPIUR_PGID: "1000"
   prune: true
