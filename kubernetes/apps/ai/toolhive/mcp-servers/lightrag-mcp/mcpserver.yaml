@@ -51,6 +51,15 @@ spec:
             # secret-injected LIGHTRAG_API_KEY env var (never committed to git).
             # mcp 2.0 (2026-07-28) removed mcp.server.fastmcp; lightrag-mcp
             # declares mcp>=1.6.0 with no upper bound, so constrain to latest 1.x.
+            # The generated openapi-python-client sends the key as
+            # `Authorization: Bearer <key>`, which the LightRAG auth middleware
+            # parses as a JWT and rejects with 401 (API-key-only profile only
+            # accepts the X-API-Key header). The inline -c patch wraps
+            # AuthenticatedClient.__init__ so every client is built with the
+            # key in the X-API-Key header instead (validated in-pod: 200 on
+            # POST /query). Patch runs before `from lightrag_mcp.main import
+            # main` so the wrapped __init__ is in place before any client is
+            # instantiated.
             # The renovate marker lives inside the shell script because the
             # annotated-deps regex requires the pinned spec (unquoted, at line
             # end) on the line right below it; the shell ignores the comment
@@ -59,7 +68,16 @@ spec:
             # swallow the whole command.
             - |
               # renovate: datasource=pypi depName=lightrag-mcp
-              exec uvx --with 'mcp<2' --from lightrag-mcp==0.1.1 lightrag-mcp \
+              exec uv run --with 'mcp<2' --with lightrag-mcp==0.1.1 python -c '
+              from lightrag_mcp.client.light_rag_server_api_client.client import AuthenticatedClient
+              _orig_init = AuthenticatedClient.__init__
+              def _patched_init(self, *args, **kwargs):
+                  kwargs.setdefault("prefix", "")
+                  kwargs.setdefault("auth_header_name", "X-API-Key")
+                  _orig_init(self, *args, **kwargs)
+              AuthenticatedClient.__init__ = _patched_init
+              from lightrag_mcp.main import main
+              main()' \
                 --host lightrag.ai.svc.cluster.local --port 9621 \
                 --api-key "$LIGHTRAG_API_KEY"
           env:
