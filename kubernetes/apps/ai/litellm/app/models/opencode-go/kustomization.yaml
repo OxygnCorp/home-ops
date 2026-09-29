@@ -1,0 +1,66 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+# Upstream provider: opencode.ai/zen/go/v1 (OpenCode Go).
+# Two subscriptions back the same pool, split across file pairs.
+#
+# Shared pool / failover
+# ----------------------
+# Each model exists as a PAIR of LiteLLMModel CRs that share one `modelName`:
+#
+#   <model>.yaml        apiKey: OPENCODE_MATT_API_KEY
+#   <model>-agnes.yaml  apiKey: OPENCODE_AGNES_API_KEY
+#
+# Because the `modelName` is identical, litellm treats them as two deployments
+# of ONE model group (`dsv41f` -> [Matt, Agnes]) and load-balances between them
+# under `routing_strategy: simple-shuffle`. The `-agnes` suffix lives in
+# `metadata.name` only — it is NOT part of the model name clients request.
+#
+# This is what makes the pool resilient: when one subscription returns 429 or
+# 5xx, the group has an alternative deployment, so the router benches the
+# failing one (`cooldown_time: 30`) and serves the request from the other.
+# With one deployment per modelName instead, a 429 has nowhere to go — the
+# request is retried and then fails.
+#
+# Do NOT give the two files of a pair different `modelName`s: that splits them
+# into two single-deployment groups and removes all failover.
+#
+# When adding a model, add BOTH files of the pair.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ./dsv41f.yaml
+  - ./dsv41f-agnes.yaml
+  - ./dsv41f-max.yaml
+  - ./dsv41f-max-agnes.yaml
+  - ./dsv41f-nothink.yaml
+  - ./dsv41f-nothink-agnes.yaml
+  - ./dsv4f.yaml
+  - ./dsv4f-agnes.yaml
+  - ./dsv4p.yaml
+  - ./dsv4p-agnes.yaml
+  - ./go-dsv4f-vision.yaml
+  - ./go-dsv4f-vision-agnes.yaml
+  - ./go-glm-5.3.yaml
+  - ./go-glm-5.3-agnes.yaml
+  - ./go-glm-5.3-flash.yaml
+  - ./go-glm-5.3-flash-agnes.yaml
+  - ./go-hy4-preview.yaml
+  - ./go-hy4-preview-agnes.yaml
+  - ./go-kimi-k2.7-code.yaml
+  - ./go-kimi-k2.7-code-agnes.yaml
+  - ./go-kimi-k3.yaml
+  - ./go-kimi-k3-agnes.yaml
+  - ./go-minimax-m2.7.yaml
+  - ./go-minimax-m2.7-agnes.yaml
+  - ./go-minimax-m3.yaml
+  - ./go-minimax-m3-agnes.yaml
+  - ./go-qwen3.8-flash.yaml
+  - ./go-qwen3.8-flash-agnes.yaml
+  - ./go-qwen3.8-max.yaml
+  - ./go-qwen3.8-max-agnes.yaml
+  - ./mimo-v2.5.yaml
+  - ./mimo-v2.5-agnes.yaml
+  - ./mimo-v2.5-pro.yaml
+  - ./mimo-v2.5-pro-agnes.yaml
+  - ./qwen3.7-plus.yaml
+  - ./qwen3.7-plus-agnes.yaml

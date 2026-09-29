@@ -2,18 +2,18 @@
 apiVersion: litellm.home-operations.com/v1alpha1
 kind: LiteLLMModel
 metadata:
-  name: go-glm-5.3-flash-agnes
+  name: dsv4p-agnes
 spec:
-  modelName: go-glm-5.3-flash-agnes
+  modelName: dsv4p
   proxyRef: litellm
   params:
-    model: openai/glm-5.3-flash
+    model: openai/deepseek-v4-pro
     apiBase: https://opencode.ai/zen/go/v1
     apiKey: os.environ/OPENCODE_AGNES_API_KEY
   info:
     mode: chat
     maxInputTokens: 1000000
-    maxOutputTokens: 131072
+    maxOutputTokens: 384000
     supportsFunctionCalling: true
-    supportsVision: true
+    supportsVision: false
     supportsPromptCaching: true
