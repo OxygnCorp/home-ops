@@ -1,0 +1,24 @@
+---
+apiVersion: litellm.home-operations.com/v1alpha1
+kind: LiteLLMModel
+metadata:
+  name: longcat-2.5-free
+spec:
+  modelName: longcat-2.5-free
+  proxyRef: litellm
+  params:
+    model: openai/longcat-2.5-preview-free
+    apiBase: https://opencode.ai/zen/go/v1
+    apiKey: os.environ/OPENCODE_MATT_API_KEY
+  info:
+    # Tier-3 emergency fallback for every chat model group: free and unmetered
+    # while the OpenCode Go promo lasts ("pour une durée limitée" — if the promo
+    # ends, repoint the tier-3 fallbacks at go-glm-5.3-flash).
+    # Info values are conservative guesses (upstream /models exposes no
+    # metadata); a reasoning model, so responses carry reasoning_content.
+    mode: chat
+    maxInputTokens: 262144
+    maxOutputTokens: 32768
+    supportsFunctionCalling: true
+    supportsVision: false
+    supportsPromptCaching: false
