@@ -34,10 +34,12 @@ spec:
       operator: Equal
       value: ai
       effect: NoSchedule
+  # batchSize must cover contextSize: llama.cpp pooling requires the whole
+  # sequence in one ubatch (same constraint as the sibling reranker).
   contextSize: 2048
   parallelSlots: 1
-  batchSize: 1024
-  uBatchSize: 1024
+  batchSize: 2048
+  uBatchSize: 2048
   resources:
     gpu: 1
     cpu: 100m
