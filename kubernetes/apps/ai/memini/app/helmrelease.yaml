@@ -26,6 +26,11 @@ spec:
               MEMINI_EMBED_DIMS: "1024"
               MEMINI_EMBED_QUERY_PREFIX: "Instruct: Given a user message, retrieve relevant past memories\nQuery: "
               MEMINI_EMBED_MAX_CONCURRENCY: "1"
+              # Keep this below the qwen3-embedding-0.6b context (2048 tokens):
+              # default 8000 runes lets a dense text (JSON/code) blow the model
+              # context, leaving the memory vectorless and stuck in the
+              # pending_embed repair loop.
+              MEMINI_EMBED_MAX_ITEM_CHARS: "6000"
               MEMINI_RECALL_EMBED_TIMEOUT: 60s
               MEMINI_RERANK: http://litellm.ai:4000
               MEMINI_RERANK_MODEL: qwen3-reranker-0.6b

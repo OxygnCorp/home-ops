@@ -34,10 +34,15 @@ spec:
       operator: Equal
       value: ai
       effect: NoSchedule
+  # Physical batch must cover the longest single input: llama.cpp pooling
+  # (rerank/embedding) requires the whole sequence in one ubatch, so any
+  # input in (batchSize, contextSize] fails with "input too large to
+  # process". Keep batchSize == contextSize (2048). Observed rerank pairs
+  # reached 1907 tokens before this bump.
   contextSize: 2048
   parallelSlots: 1
-  batchSize: 1024
-  uBatchSize: 1024
+  batchSize: 2048
+  uBatchSize: 2048
   resources:
     gpu: 1
     cpu: 100m
