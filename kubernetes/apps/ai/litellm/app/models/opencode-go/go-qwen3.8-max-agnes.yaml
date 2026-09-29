@@ -4,7 +4,7 @@ kind: LiteLLMModel
 metadata:
   name: go-qwen3.8-max-agnes
 spec:
-  modelName: go-qwen3.8-max-agnes
+  modelName: go-qwen3.8-max
   proxyRef: litellm
   params:
     model: openai/qwen3.8-max

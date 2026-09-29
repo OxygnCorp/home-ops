@@ -2,18 +2,18 @@
 apiVersion: litellm.home-operations.com/v1alpha1
 kind: LiteLLMModel
 metadata:
-  name: mimo-v2.5-agnes
+  name: dsv4f-agnes
 spec:
-  modelName: mimo-v2.5-agnes
+  modelName: dsv4f
   proxyRef: litellm
   params:
-    model: openai/mimo-v2.5
+    model: openai/deepseek-v4-flash
     apiBase: https://opencode.ai/zen/go/v1
     apiKey: os.environ/OPENCODE_AGNES_API_KEY
   info:
     mode: chat
-    maxInputTokens: 262144
-    maxOutputTokens: 128000
+    maxInputTokens: 1000000
+    maxOutputTokens: 384000
     supportsFunctionCalling: true
-    supportsVision: true
+    supportsVision: false
     supportsPromptCaching: true

@@ -2,19 +2,14 @@
 apiVersion: litellm.home-operations.com/v1alpha1
 kind: LiteLLMModel
 metadata:
-  name: dsv41f-nothink-agnes
+  name: dsv41f-agnes
 spec:
-  modelName: dsv41f-nothink-agnes
+  modelName: dsv41f
   proxyRef: litellm
   params:
     model: openai/deepseek-v4.1-flash
     apiBase: https://opencode.ai/zen/go/v1
     apiKey: os.environ/OPENCODE_AGNES_API_KEY
-    # Same upstream as dsv41f, with reasoning disabled: LightRAG's indexing
-    # guidance says to avoid reasoning models during extraction. OpenCode Go
-    # honours reasoning_effort (none disables reasoning), same as dsv41f-max/max.
-    additional:
-      reasoning_effort: none
   info:
     mode: chat
     maxInputTokens: 1000000

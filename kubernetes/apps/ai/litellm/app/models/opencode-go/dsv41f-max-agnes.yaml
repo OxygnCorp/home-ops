@@ -4,7 +4,7 @@ kind: LiteLLMModel
 metadata:
   name: dsv41f-max-agnes
 spec:
-  modelName: dsv41f-max-agnes
+  modelName: dsv41f-max
   proxyRef: litellm
   params:
     model: openai/deepseek-v4.1-flash

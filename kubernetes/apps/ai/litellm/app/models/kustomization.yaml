@@ -1,14 +1,14 @@
 ---
 # yaml-language-server: $schema=https://json.schemastore.org/kustomization
 # Grouped by upstream provider:
-#   - opencode-go-matt/  : 18 OpenCode Go models using OPENCODE_MATT_API_KEY
-#   - opencode-go-agnes/ : same 18 modelNames, OPENCODE_AGNES_API_KEY (load-balances with matt via simple-shuffle)
-#   - minimax/           : 4 MiniMax models on api.minimax.io/v1 (MINIMAX_API_KEY)
-#   - internal/          : 2 in-cluster services (embedding + reranker)
+#   - opencode-go/ : 18 OpenCode Go models x 2 subscriptions (36 CRs sharing
+#                    18 modelNames, so litellm load-balances and fails over
+#                    between the two keys — see opencode-go/kustomization.yaml)
+#   - minimax/     : 4 MiniMax models on api.minimax.io/v1 (MINIMAX_API_KEY)
+#   - internal/    : 2 in-cluster services (embedding + reranker)
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-  - ./opencode-go-matt
-  - ./opencode-go-agnes
+  - ./opencode-go
   - ./minimax
   - ./internal
