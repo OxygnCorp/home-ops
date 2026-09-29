@@ -1,0 +1,123 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: docling-serve
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: docling-serve
+  interval: 1h
+  values:
+    controllers:
+      docling-serve:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        strategy: Recreate
+        containers:
+          app:
+            image:
+              repository: ghcr.io/docling-project/docling-serve-cpu
+              # Pinned: LightRAG v1.5.7 parle une API HTTP figée à
+              # cette version de Docling. Bump conjoint requis (cf. spec §5).
+              tag: v1.35.0
+            env:
+              # Cache modèles persistant sur le PVC (~4 GB au 1er boot).
+              DOCLING_SERVE_ARTIFACTS_PATH: /app/models
+              # k8s-3 expose 4 cores aux pods (default upstream = 4).
+              DOCLING_NUM_THREADS: "4"
+              DOCLING_SERVE_ENG_KIND: local
+              DOCLING_SERVE_ENG_LOC_NUM_WORKERS: "2"
+            probes:
+              # TCP : Docling n'expose pas de /livez dédié.
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  tcpSocket:
+                    port: 5001
+                  initialDelaySeconds: 30
+                  periodSeconds: 30
+                  timeoutSeconds: 5
+                  failureThreshold: 5
+              # /health vérifie que les modèles sont chargés, pas juste que
+              # le process répond.
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /health
+                    port: 5001
+                  initialDelaySeconds: 15
+                  periodSeconds: 15
+                  timeoutSeconds: 5
+                  failureThreshold: 3
+              # 30 x 10s = 5 min de tolérance pour le téléchargement
+              # initial des 4 GB de modèles (cf. Review Focus #1).
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /health
+                    port: 5001
+                  periodSeconds: 10
+                  failureThreshold: 30
+            resources:
+              requests:
+                cpu: 2
+                memory: 4Gi
+              limits:
+                # Pas de limit CPU : on veut qu'il prenne ce qu'il peut
+                # sur le bare metal k8s-3. Mémoire bornée pour éviter
+                # un kill -9 silencieux sur PDF de 200+ pages (spec §5).
+                memory: 8Gi
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                  - ALL
+              seccompProfile:
+                type: RuntimeDefault
+    defaultPodOptions:
+      # Même scheduling que lightrag : préférence k8s-3 (bare metal,
+      # CPU/RAM récents) mais schedulable ailleurs si saturé.
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              preference:
+                matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values: [k8s-3]
+      tolerations:
+        - key: workload
+          operator: Equal
+          value: ai
+          effect: NoSchedule
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+    persistence:
+      data:
+        # PVC créé par le component kopiur/backup (APP=docling-serve) :
+        # provisionné + sauvegardé par snapshot horarioire. Le cache modèles
+        # (~4 GB) est ainsi restaurable sans re-téléchargement.
+        existingClaim: docling-serve
+        globalMounts:
+          - path: /app/models
+    service:
+      app:
+        # ClusterIP interne seulement — aucune route. LightRAG est le seul
+        # client (cf. spec D4 : pas d'auth, isolation réseau).
+        # Une exposition future imposerait un reverse proxy + auth API key.
+        type: ClusterIP
+        ports:
+          http:
+            port: 5001
