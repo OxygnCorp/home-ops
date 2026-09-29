@@ -129,6 +129,9 @@ spec:
           - go-minimax-m2.7
       - dsv4f:
           - go-minimax-m3
+      - dsv41f-nothink:
+          - go-glm-5.3-flash
+          - MiniMax-M3
       - go-glm-5.3:
           - MiniMax-M3
       - go-glm-5.3-flash:

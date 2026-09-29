@@ -4,11 +4,16 @@ apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
   name: lightrag
+  labels:
+    # Net-new CNPG cluster: plain initdb, no Barman recovery (see
+    # kubernetes/flux/cluster/ks.yaml). Remove after the first scheduled backup.
+    components.postgres/cnpg: init
 spec:
   commonMetadata:
     labels:
       app.kubernetes.io/name: lightrag
   components:
+    - ../../../../components/postgres
     - ../../../../components/kopiur/backup
   dependsOn:
     - name: onepassword
@@ -19,6 +24,11 @@ spec:
       namespace: ai
     - name: kopiur
       namespace: kopiur-system
+  healthCheckExprs:
+    - apiVersion: postgresql.cnpg.io/v1
+      kind: Cluster
+      failed: status.conditions.filter(e, e.type == 'Ready').all(e, e.status == 'False')
+      current: status.conditions.filter(e, e.type == 'Ready').all(e, e.status == 'True')
   interval: 1h
   path: ./kubernetes/apps/ai/lightrag/app
   postBuild:
