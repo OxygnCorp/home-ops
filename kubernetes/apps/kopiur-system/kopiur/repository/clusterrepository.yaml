@@ -70,6 +70,19 @@ spec:
       timezone: Europe/Paris
   mode: ReadWrite
   moverDefaults:
+    tolerations:
+      # Movers are pinned by their staging PVC's node affinity
+      # (miroir-slow-local) to the node holding the snapshot data. A source
+      # PVC on the tainted GPU worker k8s-3 (workload=ai:NoSchedule) left its
+      # mover Unschedulable on every node: 1 untolerated taint + 3 PV affinity
+      # mismatches -> MoverPodWedged, every docling-serve snapshot failed.
+      # Snapshot movers are node-pinned by their staging PVs, so this only
+      # unblocks the ones whose data lives on k8s-3; maintenance/discovery
+      # jobs (NFS backend only, no PV affinity) merely become eligible.
+      - key: workload
+        operator: Equal
+        value: ai
+        effect: NoSchedule
     cache:
       # Local (non-replicated) class for the mover kopia caches: replicated
       # staging churns DRBD on every backup run (snapshot/freeze/teardown) and
