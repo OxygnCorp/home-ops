@@ -21,7 +21,7 @@ spec:
               repository: ghcr.io/docling-project/docling-serve-cpu
               # Pinned: LightRAG v1.5.7 parle une API HTTP figée à
               # cette version de Docling. Bump conjoint requis (cf. spec §5).
-              tag: v1.35.0
+              tag: v1.36.0
             env:
               # Cache modèles persistant sur le PVC (~4 GB au 1er boot).
               DOCLING_SERVE_ARTIFACTS_PATH: /app/models
