@@ -93,56 +93,53 @@ jobs:
           # fetches the rendered (post-kustomize/Helm) Flux diff for this PR.
           KONFLATE_MCP_URL: https://konflate.oxygn.dev/mcp
         with:
-          github_token: ${{ steps.app-token.outputs.token }}
-          pr_number: ${{ github.event.pull_request.number || inputs.pr_number }}
-          force_review: ${{ github.event_name == 'workflow_dispatch' && 'true' || 'false' }}
-          ai_primary_retries: "3"
-          ai_primary_retry_delay_sec: "15"
-          ai_base_url: ${{ vars.LITELLM_URL }}
-          ai_api_format: openai
-          ai_model: ${{ vars.PRIMARY_MODEL }}
-          ai_api_key: ${{ secrets.LITELLM_API_KEY }}
-          ai_response_format: json_object
-          ai_max_tokens: "16000"
-          ai_fallback_base_url: ${{ vars.LITELLM_URL }}
-          ai_fallback_api_format: openai
-          ai_fallback_model: ${{ vars.FALLBACK_MODEL }}
-          ai_fallback_api_key: ${{ secrets.LITELLM_API_KEY }}
-          review_routing_mode: auto
-          ai_smart_base_url: ${{ vars.LITELLM_URL }}
-          ai_smart_api_format: openai
-          ai_smart_model: ${{ vars.SMART_MODEL }}
-          ai_smart_api_key: ${{ secrets.LITELLM_API_KEY }}
-          allowed_source_hosts: "github.com,api.github.com,gitlab.com,registry.terraform.io,artifacthub.io,talos.dev,www.talos.dev,docs.siderolabs.com"
-          context_limit_mode: normal
-          ci_status_check: "true"
-          ci_timeout_sec: "600"
-          search_url: "https://search.oxygn.dev/search"
-          tool_mode: native_loop
-          tool_max_rounds: "2"
-          tool_max_requests: "4"
-          tool_loop_wall_clock_sec: "600"
-          tool_planning_timeout_sec: "300"
-          tool_planning_max_context_bytes: "15000"
-          tool_planning_max_tokens: "16000"
-          tool_max_response_bytes: "12000"
-          tool_allowed_gh_api_repos: "OxygnCorp/home-ops"
-          tool_request_timeout_sec: "15"
-          tool_enable_for_forks: "false"
+          github-token: ${{ steps.app-token.outputs.token }}
+          pr-number: ${{ github.event.pull_request.number || inputs.pr_number }}
+          force-review: ${{ github.event_name == 'workflow_dispatch' && 'true' || 'false' }}
+          ai-primary-retries: "3"
+          ai-primary-retry-delay-sec: "15"
+          ai-base-url: ${{ vars.LITELLM_URL }}
+          ai-api-format: openai
+          ai-model: ${{ vars.PRIMARY_MODEL }}
+          ai-api-key: ${{ secrets.LITELLM_API_KEY }}
+          ai-response-format: json_object
+          ai-max-tokens: "16000"
+          ai-fallback-base-url: ${{ vars.LITELLM_URL }}
+          ai-fallback-api-format: openai
+          ai-fallback-model: ${{ vars.FALLBACK_MODEL }}
+          ai-fallback-api-key: ${{ secrets.LITELLM_API_KEY }}
+          review-routing-mode: auto
+          ai-smart-base-url: ${{ vars.LITELLM_URL }}
+          ai-smart-api-format: openai
+          ai-smart-model: ${{ vars.SMART_MODEL }}
+          ai-smart-api-key: ${{ secrets.LITELLM_API_KEY }}
+          allowed-source-hosts: "github.com,api.github.com,gitlab.com,registry.terraform.io,artifacthub.io,talos.dev,www.talos.dev,docs.siderolabs.com"
+          context-limit-mode: normal
+          ci-status-check: "true"
+          ci-timeout-sec: "600"
+          search-url: "https://search.oxygn.dev/search"
+          tool-mode: native_loop
+          tool-max-rounds: "2"
+          tool-max-requests: "4"
+          tool-loop-wall-clock-sec: "600"
+          tool-max-response-bytes: "12000"
+          tool-allowed-gh-api-repos: "OxygnCorp/home-ops"
+          tool-request-timeout-sec: "15"
+          tool-enable-for-forks: "false"
           # Read-only konflate MCP tools for the native loop (advertised as
           # mcp__konflate__get_pr_summary / get_pr_diff / list_pull_requests).
           # Complements the evidence provider below: the provider injects the
           # rendered-diff summary deterministically; MCP lets the model do
           # follow-up digging (e.g. pull the full rendered diff on demand).
-          tool_mcp_servers: "konflate=https://konflate.oxygn.dev/mcp"
-          system_prompt_file: .agents/instructions/pr-review.instructions.md
-          system_prompt_mode: append
-          standards_file_candidates: "AGENTS.md"
+          tool-mcp-servers: "konflate=https://konflate.oxygn.dev/mcp"
+          system-prompt-file: .agents/instructions/pr-review.instructions.md
+          system-prompt-mode: append
+          standards-file-candidates: "AGENTS.md"
           # Read-only konflate MCP: injects the rendered Flux YAML diff (the
           # resources Flux will actually apply) as advisory evidence. Never
           # gates — the provider exits clean with no findings on any failure
           # or for PRs konflate isn't tracking.
-          evidence_providers_file: .github/konflate-evidence-providers.json
-          on_model_failure: notice
-          inline_findings: "true"
-          publish_mode: review_comment
+          evidence-providers-file: .github/konflate-evidence-providers.json
+          on-model-failure: notice
+          inline-findings: "true"
+          publish-mode: review_comment
