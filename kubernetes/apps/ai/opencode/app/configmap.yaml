@@ -60,10 +60,10 @@ data:
   opencode.json: |
     {
       "$schema": "https://opencode.ai/config.json",
-      "model": "litellm/MiniMax-M3",
+      "model": "litellm/go-glm-5.3-flash",
       "agents": {
         "title": {
-          "model": "litellm/MiniMax-M2.7-highspeed"
+          "model": "litellm/dsv41f"
         },
         "reviewer": {
           "description": "Revise critique fresh-context d'un diff (bugs, cas limites, gestion d'erreurs, QoL). Famille GLM — à dispatcher après un changement substantiel (QUALITY PASS).",
@@ -111,13 +111,15 @@ data:
         }
       ],
       "plugins": [
+        "superpowers@git+https://github.com/obra/superpowers.git",
         # opencode v2 plugin contract — the v1 "@eleboucher/opencode-memini" does not load under v2.
         # Version is pinned in the "package" specifier below; grouped with the memini chart
         # updates so every memini release lands as one PR across mainclaw, devclaw and opencode.
         # The marker must stay on the line immediately above the entry. Keep "npm" bare —
         # do NOT write "datasource=npm": the annotated-deps manager would double-capture this pin.
         # renovate: npm depName=@eleboucher/opencode-memini-v2
-        { "package": "@eleboucher/opencode-memini-v2@0.7.32", "options": { "base_url": "http://memini.ai:8080", "auto_update": false } }
+        { "package": "@eleboucher/opencode-memini-v2@0.7.32", "options": { "base_url": "http://memini.ai:8080", "auto_update": false } },
+        "@tarquinen/opencode-dcp@3.2.0"
       ],
       "providers": {
         "litellm": {
@@ -189,6 +191,25 @@ data:
               "limit": {
                 "context": 204800,
                 "output": 131072
+              }
+            },
+            "dsv41f": {
+              "capabilities": {
+                "tools": true,
+                "input": [
+                  "text",
+                  "image"
+                ],
+                "output": [
+                  "text"
+                ]
+              },
+              "limit": {
+                "context": 1000000,
+                "output": 384000
+              },
+              "compatibility": {
+                "reasoningField": "reasoning_content"
               }
             },
             "dsv4f": {
