@@ -241,6 +241,12 @@ spec:
   alias: github
   proxyRef: litellm
   transport: http
+  # github-mcp-server requires `Authorization: Bearer <PAT>` per request; the
+  # operator forwards auth_token as the bearer header on proxied calls.
+  authType: bearer_token
+  authTokenRef:
+    name: toolhive-github
+    key: token
   workload:
     # Tag not pinned upstream (source MCPServer had no tag either); glance
     # digest available if a later task wants to pin it.
