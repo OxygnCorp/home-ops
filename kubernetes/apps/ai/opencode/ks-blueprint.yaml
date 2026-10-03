@@ -15,9 +15,9 @@ spec:
       APP: opencode
       OIDC_DISPLAY_NAME: OpenCode
       OIDC_ENV_PREFIX: OPENCODE
-      DOMAIN: ${DOMAIN:=oxygn.dev}
-      SUBDOMAIN: ${SUBDOMAIN:=opencode}
-      OIDC_CALLBACK: ${OIDC_CALLBACK:=/oauth2/callback}
+      DOMAIN: oxygn.dev
+      SUBDOMAIN: opencode
+      OIDC_CALLBACK: /oauth2/callback
   prune: true
   sourceRef:
     kind: GitRepository
