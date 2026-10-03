@@ -294,6 +294,17 @@ spec:
       # line. Literal block (|) keeps real newlines — a folded scalar (>-)
       # would collapse the script into one line and the # comment would
       # swallow the whole command.
+      # NO renovate marker for the lightrag-mcp==0.1.1 pin (manual bump
+      # required): the pin sits in the `uv run --with "mcp<2" --with
+      # lightrag-mcp==0.1.1 python -c "…"` line, so it never ends a line —
+      # the annotated-deps regex only matches a version at end-of-line on
+      # the comment's immediate successor, and refactoring to a separate
+      # matchable `pip install lightrag-mcp==0.1.1` step would change the
+      # in-pod install/runtime layout that was validated during
+      # migration. Note the pre-migration toolhive source
+      # (mcp-servers/lightrag-mcp/mcpserver.yaml) had the same inert
+      # placement, so no working renovate automation was lost — coverage
+      # was already zero before the wrapper.
       - |
         # renovate: datasource=pypi depName=mcp-proxy
         pip install --quiet mcp-proxy==0.12.0 &&
