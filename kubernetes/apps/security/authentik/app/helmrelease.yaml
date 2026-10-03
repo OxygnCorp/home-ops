@@ -16,6 +16,7 @@ spec:
         - authentik-blueprint
         - mainclaw-blueprint
         - opencode-blueprint
+        - hermes-blueprint
     global:
       podAnnotations:
         reloader.stakater.com/auto: "true"

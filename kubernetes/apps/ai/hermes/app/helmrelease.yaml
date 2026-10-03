@@ -95,6 +95,11 @@ spec:
             image: *image
             env:
               GATEWAY_HEALTH_URL: http://localhost:8642
+              # Explicit public URL: used verbatim for the OAuth redirect_uri
+              # (https://hermes.oxygn.dev/auth/callback, registered strict in
+              # the Authentik blueprint) instead of request-header
+              # reconstruction behind Envoy
+              HERMES_DASHBOARD_PUBLIC_URL: https://hermes.oxygn.dev
               TZ: Europe/Paris
             envFrom:
               - secretRef:
