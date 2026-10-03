@@ -9,7 +9,10 @@ kind: LiteLLMMCPServer
 metadata:
   name: litellm-ha-mcp
 spec:
-  alias: ha-mcp
+  # Underscore (not dash): litellm server-name validation forbids '-' (render:
+  # "Server name cannot contain '-' Found: ha-mcp"). Only spec.alias changes —
+  # metadata.name stays dash-qualified for workload name-collision avoidance.
+  alias: ha_mcp
   proxyRef: litellm
   transport: http
   workload:
@@ -38,7 +41,7 @@ kind: LiteLLMMCPServer
 metadata:
   name: litellm-unifi-network
 spec:
-  alias: unifi-network
+  alias: unifi_network
   proxyRef: litellm
   transport: http
   workload:
@@ -95,7 +98,7 @@ kind: LiteLLMMCPServer
 metadata:
   name: litellm-talos-mcp
 spec:
-  alias: talos-mcp
+  alias: talos_mcp
   proxyRef: litellm
   transport: http
   workload:

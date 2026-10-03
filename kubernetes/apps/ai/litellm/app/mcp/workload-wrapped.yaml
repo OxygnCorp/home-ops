@@ -86,7 +86,9 @@ kind: LiteLLMMCPServer
 metadata:
   name: litellm-seerr-mcp
 spec:
-  alias: seerr-mcp
+  # Underscore (not dash): litellm server-name validation forbids '-' (render:
+  # "Server name cannot contain '-'"). Only spec.alias changes, not metadata.name.
+  alias: seerr_mcp
   proxyRef: litellm
   transport: http
   workload:
@@ -136,7 +138,7 @@ kind: LiteLLMMCPServer
 metadata:
   name: litellm-todoist-mcp
 spec:
-  alias: todoist-mcp
+  alias: todoist_mcp
   proxyRef: litellm
   transport: http
   workload:
@@ -213,9 +215,9 @@ spec:
     resources:
       requests:
         cpu: 50m
-        memory: 128Mi
-      limits:
         memory: 256Mi
+      limits:
+        memory: 512Mi
     volumeMounts:
       - name: tmp
         mountPath: /tmp
@@ -274,7 +276,7 @@ kind: LiteLLMMCPServer
 metadata:
   name: litellm-lightrag-mcp
 spec:
-  alias: lightrag-mcp
+  alias: lightrag_mcp
   proxyRef: litellm
   transport: http
   workload:
@@ -317,7 +319,7 @@ spec:
       # was already zero before the wrapper.
       - |
         # renovate: datasource=pypi depName=mcp-proxy
-        pip install --quiet mcp-proxy==0.12.0 &&
+        pip install --quiet mcp-proxy==0.12.0 "mcp<2" &&
         exec mcp-proxy --host 0.0.0.0 --port 8050 --pass-environment -- sh -c '
         exec uv run --with "mcp<2" --with lightrag-mcp==0.1.1 python -c "
         from lightrag_mcp.client.light_rag_server_api_client.client import AuthenticatedClient

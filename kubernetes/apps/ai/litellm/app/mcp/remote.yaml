@@ -5,6 +5,7 @@ kind: LiteLLMMCPServer
 metadata:
   name: grafana
 spec:
+  alias: grafana
   proxyRef: litellm
   url: http://grafana-mcp.observability:8000/sse
   transport: sse
@@ -15,6 +16,7 @@ kind: LiteLLMMCPServer
 metadata:
   name: konflate
 spec:
+  alias: konflate
   proxyRef: litellm
   url: http://konflate.flux-system:8080/mcp
   transport: http
@@ -25,6 +27,7 @@ kind: LiteLLMMCPServer
 metadata:
   name: radar
 spec:
+  alias: radar
   proxyRef: litellm
   url: http://radar.radar:9280/mcp
   transport: http
@@ -35,6 +38,8 @@ kind: LiteLLMMCPServer
 metadata:
   name: teslamate
 spec:
+  # Explicit alias (= metadata.name): avoids future operator default-name drift.
+  alias: teslamate
   proxyRef: litellm
   url: http://teslamate-mcp.automation:8888/mcp
   transport: http
