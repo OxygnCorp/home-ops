@@ -11,11 +11,16 @@
 # github-mcp-server supports native HTTP transport (probed in-pod 2026-10-03:
 # `server http --port`, image ghcr.io/github/github-mcp-server), so it runs the
 # binary directly instead of being wrapped.
+# Note: workload CR names carry a `litellm-` prefix so their Deployments do not
+# collide with still-deployed toolhive MCPServer Deployments (same names in the
+# ai namespace) during the coexistence window. `spec.alias` restores the
+# original server name as rendered in the litellm proxy config.
 apiVersion: litellm.home-operations.com/v1alpha1
 kind: LiteLLMMCPServer
 metadata:
-  name: arr
+  name: litellm-arr
 spec:
+  alias: arr
   proxyRef: litellm
   transport: http
   workload:
@@ -79,8 +84,9 @@ spec:
 apiVersion: litellm.home-operations.com/v1alpha1
 kind: LiteLLMMCPServer
 metadata:
-  name: seerr-mcp
+  name: litellm-seerr-mcp
 spec:
+  alias: seerr-mcp
   proxyRef: litellm
   transport: http
   workload:
@@ -128,8 +134,9 @@ spec:
 apiVersion: litellm.home-operations.com/v1alpha1
 kind: LiteLLMMCPServer
 metadata:
-  name: todoist-mcp
+  name: litellm-todoist-mcp
 spec:
+  alias: todoist-mcp
   proxyRef: litellm
   transport: http
   workload:
@@ -177,8 +184,9 @@ spec:
 apiVersion: litellm.home-operations.com/v1alpha1
 kind: LiteLLMMCPServer
 metadata:
-  name: context7
+  name: litellm-context7
 spec:
+  alias: context7
   proxyRef: litellm
   transport: http
   workload:
@@ -226,8 +234,9 @@ spec:
 apiVersion: litellm.home-operations.com/v1alpha1
 kind: LiteLLMMCPServer
 metadata:
-  name: github
+  name: litellm-github
 spec:
+  alias: github
   proxyRef: litellm
   transport: http
   workload:
@@ -263,8 +272,9 @@ spec:
 apiVersion: litellm.home-operations.com/v1alpha1
 kind: LiteLLMMCPServer
 metadata:
-  name: lightrag-mcp
+  name: litellm-lightrag-mcp
 spec:
+  alias: lightrag-mcp
   proxyRef: litellm
   transport: http
   workload:
