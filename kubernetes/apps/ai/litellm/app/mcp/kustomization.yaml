@@ -1,9 +1,13 @@
 ---
 # yaml-language-server: $schema=https://json.schemastore.org/kustomization
-# ExternalSecrets migrated verbatim from toolhive mcp-servers during the
-# litellm MCP gateway migration (see .superpowers/sdd/2026-10-03-litellm-mcp-migration).
+# ExternalSecrets + workloads + RBAC/SA migrated from toolhive mcp-servers during
+# the litellm MCP gateway migration (see .superpowers/sdd/2026-10-03-litellm-mcp-migration).
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - ./externalsecrets.yaml
   - ./remote.yaml
+  - ./workloads.yaml
+  - ./flux-mcp-rbac.yaml
+  - ./kubectl-mcp-rbac.yaml
+  - ./talos-serviceaccount.yaml
