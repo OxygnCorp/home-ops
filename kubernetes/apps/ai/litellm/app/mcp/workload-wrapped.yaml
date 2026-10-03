@@ -1,0 +1,363 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/litellm.home-operations.com/litellmmcpserver_v1alpha1.json
+# Wrapped stdio MCP servers migrated from toolhive MCPServer CRs
+# (kubernetes/apps/ai/toolhive/mcp-servers/*) during the litellm MCP gateway
+# migration (see .superpowers/sdd/2026-10-03-litellm-mcp-migration).
+#
+# Every npm-based stdio server is wrapped with supergateway
+# (stdio -> streamable HTTP at /mcp); flags verified against the supergateway
+# README (github.com/supercorp-ai/supergateway): --stdio "<cmd>",
+# --outputTransport streamableHttp, --streamableHttpPath /mcp, --port N.
+# github-mcp-server supports native HTTP transport (probed in-pod 2026-10-03:
+# `server http --port`, image ghcr.io/github/github-mcp-server), so it runs the
+# binary directly instead of being wrapped.
+apiVersion: litellm.home-operations.com/v1alpha1
+kind: LiteLLMMCPServer
+metadata:
+  name: arr
+spec:
+  proxyRef: litellm
+  transport: http
+  workload:
+    # Digest pin verified against Docker Hub tag `node:24-alpine`
+    # (multi-arch index, last updated 2026-09-18).
+    image: docker.io/library/node:24-alpine@sha256:ebfe2f90462722a7a4de65e91990e97fe0d401c70e0e762c5b53302f905ec1c1
+    port: 8000
+    command:
+      - npx
+      - -y
+      - supergateway
+      - --stdio
+      # renovate: datasource=npm depName=mcp-arr-server
+      - "npx -y mcp-arr-server@1.7.3"
+      - --outputTransport
+      - streamableHttp
+      - --streamableHttpPath
+      - /mcp
+      - --port
+      - "8000"
+    env:
+      - name: HOME
+        value: /tmp
+      - name: NPM_CONFIG_CACHE
+        value: /tmp/.npm
+      - name: SONARR_URL
+        value: http://sonarr.download
+      - name: RADARR_URL
+        value: http://radarr.download
+      - name: PROWLARR_URL
+        value: http://prowlarr.download
+      - name: SONARR_API_KEY
+        valueFrom:
+          secretKeyRef:
+            name: toolhive-sonarr
+            key: SONARR_API_KEY
+      - name: RADARR_API_KEY
+        valueFrom:
+          secretKeyRef:
+            name: toolhive-radarr
+            key: RADARR_API_KEY
+      - name: PROWLARR_API_KEY
+        valueFrom:
+          secretKeyRef:
+            name: toolhive-prowlarr
+            key: PROWLARR_API_KEY
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        memory: 256Mi
+    volumeMounts:
+      - name: tmp
+        mountPath: /tmp
+    volumes:
+      - name: tmp
+        emptyDir: {}
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/litellm.home-operations.com/litellmmcpserver_v1alpha1.json
+apiVersion: litellm.home-operations.com/v1alpha1
+kind: LiteLLMMCPServer
+metadata:
+  name: seerr-mcp
+spec:
+  proxyRef: litellm
+  transport: http
+  workload:
+    image: docker.io/library/node:24-alpine@sha256:ebfe2f90462722a7a4de65e91990e97fe0d401c70e0e762c5b53302f905ec1c1
+    port: 8010
+    command:
+      - npx
+      - -y
+      - supergateway
+      - --stdio
+      # renovate: datasource=npm depName=@jhomen368/overseerr-mcp
+      - "npx -y @jhomen368/overseerr-mcp@2.3.1"
+      - --outputTransport
+      - streamableHttp
+      - --streamableHttpPath
+      - /mcp
+      - --port
+      - "8010"
+    env:
+      - name: HOME
+        value: /tmp
+      - name: NPM_CONFIG_CACHE
+        value: /tmp/.npm
+      - name: SEERR_URL
+        value: http://seerr.media
+      - name: SEERR_API_KEY
+        valueFrom:
+          secretKeyRef:
+            name: toolhive-seerr
+            key: SEERR_API_KEY
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        memory: 256Mi
+    volumeMounts:
+      - name: tmp
+        mountPath: /tmp
+    volumes:
+      - name: tmp
+        emptyDir: {}
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/litellm.home-operations.com/litellmmcpserver_v1alpha1.json
+apiVersion: litellm.home-operations.com/v1alpha1
+kind: LiteLLMMCPServer
+metadata:
+  name: todoist-mcp
+spec:
+  proxyRef: litellm
+  transport: http
+  workload:
+    image: docker.io/library/node:24-alpine@sha256:ebfe2f90462722a7a4de65e91990e97fe0d401c70e0e762c5b53302f905ec1c1
+    port: 8020
+    command:
+      - npx
+      - -y
+      - supergateway
+      - --stdio
+      # renovate: datasource=npm depName=@doist/todoist-mcp
+      - "npx -y -p @doist/todoist-mcp@13.4.0 -- todoist-mcp"
+      - --outputTransport
+      - streamableHttp
+      - --streamableHttpPath
+      - /mcp
+      - --port
+      - "8020"
+    # No tool exclusion here: the get-overview exclusion is handled at the
+    # litellm proxy layer (Task 8), not on the workload.
+    env:
+      - name: HOME
+        value: /tmp
+      - name: NPM_CONFIG_CACHE
+        value: /tmp/.npm
+      - name: TODOIST_API_KEY
+        valueFrom:
+          secretKeyRef:
+            name: toolhive-todoist
+            key: TODOIST_API_KEY
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        memory: 256Mi
+    volumeMounts:
+      - name: tmp
+        mountPath: /tmp
+    volumes:
+      - name: tmp
+        emptyDir: {}
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/litellm.home-operations.com/litellmmcpserver_v1alpha1.json
+apiVersion: litellm.home-operations.com/v1alpha1
+kind: LiteLLMMCPServer
+metadata:
+  name: context7
+spec:
+  proxyRef: litellm
+  transport: http
+  workload:
+    image: docker.io/library/node:24-alpine@sha256:ebfe2f90462722a7a4de65e91990e97fe0d401c70e0e762c5b53302f905ec1c1
+    port: 8030
+    command:
+      - npx
+      - -y
+      - supergateway
+      - --stdio
+      # renovate: datasource=npm depName=@upstash/context7-mcp
+      - "npx -y @upstash/context7-mcp@4.1.1"
+      - --outputTransport
+      - streamableHttp
+      - --streamableHttpPath
+      - /mcp
+      - --port
+      - "8030"
+    env:
+      - name: HOME
+        value: /tmp
+      - name: NPM_CONFIG_CACHE
+        value: /tmp/.npm
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        memory: 256Mi
+    volumeMounts:
+      - name: tmp
+        mountPath: /tmp
+    volumes:
+      - name: tmp
+        emptyDir: {}
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/litellm.home-operations.com/litellmmcpserver_v1alpha1.json
+# PROBE DECISION (2026-10-03, read-only kubectl run in the ai namespace):
+# gh-mcp-server --help / http --help confirm a native `http` subcommand
+# ("Start an HTTP server that listens for MCP requests over HTTP", default
+# port 8082, --port flag). Native streamable-http is supported, so this
+# workload runs the binary directly over its HTTP transport — no supergateway
+# wrap, and no fallback needed to the remote
+# https://api.githubcopilot.com/mcp endpoint.
+apiVersion: litellm.home-operations.com/v1alpha1
+kind: LiteLLMMCPServer
+metadata:
+  name: github
+spec:
+  proxyRef: litellm
+  transport: http
+  workload:
+    # Tag not pinned upstream (source MCPServer had no tag either); glance
+    # digest available if a later task wants to pin it.
+    image: ghcr.io/github/github-mcp-server
+    port: 8040
+    args:
+      - http
+      - --port
+      - "8040"
+    env:
+      - name: GITHUB_API_URL
+        value: https://api.github.com
+      - name: LOG_LEVEL
+        value: info
+      - name: GITHUB_PERSONAL_ACCESS_TOKEN
+        valueFrom:
+          secretKeyRef:
+            name: toolhive-github
+            key: token
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/litellm.home-operations.com/litellmmcpserver_v1alpha1.json
+# Single-container python (uv) stdio server bridged to streamable HTTP by
+# mcp-proxy (stdio -> streamable HTTP), replacing the toolhive proxy pod.
+apiVersion: litellm.home-operations.com/v1alpha1
+kind: LiteLLMMCPServer
+metadata:
+  name: lightrag-mcp
+spec:
+  proxyRef: litellm
+  transport: http
+  workload:
+    image: ghcr.io/astral-sh/uv:python3.12-alpine
+    port: 8050
+    command:
+      - sh
+      - -c
+    args:
+      # lightrag-mcp (shemhamforash23) is configured via CLI args only —
+      # no env fallback — so the API key is expanded at runtime from the
+      # secret-injected LIGHTRAG_API_KEY env var (never committed to git).
+      # mcp 2.0 (2026-07-28) removed mcp.server.fastmcp; lightrag-mcp
+      # declares mcp>=1.6.0 with no upper bound, so constrain to latest 1.x.
+      # The generated openapi-python-client sends the key as
+      # `Authorization: Bearer <key>`, which the LightRAG auth middleware
+      # parses as a JWT and rejects with 401 (API-key-only profile only
+      # accepts the X-API-Key header). The inline -c patch wraps
+      # AuthenticatedClient.__init__ so every client is built with the
+      # key in the X-API-Key header instead (validated in-pod: 200 on
+      # POST /query). Patch runs before `from lightrag_mcp.main import
+      # main` so the wrapped __init__ is in place before any client is
+      # instantiated.
+      # The renovate marker lives inside the shell script because the
+      # annotated-deps regex requires the pinned spec (unquoted, at line
+      # end) on the line right below it; the shell ignores the comment
+      # line. Literal block (|) keeps real newlines — a folded scalar (>-)
+      # would collapse the script into one line and the # comment would
+      # swallow the whole command.
+      # NO renovate marker for the lightrag-mcp==0.1.1 pin (manual bump
+      # required): the pin sits in the `uv run --with "mcp<2" --with
+      # lightrag-mcp==0.1.1 python -c "…"` line, so it never ends a line —
+      # the annotated-deps regex only matches a version at end-of-line on
+      # the comment's immediate successor, and refactoring to a separate
+      # matchable `pip install lightrag-mcp==0.1.1` step would change the
+      # in-pod install/runtime layout that was validated during
+      # migration. Note the pre-migration toolhive source
+      # (mcp-servers/lightrag-mcp/mcpserver.yaml) had the same inert
+      # placement, so no working renovate automation was lost — coverage
+      # was already zero before the wrapper.
+      - |
+        # renovate: datasource=pypi depName=mcp-proxy
+        pip install --quiet mcp-proxy==0.12.0 &&
+        exec mcp-proxy --host 0.0.0.0 --port 8050 --pass-environment -- sh -c '
+        exec uv run --with "mcp<2" --with lightrag-mcp==0.1.1 python -c "
+        from lightrag_mcp.client.light_rag_server_api_client.client import AuthenticatedClient
+        _orig_init = AuthenticatedClient.__init__
+        def _patched_init(self, *args, **kwargs):
+            kwargs.setdefault(\"prefix\", \"\")
+            kwargs.setdefault(\"auth_header_name\", \"X-API-Key\")
+            _orig_init(self, *args, **kwargs)
+        AuthenticatedClient.__init__ = _patched_init
+        from lightrag_mcp.main import main
+        main()" \
+          --host lightrag.ai.svc.cluster.local --port 9621 \
+          --api-key "$LIGHTRAG_API_KEY"'
+    env:
+      - name: HOME
+        value: /tmp
+      - name: UV_CACHE_DIR
+        value: /tmp/.uv-cache
+      - name: LIGHTRAG_API_KEY
+        valueFrom:
+          secretKeyRef:
+            name: toolhive-lightrag
+            key: LIGHTRAG_API_KEY
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        memory: 256Mi
+    # Prefer the dedicated AI worker (k8s-3) — same node as the lightrag
+    # service it proxies — but stay schedulable on any node if it is
+    # unavailable; the toleration unlocks the workload=ai:NoSchedule taint
+    # on k8s-3 (other nodes are untainted).
+    affinity:
+      nodeAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            preference:
+              matchExpressions:
+                - key: kubernetes.io/hostname
+                  operator: In
+                  values: [k8s-3]
+    tolerations:
+      - key: workload
+        operator: Equal
+        value: ai
+        effect: NoSchedule
+    volumeMounts:
+      - name: tmp
+        mountPath: /tmp
+    volumes:
+      - name: tmp
+        emptyDir: {}
