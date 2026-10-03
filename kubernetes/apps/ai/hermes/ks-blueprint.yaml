@@ -15,11 +15,12 @@ spec:
       APP: hermes
       OIDC_DISPLAY_NAME: Hermes
       OIDC_ENV_PREFIX: HERMES
-      DOMAIN: ${DOMAIN:=oxygn.dev}
-      SUBDOMAIN: ${SUBDOMAIN:=hermes}
-      # The hermes dashboard self-hosted OIDC plugin registers its own
-      # callback path; strict-matched in the Authentik blueprint
-      OIDC_CALLBACK: ${OIDC_CALLBACK:=/auth/callback}
+      # Literal values: flux postBuild substitution is single-pass, so
+      # writing ${VAR:=default} here renders the pattern literally into
+      # the blueprint and Authentik rejects it ("Enter a valid URL")
+      DOMAIN: oxygn.dev
+      SUBDOMAIN: hermes
+      OIDC_CALLBACK: /auth/callback
   prune: true
   sourceRef:
     kind: GitRepository
