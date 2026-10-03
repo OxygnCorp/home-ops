@@ -6,15 +6,13 @@ metadata:
 data:
   config.yaml: |
     model:
-      default: go-glm-5.3-flash
+      default: dsv41f
       provider: litellm
     fallback_providers:
       - provider: litellm
-        model: go-kimi-k3
+        model: go-glm-5.3-flash
       - provider: litellm
         model: go-qwen3.8-flash
-      - provider: litellm
-        model: go-dsv41f
     providers:
       litellm:
         base_url: http://litellm.ai:4000/v1
