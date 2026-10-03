@@ -265,11 +265,11 @@ spec:
 
 Mapping (décisions de design) :
 - mainclaw → mcp-apps
-- devclaw, opencode → mcp-devops
+- devclaw, opencode, **hermes** → mcp-devops (hermes ajouté par amendement owner du 03 oct)
 - foreman, pr-review : À VALIDER avec l'owner — si ces agents n'utilisent pas MCP, sans teamID.
 - memini, lightrag, repo-wiki : sans équipe (clés non-MCP).
 
-- [ ] **Step 1: Modifier les virtualkeys** (`teamID` sous `spec` des 3-5 clés retenues).
+- [ ] **Step 1: Modifier les virtualkeys** (`teamID` sous `spec` des clés retenues) : mainclaw → mcp-apps ; devclaw, opencode, **hermes** → mcp-devops.
 - [ ] **Step 2: tool search par défaut des NOUVELLES clés** — dans `litellmSettings` du proxy :
   ```yaml
   default_key_generate_params:
@@ -278,13 +278,14 @@ Mapping (décisions de design) :
   ```
   (la recherche mcp_tool_search est keyword token-overlap — aucun embedding model à configurer.)
 - [ ] **Step 3: exclusion todoist get-overview** — sur le CR todoist, `params.allowed_tools` = liste blanche explicite du tour (todoist a ~10 tools) obtenue par un probe `tools/list` sur le Service du workload todoist ; exclure `get-overview` de la liste. Si la sémantique litellm supporte mieux (listes noires `disallowed_tools` — intervenir si les docs le confirment), préférer la liste noire à un seul élément.
-- [ ] **Step 4: patch one-time des clés existantes** — le default ne touche que les NOUVELLES clés ; pour les existantes, `POST /key/update` (pod curl + master key) avec `object_permission: {mcp_tool_search_enabled: true}` pour mainclaw/devclaw/opencode. Documenter ce patch manuel dans `app/README.md` (section MCP) : pourquoi il est one-time et comment re-appliquer (procédure : drift d'UI).
+- [ ] **Step 4: patch one-time des clés existantes** — le default ne touche que les NOUVELLES clés ; pour les existantes, `POST /key/update` (pod curl + master key) avec `object_permission: {mcp_tool_search_enabled: true}` pour mainclaw/devclaw/opencode/hermes. Documenter ce patch manuel dans `app/README.md` (section MCP) : pourquoi il est one-time et comment re-appliquer (procédure : drift d'UI).
 - [ ] **Step 5:** flate PASS, sync, `kubectl get litellmvirtualkey -n ai` Ready ×N — clés inchangées côté 1Password (PushSecret silencieux).
 - [ ] **Step 6: probes authZ (4 probes par clé existante)** :
   1. `tools/list` KEY_MAINCLAW → serveurs apps uniquement (+ 4 tools virtuels).
   2. `tools/list` KEY_DEVCLAW → serveurs devops uniquement.
   3. KEY_MAINCLAW, `mcp_tool_search {query: "kubernetes logs"}` → AUCUN tool devops dans le résultat (anti-#27657).
   4. KEY_MAINCLAW, `tools/call` visant kubectl → 403.
+  5. `tools/list` KEY_HERMES → serveurs devops uniquement (incl. key devops-only : AUCUN tool apps).
 - [ ] **Step 7: Commit** `git commit -m "feat(ai/litellm): bind virtual keys to MCP teams and enable tool search"`
 
 ## Task 9: Gate PR 2 — état de la gateway
@@ -325,6 +326,22 @@ Mêmes steps que Task 10 (probe précut devops incluse).
 
 Note : opencode parle déjà à litellm (header x-opencode-session session_hook) ; le header MCP peut réutiliser le mécanisme auth identique.
 - [ ] **Step 4: Commit** `git commit -m "feat(ai/opencode): switch MCP dev config to litellm gateway"`
+
+## Task 12b: hermes (mcp-devops) — amendement du 03 oct (demande owner)
+
+**Files:**
+- Modify: `kubernetes/apps/ai/hermes/app/configmap.yaml` (entrée `mcp_servers.toolhive`, lignes ~87-89)
+
+**Interfaces:**
+- Consomme: Secret `litellm-key-hermes` (key `api-key`) + env `LITELLM_API_KEY` déjà injecté dans le pod hermes (les providers litellm du config.yaml l'utilisent déjà) ; teamID mcp-devops (Task 8).
+
+**Décision owner :** hermes passe du groupe internal (mcp-tools) au groupe **devops** — changement de périmètre voulu.
+
+- [ ] **Step 1: probe pré-cut-over** : pod curl avec KEY_HERMES → initialize + `mcp_tool_search` + 1 call réel réussi sur un tool devops (ex. flux).
+- [ ] **Step 2:** Éditer configmap.yaml : `mcp_servers.toolhive` → `mcp_servers.litellm`, `url: http://litellm.ai:4000/mcp` (nom svc vérifié réel = `litellm`), auth : les agents hermes authentifient le MCP via le header Authorization Bearer ${LITELLM_API_KEY} — vérifier la syntaxe MCP supportée par hermes (réutiliser le pattern des autres agents openclaw si config identique ; sinon consulter la doc hermes-agent v2026.9.24).
+- [ ] **Step 3:** sync flux, rollout hermes, logs sans erreur MCP ; test fonctionnel réel par l'humain.
+- [ ] **Step 4: Commit** `git commit -m "feat(ai/hermes): switch MCP to litellm gateway (mcp-devops)"`
+
 
 ## Task 13: Soak 24 h avant teardown
 
