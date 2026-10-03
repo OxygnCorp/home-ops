@@ -13,6 +13,7 @@ resources:
   - ./foreman/ks.yaml
   - ./foreman/ks-agents.yaml
   - ./foreman/ks-watcher.yaml
+  - ./hermes/ks-blueprint.yaml
   - ./hermes/ks.yaml
   - ./lightrag/ks.yaml
   - ./litellm-operator/ks.yaml

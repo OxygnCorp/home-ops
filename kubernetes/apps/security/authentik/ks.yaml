@@ -25,6 +25,8 @@ spec:
       namespace: ai
     - name: opencode-blueprint
       namespace: ai
+    - name: hermes-blueprint
+      namespace: ai
   interval: 1h
   path: ./kubernetes/apps/security/authentik/app
   postBuild:
