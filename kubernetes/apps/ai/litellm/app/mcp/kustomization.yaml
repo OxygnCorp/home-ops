@@ -8,6 +8,7 @@ resources:
   - ./externalsecrets.yaml
   - ./remote.yaml
   - ./workloads.yaml
+  - ./workload-wrapped.yaml
   - ./flux-mcp-rbac.yaml
   - ./kubectl-mcp-rbac.yaml
   - ./talos-serviceaccount.yaml
