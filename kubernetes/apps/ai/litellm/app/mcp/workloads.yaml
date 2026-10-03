@@ -1,10 +1,15 @@
 ---
+# Note: workload CR names carry a `litellm-` prefix so their Deployments do not
+# collide with still-deployed toolhive MCPServer Deployments (same names in the
+# ai namespace) during the coexistence window. `spec.alias` restores the
+# original server name as rendered in the litellm proxy config.
 # yaml-language-server: $schema=https://k8s-schemas.home-operations.com/litellm.home-operations.com/litellmmcpserver_v1alpha1.json
 apiVersion: litellm.home-operations.com/v1alpha1
 kind: LiteLLMMCPServer
 metadata:
-  name: ha-mcp
+  name: litellm-ha-mcp
 spec:
+  alias: ha-mcp
   proxyRef: litellm
   transport: http
   workload:
@@ -31,8 +36,9 @@ spec:
 apiVersion: litellm.home-operations.com/v1alpha1
 kind: LiteLLMMCPServer
 metadata:
-  name: unifi-network
+  name: litellm-unifi-network
 spec:
+  alias: unifi-network
   proxyRef: litellm
   transport: http
   workload:
@@ -87,8 +93,9 @@ spec:
 apiVersion: litellm.home-operations.com/v1alpha1
 kind: LiteLLMMCPServer
 metadata:
-  name: talos-mcp
+  name: litellm-talos-mcp
 spec:
+  alias: talos-mcp
   proxyRef: litellm
   transport: http
   workload:
@@ -113,8 +120,9 @@ spec:
 apiVersion: litellm.home-operations.com/v1alpha1
 kind: LiteLLMMCPServer
 metadata:
-  name: flux
+  name: litellm-flux
 spec:
+  alias: flux
   proxyRef: litellm
   transport: http
   workload:
@@ -143,8 +151,9 @@ spec:
 apiVersion: litellm.home-operations.com/v1alpha1
 kind: LiteLLMMCPServer
 metadata:
-  name: kubectl
+  name: litellm-kubectl
 spec:
+  alias: kubectl
   proxyRef: litellm
   transport: http
   workload:
