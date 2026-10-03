@@ -1,0 +1,11 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+# LiteLLMTeams recreated from toolhive groups during the litellm MCP gateway
+# migration (see .superpowers/sdd/2026-10-03-litellm-mcp-migration). mcp-apps
+# carries the original toolhive `mcp-tools` members, mcp-devops the original
+# `mcp-devops` group. Keys join these teams in Task 8 (virtualkeys).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ./mcp-apps.yaml
+  - ./mcp-devops.yaml

@@ -1,0 +1,22 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/litellm.home-operations.com/litellmteam_v1alpha1.json
+# Members of the original toolhive `mcp-tools` group (user-facing MCP tools).
+# mcpServers entries are the LIVE LiteLLMMCPServer spec.alias values — several
+# differ from the CR names: litellm proxy v1.75+ `validate_mcp_server_name`
+# rejects '-' in server names, so hyphenated aliases became underscores
+# (ha-mcp→ha_mcp, seerr-mcp→seerr_mcp, todoist-mcp→todoist_mcp,
+# lightrag-mcp→lightrag_mcp).
+apiVersion: litellm.home-operations.com/v1alpha1
+kind: LiteLLMTeam
+metadata:
+  name: mcp-apps
+spec:
+  proxyRef: litellm
+  alias: mcp-apps
+  mcpServers:
+    - arr
+    - ha_mcp
+    - seerr_mcp
+    - teslamate
+    - todoist_mcp
+    - lightrag_mcp
