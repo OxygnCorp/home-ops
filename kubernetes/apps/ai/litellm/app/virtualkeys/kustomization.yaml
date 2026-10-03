@@ -6,6 +6,7 @@ resources:
   - ./mainclaw.yaml
   - ./devclaw.yaml
   - ./foreman.yaml
+  - ./hermes.yaml
   - ./opencode.yaml
   - ./pr-review.yaml
   - ./memini.yaml

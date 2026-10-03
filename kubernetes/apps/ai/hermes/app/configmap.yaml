@@ -1,0 +1,109 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hermes-config
+data:
+  config.yaml: |
+    model:
+      default: dsv41f
+      provider: litellm
+    fallback_providers:
+      - provider: litellm
+        model: go-glm-5.3-flash
+      - provider: litellm
+        model: go-qwen3.8-flash
+    providers:
+      litellm:
+        base_url: http://litellm.ai:4000/v1
+        api_key: $${LITELLM_API_KEY}
+      litellm-anthropic:
+        base_url: http://litellm.ai:4000/
+        api_mode: anthropic_messages
+        api_key: $${LITELLM_API_KEY}
+    toolsets:
+      - hermes-cli
+    terminal:
+      backend: local
+      cwd: /opt/data/workspace
+      timeout: 180
+      persistent_shell: true
+    memory:
+      provider: memini
+      auto_migrate: true
+    compression:
+      enabled: true
+      threshold: 0.50
+      target_ratio: 0.20
+      protect_last_n: 20
+    agent:
+      max_turns: 90
+      gateway_timeout: 1800
+      restart_drain_timeout: 60
+      api_max_retries: 2
+      reasoning_effort: medium
+    streaming:
+      enabled: false
+    delegation:
+      roles:
+        explorer:
+          provider: litellm
+          model: go-minimax-m2.7
+          max_concurrent_children: 4
+        coder-local:
+          provider: litellm
+          model: go-qwen3.8-max
+        agentic-local:
+          provider: litellm
+          model: go-qwen3.8-flash
+          max_concurrent_children: 1
+        implementer:
+          provider: litellm
+          model: go-dsv41f-max
+        reviewer:
+          provider: litellm-anthropic
+          model: go-minimax-m3
+        local-reviewer:
+          provider: litellm
+          model: go-qwen3.8-flash
+          max_concurrent_children: 4
+        oracle:
+          provider: litellm
+          model: go-glm-5.3-flash
+        vision-local:
+          provider: litellm
+          model: go-dsv4f-vision
+          max_concurrent_children: 1
+      max_iterations: 250
+    gateway:
+      multiplex_profiles: false
+    security:
+      redact_secrets: true
+    privacy:
+      redact_pii: true
+    platform_toolsets:
+      cli:
+        - hermes-cli
+    mcp_servers:
+      toolhive:
+        url: http://vmcp-mcp-gateway-internal.ai:4483/mcp
+    auxiliary:
+      vision:
+        provider: litellm
+        model: go-dsv4f-vision
+      compression:
+        provider: litellm
+        model: go-qwen3.8-flash
+        timeout: 180
+      web_extract:
+        provider: litellm
+        model: go-qwen3.8-flash
+        timeout: 120
+      approval:
+        provider: litellm
+        model: go-qwen3.8-flash
+        timeout: 60
+      session_search:
+        provider: litellm
+        model: go-qwen3.8-flash
+        timeout: 120
