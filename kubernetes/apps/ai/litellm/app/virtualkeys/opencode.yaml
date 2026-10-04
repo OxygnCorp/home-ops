@@ -6,6 +6,9 @@ metadata:
 spec:
   proxyRef: litellm
   keyAlias: Opencode
+  # MCP team binding: gateway access scoped to the mcp-devops team servers
+  # (DevOps MCP tools; see app/README.md "MCP" and teams/).
+  teamID: mcp-devops
   secretName: litellm-key-opencode
   secretKey: api-key
 ---

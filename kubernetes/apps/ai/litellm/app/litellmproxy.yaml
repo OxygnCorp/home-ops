@@ -227,6 +227,15 @@ spec:
       # config.yaml comment: fallback chains must not lose the session header).
       forward_client_headers_to_llm_api:
         - "*"
+    # Tool search on by default for NEW keys: tools/list collapses the whole
+    # MCP catalog into the four virtual tools (mcp_tool_search, mcp_tool_call,
+    # agent_search, skill_search) and the LLM discovers real tools by keyword
+    # token-overlap — no embedding model needed. Merged by /key/generate for
+    # any key that leaves the field unset; does NOT retro-apply to existing
+    # keys (one-time POST /key/update, see README.md "MCP").
+    default_key_generate_params:
+      object_permission:
+        mcp_tool_search_enabled: true
   generalSettings:
     health_check_endpoint: /v1/health
     store_model_in_db: false

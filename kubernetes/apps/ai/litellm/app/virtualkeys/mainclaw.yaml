@@ -6,6 +6,9 @@ metadata:
 spec:
   proxyRef: litellm
   keyAlias: Mainclaw
+  # MCP team binding: gateway access scoped to the mcp-apps team servers
+  # (user-facing MCP tools; see app/README.md "MCP" and teams/).
+  teamID: mcp-apps
   secretName: litellm-key-mainclaw
   secretKey: api-key
 ---
