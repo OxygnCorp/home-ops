@@ -300,9 +300,12 @@
   },
   "mcp": {
     "servers": {
-      "toolhive": {
-        "url": "http://vmcp-mcp-gateway-devops.ai:4483/mcp",
-        "transport": "streamable-http"
+      "litellm": {
+        "url": "http://litellm.ai:4000/mcp",
+        "transport": "streamable-http",
+        "headers": {
+          "Authorization": "Bearer ${LITELLM_API_KEY}"
+        }
       }
     }
   },

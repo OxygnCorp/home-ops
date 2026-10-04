@@ -1,9 +1,10 @@
 # devclaw
 
 A second OpenClaw gateway, dedicated to DevOps. It talks to Discord in a
-single channel, and reaches the cluster through the toolhive **devops** MCP
-group (`http://vmcp-mcp-gateway-devops.ai:4483/mcp`) plus a `GH_TOKEN` for
-direct GitHub API calls. The personal agents live in [`../mainclaw`](../mainclaw),
+single channel, and reaches the cluster through the litellm MCP gateway
+(`http://litellm.ai:4000/mcp`, auth via `LITELLM_API_KEY`) plus a
+`GH_TOKEN` for direct GitHub API calls. The personal agents live in
+[`../mainclaw`](../mainclaw),
 which is a separate gateway with its own channels, plugins and resource budget.
 
 ## Discord bot identity
