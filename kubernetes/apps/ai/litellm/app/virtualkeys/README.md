@@ -7,11 +7,11 @@ Each file defines a LiteLLM virtual key (`LiteLLMVirtualKey`) plus the `PushSecr
 All API credentials live in the vault `home-ops`:
 
 - **Category**: items holding API keys/tokens MUST be of type **API Credential** (not "Password"/"Login"). The 1Password Connect API refuses to update or rename items of category `PASSWORD` that have an empty password field (`Password item requires ps value`), which blocks any later automated change.
-- **Field naming**: `ABC_DEF` uppercase with underscores (e.g. `MINIMAX_API_KEY`, `KEY_MAINCLAW`), never kebab-case.
+- **Field naming**: `ABC_DEF` uppercase with underscores (e.g. `OPENCODE_MATT_API_KEY`, `KEY_MAINCLAW`), never kebab-case.
 - **Centralization**: related keys for the same service are grouped as fields of a single item (e.g. `litellm`) instead of one item per app, and pushed by the `PushSecret` in each `virtualkeys/<app>.yaml` (`remoteKey: litellm`, `property: KEY_<APP>`).
 - **Generated items**: `oxygn-dev-tls` — `tls.crt`/`tls.key` exported from cert-manager (`kubernetes/apps/network/certificates/export` push) — must be an **API Credential** item. Historical note: the `kubernetes` item was an old bootstrap kubeconfig holder, no longer referenced anywhere.
 - **Sections** in the `litellm` item:
-  - `providers` — upstream provider API keys (`MINIMAX_API_KEY`, `OPENCODE_MATT_API_KEY`, `OPENCODE_AGNES_API_KEY`). Two `OPENCODE_*_API_KEY` fields back the two OpenCode Go subscriptions consumed by the matching `opencode-go-matt/` and `opencode-go-agnes/` model folders in `kubernetes/apps/ai/litellm/app/models/`; the litellm router load-balances between them per model group.
+  - `providers` — upstream provider API keys (`OPENCODE_MATT_API_KEY`, `OPENCODE_AGNES_API_KEY`). Two `OPENCODE_*_API_KEY` fields back the two OpenCode Go subscriptions consumed by the matching `opencode-go-matt/` and `opencode-go-agnes/` model folders in `kubernetes/apps/ai/litellm/app/models/`; the litellm router load-balances between them per model group.
   - `virtual keys` — the per-app virtual key fields (`KEY_*`)
   - `LITELLM_MASTER_KEY` stays at the item root.
 

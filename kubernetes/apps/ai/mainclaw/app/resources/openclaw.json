@@ -1234,7 +1234,7 @@
         "enabled": true,
         "config": {
           "webSearch": {
-            "baseUrl": "http://searxng.ai:8080"
+            "baseUrl": "http://searxng-app.ai:8080"
           }
         }
       },
