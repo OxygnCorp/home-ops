@@ -398,9 +398,10 @@ data:
       },
       "mcp": {
         "servers": {
-          "toolhive": {
+          "litellm": {
             "type": "remote",
-            "url": "http://vmcp-mcp-gateway-devops.ai:4483/mcp",
+            "url": "http://litellm.ai:4000/mcp",
+            "headers": { "Authorization": "Bearer {env:LITELLM_API_KEY}" },
             "disabled": false
           }
         }

@@ -85,8 +85,10 @@ data:
       cli:
         - hermes-cli
     mcp_servers:
-      toolhive:
-        url: http://vmcp-mcp-gateway-internal.ai:4483/mcp
+      litellm:
+        url: http://litellm.ai:4000/mcp
+        headers:
+          Authorization: "Bearer $${LITELLM_API_KEY}"
     auxiliary:
       vision:
         provider: litellm
