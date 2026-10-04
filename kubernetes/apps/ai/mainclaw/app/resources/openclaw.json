@@ -937,7 +937,7 @@
         "url": "http://litellm.ai:4000/mcp",
         "transport": "streamable-http",
         "headers": {
-          "Authorization": "Bearer ${LITELLM_API_KEY}"
+          "Authorization": "Bearer $${LITELLM_API_KEY}"
         }
       }
     }
