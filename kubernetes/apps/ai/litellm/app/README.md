@@ -67,14 +67,17 @@ for k in mainclaw devclaw opencode hermes; do
     curl -s -X POST http://litellm.ai.svc.cluster.local:4000/key/update \
       -H "Authorization: Bearer $MASTER_KEY" \
       -H "Content-Type: application/json" \
-      -d '{"keys":["'"$KEY"'"],"object_permission":{"mcp_tool_search_enabled":true}}'
+      -d '{"key":"'"$KEY"'","object_permission":{"mcp_tool_search_enabled":true}}'
 done
 ```
 
 `$MASTER_KEY` is `LITELLM_MASTER_KEY` from the 1Password `litellm` item (also
-mirrored into the `litellm-secret` Secret). The `keys` entries are the actual
-key tokens, read from the per-key Secrets the operator generates
-(`litellm-key-<name>.data.api-key`) — no alias name-matching involved.
+mirrored into the `litellm-secret` Secret). The `key` field takes the raw
+`sk-` token, read from the per-key Secret the operator generates
+(`litellm-key-<name>.data.api-key`) — no alias name-matching involved. One key
+per call: `UpdateKeyRequest` (litellm v1.104.0) exposes only `key: str` /
+`key_alias`, there is no `keys` array — an unknown `keys` field is dropped by
+Pydantic and the validator then rejects the body with 422.
 
 Verify:
 
@@ -97,12 +100,22 @@ this change are already covered by the generate-time default.
 
 ### Tool exclusion (todoist `get-overview`)
 
-`mcp/litellm-todoist-mcp` (alias `todoist_mcp`) sets
+The `litellm-todoist-mcp` CR (alias `todoist_mcp`,
+`mcp/workload-wrapped.yaml`) sets
 `spec.params.disallowed_tools: [get-overview]`, a server-level blacklist that
 applies to **every** caller (docs: MCP Permission Management). It reproduces the
 toolhive `VirtualMCPServer` aggregation exclusion
 (`kubernetes/apps/ai/toolhive/config/virtualmcpserver.yaml`). A blacklist — not
 an allowlist — so tools the upstream adds stay visible without a config bump.
+
+### Footnote: `agent_search` / `skill_search`
+
+Tool search's keyword ranking needs no embedding model — for `mcp_tool_search`
+(token-overlap). The gateway also serves two other virtual tools:
+`agent_search` (A2A registry) and `skill_search` (skill registry) rank by
+embeddings and only work once `litellmSettings.agent_search_embedding_model` /
+`skill_search_embedding_model` are set. Unused here today; configure before
+relying on them.
 
 ### AuthZ probes
 
