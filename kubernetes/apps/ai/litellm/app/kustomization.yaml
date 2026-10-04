@@ -9,6 +9,7 @@ resources:
   - ./virtualkeys
   - ./mcp
   - ./models
+  - ./teams
   - ./dashboard
   - ./grafanadashboard.yaml
   - ./prometheusrule.yaml

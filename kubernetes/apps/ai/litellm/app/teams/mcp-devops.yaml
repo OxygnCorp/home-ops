@@ -1,0 +1,24 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/litellm.home-operations.com/litellmteam_v1alpha1.json
+# Members of the original toolhive `mcp-devops` group (DevOps MCP tools).
+# mcpServers entries are the LIVE LiteLLMMCPServer spec.alias values —
+# talos-mcp is talos_mcp and unifi-network is unifi_network for the same
+# reason as mcp-apps (validate_mcp_server_name forbids '-'); the rest keep
+# their original names.
+apiVersion: litellm.home-operations.com/v1alpha1
+kind: LiteLLMTeam
+metadata:
+  name: mcp-devops
+spec:
+  proxyRef: litellm
+  alias: mcp-devops
+  mcpServers:
+    - context7
+    - flux
+    - github
+    - grafana
+    - konflate
+    - kubectl
+    - radar
+    - talos_mcp
+    - unifi_network
