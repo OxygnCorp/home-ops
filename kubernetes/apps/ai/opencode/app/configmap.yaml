@@ -131,92 +131,12 @@ data:
             "timeout": 1800000
           },
           "models": {
-            "MiniMax-M3": {
-              "capabilities": {
-                "tools": true,
-                "input": [
-                  "text",
-                  "image"
-                ],
-                "output": [
-                  "text"
-                ]
-              },
-              "limit": {
-                "context": 1000000,
-                "output": 131072
-              }
-            },
-            "MiniMax-M3.1-Flash-Preview": {
-              "capabilities": {
-                "tools": true,
-                "input": [
-                  "text",
-                  "image"
-                ],
-                "output": [
-                  "text"
-                ]
-              },
-              "limit": {
-                "context": 1000000,
-                "output": 32768
-              }
-            },
-            "MiniMax-M2.7": {
-              "capabilities": {
-                "tools": true,
-                "input": [
-                  "text"
-                ],
-                "output": [
-                  "text"
-                ]
-              },
-              "limit": {
-                "context": 204800,
-                "output": 131072
-              }
-            },
-            "MiniMax-M2.7-highspeed": {
-              "capabilities": {
-                "tools": true,
-                "input": [
-                  "text"
-                ],
-                "output": [
-                  "text"
-                ]
-              },
-              "limit": {
-                "context": 204800,
-                "output": 131072
-              }
-            },
             "dsv41f": {
               "capabilities": {
                 "tools": true,
                 "input": [
                   "text",
                   "image"
-                ],
-                "output": [
-                  "text"
-                ]
-              },
-              "limit": {
-                "context": 1000000,
-                "output": 384000
-              },
-              "compatibility": {
-                "reasoningField": "reasoning_content"
-              }
-            },
-            "dsv4f": {
-              "capabilities": {
-                "tools": true,
-                "input": [
-                  "text"
                 ],
                 "output": [
                   "text"

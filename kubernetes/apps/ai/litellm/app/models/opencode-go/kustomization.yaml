@@ -34,8 +34,6 @@ resources:
   - ./dsv41f-max-agnes.yaml
   - ./dsv41f-nothink.yaml
   - ./dsv41f-nothink-agnes.yaml
-  - ./dsv4f.yaml
-  - ./dsv4f-agnes.yaml
   - ./dsv4p.yaml
   - ./dsv4p-agnes.yaml
   - ./go-dsv4f-vision.yaml

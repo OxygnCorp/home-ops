@@ -36,12 +36,12 @@ spec:
               # LLM via litellm (OpenAI-compatible gateway)
               LLM_BINDING: openai
               LLM_BINDING_HOST: http://litellm.ai.svc.cluster.local:4000/v1
-              LLM_MODEL: MiniMax-M3
+              LLM_MODEL: dsv41f
               # Indexing (high volume): fast, cheap-cache model, reasoning off.
               EXTRACT_LLM_MODEL: dsv41f-nothink
               KEYWORD_LLM_MODEL: dsv41f-nothink
               # Query (low volume, quality-critical).
-              QUERY_LLM_MODEL: MiniMax-M3
+              QUERY_LLM_MODEL: dsv41f
               MAX_ASYNC_LLM: "4"
               LLM_TIMEOUT: "480"
               ENTITY_EXTRACTION_USE_JSON: "true"

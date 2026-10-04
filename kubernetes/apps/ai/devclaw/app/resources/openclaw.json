@@ -16,7 +16,6 @@
         "mode": "off"
       },
       "heartbeat": {
-        "model": "litellm/MiniMax-M3",
         "directPolicy": "allow",
         "every": "60m",
         "isolatedSession": true,
@@ -24,45 +23,20 @@
       },
       "maxConcurrent": 4,
       "model": {
-        "primary": "litellm/MiniMax-M3",
+        "primary": "litellm/dsv41f",
         "fallbacks": [
-          "litellm/go-glm-5.3",
-          "litellm/dsv4f"
+          "litellm/go-glm-5.3"
         ]
       },
       "imageModel": {
-        "primary": "litellm/MiniMax-M3",
+        "primary": "litellm/go-dsv4f-vision",
         "fallbacks": [
           "litellm/go-glm-5.3-flash"
         ]
       },
       "models": {
-        "litellm/MiniMax-M3": {
-          "alias": "minimax-m3",
-          "params": {
-            "cacheRetention": "short"
-          }
-        },
-        "litellm/MiniMax-M3.1-Flash-Preview": {
-          "alias": "minimax-m3.1-flash",
-          "params": {
-            "cacheRetention": "short"
-          }
-        },
-        "litellm/MiniMax-M2.7": {
-          "alias": "minimax-m2.7",
-          "params": {
-            "cacheRetention": "short"
-          }
-        },
         "litellm/dsv41f": {
           "alias": "dsv41f",
-          "params": {
-            "cache_prompt": true
-          }
-        },
-        "litellm/dsv4f": {
-          "alias": "dsv4f",
           "params": {
             "cache_prompt": true
           }
@@ -128,10 +102,7 @@
         "maxChildrenPerAgent": 3,
         "maxConcurrent": 3,
         "model": {
-          "primary": "litellm/MiniMax-M3",
-          "fallbacks": [
-            "litellm/dsv4f"
-          ]
+          "primary": "litellm/dsv41f"
         },
         "runTimeoutSeconds": 900,
         "announceTimeoutMs": 180000,
@@ -147,10 +118,6 @@
       },
       "modelPolicy": {
         "allow": [
-          "litellm/MiniMax-M3",
-          "litellm/MiniMax-M3.1-Flash-Preview",
-          "litellm/MiniMax-M2.7",
-          "litellm/dsv4f",
           "litellm/dsv4p",
           "litellm/go-glm-5.3",
           "litellm/go-glm-5.3-flash",
@@ -358,74 +325,8 @@
         "timeoutSeconds": 1800,
         "models": [
           {
-            "id": "MiniMax-M3",
-            "name": "MiniMax M3",
-            "reasoning": true,
-            "input": [
-              "text",
-              "image"
-            ],
-            "cost": {
-              "input": 15,
-              "output": 60,
-              "cacheRead": 2,
-              "cacheWrite": 0
-            },
-            "contextWindow": 1000000,
-            "maxTokens": 131072
-          },
-          {
-            "id": "MiniMax-M3.1-Flash-Preview",
-            "name": "MiniMax M3.1 Flash Preview",
-            "reasoning": true,
-            "input": [
-              "text",
-              "image"
-            ],
-            "cost": {
-              "input": 15,
-              "output": 60,
-              "cacheRead": 2,
-              "cacheWrite": 0
-            },
-            "contextWindow": 1000000,
-            "maxTokens": 32768
-          },
-          {
-            "id": "MiniMax-M2.7",
-            "name": "MiniMax M2.7",
-            "reasoning": true,
-            "input": [
-              "text"
-            ],
-            "cost": {
-              "input": 15,
-              "output": 60,
-              "cacheRead": 2,
-              "cacheWrite": 0
-            },
-            "contextWindow": 204800,
-            "maxTokens": 131072
-          },
-          {
             "id": "dsv41f",
             "name": "OpenCode Go DeepSeek V4.1 Flash",
-            "reasoning": true,
-            "input": [
-              "text"
-            ],
-            "cost": {
-              "input": 0,
-              "output": 0,
-              "cacheRead": 0,
-              "cacheWrite": 0
-            },
-            "contextWindow": 1000000,
-            "maxTokens": 384000
-          },
-          {
-            "id": "dsv4f",
-            "name": "OpenCode Go DeepSeek V4 Flash",
             "reasoning": true,
             "input": [
               "text"
@@ -598,7 +499,7 @@
       "lossless-claw",
       "memory-wiki",
       "memini",
-      "minimax"
+      "searxng"
     ],
     "entries": {
       "browser": {
@@ -623,8 +524,8 @@
           "contextThreshold": 0.75,
           "incrementalMaxDepth": 1,
           "newSessionRetainDepth": 2,
-          "summaryModel": "litellm/dsv4f",
-          "expansionModel": "litellm/dsv4f",
+          "summaryModel": "litellm/dsv41f",
+          "expansionModel": "litellm/dsv41f",
           "delegationTimeoutMs": 120000,
           "summaryTimeoutMs": 30000,
           "ignoreSessionPatterns": [
@@ -644,13 +545,13 @@
         "llm": {
           "allowModelOverride": true,
           "allowedModels": [
-            "litellm/dsv4f"
+            "litellm/dsv41f"
           ]
         },
         "subagent": {
           "allowModelOverride": true,
           "allowedModels": [
-            "litellm/dsv4f"
+            "litellm/dsv41f"
           ]
         }
       },
@@ -681,11 +582,11 @@
           }
         }
       },
-      "minimax": {
+      "searxng": {
         "enabled": true,
         "config": {
           "webSearch": {
-            "region": "global"
+            "baseUrl": "http://searxng-app.ai:8080"
           }
         }
       },
@@ -881,7 +782,7 @@
     "web": {
       "search": {
         "enabled": true,
-        "provider": "minimax",
+        "provider": "searxng",
         "openaiCodex": {
           "enabled": true,
           "mode": "cached"

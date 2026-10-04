@@ -71,7 +71,6 @@ onepassword`):
 | `OPENCLAW_GATEWAY_TOKEN`    | `devclaw`                   |
 | `GH_TOKEN`                  | `devclaw`                   |
 | `LITELLM_API_KEY`           | `litellm` → `KEY_DEVCLAW`   |
-| `MINIMAX_API_KEY`           | `litellm` → `MINIMAX_API_KEY` |
 | `MEMINI_API_KEY`            | `memini` → `MEMINI_API_KEY` |
 
 The HelmRelease carries

@@ -130,13 +130,11 @@ spec:
     # is skipped and the request is served by the other subscription.
     optional_pre_call_checks:
       - session_affinity
-    # Three-tier fallback policy, coherent per model class. Tier 1 is implicit:
-    # every group's matt/agnes pair load-balances within the group itself.
-    # Tier 2 is the MiniMax subscription, flash-class models → M3.1-Flash-Preview
-    # (fast), pro/heavy-class models → M3 (stronger). Tier 3 is longcat-2.5-free,
+    # Three-tier fallback policy reduced to two tiers after the MiniMax
+    # subscription lapsed: tier 1 is implicit (every group's matt/agnes pair
+    # load-balances within the group itself), tier 2 is longcat-2.5-free,
     # free and unmetered on the OpenCode Go promos (repoint at go-glm-5.3-flash
-    # if the promo ends). The MiniMax abo groups fall to their Go twin first
-    # (same family, same price), then tier 3.
+    # if the promo ends).
     #
     # Caveat: go-dsv4f-vision's fallbacks are not vision-capable — a vision
     # request that exhausts the group will fail differently, which still beats
@@ -144,63 +142,33 @@ spec:
     fallbacks:
       # Flash-class OpenCode Go groups
       - dsv41f:
-          - MiniMax-M3.1-Flash-Preview
           - longcat-2.5-free
       - dsv41f-nothink:
-          - MiniMax-M3.1-Flash-Preview
-          - longcat-2.5-free
-      - dsv4f:
-          - MiniMax-M3.1-Flash-Preview
           - longcat-2.5-free
       - go-glm-5.3-flash:
-          - MiniMax-M3.1-Flash-Preview
           - longcat-2.5-free
       - go-qwen3.8-flash:
-          - MiniMax-M3.1-Flash-Preview
           - longcat-2.5-free
       - mimo-v2.5:
-          - MiniMax-M3.1-Flash-Preview
           - longcat-2.5-free
       - go-dsv4f-vision:
-          - MiniMax-M3.1-Flash-Preview
           - longcat-2.5-free
       # Pro/heavy-class OpenCode Go groups
       - dsv4p:
-          - MiniMax-M3
           - longcat-2.5-free
       - go-glm-5.3:
-          - MiniMax-M3
           - longcat-2.5-free
       - go-qwen3.8-max:
-          - MiniMax-M3
           - longcat-2.5-free
       - go-kimi-k3:
-          - MiniMax-M3
           - longcat-2.5-free
       - go-kimi-k2.7-code:
-          - MiniMax-M3
           - longcat-2.5-free
       - qwen3.7-plus:
-          - MiniMax-M3
           - longcat-2.5-free
       - go-hy4-preview:
-          - MiniMax-M3
           - longcat-2.5-free
       - mimo-v2.5-pro:
-          - MiniMax-M3
-          - longcat-2.5-free
-      # MiniMax subscription groups
-      - MiniMax-M3:
-          - go-minimax-m3
-          - longcat-2.5-free
-      - MiniMax-M3.1-Flash-Preview:
-          - go-minimax-m3
-          - longcat-2.5-free
-      - MiniMax-M2.7:
-          - go-minimax-m2.7
-          - longcat-2.5-free
-      - MiniMax-M2.7-highspeed:
-          - go-minimax-m2.7
           - longcat-2.5-free
   litellmSettings:
     callbacks:
@@ -241,7 +209,6 @@ spec:
     store_model_in_db: false
   extraConfig:
     environment:
-      - MINIMAX_API_KEY
       - OPENCODE_MATT_API_KEY
       - OPENCODE_AGNES_API_KEY
       - REDIS_HOST
