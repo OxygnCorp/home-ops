@@ -48,7 +48,7 @@ data:
       roles:
         explorer:
           provider: litellm
-          model: go-minimax-m2.7
+          model: go-qwen3.8-flash
           max_concurrent_children: 4
         coder-local:
           provider: litellm
@@ -62,7 +62,7 @@ data:
           model: go-dsv41f-max
         reviewer:
           provider: litellm-anthropic
-          model: go-minimax-m3
+          model: dsv41f
         local-reviewer:
           provider: litellm
           model: go-qwen3.8-flash
