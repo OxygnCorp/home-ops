@@ -141,6 +141,14 @@ spec:
   alias: todoist_mcp
   proxyRef: litellm
   transport: http
+  # get-overview (project-wide rollup; noisy/expensive) is hidden for every
+  # caller of todoist_mcp, mirroring the toolhive VirtualMCPServer exclusion
+  # (kubernetes/apps/ai/toolhive/config/virtualmcpserver.yaml). Blacklist, not
+  # allowlist, so new upstream tools stay visible; `params` passes the field
+  # through to the generated mcp_servers entry (docs.litellm.ai/docs/mcp_control).
+  params:
+    disallowed_tools:
+      - get-overview
   workload:
     image: docker.io/library/node:24-alpine@sha256:ebfe2f90462722a7a4de65e91990e97fe0d401c70e0e762c5b53302f905ec1c1
     port: 8020
@@ -157,8 +165,9 @@ spec:
       - /mcp
       - --port
       - "8020"
-    # No tool exclusion here: the get-overview exclusion is handled at the
-    # litellm proxy layer (Task 8), not on the workload.
+    # Tool exclusion happens on the CR itself (spec.params.disallowed_tools —
+    # formerly handled by the toolhive VirtualMCPServer aggregation config),
+    # not on the workload.
     env:
       - name: HOME
         value: /tmp
