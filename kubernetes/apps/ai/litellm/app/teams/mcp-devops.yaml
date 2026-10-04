@@ -12,6 +12,9 @@ metadata:
 spec:
   proxyRef: litellm
   alias: mcp-devops
+  # explicit empty list: the operator otherwise sends `models: null` to
+  # POST /team/new, which litellm rejects with 422 list_type
+  models: []
   mcpServers:
     - context7
     - flux

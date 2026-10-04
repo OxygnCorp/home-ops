@@ -13,6 +13,9 @@ metadata:
 spec:
   proxyRef: litellm
   alias: mcp-apps
+  # explicit empty list: the operator otherwise sends `models: null` to
+  # POST /team/new, which litellm rejects with 422 list_type
+  models: []
   mcpServers:
     - arr
     - ha_mcp
