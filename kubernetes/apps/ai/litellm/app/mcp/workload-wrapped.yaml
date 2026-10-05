@@ -8,6 +8,15 @@
 # (stdio -> streamable HTTP at /mcp); flags verified against the supergateway
 # README (github.com/supercorp-ai/supergateway): --stdio "<cmd>",
 # --outputTransport streamableHttp, --streamableHttpPath /mcp, --port N.
+# All wrappers run --stateful with --sessionTimeout (2026-10-05): in the
+# default stateless mode supergateway spawns a NEW child MCP process per
+# sessionless request and SIGTERMs it after the response. The litellm proxy
+# replicas refresh each server's catalog (tools/prompts/resources) every few
+# minutes on top of real tool calls, which produced ~1000 child boots per
+# 16h (933 initializes) on litellm-context7 — overlapping npx+node boots
+# (~100-150Mi each on a ~205Mi base) blew the memory limits => repeated
+# OOMKilled (exit 137). Stateful keeps one child per client session and
+# reaps idle ones after --sessionTimeout, flattening memory and CPU.
 # github-mcp-server supports native HTTP transport (probed in-pod 2026-10-03:
 # `server http --port`, image ghcr.io/github/github-mcp-server), so it runs the
 # binary directly instead of being wrapped.
@@ -41,6 +50,9 @@ spec:
       - /mcp
       - --port
       - "8000"
+      - --stateful
+      - --sessionTimeout
+      - "600000"
     env:
       - name: HOME
         value: /tmp
@@ -107,6 +119,9 @@ spec:
       - /mcp
       - --port
       - "8010"
+      - --stateful
+      - --sessionTimeout
+      - "600000"
     env:
       - name: HOME
         value: /tmp
@@ -165,6 +180,9 @@ spec:
       - /mcp
       - --port
       - "8020"
+      - --stateful
+      - --sessionTimeout
+      - "600000"
     # Tool exclusion happens on the CR itself (spec.params.disallowed_tools —
     # formerly handled by the toolhive VirtualMCPServer aggregation config),
     # not on the workload.
@@ -178,12 +196,15 @@ spec:
           secretKeyRef:
             name: toolhive-todoist
             key: TODOIST_API_KEY
+    # 384Mi limit: stateful child per session + ~175Mi base (npm wrapper +
+    # supergateway node) — 256Mi left no headroom for two concurrent sessions
+    # (transient boot spikes OOMKilled this pod repeatedly, exit 137).
     resources:
       requests:
         cpu: 50m
         memory: 128Mi
       limits:
-        memory: 256Mi
+        memory: 384Mi
     volumeMounts:
       - name: tmp
         mountPath: /tmp
@@ -216,6 +237,9 @@ spec:
       - /mcp
       - --port
       - "8030"
+      - --stateful
+      - --sessionTimeout
+      - "600000"
     env:
       - name: HOME
         value: /tmp
