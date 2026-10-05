@@ -36,7 +36,17 @@
         "/\\.yaml(?:\\.j2)?$/",
       ],
       matchStrings: [
-        "datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\n\\s*-\\s+\"?[\\S]+@(?<currentValue>[0-9][^\"\\s]*)\"?",
+        // # renovate: datasource=npm depName=@doist/todoist-mcp
+        // - "npx -y -p @doist/todoist-mcp@13.4.1 -- todoist-mcp"
+        // # renovate: datasource=npm depName=mcp-arr-server
+        // - mcp-arr-server@1.7.3
+        // The pin is the last <pkg>@<numeric-version> token on the line right
+        // below the marker: the package may be the bare list item (toolhive
+        // MCPServer args) or preceded by `npx -y [-p <pkg>]` and followed by
+        // more args (supergateway-wrapped LiteLLMMCPServer commands). An
+        // earlier stricter form (`\n\s*-\s+"?[\S]+@...`) silently missed the
+        // npx-wrapped pins (version not the first token after the bullet).
+        "datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\n[^\\n]*?(?:[A-Za-z0-9@/._-]+)@(?<currentValue>[0-9][^\"\\s]*)\"?",
       ],
       datasourceTemplate: "{{#if datasource}}{{{datasource}}}{{else}}npm{{/if}}",
     },
