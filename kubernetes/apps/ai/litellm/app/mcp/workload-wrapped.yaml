@@ -38,21 +38,17 @@ spec:
     image: docker.io/library/node:24-alpine@sha256:ebfe2f90462722a7a4de65e91990e97fe0d401c70e0e762c5b53302f905ec1c1
     port: 8000
     command:
-      - npx
-      - -y
-      - supergateway
-      - --stdio
+      - sh
+      - -c
+      # npm install runs ONCE at container boot; the stdio child is the plain
+      # binary from PATH (no per-session npx). Concurrent session boots used
+      # to race on the shared npx cache (/tmp/.npm/_npx): a process that found
+      # the cache dir present skipped the install and died reading a
+      # package.json that was not written yet (ENOENT — seen live on todoist
+      # 2026-10-05 with a fresh emptyDir). The version pin must stay the last
+      # <pkg>@<version> token on the line right below the renovate marker.
       # renovate: datasource=npm depName=mcp-arr-server
-      - "npx -y mcp-arr-server@1.7.3"
-      - --outputTransport
-      - streamableHttp
-      - --streamableHttpPath
-      - /mcp
-      - --port
-      - "8000"
-      - --stateful
-      - --sessionTimeout
-      - "600000"
+      - npm install -g --no-audit --no-fund supergateway mcp-arr-server@1.7.3 && exec supergateway --stdio mcp-arr --outputTransport streamableHttp --streamableHttpPath /mcp --port 8000 --stateful --sessionTimeout 600000
     env:
       - name: HOME
         value: /tmp
@@ -107,21 +103,12 @@ spec:
     image: docker.io/library/node:24-alpine@sha256:ebfe2f90462722a7a4de65e91990e97fe0d401c70e0e762c5b53302f905ec1c1
     port: 8010
     command:
-      - npx
-      - -y
-      - supergateway
-      - --stdio
+      - sh
+      - -c
+      # Boot-time npm install + plain-binary child (no per-session npx): see
+      # litellm-arr above for the npx cache race rationale.
       # renovate: datasource=npm depName=@jhomen368/overseerr-mcp
-      - "npx -y @jhomen368/overseerr-mcp@2.3.1"
-      - --outputTransport
-      - streamableHttp
-      - --streamableHttpPath
-      - /mcp
-      - --port
-      - "8010"
-      - --stateful
-      - --sessionTimeout
-      - "600000"
+      - npm install -g --no-audit --no-fund supergateway @jhomen368/overseerr-mcp@2.3.1 && exec supergateway --stdio overseerr-mcp --outputTransport streamableHttp --streamableHttpPath /mcp --port 8010 --stateful --sessionTimeout 600000
     env:
       - name: HOME
         value: /tmp
@@ -168,21 +155,12 @@ spec:
     image: docker.io/library/node:24-alpine@sha256:ebfe2f90462722a7a4de65e91990e97fe0d401c70e0e762c5b53302f905ec1c1
     port: 8020
     command:
-      - npx
-      - -y
-      - supergateway
-      - --stdio
+      - sh
+      - -c
+      # Boot-time npm install + plain-binary child (no per-session npx): see
+      # litellm-arr above for the npx cache race rationale.
       # renovate: datasource=npm depName=@doist/todoist-mcp
-      - "npx -y -p @doist/todoist-mcp@13.4.1 -- todoist-mcp"
-      - --outputTransport
-      - streamableHttp
-      - --streamableHttpPath
-      - /mcp
-      - --port
-      - "8020"
-      - --stateful
-      - --sessionTimeout
-      - "600000"
+      - npm install -g --no-audit --no-fund supergateway @doist/todoist-mcp@13.4.1 && exec supergateway --stdio todoist-mcp --outputTransport streamableHttp --streamableHttpPath /mcp --port 8020 --stateful --sessionTimeout 600000
     # Tool exclusion happens on the CR itself (spec.params.disallowed_tools —
     # formerly handled by the toolhive VirtualMCPServer aggregation config),
     # not on the workload.
@@ -225,21 +203,12 @@ spec:
     image: docker.io/library/node:24-alpine@sha256:ebfe2f90462722a7a4de65e91990e97fe0d401c70e0e762c5b53302f905ec1c1
     port: 8030
     command:
-      - npx
-      - -y
-      - supergateway
-      - --stdio
+      - sh
+      - -c
+      # Boot-time npm install + plain-binary child (no per-session npx): see
+      # litellm-arr above for the npx cache race rationale.
       # renovate: datasource=npm depName=@upstash/context7-mcp
-      - "npx -y @upstash/context7-mcp@4.1.1"
-      - --outputTransport
-      - streamableHttp
-      - --streamableHttpPath
-      - /mcp
-      - --port
-      - "8030"
-      - --stateful
-      - --sessionTimeout
-      - "600000"
+      - npm install -g --no-audit --no-fund supergateway @upstash/context7-mcp@4.1.1 && exec supergateway --stdio context7-mcp --outputTransport streamableHttp --streamableHttpPath /mcp --port 8030 --stateful --sessionTimeout 600000
     env:
       - name: HOME
         value: /tmp
