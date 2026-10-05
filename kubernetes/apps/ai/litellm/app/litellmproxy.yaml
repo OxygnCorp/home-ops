@@ -171,6 +171,18 @@ spec:
       - mimo-v2.5-pro:
           - longcat-2.5-free
   litellmSettings:
+    # Semantic MCP tool filter: for /v1/responses and /v1/chat/completions
+    # requests carrying MCP tools, narrow the per-request tool list to the
+    # top-K semantically relevant tools (headers x-litellm-semantic-filter).
+    # Uses the local TEI embedding server (LiteLLMModel qwen3-embedding-0.6b).
+    # Does NOT affect direct /mcp clients: keys with tool search keep their
+    # four virtual tools and keyword search (the two features coexist).
+    # Fails gracefully: if the embedding model is unreachable, all tools pass.
+    mcp_semantic_tool_filter:
+      enabled: true
+      embedding_model: qwen3-embedding-0.6b
+      top_k: 10
+      similarity_threshold: 0.3
     callbacks:
       - prometheus
       - hooks.session_hook.service_session_injector
