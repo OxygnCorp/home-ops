@@ -173,7 +173,7 @@ spec:
       - supergateway
       - --stdio
       # renovate: datasource=npm depName=@doist/todoist-mcp
-      - "npx -y -p @doist/todoist-mcp@13.4.0 -- todoist-mcp"
+      - "npx -y -p @doist/todoist-mcp@13.4.1 -- todoist-mcp"
       - --outputTransport
       - streamableHttp
       - --streamableHttpPath
