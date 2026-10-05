@@ -1129,6 +1129,7 @@
   },
   "plugins": {
     "allow": [
+      "brave",
       "browser",
       "device-pair",
       "discord",
@@ -1144,6 +1145,9 @@
       "browser": {
         "enabled": true,
         "config": {}
+      },
+      "brave": {
+        "enabled": true
       },
       "discord": {
         "enabled": true,

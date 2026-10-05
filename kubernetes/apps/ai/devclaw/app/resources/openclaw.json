@@ -494,6 +494,7 @@
   },
   "plugins": {
     "allow": [
+      "brave",
       "browser",
       "discord",
       "file-transfer",
@@ -504,6 +505,9 @@
       "memini"
     ],
     "entries": {
+      "brave": {
+        "enabled": true
+      },
       "browser": {
         "enabled": true
       },
