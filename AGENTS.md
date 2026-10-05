@@ -10,7 +10,7 @@ This is a **Home Kubernetes cluster monorepo** managed with GitOps (Flux, Renova
 home-ops/
 ├── kubernetes/           # Kubernetes configurations (Flux-managed)
 │   ├── apps/            # Application configs (namespaces as subdirectories)
-│   │   ├── ai/          # AI apps (mainclaw, toolhive, etc.)
+│   │   ├── ai/          # AI apps (mainclaw, litellm, etc.)
 │   │   ├── network/     # Networking (cilium, envoy, etc.)
 │   │   ├── observability/ # Monitoring (grafana, prometheus, etc.)
 │   │   └── ...         # Other namespaces
@@ -35,7 +35,7 @@ home-ops/
 | Cache      | DragonflyDB                  | Redis-compatible in-memory cache (`components/dragonfly`) |
 | Backups    | kopiur (volsync fork)        | PVC backup/restore via Kopia → NFS (`components/kopiur`) |
 | Images     | spegel                       | Local OCI mirror                  |
-| AI         | toolhive (MCP)              | MCP gateway for AI assistants      |
+| AI         | litellm                     | LLM gateway + MCP gateway for AI assistants |
 
 ## GitOps Flow
 
@@ -74,11 +74,11 @@ Flux recursively searches `kubernetes/apps/` for `kustomization.yaml` files. Eac
 
 - **Gateway policy namespace rule**: `ClientTrafficPolicy` and `EnvoyPatchPolicy` that target a `Gateway` must live in the same namespace as that `Gateway`. For `envoy-internal`, put those resources in `kubernetes/apps/network/` with namespace `network`.
 
-## MCP Servers (toolhive)
+## MCP Servers (litellm)
 
-MCP servers are managed via toolhive in the `ai` namespace, wired into two groups: `mcp-default` (user-facing: arr, ha, seerr, teslamate, todoist, unifi-network, …) and `mcp-devops` (DevOps: flux, github, grafana, kubectl, konflate, lightrag, radar, talos, …).
+MCP servers are managed by the **litellm operator** in the `ai` namespace, defined as `LiteLLMMCPServer` CRs under `kubernetes/apps/ai/litellm/app/mcp/`. Access control is via two `LiteLLMTeam`s: `mcp-apps` (user-facing: arr, ha_mcp, seerr, teslamate, todoist, lightrag, unifi-network, …) and `mcp-devops` (DevOps: flux, github, grafana, kubectl, konflate, radar, talos, …).
 
-Each MCP server is in `kubernetes/apps/ai/toolhive/mcp-servers/` with its own directory — that directory is the source of truth for the current list.
+Agents connect to `http://litellm.ai:4000/mcp` with per-agent virtual keys (`litellm-key-*`, team-bound); tool discovery uses the 4 virtual tools (`mcp_tool_search`, `mcp_tool_call`, `agent_search`, `skill_search`) instead of a full catalog. The MCP server directory (`kubernetes/apps/ai/litellm/app/mcp/`) is the source of truth for the current list.
 
 ## PR Review Standards
 
@@ -148,7 +148,7 @@ The cluster is a 4-node **Talos Linux** cluster running on Proxmox VE 8, semi-hy
 
 - **3 control-plane nodes** (HA etcd): `k8s-0`, `k8s-1`, `k8s-2`
 - **Workloads + storage co-located** on the control-plane nodes: OpenEBS local-path (`openebs-hostpath`) and Miroir DRBD-replicated block storage (`miroir-slow` / `miroir-slow-local`, snapshot class `miroir`)
-- **1 dedicated GPU worker node**: `k8s-3` — tainted `workload=ai:NoSchedule` and reserved for AI workloads (NVIDIA GPU via `nvidia.com/gpu`). Workloads targeting it must set a matching toleration (and usually a `nodeSelector` on `kubernetes.io/hostname: k8s-3`); see the `nvidia-device-plugin` and `toolhive` `EmbeddingServer` for the established pattern
+- **1 dedicated GPU worker node**: `k8s-3` — tainted `workload=ai:NoSchedule` and reserved for AI workloads (NVIDIA GPU via `nvidia.com/gpu`). Workloads targeting it must set a matching toleration (and usually a `nodeSelector` on `kubernetes.io/hostname: k8s-3`); see the `nvidia-device-plugin` and the litellm MCP workloads (GPU-adjacent: `litellm-lightrag-mcp`) for the established pattern
 - **Separate NFS server** for file storage (not on Talos nodes)
 - **Proxmox VM provisioning** with the QEMU guest agent enabled (`siderolabs/qemu-guest-agent` system extension)
 - **PCI passthrough** enabled via kernel args: `intel_iommu=on iommu=pt`
@@ -313,17 +313,17 @@ touch .secrets.env   # ignored by .gitignore
 mise exec -- flate test ks --path ./kubernetes/apps
 ```
 
-For a one-shot cluster investigation from the AI agent workspace, no extra setup is required: the agent runs in-cluster and can use `kubectl` / `talosctl` / the `toolhive__*` MCP servers out of the box.
+For a one-shot cluster investigation from the AI agent workspace, no extra setup is required: the agent runs in-cluster and can use `kubectl` / `talosctl` / the litellm MCP gateway (virtual tools via `http://litellm.ai:4000/mcp`) out of the box.
 
 ## AI Agent Role
 
-The repository's `ai` namespace hosts the **Puchu** AI agent (this assistant), exposed through the `toolhive` operator. The agent interacts with the cluster via these MCP servers (group `mcp-devops`):
+The repository's `ai` namespace hosts the **Puchu** AI agent (this assistant). The agent interacts with the cluster via the litellm MCP gateway, through its `litellm-key-*` virtual key bound to the `mcp-devops` LiteLLMTeam:
 
 - `github` — repository operations (PRs, issues, code search, releases)
 - `grafana` — dashboards, datasources, alert groups
 - `kubectl` — cluster inspection (read-only via dedicated ServiceAccount)
 - `talos` — Talos node operations
 
-Plus the user-facing group `mcp-default` (Home Assistant, *arr stack, Seerr, memory).
+Plus the user-facing team `mcp-apps` (Home Assistant, *arr stack, Seerr, memory), reachable by user-facing agents.
 
 When delegating tasks to the agent, the **branch + PR workflow** applies: every change is on its own branch, and merges go through PR review.
