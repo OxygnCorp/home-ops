@@ -122,7 +122,6 @@ rules:
       - source.toolkit.fluxcd.io
       - storage.k8s.io
       - talos.dev
-      - toolhive.stacklok.dev
       - tuppr.home-operations.com
       - upgrade.cattle.io
     resources:

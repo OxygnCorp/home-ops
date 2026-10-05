@@ -99,19 +99,16 @@ This Git repository is structured as follows:
 
 ### Flux Workflow
 
-This is a high-level look how Flux deploys applications with dependencies, using the real `toolhive` chain: the CRDs must be healthy before the operator, and the operator before the config (which brings its Dragonfly cache).
+This is a high-level look how Flux deploys applications with dependencies, using the real `litellm` chain: the operator must be healthy before the app kustomization (which brings the proxy, teams and MCP server CRs).
 
 ```mermaid
 graph TD;
   id1>Kustomization: cluster] -->|Creates| id2>Kustomization: cluster-apps];
-  id2>Kustomization: cluster-apps] -->|Creates| id3>Kustomization: toolhive-crds];
-  id2>Kustomization: cluster-apps] -->|Creates| id5>Kustomization: toolhive];
-  id2>Kustomization: cluster-apps] -->|Creates| id8>Kustomization: toolhive-config];
-  id5>Kustomization: toolhive] -->|Depends on| id3>Kustomization: toolhive-crds];
-  id8>Kustomization: toolhive-config] -->|Depends on| id5>Kustomization: toolhive];
-  id3>Kustomization: toolhive-crds] -->|Creates| id4[HelmRelease: toolhive-operator-crds];
-  id5>Kustomization: toolhive] -->|Creates| id7[HelmRelease: toolhive-operator];
-  id8>Kustomization: toolhive-config] -->|Creates| id10[Dragonfly cluster];
+  id2>Kustomization: cluster-apps] -->|Creates| id3>Kustomization: litellm-operator];
+  id2>Kustomization: cluster-apps] -->|Creates| id5>Kustomization: litellm];
+  id5>Kustomization: litellm] -->|Depends on| id3>Kustomization: litellm-operator];
+  id3>Kustomization: litellm-operator] -->|Creates| id4[Deployment: litellm-operator];
+  id5>Kustomization: litellm] -->|Creates| id7[LiteLLM CRs: proxy, teams, MCP servers];
 ```
 
 ---
