@@ -48,6 +48,15 @@ def req(url, *, data=None, method=None, headers=None, ctx=None):
                 delay = 2 ** attempt
             print(f"  HTTP {e.code} — retry {attempt + 1}/3 in {delay}s", flush=True)
             time.sleep(delay)
+        # HTTPError subclasses URLError, so this must come second: it retries
+        # transient network failures (DNS blips, connection resets, timeouts)
+        # that previously crashed the whole run with exit 1.
+        except (urllib.error.URLError, TimeoutError):
+            if attempt == 3:
+                raise
+            delay = 2 ** attempt
+            print(f"  network error — retry {attempt + 1}/3 in {delay}s", flush=True)
+            time.sleep(delay)
 
 
 def gh(path, data=None, method=None):
@@ -123,7 +132,10 @@ def make_workload(issue, title, attempt):
     print(f"  created Workload wx-{issue} (attempt {attempt}){' — escalated' if attempt >= MAX_ATTEMPTS else ''}", flush=True)
 
 
-wl_list = k8s(f"/apis/foreman.llmkube.dev/v1alpha1/namespaces/{NS}/workloads")["items"]
+# A malformed reply makes req() return None — degrade to empty state
+# instead of crashing the run with an unhandled TypeError.
+wl_list = (k8s(f"/apis/foreman.llmkube.dev/v1alpha1/namespaces/{NS}/workloads")
+           or {}).get("items", [])
 by_issue, active = {}, 0
 for wl in wl_list:
     name = wl["metadata"].get("name", "")
@@ -135,8 +147,9 @@ for wl in wl_list:
 
 print(f"{active} active workloads, {len(by_issue)} tracked", flush=True)
 
-ready = [i for i in gh(f"/repos/{REPO}/issues?labels={urllib.parse.quote(LABEL, safe='')}"
-                       f"&state=open&per_page=50") if "pull_request" not in i]
+ready = [i for i in (gh(f"/repos/{REPO}/issues?labels={urllib.parse.quote(LABEL, safe='')}"
+                        f"&state=open&per_page=50") or [])
+         if "pull_request" not in i]
 
 for issue in ready:
     n = issue["number"]
@@ -159,6 +172,11 @@ for issue in ready:
         continue
 
     prs = gh(f"/repos/{REPO}/pulls?state=open&head={ORG}:{branch_of(n)}")
+    if prs is None:
+        # Malformed PR reply — skip this pass rather than misreading it as
+        # "no PR" (which would report completion and drop the label).
+        print("  PR list reply malformed — skipping this pass", flush=True)
+        continue
     attempts = int((wl["metadata"].get("annotations") or {}).get(ATTEMPT_ANNOTATION, "1"))
 
     if prs:

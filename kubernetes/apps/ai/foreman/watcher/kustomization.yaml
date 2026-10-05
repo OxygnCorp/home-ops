@@ -6,6 +6,7 @@ resources:
   - ./externalsecret.yaml
   - ./rbac.yaml
   - ./cronjob.yaml
+  - ./prometheusrule.yaml
 configMapGenerator:
   - name: foreman-watcher-config
     files:

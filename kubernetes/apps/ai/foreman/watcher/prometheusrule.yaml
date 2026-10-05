@@ -1,0 +1,22 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/monitoring.coreos.com/prometheusrule_v1.json
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: foreman-watcher
+spec:
+  groups:
+    - name: foreman-watcher.rules
+      rules:
+        - alert: ForemanWatcherRunFailed
+          expr: |-
+            time() - kube_job_status_start_time{job_name=~"foreman-watcher-.*"} < 1800
+            and on(job_name)
+            kube_job_status_failed{job_name=~"foreman-watcher-.*"} == 1
+          annotations:
+            summary: >-
+              foreman-watcher run {{ $labels.job_name }} failed (exit != 0) —
+              one issue-triage pass was missed; the next 15-min run usually
+              self-heals. Check the job logs if it repeats.
+          labels:
+            severity: warning
