@@ -501,8 +501,7 @@
       "llm-task",
       "lossless-claw",
       "memory-wiki",
-      "memini",
-      "searxng"
+      "memini"
     ],
     "entries": {
       "browser": {
@@ -582,14 +581,6 @@
             "preserveHumanBlocks": true,
             "createBacklinks": true,
             "createDashboards": true
-          }
-        }
-      },
-      "searxng": {
-        "enabled": true,
-        "config": {
-          "webSearch": {
-            "baseUrl": "http://searxng-app.ai:8080"
           }
         }
       },
@@ -785,7 +776,7 @@
     "web": {
       "search": {
         "enabled": true,
-        "provider": "searxng",
+        "provider": "brave",
         "openaiCodex": {
           "enabled": true,
           "mode": "cached"
