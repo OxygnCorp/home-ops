@@ -150,6 +150,44 @@ data:
                 "reasoningField": "reasoning_content"
               }
             },
+            "dsv41f-max": {
+              "capabilities": {
+                "tools": true,
+                "input": [
+                  "text",
+                  "image"
+                ],
+                "output": [
+                  "text"
+                ]
+              },
+              "limit": {
+                "context": 1000000,
+                "output": 384000
+              },
+              "compatibility": {
+                "reasoningField": "reasoning_content"
+              }
+            },
+            "dsv41f-nothink": {
+              "capabilities": {
+                "tools": true,
+                "input": [
+                  "text",
+                  "image"
+                ],
+                "output": [
+                  "text"
+                ]
+              },
+              "limit": {
+                "context": 1000000,
+                "output": 384000
+              },
+              "compatibility": {
+                "reasoningField": "reasoning_content"
+              }
+            },
             "dsv4p": {
               "capabilities": {
                 "tools": true,
@@ -338,6 +376,24 @@ data:
               "limit": {
                 "context": 204800,
                 "output": 131072
+              }
+            },
+            "longcat-2.5-free": {
+              "capabilities": {
+                "tools": true,
+                "input": [
+                  "text"
+                ],
+                "output": [
+                  "text"
+                ]
+              },
+              "limit": {
+                "context": 262144,
+                "output": 32768
+              },
+              "compatibility": {
+                "reasoningField": "reasoning_content"
               }
             },
             "mimo-v2.5-pro": {
