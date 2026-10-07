@@ -45,7 +45,7 @@ jobs:
         uses: jdx/mise-action@94c60b39bc2d90ab2f9bab27f38d3cc4812c1834 # v5.1.0
         with:
           # renovate: datasource=github-releases depName=jdx/mise
-          version: v2026.10.1
+          version: v2026.10.2
           cache: false
           # Only install what this job needs (version pinned in .mise/config.toml).
           # A bare `mise install` would pull every tool in .mise/config.toml and
@@ -74,7 +74,7 @@ jobs:
         uses: jdx/mise-action@94c60b39bc2d90ab2f9bab27f38d3cc4812c1834 # v5.1.0
         with:
           # renovate: datasource=github-releases depName=jdx/mise
-          version: v2026.10.1
+          version: v2026.10.2
           cache: false
           # No checkout in this job: pin the tool inline so it is activated
           # (install_args alone installs the binary but leaves the shim unset).
