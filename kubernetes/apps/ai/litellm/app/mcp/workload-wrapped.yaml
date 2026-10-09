@@ -208,7 +208,7 @@ spec:
       # Boot-time npm install + plain-binary child (no per-session npx): see
       # litellm-arr above for the npx cache race rationale.
       # renovate: datasource=npm depName=@upstash/context7-mcp
-      - npm install -g --no-audit --no-fund supergateway @upstash/context7-mcp@4.2.0 && exec supergateway --stdio context7-mcp --outputTransport streamableHttp --streamableHttpPath /mcp --port 8030 --stateful --sessionTimeout 600000
+      - npm install -g --no-audit --no-fund supergateway @upstash/context7-mcp@4.2.1 && exec supergateway --stdio context7-mcp --outputTransport streamableHttp --streamableHttpPath /mcp --port 8030 --stateful --sessionTimeout 600000
     env:
       - name: HOME
         value: /tmp
