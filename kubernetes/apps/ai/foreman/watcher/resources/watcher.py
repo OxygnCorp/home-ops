@@ -9,6 +9,7 @@
 import json
 import os
 import ssl
+import sys
 import time
 import urllib.error
 import urllib.parse
@@ -21,6 +22,12 @@ ORG = REPO.split("/")[0]
 MAX_IN_PROGRESS = int(os.environ.get("MAX_IN_PROGRESS", "2"))
 MAX_ATTEMPTS = int(os.environ.get("MAX_ATTEMPTS", "2"))
 ATTEMPT_ANNOTATION = "oxygn.dev/foreman-attempt"
+# Requests to api.github.com can stall during the TLS handshake far past a
+# 30s read budget (observed as "handshake operation timed out" runs that
+# burned the whole retry ladder and killed the job). A wider per-call budget
+# plus the non-lethal bail-out around sweep() keep a single network blip
+# from earning a critical alert every morning.
+HTTP_TIMEOUT = int(os.environ.get("HTTP_TIMEOUT", "60"))
 TERMINAL = ("Completed", "Failed")
 GH = "https://api.github.com"
 SA_DIR = "/var/run/secrets/kubernetes.io/serviceaccount"
@@ -32,30 +39,30 @@ def req(url, *, data=None, method=None, headers=None, ctx=None):
         url, headers=headers or {},
         data=json.dumps(data).encode() if data is not None else None,
         method=method or ("POST" if data is not None else "GET"))
-    for attempt in range(4):
+    for attempt in range(5):
         try:
-            with urllib.request.urlopen(req, timeout=30, context=ctx) as resp:
+            with urllib.request.urlopen(req, timeout=HTTP_TIMEOUT, context=ctx) as resp:
                 try:
                     return json.load(resp)
                 except json.JSONDecodeError:
                     return None
         except urllib.error.HTTPError as e:
-            if e.code not in (429, 502, 503, 504) or attempt == 3:
+            if e.code not in (429, 502, 503, 504) or attempt == 4:
                 raise
             try:
                 delay = float(e.headers.get("Retry-After") or 0) or 2 ** attempt
             except ValueError:
                 delay = 2 ** attempt
-            print(f"  HTTP {e.code} — retry {attempt + 1}/3 in {delay}s", flush=True)
+            print(f"  HTTP {e.code} — retry {attempt + 1}/5 in {delay}s", flush=True)
             time.sleep(delay)
         # HTTPError subclasses URLError, so this must come second: it retries
         # transient network failures (DNS blips, connection resets, timeouts)
         # that previously crashed the whole run with exit 1.
-        except (urllib.error.URLError, TimeoutError):
-            if attempt == 3:
+        except (urllib.error.URLError, TimeoutError, ssl.SSLError):
+            if attempt == 4:
                 raise
-            delay = 2 ** attempt
-            print(f"  network error — retry {attempt + 1}/3 in {delay}s", flush=True)
+            delay = min(2 ** attempt * 2, 30)
+            print(f"  network error — retry {attempt + 1}/5 in {delay}s", flush=True)
             time.sleep(delay)
 
 
@@ -132,73 +139,84 @@ def make_workload(issue, title, attempt):
     print(f"  created Workload wx-{issue} (attempt {attempt}){' — escalated' if attempt >= MAX_ATTEMPTS else ''}", flush=True)
 
 
-# A malformed reply makes req() return None — degrade to empty state
-# instead of crashing the run with an unhandled TypeError.
-wl_list = (k8s(f"/apis/foreman.llmkube.dev/v1alpha1/namespaces/{NS}/workloads")
-           or {}).get("items", [])
-by_issue, active = {}, 0
-for wl in wl_list:
-    name = wl["metadata"].get("name", "")
-    if not name.startswith("wx-"):
-        continue
-    by_issue[name] = wl
-    if (wl.get("status") or {}).get("phase") not in TERMINAL:
-        active += 1
-
-print(f"{active} active workloads, {len(by_issue)} tracked", flush=True)
-
-ready = [i for i in (gh(f"/repos/{REPO}/issues?labels={urllib.parse.quote(LABEL, safe='')}"
-                        f"&state=open&per_page=50") or [])
-         if "pull_request" not in i]
-
-for issue in ready:
-    n = issue["number"]
-    title = issue["title"]
-    name = f"wx-{n}"
-    wl = by_issue.get(name)
-    phase = (wl.get("status") or {}).get("phase") if wl else None
-    print(f"# {n} {title}", flush=True)
-
-    if wl is None:
-        if active >= MAX_IN_PROGRESS:
-            print("  skipped — MAX_IN_PROGRESS reached", flush=True)
+def sweep():
+    # A malformed reply makes req() return None — degrade to empty state
+    # instead of crashing the run with an unhandled TypeError.
+    wl_list = (k8s(f"/apis/foreman.llmkube.dev/v1alpha1/namespaces/{NS}/workloads")
+               or {}).get("items", [])
+    by_issue, active = {}, 0
+    for wl in wl_list:
+        name = wl["metadata"].get("name", "")
+        if not name.startswith("wx-"):
             continue
-        make_workload(n, title, 1)
-        active += 1
-        continue
+        by_issue[name] = wl
+        if (wl.get("status") or {}).get("phase") not in TERMINAL:
+            active += 1
 
-    if phase not in TERMINAL:
-        print(f"  still in flight ({phase}) — counted toward MAX_IN_PROGRESS", flush=True)
-        continue
+    print(f"{active} active workloads, {len(by_issue)} tracked", flush=True)
 
-    prs = gh(f"/repos/{REPO}/pulls?state=open&head={ORG}:{branch_of(n)}")
-    if prs is None:
-        # Malformed PR reply — skip this pass rather than misreading it as
-        # "no PR" (which would report completion and drop the label).
-        print("  PR list reply malformed — skipping this pass", flush=True)
-        continue
-    attempts = int((wl["metadata"].get("annotations") or {}).get(ATTEMPT_ANNOTATION, "1"))
+    ready = [i for i in (gh(f"/repos/{REPO}/issues?labels={urllib.parse.quote(LABEL, safe='')}"
+                            f"&state=open&per_page=50") or [])
+             if "pull_request" not in i]
 
-    if prs:
-        report(n, f"🤖 foreman pipeline completed — PR #{prs[0]['number']}: {prs[0]['html_url']}")
-        drop_label(n)
-        k8s(f"/apis/foreman.llmkube.dev/v1alpha1/namespaces/{NS}/workloads/{name}", method="DELETE")
-    elif phase == "Failed" and attempts < MAX_ATTEMPTS:
-        # The harness cannot force-push, and a survivor branch would reject
-        # the retry's push — clear the remote branch before recreating.
-        clear_branch(n)
-        k8s(f"/apis/foreman.llmkube.dev/v1alpha1/namespaces/{NS}/workloads/{name}", method="DELETE")
-        make_workload(n, title, attempts + 1)
-        active += 1
-    elif phase == "Failed":
-        report(n, f"🤖 foreman gave up after {attempts} attempts — human triage needed. "
-                  f"Branch `{branch_of(n)}` may hold partial work.")
-        drop_label(n)
-        k8s(f"/apis/foreman.llmkube.dev/v1alpha1/namespaces/{NS}/workloads/{name}", method="DELETE")
-    else:  # Completed but no PR found
-        report(n, "🤖 foreman pipeline completed (no open PR found — work may already "
-                  "be merged or resolved).")
-        drop_label(n)
-        k8s(f"/apis/foreman.llmkube.dev/v1alpha1/namespaces/{NS}/workloads/{name}", method="DELETE")
+    for issue in ready:
+        n = issue["number"]
+        title = issue["title"]
+        name = f"wx-{n}"
+        wl = by_issue.get(name)
+        phase = (wl.get("status") or {}).get("phase") if wl else None
+        print(f"# {n} {title}", flush=True)
 
+        if wl is None:
+            if active >= MAX_IN_PROGRESS:
+                print("  skipped — MAX_IN_PROGRESS reached", flush=True)
+                continue
+            make_workload(n, title, 1)
+            active += 1
+            continue
+
+        if phase not in TERMINAL:
+            print(f"  still in flight ({phase}) — counted toward MAX_IN_PROGRESS", flush=True)
+            continue
+
+        prs = gh(f"/repos/{REPO}/pulls?state=open&head={ORG}:{branch_of(n)}")
+        if prs is None:
+            # Malformed PR reply — skip this pass rather than misreading it as
+            # "no PR" (which would report completion and drop the label).
+            print("  PR list reply malformed — skipping this pass", flush=True)
+            continue
+        attempts = int((wl["metadata"].get("annotations") or {}).get(ATTEMPT_ANNOTATION, "1"))
+
+        if prs:
+            report(n, f"🤖 foreman pipeline completed — PR #{prs[0]['number']}: {prs[0]['html_url']}")
+            drop_label(n)
+            k8s(f"/apis/foreman.llmkube.dev/v1alpha1/namespaces/{NS}/workloads/{name}", method="DELETE")
+        elif phase == "Failed" and attempts < MAX_ATTEMPTS:
+            # The harness cannot force-push, and a survivor branch would reject
+            # the retry's push — clear the remote branch before recreating.
+            clear_branch(n)
+            k8s(f"/apis/foreman.llmkube.dev/v1alpha1/namespaces/{NS}/workloads/{name}", method="DELETE")
+            make_workload(n, title, attempts + 1)
+            active += 1
+        elif phase == "Failed":
+            report(n, f"🤖 foreman gave up after {attempts} attempts — human triage needed. "
+                      f"Branch `{branch_of(n)}` may hold partial work.")
+            drop_label(n)
+            k8s(f"/apis/foreman.llmkube.dev/v1alpha1/namespaces/{NS}/workloads/{name}", method="DELETE")
+        else:  # Completed but no PR found
+            report(n, "🤖 foreman pipeline completed (no open PR found — work may already "
+                      "be merged or resolved).")
+            drop_label(n)
+            k8s(f"/apis/foreman.llmkube.dev/v1alpha1/namespaces/{NS}/workloads/{name}", method="DELETE")
+
+
+# A network outage becomes exit 1 — and a critical radar issue — only if it
+# survives the full 5/5 retry ladder. That failure mode is safe to defer:
+# the state lives in the Workload CRs, so the next CronJob pass simply picks
+# everything up again. Real bugs (KeyError, TypeError, …) still crash loudly.
+try:
+    sweep()
+except (urllib.error.URLError, TimeoutError, ssl.SSLError) as e:
+    print(f"network outage after retries — deferring to next pass: {e}", flush=True)
+    sys.exit(0)
 print("done", flush=True)
