@@ -40,9 +40,10 @@ spec:
               # recall limit (docs natural ceiling) so relevant memories buried past the
               # limit can be rescued; cost is linear — trades recall latency for accuracy
               MEMINI_RERANK_POOL: "50"
-              # HTTP payload guard (not a context guard): large enough that the 50-candidate
-              # pool is not sharded into serial requests that blow RERANK_TIMEOUT
-              MEMINI_RERANK_MAX_BATCH_CHARS: "32000"
+              # HTTP payload guard (not a context guard): docs tuning-recall.md says a
+              # 50-deep pool with a low cap shards into many serial requests that blow
+              # RERANK_TIMEOUT — the doc-prescribed value for a pool of 50 is 120000
+              MEMINI_RERANK_MAX_BATCH_CHARS: "120000"
               # coalesce wants a high score (docs recommend ~0.9; the 0.625 default was
               # calibrated for the hint action) — 0.80 collapsed legitimately distinct facts
               MEMINI_WRITE_DEDUP_SCORE: "0.90"

@@ -1248,7 +1248,7 @@
           "skip_without_agent": true,
           "skip_system_turns": true,
           "fallback_on_error": true,
-          "timeout_ms": 15000,
+          "timeout_ms": 30000,
           "recall_limit": 3,
           "expose_tools": true
         }
