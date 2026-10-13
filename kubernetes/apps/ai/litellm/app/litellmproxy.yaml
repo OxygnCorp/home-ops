@@ -149,7 +149,7 @@ spec:
           - longcat-2.5-free
       - go-qwen3.8-flash:
           - longcat-2.5-free
-      - mimo-v2.5:
+      - mimo-v2.6-flash:
           - longcat-2.5-free
       - go-dsv4f-vision:
           - longcat-2.5-free
@@ -168,7 +168,7 @@ spec:
           - longcat-2.5-free
       - go-hy4-preview:
           - longcat-2.5-free
-      - mimo-v2.5-pro:
+      - mimo-v2.6-pro:
           - longcat-2.5-free
   litellmSettings:
     # Semantic MCP tool filter: for /v1/responses and /v1/chat/completions

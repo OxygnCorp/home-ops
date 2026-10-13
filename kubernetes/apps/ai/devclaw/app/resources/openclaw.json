@@ -77,20 +77,38 @@
             "cache_prompt": true
           }
         },
-        "litellm/mimo-v2.5-pro": {
-          "alias": "mimo-agent",
-          "params": {
-            "cache_prompt": true
-          }
-        },
-        "litellm/mimo-v2.5": {
-          "alias": "mimo-v2.5",
-          "params": {
-            "cache_prompt": true
-          }
-        },
         "litellm/qwen3.7-plus": {
           "alias": "qwen-plus",
+          "params": {
+            "cache_prompt": true
+          }
+        },
+        "litellm/go-grok-4.7": {
+          "alias": "grok-4.7",
+          "params": {
+            "cache_prompt": true
+          }
+        },
+        "litellm/go-gpt-6-luna": {
+          "alias": "gpt-6-luna",
+          "params": {
+            "cache_prompt": true
+          }
+        },
+        "litellm/go-claude-haiku-5-5": {
+          "alias": "haiku-5-5",
+          "params": {
+            "cache_prompt": true
+          }
+        },
+        "litellm/mimo-v2.6-flash": {
+          "alias": "mimo-flash",
+          "params": {
+            "cache_prompt": true
+          }
+        },
+        "litellm/mimo-v2.6-pro": {
+          "alias": "mimo-agent",
           "params": {
             "cache_prompt": true
           }
@@ -124,9 +142,12 @@
           "litellm/go-qwen3.8-flash",
           "litellm/go-minimax-m3",
           "litellm/go-minimax-m2.7",
-          "litellm/mimo-v2.5-pro",
-          "litellm/mimo-v2.5",
-          "litellm/qwen3.7-plus"
+          "litellm/qwen3.7-plus",
+          "litellm/go-grok-4.7",
+          "litellm/go-gpt-6-luna",
+          "litellm/go-claude-haiku-5-5",
+          "litellm/mimo-v2.6-flash",
+          "litellm/mimo-v2.6-pro"
         ]
       }
     },
@@ -392,38 +413,6 @@
             "maxTokens": 131072
           },
           {
-            "id": "mimo-v2.5-pro",
-            "name": "OpenCode Go MiMo V2.5 Pro",
-            "reasoning": true,
-            "input": [
-              "text"
-            ],
-            "cost": {
-              "input": 0,
-              "output": 0,
-              "cacheRead": 0,
-              "cacheWrite": 0
-            },
-            "contextWindow": 262144,
-            "maxTokens": 128000
-          },
-          {
-            "id": "mimo-v2.5",
-            "name": "OpenCode Go MiMo V2.5",
-            "reasoning": true,
-            "input": [
-              "text"
-            ],
-            "cost": {
-              "input": 0,
-              "output": 0,
-              "cacheRead": 0,
-              "cacheWrite": 0
-            },
-            "contextWindow": 262144,
-            "maxTokens": 128000
-          },
-          {
             "id": "go-glm-5.3",
             "name": "OpenCode Go GLM 5.3",
             "reasoning": true,
@@ -487,6 +476,90 @@
             },
             "contextWindow": 1000000,
             "maxTokens": 65536
+          },
+          {
+            "id": "go-grok-4.7",
+            "name": "OpenCode Go Grok 4.7",
+            "reasoning": true,
+            "input": [
+              "text",
+              "image"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 500000,
+            "maxTokens": 500000
+          },
+          {
+            "id": "go-gpt-6-luna",
+            "name": "OpenCode Go GPT-6 Luna",
+            "reasoning": true,
+            "input": [
+              "text",
+              "image"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1050000,
+            "maxTokens": 128000
+          },
+          {
+            "id": "go-claude-haiku-5-5",
+            "name": "OpenCode Go Claude Haiku 5.5",
+            "reasoning": true,
+            "input": [
+              "text",
+              "image"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1000000,
+            "maxTokens": 128000
+          },
+          {
+            "id": "mimo-v2.6-flash",
+            "name": "OpenCode Go MiMo V2.6 Flash",
+            "reasoning": true,
+            "input": [
+              "text",
+              "image"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1048576,
+            "maxTokens": 131072
+          },
+          {
+            "id": "mimo-v2.6-pro",
+            "name": "OpenCode Go MiMo V2.6 Pro",
+            "reasoning": true,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1048576,
+            "maxTokens": 131072
           }
         ]
       }
