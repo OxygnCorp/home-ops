@@ -42,7 +42,7 @@ spec:
           install-tools:
             image:
               repository: ghcr.io/openclaw/openclaw
-              tag: 2026.10.2@sha256:32490a7091ca02acde649af3a214704d5c0fa9d774890f6ab231a8c2c958c36f
+              tag: 2026.10.3@sha256:70b8dbd23f8d27a206f43f9828fdebc87289e50d56dc55177354c9270d764026
             env:
               HOME: /home/node
               PATH: /home/node/.local/bin:/home/node/.local/share/mise/shims:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
@@ -65,7 +65,7 @@ spec:
           app:
             image:
               repository: ghcr.io/openclaw/openclaw
-              tag: 2026.10.2@sha256:32490a7091ca02acde649af3a214704d5c0fa9d774890f6ab231a8c2c958c36f
+              tag: 2026.10.3@sha256:70b8dbd23f8d27a206f43f9828fdebc87289e50d56dc55177354c9270d764026
             # The gateway only listens on 18789 after a slow doctor/migration
             # phase (~8 min); keep the pod NotReady until then so Envoy does
             # not route to a dead upstream during rollouts
