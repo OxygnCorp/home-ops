@@ -51,7 +51,7 @@ gum = "2.0.2"
 "aqua:cilium/hubble" = "1.20.2"
 
 # Security
-"aqua:kubescape/kubescape" = "4.0.15"
+"aqua:kubescape/kubescape" = "4.0.16"
 
 # Linters
 "pipx:yamllint" = "1.38.0"
