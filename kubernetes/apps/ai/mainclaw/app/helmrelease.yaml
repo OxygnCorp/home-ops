@@ -26,6 +26,13 @@ spec:
               - -c
               - |
                 set -euo pipefail
+                # Sticky bit on the PVC root: openclaw doctor refuses to
+                # snap pre-repair state when a staging ancestor can be
+                # replaced by another user ("Original state capture was
+                # unavailable" + no automatic restore path). g+w must stay
+                # (fsGroup children like ~/.config, ~/.local are created
+                # group-writable), so 3775 = setgid + sticky.
+                chmod 3775 /home/node
                 mkdir -p /home/node/.openclaw
                 rm -f /home/node/.openclaw/openclaw.json
                 cp /tmp/openclaw.json /home/node/.openclaw/openclaw.json
