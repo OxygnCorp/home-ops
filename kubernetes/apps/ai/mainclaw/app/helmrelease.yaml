@@ -73,9 +73,10 @@ spec:
             image:
               repository: ghcr.io/openclaw/openclaw
               tag: 2026.10.4@sha256:614004ec2cf2e6095124ea544dc8d950c49306aef445a1fc300b88717e24261a
-            # The gateway only listens on 18789 after a slow doctor/migration
-            # phase (~8 min); keep the pod NotReady until then so Envoy does
-            # not route to a dead upstream during rollouts
+            # The gateway only listens on 18789 until after the doctor phase
+            # and gateway bootstrap (~2-3 min warm boot; keep generous margin
+            # for a cold boot from a restored PVC); keep the pod NotReady
+            # until then so Envoy does not route to a dead upstream
             probes:
               readiness:
                 custom: true
@@ -84,7 +85,8 @@ spec:
                     port: 18789
                   periodSeconds: 15
                   timeoutSeconds: 5
-                  failureThreshold: 60
+                  # 24 * 15s = 6 min of grace before marking unready
+                  failureThreshold: 24
             command:
               - /bin/sh
               - -c
