@@ -51,7 +51,7 @@ machine:
         wsize=1048576
   install:
     disk: /dev/sdb
-    # renovate: datasource=docker depName=ghcr.io/siderolabs/installer
+    # renovate: talos-installer custom.talos-factory
     image: factory.talos.dev/nocloud-installer/{{ ENV.SCHEMATIC }}:v1.14.1
     wipe: false
   kernel:

@@ -3,22 +3,27 @@
   customManagers: [
     {
       customType: "regex",
-      description: "Track Talos installer image tags (factory.talos.dev schematic images); version source is ghcr.io/siderolabs/installer",
+      description: "Track Talos installer image tags (factory.talos.dev schematic images); version source is the Image Factory versions endpoint",
       managerFilePatterns: [
         "/\\.yaml(?:\\.j2)?$/",
       ],
       matchStrings: [
-        // # renovate: datasource=docker depName=ghcr.io/siderolabs/installer
+        // # renovate: talos-installer custom.talos-factory
         // image: factory.talos.dev/metal-installer/{{ ENV.SCHEMATIC }}:v1.14.1
-        // The repo segment tolerates the space inside the Jinja placeholder via
-        // [^:\n]+; only the tag after the last colon is captured. This beats the
-        // generic annotated-deps manager, whose `(\S+)$` capture truncates the
-        // image reference at the placeholder (`factory.talos.dev/metal-installer/{{`),
-        // producing an invalid docker dependency that never updates.
-        "datasource=docker depName=ghcr\\.io/siderolabs/installer\\n\\s*image:\\s*factory\\.talos\\.dev/[^:\\n]+:(?<currentValue>v\\S+)",
+        // ghcr.io/siderolabs/installer stopped being published with Talos
+        // v1.14 ("stop publishing installer to ghcr") — installer images are
+        // built and served by the Image Factory, so the version source is the
+        // factory /versions endpoint. The dedicated marker deliberately omits
+        // the literal `datasource=` so the generic annotated-deps manager
+        // (whose `(\S+)$` capture truncates the image reference at the Jinja
+        // placeholder) never extracts a ghost dep for these lines. The repo
+        // segment tolerates the placeholder space via [^:\n]+; only the tag
+        // after the separator colon is captured, so replacement rewrites the
+        // tag in place and leaves the schematic untouched.
+        "renovate:\\s*talos-installer\\s+custom\\.talos-factory\\n\\s*image:\\s*factory\\.talos\\.dev/[^:\\n]+:(?<currentValue>v\\S+)",
       ],
-      depNameTemplate: "ghcr.io/siderolabs/installer",
-      datasourceTemplate: "docker",
+      depNameTemplate: "siderolabs/talos",
+      datasourceTemplate: "custom.talos-factory",
     },
     {
       customType: "regex",
