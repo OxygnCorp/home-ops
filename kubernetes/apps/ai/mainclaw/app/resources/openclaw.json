@@ -370,6 +370,7 @@
         "name": "Nova",
         "workspace": "/home/node/.openclaw/workspace-nova",
         "agentDir": "/home/node/.openclaw/agents/nova/agent",
+        "bootstrapMaxChars": 20480,
         "identity": {
           "name": "Nova",
           "emoji": "🌟"
@@ -982,6 +983,23 @@
             "reasoning": true,
             "input": [
               "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1000000,
+            "maxTokens": 384000
+          },
+          {
+            "id": "go-dsv4f-vision",
+            "name": "OpenCode Go DeepSeek V4 Flash Vision",
+            "reasoning": false,
+            "input": [
+              "text",
+              "image"
             ],
             "cost": {
               "input": 0,
