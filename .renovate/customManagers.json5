@@ -3,6 +3,25 @@
   customManagers: [
     {
       customType: "regex",
+      description: "Track Talos installer image tags (factory.talos.dev schematic images); version source is ghcr.io/siderolabs/installer",
+      managerFilePatterns: [
+        "/\\.yaml(?:\\.j2)?$/",
+      ],
+      matchStrings: [
+        // # renovate: datasource=docker depName=ghcr.io/siderolabs/installer
+        // image: factory.talos.dev/metal-installer/{{ ENV.SCHEMATIC }}:v1.14.1
+        // The repo segment tolerates the space inside the Jinja placeholder via
+        // [^:\n]+; only the tag after the last colon is captured. This beats the
+        // generic annotated-deps manager, whose `(\S+)$` capture truncates the
+        // image reference at the placeholder (`factory.talos.dev/metal-installer/{{`),
+        // producing an invalid docker dependency that never updates.
+        "datasource=docker depName=ghcr\\.io/siderolabs/installer\\n\\s*image:\\s*factory\\.talos\\.dev/[^:\\n]+:(?<currentValue>v\\S+)",
+      ],
+      depNameTemplate: "ghcr.io/siderolabs/installer",
+      datasourceTemplate: "docker",
+    },
+    {
+      customType: "regex",
       description: "Process annotated dependencies",
       managerFilePatterns: [
         "/\\.env(?:\\.j2)?$/",
