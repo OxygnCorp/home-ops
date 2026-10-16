@@ -14,6 +14,12 @@
       overridePackageName: "ghcr.io/siderolabs/installer",
     },
     {
+      description: "Disable Dead Factory Installer Deps (the Kubernetes manager extracts factory.talos.dev image deps that duplicate the dedicated custom manager and never update)",
+      matchManagers: ["kubernetes"],
+      matchDepNames: ["/factory\\.talos\\.dev/"],
+      enabled: false,
+    },
+    {
       description: "Cadence Weekly For llama.cpp Digests (Frequent Upstream Builds, Breaking CLI Changes)",
       matchDatasources: ["docker"],
       matchPackageNames: ["ghcr.io/ggml-org/llama.cpp"],
