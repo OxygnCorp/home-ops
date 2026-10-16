@@ -42,6 +42,20 @@ spec:
         - secretRef:
             name: authentik-secret
     server:
+      # 2 replicas: authentik is the SSO for the whole cluster — a single pod
+      # turns every node reboot into a cluster-wide auth outage. Requires the
+      # shared cache (dragonfly) and CNPG Postgres, both already HA.
+      replicas: 2
+      # Keep at least one server serving auth during voluntary evictions
+      pdb:
+        enabled: true
+        minAvailable: 1
+      # Force the two replicas onto different nodes so a single node reboot
+      # leaves one replica (and its spegel-cached image) behind
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: DoNotSchedule
       resources:
         requests:
           cpu: 200m
