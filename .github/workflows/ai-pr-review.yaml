@@ -88,6 +88,8 @@ jobs:
           repositories: ${{ github.repository }}
           permission-contents: read
           permission-pull-requests: write
+          # ci-status-check: "true" below reads check runs for CI evidence
+          permission-checks: read
 
       - name: Analyze PR with reusable AI reviewer
         id: analyze

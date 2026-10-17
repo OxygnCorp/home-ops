@@ -26,6 +26,9 @@ jobs:
           app-id: "${{ secrets.BOT_APP_ID }}"
           private-key: "${{ secrets.BOT_APP_PRIVATE_KEY }}"
           repositories: "${{ github.repository }}"
+          # no checkout in this job: the labeler config is fetched via the
+          # API, which needs contents: read on the app token
+          permission-contents: read
           permission-pull-requests: write
 
       - name: Labeler
