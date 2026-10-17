@@ -14,8 +14,14 @@ spec:
       envoyDeployment:
         replicas: 2
         container:
-          image: mirror.gcr.io/envoyproxy/envoy:v1.40.2
-          # imageRepository: mirror.gcr.io/envoyproxy/envoy
+          # The proxy image follows the chart default (DefaultEnvoyProxyImage):
+          # Envoy Gateway 1.9.3 appends distroless-v1.39.5, so an Envoy minor
+          # can no longer land before Envoy Gateway supports it, and the
+          # version no longer needs its own Renovate bump.
+          # imageRepository is required on mirror.gcr.io: global.imageRegistry
+          # never applies to the proxy unless global.images.envoyProxy.image
+          # is also set, so a bare fallback would pull from docker.io.
+          imageRepository: mirror.gcr.io/envoyproxy/envoy
           resources:
             requests:
               cpu: 100m
