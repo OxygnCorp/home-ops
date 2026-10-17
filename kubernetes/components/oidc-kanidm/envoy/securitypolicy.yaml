@@ -1,0 +1,27 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/gateway.envoyproxy.io/securitypolicy_v1alpha1.json
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: SecurityPolicy
+metadata:
+  name: ${APP}-oidc
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: ${OIDC_ROUTE_NAME}
+  oidc:
+    provider:
+      issuer: https://idm.oxygn.dev/oauth2/openid/${APP}
+      # Pin both endpoints: Envoy Gateway does not retry discovery, and
+      # re-discovery through this very gateway can 404 during Kanidm
+      # TLS-certificate rollouts (see eleboucher/homelab oidc component)
+      authorizationEndpoint: https://idm.oxygn.dev/ui/oauth2
+      tokenEndpoint: https://idm.oxygn.dev/oauth2/token
+    # Kanidm uses the OAuth2 system name as the client ID; the kanidm-provision
+    # controller writes the matching secret into the app namespace
+    clientID: ${APP}
+    clientSecret:
+      name: kanidm-${APP}-oidc
+    redirectURL: https://${SUBDOMAIN}.oxygn.dev${OIDC_CALLBACK}
+    logoutPath: /logout
+    scopes: ["openid", "email", "profile", "groups"]
