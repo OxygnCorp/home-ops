@@ -50,6 +50,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          persist-credentials: false
           ref: ${{ github.event.pull_request.head.sha || steps.prctx.outputs.head_sha }}
 
       - name: Setup review tooling
@@ -84,6 +85,9 @@ jobs:
         with:
           client-id: ${{ secrets.APP_CLIENT_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          repositories: ${{ github.repository }}
+          permission-contents: read
+          permission-pull-requests: write
 
       - name: Analyze PR with reusable AI reviewer
         id: analyze
