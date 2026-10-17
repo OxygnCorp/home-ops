@@ -1,0 +1,133 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: headroom
+spec:
+  interval: 15m
+  dependsOn:
+    - name: onepassword
+      namespace: external-secrets
+  chartRef:
+    kind: OCIRepository
+    name: headroom
+  values:
+    defaultPodOptions:
+      # AVX2 requis par ONNX Runtime (Magika/embeddings/Kompress) —
+      # uniquement disponible sur k8s-3 (label NFD oxygen.dev/avx2: "true")
+      # ; sans AVX2 headroom dégrade silencieusement en BM25.
+      nodeSelector:
+        kubernetes.io/hostname: k8s-3
+      tolerations:
+        - key: workload
+          operator: Equal
+          value: ai
+          effect: NoSchedule
+      securityContext:
+        fsGroup: 65532
+        fsGroupChangePolicy: OnRootMismatch
+        runAsGroup: 65532
+        runAsNonRoot: true
+        runAsUser: 65532
+    controllers:
+      headroom:
+        # Décision design : 1 réplica (fail_open sur la guardrail litellm
+        # rend les pannes non-bloquantes, le sizing 3 réplicas de Jory
+        # correspond à son profil de trafic multi-ns).
+        replicas: 1
+        strategy: Recreate
+        containers:
+          main:
+            image:
+              repository: ghcr.io/headroomlabs-ai/headroom
+              # Digest re-vérifié contre ghcr.io (égal au pin de Jory
+              # #11133, v0.41.0-slim-nonroot).
+              tag: 0.41.0-slim-nonroot@sha256:686a86ad0f7dba60816b5d3d6f6438a02323d256d70491c6448526212c6c08b3
+            env:
+              HEADROOM_COMPRESS_ALLOW_REMOTE: "1"
+              HEADROOM_HOST: 0.0.0.0
+              HEADROOM_MODE: cache
+              HEADROOM_PORT: &port 8787
+              HEADROOM_TELEMETRY: "off"
+              HEADROOM_WORKSPACE_DIR: /data/headroom
+              HF_HOME: /data/huggingface
+            envFrom:
+              - secretRef:
+                  name: headroom
+            probes:
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /livez
+                    port: *port
+                  periodSeconds: 30
+                  timeoutSeconds: 5
+                  failureThreshold: 3
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /readyz
+                    port: *port
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 3
+            resources:
+              requests:
+                cpu: 100m
+                memory: 1Gi
+              limits:
+                memory: 4Gi
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                  - ALL
+              readOnlyRootFilesystem: true
+    persistence:
+      data:
+        type: emptyDir
+        globalMounts:
+          - path: /data
+      tmpfs:
+        type: emptyDir
+        globalMounts:
+          - path: /tmp
+    service:
+      app:
+        ports:
+          http:
+            port: *port
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/monitoring.coreos.com/servicemonitor_v1.json
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: &app headroom
+  labels: &labels
+    app.kubernetes.io/instance: *app
+    app.kubernetes.io/name: *app
+spec:
+  selector:
+    matchLabels:
+      <<: *labels
+  namespaceSelector:
+    matchNames:
+      - ai
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 30s
+      scrapeTimeout: 10s
+      # HEADROOM_PROXY_TOKEN est exempté pour /livez & /readyz mais PAS pour
+      # /metrics (auth Bearer) ; le Secret est duplicé en ns observability via
+      # kube-prometheus-stack (externalsecret.yaml + prometheus.secrets).
+      authorization:
+        type: Bearer
+        credentials:
+          name: headroom
+          key: HEADROOM_PROXY_TOKEN
