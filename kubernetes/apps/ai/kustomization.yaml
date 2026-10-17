@@ -15,6 +15,7 @@ resources:
   - ./foreman/ks-watcher.yaml
   - ./hermes/ks-blueprint.yaml
   - ./hermes/ks.yaml
+  - ./headroom/ks.yaml
   - ./lightrag/ks.yaml
   - ./litellm-operator/ks.yaml
   - ./litellm/ks.yaml

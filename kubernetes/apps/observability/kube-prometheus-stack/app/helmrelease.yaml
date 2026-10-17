@@ -108,6 +108,9 @@ spec:
         ruleSelectorNilUsesHelmValues: false
         scrapeConfigSelectorNilUsesHelmValues: false
         serviceMonitorSelectorNilUsesHelmValues: false
+        # Secrets montés dans le pod Prometheus (auth Bearer sur /metrics des
+        # targets eksternes — headroom).
+        secrets: [headroom-proxy-token]
         scrapeInterval: 1m # Must match interval in Grafana Helm chart
         retention: 30d
         retentionSize: 40GB
