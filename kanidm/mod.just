@@ -1,0 +1,144 @@
+set quiet
+set script-interpreter := ['bash', '-euo', 'pipefail']
+set shell := ['bash', '-euo', 'pipefail', '-c']
+
+# Kanidm admin — idm.oxygn.dev
+#
+# The `kanidm` CLI runs where it is installed; when absent, every command is
+# wrapped in a throwaway quay.io/kanidm/kanidm-tools pod (zero install).
+# Auth is non-interactive: the idm_admin password comes from the 1Password
+# item `kanidm` (field idm_admin_password) via `op`, fed to the hidden
+# global `--password` flag / KANIDM_PASSWORD env of the CLI.
+#
+#   just kanidm bootstrap                    # one-shot: accounts + provision token + 1Password
+#   just kanidm onboard nea "Nea" nea@…      # person + groups + reset link
+#   just kanidm reset nea                    # re-issue a reset link
+
+KANIDM_URL := "https://idm.oxygn.dev"
+KANIDM_IMAGE := "quay.io/kanidm/kanidm-tools:latest"
+
+[private]
+default:
+    just -l kanidm
+
+# ── internals ────────────────────────────────────────────────────────────────
+
+# Run one kanidm CLI command as idm_admin (non-interactive).
+[private]
+cli *args:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    export KANIDM_URL="{{ KANIDM_URL }}"
+    export KANIDM_NAME=idm_admin
+    export KANIDM_PASSWORD="${KANIDM_PASSWORD:-$(op read 'op://Private/kanidm/idm_admin_password')}"
+    if command -v kanidm >/dev/null 2>&1; then
+      kanidm "$@" {{ args }}
+    else
+      kubectl run -n security kanidm-cli-"$RANDOM" --rm -i --restart=Never \
+        --image={{ KANIDM_IMAGE }} --command -- \
+        kanidm "$@" {{ args }}
+    fi
+
+# ── bootstrap ────────────────────────────────────────────────────────────────
+
+# One-shot bootstrap: recover built-in accounts, create the provision
+# service-account + API token, store everything in 1Password, and unblock
+# the kanidm-provision controller.
+[doc('One-shot Kanidm bootstrap (accounts + provision token + 1Password)')]
+[script]
+bootstrap:
+    set -euo pipefail
+    : "${OP_SESSION:=}"   # needs an authenticated `op` CLI
+    log() { just log info "$@"; }
+
+    log "recovering built-in accounts"
+    recover() {
+      kubectl exec -n security statefulset/kanidm -- kanidmd recover-account "$1" \
+        | sed -n 's/.*"output":"\([^"]*\)".*/\1/p'
+    }
+    admin_pw="$(recover admin)"
+    idm_pw="$(recover idm_admin)"
+    [ -n "$admin_pw" ] && [ -n "$idm_pw" ] || { echo "failed to parse recover-account output" >&2; exit 1; }
+
+    log "storing break-glass passwords in 1Password (item kanidm)"
+    op item create kanidm --category 'Login' \
+      admin_password="$admin_pw" idm_admin_password="$idm_pw" \
+      --vault Private >/dev/null 2>&1 \
+      || op item edit kanidm admin_password="$admin_pw" idm_admin_password="$idm_pw" >/dev/null
+
+    log "creating service-account kanidm-provision"
+    export KANIDM_URL="{{ KANIDM_URL }}" KANIDM_NAME=idm_admin KANIDM_PASSWORD="$idm_pw"
+    kcli() {
+      if command -v kanidm >/dev/null 2>&1; then kanidm "$@"; else
+        kubectl run -n security kanidm-cli-"$RANDOM" --rm -i --restart=Never \
+          --image={{ KANIDM_IMAGE }} --command -- kanidm "$@"; fi
+    }
+    kcli service-account create kanidm-provision "Kanidm Provision" idm_admins || true
+    kcli group add-members idm_admins kanidm-provision || true
+    kcli group create users || true
+    kcli group create admins || true
+    token="$(kcli service-account api-token generate --readwrite kanidm-provision provision-token \
+      | sed -n 's/.*"output":"\([^"]*\)".*/\1/p' | tail -1)"
+    [ -n "$token" ] || { echo "failed to parse api-token output" >&2; exit 1; }
+
+    log "storing provision token in 1Password (item kanidm-provision)"
+    op item create kanidm-provision --category 'API Credential' token="$token" \
+      --vault Private >/dev/null 2>&1 \
+      || op item edit kanidm-provision token="$token" >/dev/null
+
+    log "syncing ExternalSecret kanidm-provision-token"
+    kubectl -n security annotate externalsecret kanidm-provision-token "force-sync=$(date +%s)" --overwrite
+
+    log "waiting for the provision controller"
+    kubectl -n security rollout status deploy/kanidm-provision --timeout=300s
+    log "bootstrap complete — now: just kanidm onboard <user> '<Name>' <email>"
+
+# ── people ───────────────────────────────────────────────────────────────────
+
+# Onboard a person: create, add to groups (default users), print the reset link.
+[doc('Onboard a person and print their credential reset link')]
+onboard user name email +groups="users":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    just kanidm cli person create {{ user }} "{{ name }}"
+    just kanidm cli person update {{ user }} --mail {{ email }}
+    for g in {{ groups }}; do just kanidm cli group add-members "$g" {{ user }}; done
+    echo "### reset link for {{ user }} ###"
+    just kanidm cli person credential create-reset-token {{ user }}
+
+# Bulk onboard from CSV: username,Full Name,email,space-separated-groups
+[doc('Bulk onboard people from a CSV file')]
+bulk file:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    while IFS=, read -r user name mail groups; do
+      [ -z "${user:-}" ] && continue
+      just kanidm onboard "$user" "$name" "$mail" ${groups:-users}
+    done < {{ file }}
+
+# (Re)issue a credential reset link (e.g. lost passkey)
+[doc('Issue a credential reset link for a person')]
+reset user:
+    just kanidm cli person credential create-reset-token {{ user }}
+
+# ── groups ───────────────────────────────────────────────────────────────────
+
+[doc('Add a person to a group')]
+group-add group user:
+    just kanidm cli group add-members {{ group }} {{ user }}
+
+[doc('Remove a person from a group')]
+group-rm group user:
+    just kanidm cli group remove-members {{ group }} {{ user }}
+
+[doc('List group members')]
+members group="users":
+    just kanidm cli group list-members {{ group }}
+
+[doc('List all people')]
+list:
+    just kanidm cli person list
+
+[doc('Show one person')]
+get user:
+    just kanidm cli person get {{ user }}

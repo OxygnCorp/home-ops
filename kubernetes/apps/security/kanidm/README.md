@@ -29,49 +29,37 @@ created by external-dns).
 
 ## Initial setup
 
-### 1. Recover the built-in admin accounts
-
-After first deployment (`recover-account` sets a **generated password** on the
-account — Kanidm 1.11 prints `new_password: "…"` and no URL; the `/ui/reset`
-token flow only applies to `person` accounts):
+Everything below is automated in `kanidm/mod.just` (modeled on vrozaksen's
+home-ops): **one command**. It needs an authenticated `op` CLI (the break-glass
+passwords and the provision token go straight to 1Password).
 
 ```bash
-kubectl exec -n security -it statefulset/kanidm -- kanidmd recover-account admin
-kubectl exec -n security -it statefulset/kanidm -- kanidmd recover-account idm_admin
+just kanidm bootstrap
 ```
 
-Log in at `https://idm.oxygn.dev` with each account and the printed
-`new_password`, then change the password from the UI (credentials menu) and
-enroll a passkey.
+What it does:
 
-### 2. Create the provision service account
+1. `kanidmd recover-account admin` / `idm_admin` (Kanidm 1.11 prints a JSON
+   `output` — that is a **generated password**, not a `/ui/reset` token; the
+   reset-token flow only applies to `person` accounts) → stores both in the
+   1Password item **`kanidm`** (`admin_password`, `idm_admin_password`).
+2. Creates the `kanidm-provision` service-account + `provision-token` API token
+   (CLI runs locally if installed, otherwise in a throwaway
+   `quay.io/kanidm/kanidm-tools` pod; auth via the hidden `KANIDM_PASSWORD`
+   global — non-interactive) → stores the token in the 1Password item
+   **`kanidm-provision`** (`token`).
+3. Force-syncs the `kanidm-provision-token` ExternalSecret and waits for the
+   `kanidm-provision` deployment to roll out.
 
-The `kanidm` CLI prompts for the `idm_admin` password set above:
+Then onboard yourself (password + passkey via the printed reset link — open it
+after ~3 minutes, the token has a delayed validity):
 
 ```bash
-kubectl exec -n security -it statefulset/kanidm -- kanidm service-account create kanidm-provision "Kanidm Provision" idm_admins -D idm_admin
-kubectl exec -n security -it statefulset/kanidm -- kanidm group add-members idm_admins kanidm-provision -D idm_admin
-kubectl exec -n security -it statefulset/kanidm -- kanidm service-account api-token generate --readwrite kanidm-provision provision-token -D idm_admin
+just kanidm onboard <username> "<Display Name>" <email>
 ```
 
-Store the generated token in 1Password as item **`kanidm-provision`**, field
-`token`. The `ExternalSecret` `kanidm-provision-token` picks it up within
-1h (annotate `force-sync` to speed up); the `provision` controller decrashloops.
-
-### 3. Create the groups and the first user
-
-```bash
-kubectl exec -n security -it statefulset/kanidm -- kanidm group create users -D idm_admin
-kubectl exec -n security -it statefulset/kanidm -- kanidm group create admins -D idm_admin
-kubectl exec -n security -it statefulset/kanidm -- kanidm person create <username> "<Display Name>" -D idm_admin
-kubectl exec -n security -it statefulset/kanidm -- kanidm person update <username> --mail "<email>" -D idm_admin
-kubectl exec -n security -it statefulset/kanidm -- kanidm group add-members users <username> -D idm_admin
-kubectl exec -n security -it statefulset/kanidm -- kanidm group add-members admins <username> -D idm_admin
-kubectl exec -n security -it statefulset/kanidm -- kanidm group add-members idm_admins <username> -D idm_admin
-kubectl exec -n security -it statefulset/kanidm -- kanidm person credential create-reset-token <username> -D idm_admin
-```
-
-Enrol a password and/or passkey via the printed reset URL.
+Other recipes: `bulk people.csv`, `reset <user>`, `group-add`, `group-rm`,
+`members`, `list`, `get`.
 
 ## Troubleshooting
 
