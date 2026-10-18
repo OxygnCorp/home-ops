@@ -31,17 +31,22 @@ created by external-dns).
 
 ### 1. Recover the built-in admin accounts
 
-After first deployment:
+After first deployment (`recover-account` sets a **generated password** on the
+account — Kanidm 1.11 prints `new_password: "…"` and no URL; the `/ui/reset`
+token flow only applies to `person` accounts):
 
 ```bash
 kubectl exec -n security -it statefulset/kanidm -- kanidmd recover-account admin
 kubectl exec -n security -it statefulset/kanidm -- kanidmd recover-account idm_admin
 ```
 
-Log in with each recovery token and set a real password via the web UI at
-`https://idm.oxygn.dev/ui/reset`.
+Log in at `https://idm.oxygn.dev` with each account and the printed
+`new_password`, then change the password from the UI (credentials menu) and
+enroll a passkey.
 
 ### 2. Create the provision service account
+
+The `kanidm` CLI prompts for the `idm_admin` password set above:
 
 ```bash
 kubectl exec -n security -it statefulset/kanidm -- kanidm service-account create kanidm-provision "Kanidm Provision" idm_admins -D idm_admin
