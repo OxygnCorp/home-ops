@@ -34,12 +34,12 @@ spec:
       DOMAIN: ${DOMAIN}
       DISPLAY_NAME: ${OIDC_DISPLAY_NAME}
       CALLBACK: ${OIDC_CALLBACK}
-      ORIGIN: ${OIDC_ORIGIN:=/}
-      SHORT_USERNAME: ${OIDC_SHORT_USERNAME:=false}
+      ORIGIN: ${q:='}${OIDC_ORIGIN:=/}${q:='}
+      SHORT_USERNAME: ${q:='}${OIDC_SHORT_USERNAME:=false}${q:='}
       GROUP: "${OIDC_GROUP:=users}"
-      SCOPES: "${OIDC_SCOPES:=[\"openid\", \"profile\", \"email\", \"groups\"]}"
-      CLIENT_ID_KEY: ${OIDC_CLIENT_ID_KEY:=client-id}
-      CLIENT_SECRET_KEY: ${OIDC_CLIENT_SECRET_KEY:=client-secret}
+      SCOPES: ${q:='}${OIDC_SCOPES:=["openid", "profile", "email", "groups"]}${q:='}
+      CLIENT_ID_KEY: "${OIDC_CLIENT_ID_KEY:=client-id}"
+      CLIENT_SECRET_KEY: "${OIDC_CLIENT_SECRET_KEY:=client-secret}"
   prune: true
   retryInterval: 2m
   sourceRef:
