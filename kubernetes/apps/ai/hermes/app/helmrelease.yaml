@@ -97,9 +97,23 @@ spec:
               GATEWAY_HEALTH_URL: http://localhost:8642
               # Explicit public URL: used verbatim for the OAuth redirect_uri
               # (https://hermes.oxygn.dev/auth/callback, registered strict in
-              # the Authentik blueprint) instead of request-header
+              # Kanidm by the provision controller) instead of request-header
               # reconstruction behind Envoy
               HERMES_DASHBOARD_PUBLIC_URL: https://hermes.oxygn.dev
+              # Dashboard OIDC (self-hosted provider plugin; env vars win over
+              # config.yaml). The kanidm-provision controller provisions the
+              # OAuth2 client and writes the secret into this namespace.
+              HERMES_DASHBOARD_OIDC_ISSUER: https://idm.oxygn.dev/oauth2/openid/hermes
+              HERMES_DASHBOARD_OIDC_CLIENT_ID:
+                valueFrom:
+                  secretKeyRef:
+                    name: kanidm-hermes-oidc
+                    key: client-id
+              HERMES_DASHBOARD_OIDC_CLIENT_SECRET:
+                valueFrom:
+                  secretKeyRef:
+                    name: kanidm-hermes-oidc
+                    key: client-secret
               TZ: Europe/Paris
             envFrom:
               - secretRef:
