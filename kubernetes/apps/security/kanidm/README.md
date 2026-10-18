@@ -15,6 +15,14 @@ app-template`):
   (`kanidm-provision` service-account token), and writes each client's
   `client-id` / `client-secret` into the app's namespace
   (Secret `kanidm-${APP}-oidc`, referenced by the app's `SecurityPolicy`).
+  The pinned digest is the sidecar build (`src/bin/sidecar/k8s.rs`), the
+  variant running in production in eleboucher's homelab against Kanidm
+  1.11.x; its binary carries the k8s watcher, the `kanidm-${APP}-oidc`
+  secret naming and the `/_basic_secret` API path (binary-verified).
+  Runs under its own ServiceAccount (cluster-wide create/patch Secrets,
+  namespaced read of ConfigMaps in `security`) — the `kanidm` server pod
+  itself runs without a token. Upstream publishes on Docker Hub only
+  (fallback registry per the repo image policy — no GHCR mirror exists).
 
 Public endpoint: `https://idm.oxygn.dev` (envoy-external; the DNS record is
 created by external-dns).

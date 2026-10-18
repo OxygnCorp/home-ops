@@ -18,12 +18,22 @@ spec:
       retries: 3
   values:
     defaultPodOptions:
-      # The provision controller watches ConfigMaps cluster-wide
-      automountServiceAccountToken: true
+      # No token for the internet-facing server pod; only `provision` gets one
+      automountServiceAccountToken: false
+    serviceAccount:
+      # Dedicated SAs: the kanidm server pod runs without a token; the
+      # provisioner gets its own identity (cluster-wide create/patch Secrets,
+      # namespaced read of ConfigMaps); bound via the rbac block below
+      kanidm:
+        forceRename: kanidm
+      provision:
+        forceRename: provision
     controllers:
       kanidm:
         type: statefulset
         replicas: 1
+        serviceAccount:
+          identifier: kanidm
         pod:
           annotations:
             reloader.stakater.com/auto: "true"
@@ -73,7 +83,12 @@ spec:
                 drop:
                   - ALL
       provision:
+        serviceAccount:
+          identifier: provision
         pod:
+          # SA identifier matches the controller name — pods run as the
+          # `provision` ServiceAccount (see serviceAccount + rbac below)
+          automountServiceAccountToken: true
           securityContext:
             fsGroup: 1000
             fsGroupChangePolicy: OnRootMismatch
@@ -157,6 +172,7 @@ spec:
               - path: /data/icons
     rbac:
       roles:
+        # Secrets must be creatable in every app namespace
         kanidm-write-secret:
           type: ClusterRole
           rules:
@@ -167,8 +183,9 @@ spec:
               verbs:
                 - "create"
                 - "patch"
+        # ConfigMap watch is scoped to the security namespace
         kanidm-read-cm:
-          type: ClusterRole
+          type: Role
           rules:
             - apiGroups:
                 - ""
@@ -184,10 +201,12 @@ spec:
           roleRef:
             identifier: kanidm-write-secret
           subjects:
-            - identifier: kanidm
+            - identifier: provision
+              serviceAccount: provision
         kanidm-read-cm:
-          type: ClusterRoleBinding
+          type: RoleBinding
           roleRef:
             identifier: kanidm-read-cm
           subjects:
-            - identifier: kanidm
+            - identifier: provision
+              serviceAccount: provision

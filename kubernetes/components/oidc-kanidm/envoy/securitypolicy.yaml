@@ -22,6 +22,8 @@ spec:
     clientID: ${APP}
     clientSecret:
       name: kanidm-${APP}-oidc
-    redirectURL: https://${SUBDOMAIN}.oxygn.dev${OIDC_CALLBACK}
+    redirectURL: https://${SUBDOMAIN}.${DOMAIN}${OIDC_CALLBACK}
     logoutPath: /logout
-    scopes: ["openid", "email", "profile", "groups"]
+    # Keep in sync with the OIDC_SCOPES default in base/ks.yaml (the SecurityPolicy
+    # cannot be parameterized with a JSON array — see the component README)
+    scopes: ["openid", "profile", "email", "groups"]

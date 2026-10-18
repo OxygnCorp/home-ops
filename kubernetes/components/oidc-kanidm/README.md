@@ -9,7 +9,7 @@ ConfigMaps + `${APP}-oidc` secrets from 1Password).
 
 | Path     | Kind                | Contents                                                                                                                            |
 |----------|---------------------|--------------------------------------------------------------------------------------------------------------------------------------|
-| `base/`  | shared template     | Flux Kustomization `kanidm-${APP}-oidc` (namespace `security`, `dependsOn`: kanidm) applying the kanidm-provision ConfigMap for this app. Included transitively by every consumer below. |
+| `base/`  | shared template     | Flux Kustomization `kanidm-${APP}-oidc` (created in the consumer's namespace, `spec.targetNamespace: security`, `dependsOn`: kanidm) applying the kanidm-provision ConfigMap for this app. Included transitively by every consumer below. |
 | `envoy/` | kustomize Component | `../base` + Envoy Gateway `SecurityPolicy` `${APP}-oidc` (OIDC in front of the app's HTTPRoute). Included via `spec.components`.       |
 
 ## What gets created

@@ -1,9 +1,10 @@
 ---
 # yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kustomize.toolkit.fluxcd.io/kustomization_v1.json
 # Nested Flux Kustomization: applies the kanidm provisioning ConfigMap for
-# this app (the kanidm-provision controller in apps/security/kanidm watches
+# this app (the provision controller in apps/security/kanidm watches
 # ConfigMaps labeled kanidm_config=1 in the security namespace). Included
-# through components/oidc-kanidm/{envoy,base} from an app's ks.yaml.
+# through components/oidc-kanidm/{envoy,base} from an app's ks.yaml; the
+# object itself is created in the consumer's namespace and targets security.
 #
 # Required substitutes (set them on the consuming ks.yaml — the component
 # renders a dry null value otherwise):
