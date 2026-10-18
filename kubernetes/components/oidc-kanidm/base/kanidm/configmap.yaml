@@ -1,0 +1,46 @@
+---
+# Declarative OAuth2 client state for kanidm-provision. The controller
+# watches ConfigMaps labeled kanidm_config=1 in namespace security; every
+# ${VAR} is substituted by the nested kanidm-${APP}-oidc Flux Kustomization
+# (postBuild in ../ks.yaml). Built after eleboucher/homelab
+# components/oidc/base/kanidm/configmap.yaml, minus the claim-map extras
+# (YAGNI — a consumer can extend state via kanidm CLI until needed).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kanidm-${APP}-oidc
+  labels:
+    kanidm_config: "1"
+data:
+  targetNamespace: "${APP_NAMESPACE}"
+  state.json: |
+    {
+      "systems": {
+        "oauth2": {
+          "${APP}": {
+            "displayName": "${DISPLAY_NAME}",
+            "originUrl": ["https://${SUBDOMAIN}.${DOMAIN}${CALLBACK}"],
+            "originLanding": "${ORIGIN}",
+            "removeOrphanedClaimMaps": true,
+            "public": false,
+            "preferShortUsername": ${SHORT_USERNAME},
+            "scopeMaps": {
+              "${GROUP}": ${SCOPES}
+            }
+          }
+        }
+      }
+    }
+  extra.json: |
+    {
+      "systems": {
+        "oauth2": {
+          "${APP}": {
+            "k8s": {
+              "clientIdKey": "${CLIENT_ID_KEY}",
+              "clientSecretKey": "${CLIENT_SECRET_KEY}"
+            }
+          }
+        }
+      }
+    }
