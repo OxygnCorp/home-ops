@@ -14,22 +14,20 @@ concurrency:
 permissions:
   contents: read
 
-jobs:
-  filter:
-    name: Image Pull - Filter
-    runs-on: ubuntu-latest
-    outputs:
-      changed-files: ${{ steps.changed-files.outputs.changed_files }}
-    steps:
-      - name: Get Changed Files
-        id: changed-files
-        uses: bjw-s-labs/action-changed-files@147be9638332cf68fd60714a610509d7a9360d60 # v0.7.0
-        with:
-          patterns: kubernetes/**/*
+env:
+  # talosctl is pinned to the cluster's Talos version. This annotation makes
+  # the pin join the Renovate "talos" group (groups.json5) together with the
+  # factory installer images (talos/main/machineconfig.yaml.j2), so Renovate
+  # bumps it in the same PR as a Talos upgrade.
+  # IMPORTANT: keep the `TALOS_VERSION: v...` format — the annotated-deps
+  # custom manager (.renovate/customManagers.json5) only captures a value
+  # preceded by ": " or "=" on the line under the marker (the former inline
+  # `tool_versions:` pin `talosctl 1.14.1` was never captured, hence the drift).
+  # renovate: datasource=custom.talos-factory depName=siderolabs/talos
+  TALOS_VERSION: v1.14.4
 
+jobs:
   extract:
-    if: ${{ needs.filter.outputs.changed-files != '[]' }}
-    needs: filter
     name: Image Pull - Extract Images
     runs-on: ubuntu-latest
     outputs:
@@ -60,7 +58,10 @@ jobs:
           echo 'EOF' >> $GITHUB_OUTPUT
 
   pull:
-    if: ${{ needs.extract.outputs.images != '[]' }}
+    # Fork guard: only same-repo PRs may trigger pulls on the self-hosted
+    # runner. `flate diff images` returns [] when nothing under kubernetes/
+    # changed, which gates this job without a separate changed-files job.
+    if: ${{ needs.extract.outputs.images != '[]' && github.event.pull_request.head.repo.full_name == github.repository }}
     needs: extract
     name: Image Pull - Pull Images
     runs-on: ${{ github.event.repository.name }}-runner
@@ -76,29 +77,30 @@ jobs:
           # renovate: datasource=github-releases depName=jdx/mise
           version: v2026.10.11
           cache: false
-          # No checkout in this job: pin the tool inline so it is activated
-          # (install_args alone installs the binary but leaves the shim unset).
-          tool_versions: |
-            # renovate: datasource=github-releases depName=siderolabs/talos
-            talosctl 1.14.1
+          # No checkout in this job: mise exec auto-installs the exact pinned
+          # version from an empty directory (TALOS_VERSION env, above).
+          install: false
 
       - name: Pull Image
         env:
           IMAGE: ${{ matrix.image }}
-        run: talosctl --nodes "$NODE" image pull "$IMAGE"
+          MISE_GITHUB_TOKEN: ${{ github.token }}
+        run: mise exec "talosctl@${TALOS_VERSION}" -- talosctl --nodes "$NODE" image pull "$IMAGE"
 
   success:
     if: ${{ !cancelled() }}
-    needs: pull
+    needs:
+      - extract
+      - pull
     name: Image Pull - Success
     runs-on: ubuntu-latest
     steps:
-      - name: Any jobs failed?
-        if: ${{ contains(needs.*.result, 'failure') }}
+      - name: Any jobs failed or cancelled?
+        if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}
         run: exit 1
 
       - name: All jobs passed or skipped?
-        if: ${{ !(contains(needs.*.result, 'failure')) }}
+        if: ${{ !(contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')) }}
         env:
           RESULTS: ${{ toJSON(needs.*.result) }}
         run: echo "All jobs passed or skipped" && echo "$RESULTS"
