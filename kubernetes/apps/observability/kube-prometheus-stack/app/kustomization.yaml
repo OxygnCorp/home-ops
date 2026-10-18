@@ -6,7 +6,6 @@ resources:
   - ./alertmanagerconfig.yaml
   - ./prometheusrule.yaml
   - ./externalsecret.yaml
-  - ./externalsecret-headroom.yaml
   - ./grafanadashboard.yaml
   - ./helmrelease.yaml
   - ./ocirepository.yaml
