@@ -1,0 +1,212 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: &app kanidm
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: *app
+  install:
+    remediation:
+      retries: -1
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  values:
+    defaultPodOptions:
+      # No token for the internet-facing server pod; only `provision` gets one
+      automountServiceAccountToken: false
+    serviceAccount:
+      # Dedicated SAs: the kanidm server pod runs without a token; the
+      # provisioner gets its own identity (cluster-wide create/patch Secrets,
+      # namespaced read of ConfigMaps); bound via the rbac block below
+      kanidm:
+        forceRename: kanidm
+      provision:
+        forceRename: provision
+    controllers:
+      kanidm:
+        type: statefulset
+        replicas: 1
+        serviceAccount:
+          identifier: kanidm
+        pod:
+          annotations:
+            reloader.stakater.com/auto: "true"
+          securityContext:
+            fsGroup: 1000
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1000
+            runAsNonRoot: true
+            runAsUser: 1000
+        containers:
+          app:
+            image:
+              repository: docker.io/kanidm/server
+              tag: 1.11.2@sha256:e45f00bd354c1fc1c06a4be484b4e87b094c431e78280f1d19e911815e63efb5
+            env:
+              KANIDM_ADMIN_BIND_PATH: /var/run/kanidmd.sock
+              KANIDM_BINDADDRESS: "[::]:8443"
+              KANIDM_DB_PATH: /data/kanidm.db
+              KANIDM_DOMAIN: idm.oxygn.dev
+              KANIDM_LDAPBINDADDRESS: "[::]:3636"
+              KANIDM_ORIGIN: https://idm.oxygn.dev
+              KANIDM_TLS_CHAIN: /certs/tls.crt
+              KANIDM_TLS_KEY: /certs/tls.key
+            resources:
+              requests:
+                cpu: 10m
+              limits:
+                memory: 144Mi
+            probes:
+              liveness: &probe
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /status
+                    port: &port 8443
+                    scheme: HTTPS
+                  initialDelaySeconds: 0
+                  periodSeconds: 10
+                  timeoutSeconds: 1
+                  failureThreshold: 3
+              readiness: *probe
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities:
+                drop:
+                  - ALL
+      provision:
+        serviceAccount:
+          identifier: provision
+        pod:
+          # SA identifier matches the controller name — pods run as the
+          # `provision` ServiceAccount (see serviceAccount + rbac below)
+          automountServiceAccountToken: true
+          securityContext:
+            fsGroup: 1000
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1000
+            runAsNonRoot: true
+            runAsUser: 1000
+        containers:
+          app:
+            image:
+              # Provision declarative OAuth2 clients: watches ConfigMaps
+              # labeled kanidm_config=1 in security and writes each client's
+              # secret into the app namespace. Pinned digest is the build
+              # running in production in eleboucher's homelab against
+              # Kanidm 1.11.x (validated pair).
+              repository: ghcr.io/m00nwtchr/kanidm-provision
+              tag: main@sha256:1271844f1db6c3b7656f8954595591ab2c968b005ac4420127343fcb6a7d190f
+            env:
+              KANIDM_INSTANCE: https://idm.oxygn.dev
+              KANIDM_NAMESPACE: security
+              KANIDM_TOKEN:
+                valueFrom:
+                  secretKeyRef:
+                    name: kanidm-provision-token
+                    key: token
+            resources:
+              requests:
+                cpu: 10m
+              limits:
+                memory: 100Mi
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                  - ALL
+    service:
+      app:
+        controller: kanidm
+        ports:
+          http:
+            port: *port
+          ldap:
+            port: 3636
+    route:
+      app:
+        annotations:
+          gatus.home-operations.com/endpoint: |-
+            conditions: ["[STATUS] == 200"]
+        hostnames:
+          - idm.oxygn.dev
+        parentRefs:
+          - name: envoy-external
+            namespace: network
+    persistence:
+      # Created by components/kopiur/backup (miroir-slow, hourly snapshots)
+      data:
+        existingClaim: "{{ .Release.Name }}"
+        advancedMounts:
+          kanidm:
+            app:
+              - path: /data
+                subPath: data
+      certs:
+        type: secret
+        name: idm-oxygn-dev-tls
+        defaultMode: 400
+        advancedMounts:
+          kanidm:
+            app:
+              - path: /certs
+      empty:
+        type: emptyDir
+        globalMounts:
+          - path: /var/run
+      icon-cache:
+        accessMode: ReadWriteOnce
+        size: 1Gi
+        suffix: icon-cache
+        advancedMounts:
+          provision:
+            app:
+              - path: /data/icons
+    rbac:
+      roles:
+        # Secrets must be creatable in every app namespace
+        kanidm-write-secret:
+          type: ClusterRole
+          rules:
+            - apiGroups:
+                - ""
+              resources:
+                - "secrets"
+              verbs:
+                - "create"
+                - "patch"
+        # ConfigMap watch is scoped to the security namespace
+        kanidm-read-cm:
+          type: Role
+          rules:
+            - apiGroups:
+                - ""
+              resources:
+                - "configmaps"
+              verbs:
+                - "get"
+                - "list"
+                - "watch"
+      bindings:
+        kanidm-write-secret:
+          type: ClusterRoleBinding
+          roleRef:
+            identifier: kanidm-write-secret
+          subjects:
+            - identifier: provision
+              serviceAccount: provision
+        kanidm-read-cm:
+          type: RoleBinding
+          roleRef:
+            identifier: kanidm-read-cm
+          subjects:
+            - identifier: provision
+              serviceAccount: provision

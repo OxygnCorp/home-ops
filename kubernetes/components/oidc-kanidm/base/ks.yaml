@@ -1,0 +1,51 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+# Nested Flux Kustomization: applies the kanidm provisioning ConfigMap for
+# this app (the provision controller in apps/security/kanidm watches
+# ConfigMaps labeled kanidm_config=1 in the security namespace). Included
+# through components/oidc-kanidm/{envoy,base} from an app's ks.yaml; the
+# object itself is created in the consumer's namespace and targets security.
+#
+# Required substitutes (set them on the consuming ks.yaml — the component
+# renders a dry null value otherwise):
+#   APP, APP_NAMESPACE, SUBDOMAIN, DOMAIN, OIDC_DISPLAY_NAME, OIDC_CALLBACK
+# Optional: OIDC_ORIGIN, OIDC_SHORT_USERNAME, OIDC_GROUP, OIDC_SCOPES,
+#   OIDC_CLIENT_ID_KEY, OIDC_CLIENT_SECRET_KEY.
+# Defaults must stay free of ${} nesting — Flux's envsubst expands := defaults
+# exactly once (nested placeholders render as null, verified via flate).
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: kanidm-${APP}-oidc
+spec:
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: ${APP}
+  dependsOn:
+    - name: kanidm
+      namespace: security
+  interval: 1h
+  path: ./kubernetes/components/oidc-kanidm/base/kanidm
+  postBuild:
+    substitute:
+      APP: ${APP}
+      APP_NAMESPACE: ${APP_NAMESPACE}
+      SUBDOMAIN: ${SUBDOMAIN}
+      DOMAIN: ${DOMAIN}
+      DISPLAY_NAME: ${OIDC_DISPLAY_NAME}
+      CALLBACK: ${OIDC_CALLBACK}
+      ORIGIN: ${OIDC_ORIGIN:=/}
+      SHORT_USERNAME: ${OIDC_SHORT_USERNAME:=false}
+      GROUP: "${OIDC_GROUP:=users}"
+      SCOPES: "${OIDC_SCOPES:=[\"openid\", \"profile\", \"email\", \"groups\"]}"
+      CLIENT_ID_KEY: ${OIDC_CLIENT_ID_KEY:=client-id}
+      CLIENT_SECRET_KEY: ${OIDC_CLIENT_SECRET_KEY:=client-secret}
+  prune: true
+  retryInterval: 2m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  targetNamespace: security
+  timeout: 5m
+  wait: false
