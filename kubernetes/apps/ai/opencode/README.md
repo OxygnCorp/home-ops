@@ -6,7 +6,8 @@ plugin are shared by every client that connects to the same server.
 
 ## Server
 
-- External UI: `opencode.oxygn.dev` (envoy-external, Authentik OIDC) — the v2
+- External UI: `opencode.oxygn.dev` (envoy-external, Kanidm OIDC via
+  `components/oidc-kanidm/envoy`) — the v2
   web app adds its own Basic login on top (`opencode` + `OPENCODE_SERVER_PASSWORD`)
 - Internal API: `opencode-api.oxygn.dev` (envoy-internal, no gateway policy —
   the v2 server enforces Basic auth itself)

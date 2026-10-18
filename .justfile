@@ -16,6 +16,10 @@ mod kube "kubernetes"
 [group: 'Talos']
 mod talos "talos"
 
+# Kanidm IdP Recipes
+[group: 'Kanidm']
+mod kanidm "kanidm"
+
 [private]
 default:
     just -l

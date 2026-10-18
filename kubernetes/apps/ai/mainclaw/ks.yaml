@@ -10,9 +10,9 @@ spec:
       app.kubernetes.io/name: mainclaw
   components:
     - ../../../../components/kopiur/backup
-    - ../../../../components/oidc/envoy
+    - ../../../../components/oidc-kanidm/envoy
   dependsOn:
-    - name: authentik
+    - name: kanidm
       namespace: security
     - name: kopiur
       namespace: kopiur-system
@@ -23,8 +23,12 @@ spec:
   postBuild:
     substitute:
       APP: mainclaw
+      APP_NAMESPACE: ai
+      DOMAIN: oxygn.dev
       KOPIUR_CAPACITY: 20Gi
       KOPIUR_PUID: "1000"
+      OIDC_CALLBACK: /oauth2/callback
+      OIDC_DISPLAY_NAME: MainClaw
       OIDC_ROUTE_NAME: mainclaw-main
       SUBDOMAIN: mainclaw
   prune: true

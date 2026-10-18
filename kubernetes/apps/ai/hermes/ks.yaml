@@ -10,20 +10,26 @@ spec:
       app.kubernetes.io/name: *app
   components:
     - ../../../../components/kopiur/backup
+    - ../../../../components/oidc-kanidm
   dependsOn:
+    - name: kanidm
+      namespace: security
     - name: litellm
     - name: memini
     - name: kopiur
       namespace: kopiur-system
-    - name: authentik
-      namespace: security
   interval: 1h
   path: ./kubernetes/apps/ai/hermes/app
   postBuild:
     substitute:
       APP: *app
+      APP_NAMESPACE: ai
+      DOMAIN: oxygn.dev
       KOPIUR_CAPACITY: 10Gi
       KOPIUR_PUID: "10000"
+      OIDC_CALLBACK: /auth/callback
+      OIDC_DISPLAY_NAME: Hermes
+      SUBDOMAIN: hermes
   prune: true
   sourceRef:
     kind: GitRepository
