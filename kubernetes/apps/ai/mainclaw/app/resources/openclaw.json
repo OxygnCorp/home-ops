@@ -253,9 +253,9 @@
         "workspace": "/home/node/.openclaw/workspace-finance",
         "agentDir": "/home/node/.openclaw/agents/finance/agent",
         "model": {
-          "primary": "litellm/dsv41f",
+          "primary": "litellm/mimo-v2.6-pro",
           "fallbacks": [
-            "litellm/go-minimax-m3"
+            "litellm/dsv41f"
           ]
         },
         "heartbeat": {
