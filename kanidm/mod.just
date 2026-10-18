@@ -30,7 +30,7 @@ cli *args:
     set -euo pipefail
     export KANIDM_URL="{{ KANIDM_URL }}"
     export KANIDM_NAME=idm_admin
-    export KANIDM_PASSWORD="${KANIDM_PASSWORD:-$(op read 'op://Private/kanidm/idm_admin_password')}"
+    export KANIDM_PASSWORD="${KANIDM_PASSWORD:-$(op item get kanidm --fields idm_admin_password --reveal 2>/dev/null || op read 'op://Private/kanidm/idm_admin_password')}"
     if command -v kanidm >/dev/null 2>&1; then
       kanidm "$@" {{ args }}
     else
@@ -48,22 +48,38 @@ cli *args:
 [script]
 bootstrap:
     set -euo pipefail
-    : "${OP_SESSION:=}"   # needs an authenticated `op` CLI
     log() { just log info "$@"; }
+
+    # Accepts JSON {"output":"..."} (kanidmd scripting / kanidm -o json),
+    # human `new_password: "..."` (kanidmd recover-account tracing line), or
+    # a bare opaque token as a last resort.
+    extract_secret() {
+      local raw="$1" v=""
+      v="$(printf '%s' "$raw" | tr -d '\r' | sed -n 's/.*"output": *"\([^"]*\)".*/\1/p' | tail -1)"
+      [ -n "$v" ] || v="$(printf '%s' "$raw" | tr -d '\r' | sed -n 's/.*new_password: *"\([^"]*\)".*/\1/p' | tail -1)"
+      [ -n "$v" ] || v="$(printf '%s' "$raw" | tr -d '\r' | grep -oE '[A-Za-z0-9._-]{32,}' | tail -1)"
+      printf '%s' "$v"
+    }
 
     log "recovering built-in accounts"
     recover() {
-      kubectl exec -n security statefulset/kanidm -- kanidmd recover-account "$1" \
-        | sed -n 's/.*"output":"\([^"]*\)".*/\1/p'
+      # NB: the top-level `kanidmd recover-account` prints via tracing (human);
+      # `kanidmd scripting recover-account` is the machine-parsable JSON path.
+      kubectl exec -n security statefulset/kanidm -- kanidmd scripting recover-account "$1"
     }
-    admin_pw="$(recover admin)"
-    idm_pw="$(recover idm_admin)"
-    [ -n "$admin_pw" ] && [ -n "$idm_pw" ] || { echo "failed to parse recover-account output" >&2; exit 1; }
+    admin_raw="$(recover admin)"
+    idm_raw="$(recover idm_admin)"
+    admin_pw="$(extract_secret "$admin_raw")"
+    idm_pw="$(extract_secret "$idm_raw")"
+    if [ -z "$admin_pw" ] || [ -z "$idm_pw" ]; then
+      echo "failed to parse recover-account output:" >&2
+      printf 'admin: %s\nidm_admin: %s\n' "$admin_raw" "$idm_raw" >&2
+      exit 1
+    fi
 
     log "storing break-glass passwords in 1Password (item kanidm)"
     op item create kanidm --category 'Login' \
-      admin_password="$admin_pw" idm_admin_password="$idm_pw" \
-      --vault Private >/dev/null 2>&1 \
+      admin_password="$admin_pw" idm_admin_password="$idm_pw" >/dev/null 2>&1 \
       || op item edit kanidm admin_password="$admin_pw" idm_admin_password="$idm_pw" >/dev/null
 
     log "creating service-account kanidm-provision"
@@ -77,13 +93,16 @@ bootstrap:
     kcli group add-members idm_admins kanidm-provision || true
     kcli group create users || true
     kcli group create admins || true
-    token="$(kcli service-account api-token generate --readwrite kanidm-provision provision-token \
-      | sed -n 's/.*"output":"\([^"]*\)".*/\1/p' | tail -1)"
-    [ -n "$token" ] || { echo "failed to parse api-token output" >&2; exit 1; }
+    token_raw="$(kcli service-account api-token generate --readwrite kanidm-provision provision-token 2>/dev/null)"
+    token="$(extract_secret "$token_raw")"
+    if [ -z "$token" ]; then
+      echo "failed to parse api-token output:" >&2
+      printf '%s\n' "$token_raw" >&2
+      exit 1
+    fi
 
     log "storing provision token in 1Password (item kanidm-provision)"
-    op item create kanidm-provision --category 'API Credential' token="$token" \
-      --vault Private >/dev/null 2>&1 \
+    op item create kanidm-provision --category 'API Credential' token="$token" >/dev/null 2>&1 \
       || op item edit kanidm-provision token="$token" >/dev/null
 
     log "syncing ExternalSecret kanidm-provision-token"
