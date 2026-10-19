@@ -116,11 +116,9 @@ bootstrap:
       exit 1
     fi
 
-    log "storing provision token (1Password + Secret fallback)"
-    if ! op item create --title kanidm-provision --category 'API Credential' --vault "$OP_VAULT" \
-        token="$token" >/dev/null 2>&1 \
-       && ! op item edit --vault "$OP_VAULT" kanidm-provision token="$token" >/dev/null 2>&1; then
-      echo "WARNING: cannot write to 1Password — create item kanidm-provision (field token) manually:" >&2
+    log "storing provision token in 1Password (item kanidm, field provision_token)"
+    if ! op item edit --vault "$OP_VAULT" kanidm provision_token="$token" >/dev/null 2>&1; then
+      echo "WARNING: cannot write to 1Password — add field provision_token to item kanidm manually:" >&2
       echo "  token=$token" >&2
     fi
     # Always materialise the Secret directly so the provision controller can

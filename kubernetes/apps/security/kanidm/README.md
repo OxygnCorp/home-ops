@@ -47,7 +47,7 @@ What it does:
    (CLI runs locally if installed, otherwise in a throwaway
    `quay.io/kanidm/kanidm-tools` pod; auth via the hidden `KANIDM_PASSWORD`
    global — non-interactive) → stores the token in the 1Password item
-   **`kanidm-provision`** (`token`).
+   **`kanidm`** (`provision_token` field).
 3. Force-syncs the `kanidm-provision-token` ExternalSecret and waits for the
    `kanidm-provision` deployment to roll out.
 
@@ -63,8 +63,9 @@ Other recipes: `bulk people.csv`, `reset <user>`, `group-add`, `group-rm`,
 
 ## Troubleshooting
 
-- `provision` pod crashlooping → `kanidm-provision-token` missing: create the
-  1Password item (step 2) and `kubectl -n security annotate externalsecret
+- `provision` pod crashlooping → `kanidm-provision-token` missing: add the
+  `provision_token` field to the 1Password item `kanidm`, then
+  `kubectl -n security annotate externalsecret
   kanidm-provision-token force-sync=$(date +%s)`.
 - Envoy discovery failures during Kanidm TLS-secret rollouts: the
   `SecurityPolicy`s produced by `components/oidc-kanidm/envoy` pin the
