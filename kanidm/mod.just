@@ -87,12 +87,17 @@ bootstrap:
 
     log "storing break-glass passwords in 1Password (item kanidm)"
     OP_VAULT="${KANIDM_OP_VAULT:-$(op vault list --format json 2>/dev/null | sed -n 's/.*"id": *"\([^"]*\)".*/\1/p' | head -1)}"
-    if ! op item create --category "API Credential" --vault "$OP_VAULT" --title kanidm \
-         ADMIN_PASSWORD="$admin_pw" IDM_ADMIN_PASSWORD="$idm_pw" >/dev/null 2>&1 \
-       && ! op item edit --vault "$OP_VAULT" kanidm \
-         ADMIN_PASSWORD="$admin_pw" IDM_ADMIN_PASSWORD="$idm_pw" >/dev/null 2>&1; then
-      echo "WARNING: cannot write to 1Password (vault: ${OP_VAULT:-?}) — no write permission or no session." >&2
-      echo "" >&2
+    # NB: op item create allows duplicate titles — upsert (edit if present,
+    # create otherwise) so repeated bootstraps never fork the item
+    if op item get kanidm --vault "$OP_VAULT" >/dev/null 2>&1; then
+      op item edit --vault "$OP_VAULT" kanidm \
+        ADMIN_PASSWORD="$admin_pw" IDM_ADMIN_PASSWORD="$idm_pw" >/dev/null 2>&1 \
+        || echo "WARNING: op item edit failed (vault: $OP_VAULT)" >&2
+    else
+      op item create --category "API Credential" --vault "$OP_VAULT" --title kanidm \
+        ADMIN_PASSWORD="$admin_pw" IDM_ADMIN_PASSWORD="$idm_pw" >/dev/null 2>&1 \
+        || echo "WARNING: op item create failed (vault: $OP_VAULT)" >&2
+    fi
       echo "CLI (run with an op session that can write):" >&2
       echo "  op item create --category 'API Credential' --vault $OP_VAULT --title kanidm \\" >&2
       echo "    ADMIN_PASSWORD=$admin_pw IDM_ADMIN_PASSWORD=$idm_pw" >&2
