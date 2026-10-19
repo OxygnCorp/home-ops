@@ -20,7 +20,7 @@ data:
           "${APP}": {
             "displayName": "${DISPLAY_NAME}",
             "originUrl": ["https://${SUBDOMAIN}.${DOMAIN}${CALLBACK}"],
-            "originLanding": "${ORIGIN}",
+            "originLanding": "https://${SUBDOMAIN}.${DOMAIN}${ORIGIN}",
             "removeOrphanedClaimMaps": true,
             "public": false,
             "preferShortUsername": ${SHORT_USERNAME},
