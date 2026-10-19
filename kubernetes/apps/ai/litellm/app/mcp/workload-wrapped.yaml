@@ -160,7 +160,7 @@ spec:
       # Boot-time npm install + plain-binary child (no per-session npx): see
       # litellm-arr above for the npx cache race rationale.
       # renovate: datasource=npm depName=@doist/todoist-mcp
-      - npm install -g --no-audit --no-fund supergateway @doist/todoist-mcp@13.6.0 && exec supergateway --stdio todoist-mcp --outputTransport streamableHttp --streamableHttpPath /mcp --port 8020 --stateful --sessionTimeout 600000
+      - npm install -g --no-audit --no-fund supergateway @doist/todoist-mcp@13.6.1 && exec supergateway --stdio todoist-mcp --outputTransport streamableHttp --streamableHttpPath /mcp --port 8020 --stateful --sessionTimeout 600000
     # Tool exclusion happens on the CR itself (spec.params.disallowed_tools —
     # formerly handled by the toolhive VirtualMCPServer aggregation config),
     # not on the workload.
