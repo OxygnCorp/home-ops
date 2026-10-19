@@ -33,13 +33,13 @@ cli *args:
     export KANIDM_PASSWORD="${KANIDM_PASSWORD:-$(op item get kanidm --vault home-ops --fields idm_admin_password --reveal 2>/dev/null || op read 'op://home-ops/kanidm/idm_admin_password')}"
     if command -v kanidm >/dev/null 2>&1; then
       kanidm login >/dev/null 2>&1 || true
-      kanidm {{ quote(args) }}
+      kanidm {{ args }}
     else
       kubectl run -n security kanidm-cli-"$RANDOM" --rm -i --restart=Never --pod-running-timeout=5m \
         --env KANIDM_URL="$KANIDM_URL" --env KANIDM_NAME="$KANIDM_NAME" \
         --env KANIDM_PASSWORD="$KANIDM_PASSWORD" \
         --image={{ KANIDM_IMAGE }} --command -- \
-        sh -c 'kanidm login >/dev/null 2>&1 && exec kanidm "$@"' _ {{ quote(args) }}
+        sh -c 'kanidm login >/dev/null 2>&1 && exec kanidm "$@"' _ {{ args }}
     fi
 
 # ── bootstrap ────────────────────────────────────────────────────────────────
@@ -143,11 +143,25 @@ bootstrap:
 onboard user name email +groups="users":
     #!/usr/bin/env bash
     set -euo pipefail
-    just kanidm cli person create {{ user }} "{{ name }}"
-    just kanidm cli person update {{ user }} --mail {{ email }}
-    for g in {{ groups }}; do just kanidm cli group add-members "$g" {{ user }}; done
+    export KANIDM_URL="{{ KANIDM_URL }}" KANIDM_NAME=idm_admin
+    export KANIDM_PASSWORD="${KANIDM_PASSWORD:-$(op item get kanidm --vault home-ops --fields idm_admin_password --reveal 2>/dev/null || op read 'op://home-ops/kanidm/idm_admin_password')}"
+    kcli() {
+      if command -v kanidm >/dev/null 2>&1; then
+        kanidm login >/dev/null 2>&1 || true
+        kanidm "$@"
+      else
+        kubectl run -n security kanidm-cli-"$RANDOM" --rm -i --restart=Never --pod-running-timeout=5m \
+          --env KANIDM_URL="$KANIDM_URL" --env KANIDM_NAME="$KANIDM_NAME" \
+          --env KANIDM_PASSWORD="$KANIDM_PASSWORD" \
+          --image={{ KANIDM_IMAGE }} --command -- \
+          sh -c 'kanidm login >/dev/null 2>&1 && exec kanidm "$@"' _ "$@"
+      fi
+    }
+    kcli person create "{{ user }}" "{{ name }}"
+    kcli person update "{{ user }}" --mail "{{ email }}"
+    for g in {{ groups }}; do kcli group add-members "$g" "{{ user }}"; done
     echo "### reset link for {{ user }} ###"
-    just kanidm cli person credential create-reset-token {{ user }}
+    kcli person credential create-reset-token "{{ user }}"
 
 # Bulk onboard from CSV: username,Full Name,email,space-separated-groups
 [doc('Bulk onboard people from a CSV file')]
