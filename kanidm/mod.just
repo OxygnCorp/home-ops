@@ -86,8 +86,19 @@ bootstrap:
         admin_password="$admin_pw" idm_admin_password="$idm_pw" >/dev/null 2>&1 \
        && ! op item edit --vault "$OP_VAULT" kanidm \
         admin_password="$admin_pw" idm_admin_password="$idm_pw" >/dev/null 2>&1; then
-      echo "WARNING: cannot write to 1Password (vault: $OP_VAULT) — store these manually:" >&2
-      echo "  item kanidm:  admin_password=$admin_pw  idm_admin_password=$idm_pw" >&2
+      echo "WARNING: cannot write to 1Password (vault: ${OP_VAULT:-?}) — no write permission or no session." >&2
+      echo "" >&2
+      echo "CLI (run with an op session that can write, e.g. your user session):" >&2
+      echo "  op item create --category Login --vault $OP_VAULT --title kanidm \\" >&2
+      echo "    admin_password=$admin_pw idm_admin_password=$idm_pw" >&2
+      echo "  # (si l'item existe déjà :)" >&2
+      echo "  op item edit --vault $OP_VAULT kanidm admin_password=$admin_pw idm_admin_password=$idm_pw" >&2
+      echo "" >&2
+      echo "Manuellement :" >&2
+      echo "  1. 1Password → coffre $OP_VAULT → + New Item → Login → title : kanidm" >&2
+      echo "  2. Add Field → Text → label admin_password → valeur : $admin_pw" >&2
+      echo "  3. Add Field → Text → label idm_admin_password → valeur : $idm_pw" >&2
+      echo "" >&2
     fi
 
     log "creating service-account kanidm-provision"
@@ -118,8 +129,16 @@ bootstrap:
 
     log "storing provision token in 1Password (item kanidm, field provision_token)"
     if ! op item edit --vault "$OP_VAULT" kanidm provision_token="$token" >/dev/null 2>&1; then
-      echo "WARNING: cannot write to 1Password — add field provision_token to item kanidm manually:" >&2
-      echo "  token=$token" >&2
+      echo "WARNING: cannot write to 1Password (vault: ${OP_VAULT:-?}) — no write permission or no session." >&2
+      echo "" >&2
+      echo "CLI (run with an op session that can write):" >&2
+      echo "  op item edit --vault $OP_VAULT kanidm provision_token=$token" >&2
+      echo "" >&2
+      echo "Manuellement :" >&2
+      echo "  1. 1Password → coffre $OP_VAULT → item kanidm" >&2
+      echo "  2. Add Field → Text → label provision_token → valeur :" >&2
+      echo "     $token" >&2
+      echo "" >&2
     fi
     # Always materialise the Secret directly so the provision controller can
     # start even before the 1Password item exists (the ExternalSecret adopts
