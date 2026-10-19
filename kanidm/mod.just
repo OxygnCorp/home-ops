@@ -68,25 +68,6 @@ bootstrap:
       printf '%s' "$v"
     }
 
-    # Best-effort 1Password write; on failure print the CLI commands AND the
-    # manual steps so the values can be stored by hand.
-    op_store() {
-      local desc="$1" create_cmd="$2" edit_cmd="$3"; shift 3
-      if op item create $create_cmd >/dev/null 2>&1 \
-         || op item edit $edit_cmd >/dev/null 2>&1; then
-        return 0
-      fi
-      echo "WARNING: cannot write to 1Password (vault: ${OP_VAULT:-?}) — no write permission or no session." >&2
-      echo "" >&2
-      echo "CLI (run with an op session that can write):" >&2
-      echo "  $create_cmd" >&2
-      echo "  # (si l'item existe déjà :)" >&2
-      echo "  $edit_cmd" >&2
-      echo "" >&2
-      echo "Manuellement :" >&2
-      for step in "$@"; do echo "  $step" >&2; done
-      echo "" >&2
-    }
 
     log "recovering built-in accounts"
     recover() {
@@ -106,12 +87,24 @@ bootstrap:
 
     log "storing break-glass passwords in 1Password (item kanidm)"
     OP_VAULT="${KANIDM_OP_VAULT:-$(op vault list --format json 2>/dev/null | sed -n 's/.*"id": *"\([^"]*\)".*/\1/p' | head -1)}"
-    op_store "break-glass passwords" \
-      "op item create --category 'API Credential' --vault $OP_VAULT --title kanidm ADMIN_PASSWORD=$admin_pw IDM_ADMIN_PASSWORD=$idm_pw" \
-      "op item edit --vault $OP_VAULT kanidm ADMIN_PASSWORD=$admin_pw IDM_ADMIN_PASSWORD=$idm_pw" \
-      "1. 1Password → coffre $OP_VAULT → + New Item → API Credential → title : kanidm" \
-      "2. Add Field → Text → label ADMIN_PASSWORD → valeur : $admin_pw" \
-      "3. Add Field → Text → label IDM_ADMIN_PASSWORD → valeur : $idm_pw"
+    if ! op item create --category "API Credential" --vault "$OP_VAULT" --title kanidm \
+         ADMIN_PASSWORD="$admin_pw" IDM_ADMIN_PASSWORD="$idm_pw" >/dev/null 2>&1 \
+       && ! op item edit --vault "$OP_VAULT" kanidm \
+         ADMIN_PASSWORD="$admin_pw" IDM_ADMIN_PASSWORD="$idm_pw" >/dev/null 2>&1; then
+      echo "WARNING: cannot write to 1Password (vault: ${OP_VAULT:-?}) — no write permission or no session." >&2
+      echo "" >&2
+      echo "CLI (run with an op session that can write):" >&2
+      echo "  op item create --category 'API Credential' --vault $OP_VAULT --title kanidm \\" >&2
+      echo "    ADMIN_PASSWORD=$admin_pw IDM_ADMIN_PASSWORD=$idm_pw" >&2
+      echo "  # (si l'item existe déjà :)" >&2
+      echo "  op item edit --vault $OP_VAULT kanidm ADMIN_PASSWORD=$admin_pw IDM_ADMIN_PASSWORD=$idm_pw" >&2
+      echo "" >&2
+      echo "Manuellement :" >&2
+      echo "  1. 1Password → coffre $OP_VAULT → + New Item → API Credential → title : kanidm" >&2
+      echo "  2. Add Field → Text → label ADMIN_PASSWORD → valeur : $admin_pw" >&2
+      echo "  3. Add Field → Text → label IDM_ADMIN_PASSWORD → valeur : $idm_pw" >&2
+      echo "" >&2
+    fi
 
     log "creating service-account kanidm-provision"
     export KANIDM_URL="{{ KANIDM_URL }}" KANIDM_NAME=idm_admin KANIDM_PASSWORD="$idm_pw"
@@ -140,10 +133,17 @@ bootstrap:
     fi
 
     log "storing provision token in 1Password (item kanidm, field PROVISION_TOKEN)"
-    op_store "provision token" \
-      "op item edit --vault $OP_VAULT kanidm PROVISION_TOKEN=$token" \
-      "1. 1Password → coffre $OP_VAULT → item kanidm" \
-      "2. Add Field → Text → label PROVISION_TOKEN → valeur : $token"
+    if ! op item edit --vault "$OP_VAULT" kanidm PROVISION_TOKEN="$token" >/dev/null 2>&1; then
+      echo "WARNING: cannot write to 1Password (vault: ${OP_VAULT:-?}) — no write permission or no session." >&2
+      echo "" >&2
+      echo "CLI (run with an op session that can write):" >&2
+      echo "  op item edit --vault $OP_VAULT kanidm PROVISION_TOKEN=$token" >&2
+      echo "" >&2
+      echo "Manuellement :" >&2
+      echo "  1. 1Password → coffre $OP_VAULT → item kanidm" >&2
+      echo "  2. Add Field → Text → label PROVISION_TOKEN → valeur : $token" >&2
+      echo "" >&2
+    fi
 
     # Always materialise the Secret directly so the provision controller can
     # start even before the 1Password item exists (the ExternalSecret adopts
