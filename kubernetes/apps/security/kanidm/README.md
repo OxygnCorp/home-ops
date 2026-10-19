@@ -42,12 +42,12 @@ What it does:
 1. `kanidmd recover-account admin` / `idm_admin` (Kanidm 1.11 prints a JSON
    `output` — that is a **generated password**, not a `/ui/reset` token; the
    reset-token flow only applies to `person` accounts) → stores both in the
-   1Password item **`kanidm`** (`admin_password`, `idm_admin_password`).
+   1Password item **`kanidm`** (`ADMIN_PASSWORD`, `IDM_ADMIN_PASSWORD`).
 2. Creates the `kanidm-provision` service-account + `provision-token` API token
    (CLI runs locally if installed, otherwise in a throwaway
-   `quay.io/kanidm/kanidm-tools` pod; auth via the hidden `KANIDM_PASSWORD`
+   `docker.io/kanidm/tools` pod; auth via the hidden `KANIDM_PASSWORD`
    global — non-interactive) → stores the token in the 1Password item
-   **`kanidm-provision`** (`token`).
+   **`kanidm`** (`PROVISION_TOKEN` field).
 3. Force-syncs the `kanidm-provision-token` ExternalSecret and waits for the
    `kanidm-provision` deployment to roll out.
 
@@ -63,9 +63,10 @@ Other recipes: `bulk people.csv`, `reset <user>`, `group-add`, `group-rm`,
 
 ## Troubleshooting
 
-- `provision` pod crashlooping → `kanidm-provision-token` missing: create the
-  1Password item (step 2) and `kubectl -n security annotate externalsecret
-  kanidm-provision-token force-sync=$(date +%s)`.
+- `provision` pod crashlooping → `kanidm-provision-token` missing: add the
+  `PROVISION_TOKEN` field to the 1Password item `kanidm` and `kubectl -n
+  security annotate externalsecret kanidm-provision-token
+  force-sync=$(date +%s)`.
 - Envoy discovery failures during Kanidm TLS-secret rollouts: the
   `SecurityPolicy`s produced by `components/oidc-kanidm/envoy` pin the
   authorization and token endpoints explicitly, so Envoy never re-discovers —

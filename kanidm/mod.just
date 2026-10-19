@@ -5,14 +5,18 @@ set shell := ['bash', '-euo', 'pipefail', '-c']
 # Kanidm admin — idm.oxygn.dev
 #
 # The `kanidm` CLI runs where it is installed; when absent, every command is
-# wrapped in a throwaway quay.io/kanidm/kanidm-tools pod (zero install).
+# wrapped in a throwaway docker.io/kanidm/tools pod (zero install).
 # Auth is non-interactive: the idm_admin password comes from the 1Password
-# item `kanidm` (field idm_admin_password) via `op`, fed to the hidden
+# item `kanidm` (field IDM_ADMIN_PASSWORD) via `op`, fed to the hidden
 # global `--password` flag / KANIDM_PASSWORD env of the CLI.
 #
 #   just kanidm bootstrap                    # one-shot: accounts + provision token + 1Password
-#   just kanidm onboard nea "Nea" nea@…      # person + groups + reset link
-#   just kanidm reset nea                    # re-issue a reset link
+#   just kanidm onboard matt "Matt" matt@oxygn.dev
+#   just kanidm reset matt                   # re-issue a reset link
+#
+# All secrets live in the SINGLE 1Password item `kanidm` (category API
+# Credential, vault home-ops), fields in caps: ADMIN_PASSWORD,
+# IDM_ADMIN_PASSWORD, PROVISION_TOKEN.
 
 KANIDM_URL := "https://idm.oxygn.dev"
 KANIDM_IMAGE := "docker.io/kanidm/tools:1.11.2@sha256:877fc564fb78ad9d198252da2efb1415fc8eeea9184135c8def863333511dd21"
@@ -30,7 +34,7 @@ cli *args:
     set -euo pipefail
     export KANIDM_URL="{{ KANIDM_URL }}"
     export KANIDM_NAME=idm_admin
-    export KANIDM_PASSWORD="${KANIDM_PASSWORD:-$(op item get kanidm --vault home-ops --fields idm_admin_password --reveal 2>/dev/null || op read 'op://home-ops/kanidm/idm_admin_password')}"
+    export KANIDM_PASSWORD="${KANIDM_PASSWORD:-$(op item get kanidm --vault home-ops --fields IDM_ADMIN_PASSWORD --reveal 2>/dev/null || op read "op://home-ops/kanidm/IDM_ADMIN_PASSWORD")}"
     if command -v kanidm >/dev/null 2>&1; then
       kanidm login >/dev/null 2>&1 || true
       kanidm {{ args }}
@@ -64,6 +68,26 @@ bootstrap:
       printf '%s' "$v"
     }
 
+    # Best-effort 1Password write; on failure print the CLI commands AND the
+    # manual steps so the values can be stored by hand.
+    op_store() {
+      local desc="$1" create_cmd="$2" edit_cmd="$3"; shift 3
+      if op item create $create_cmd >/dev/null 2>&1 \
+         || op item edit $edit_cmd >/dev/null 2>&1; then
+        return 0
+      fi
+      echo "WARNING: cannot write to 1Password (vault: ${OP_VAULT:-?}) — no write permission or no session." >&2
+      echo "" >&2
+      echo "CLI (run with an op session that can write):" >&2
+      echo "  $create_cmd" >&2
+      echo "  # (si l'item existe déjà :)" >&2
+      echo "  $edit_cmd" >&2
+      echo "" >&2
+      echo "Manuellement :" >&2
+      for step in "$@"; do echo "  $step" >&2; done
+      echo "" >&2
+    }
+
     log "recovering built-in accounts"
     recover() {
       # NB: the top-level `kanidmd recover-account` prints via tracing (human);
@@ -82,13 +106,12 @@ bootstrap:
 
     log "storing break-glass passwords in 1Password (item kanidm)"
     OP_VAULT="${KANIDM_OP_VAULT:-$(op vault list --format json 2>/dev/null | sed -n 's/.*"id": *"\([^"]*\)".*/\1/p' | head -1)}"
-    if ! op item create --title kanidm --category Login --vault "$OP_VAULT" \
-        admin_password="$admin_pw" idm_admin_password="$idm_pw" >/dev/null 2>&1 \
-       && ! op item edit --vault "$OP_VAULT" kanidm \
-        admin_password="$admin_pw" idm_admin_password="$idm_pw" >/dev/null 2>&1; then
-      echo "WARNING: cannot write to 1Password (vault: $OP_VAULT) — store these manually:" >&2
-      echo "  item kanidm:  admin_password=$admin_pw  idm_admin_password=$idm_pw" >&2
-    fi
+    op_store "break-glass passwords" \
+      "op item create --category 'API Credential' --vault $OP_VAULT --title kanidm ADMIN_PASSWORD=$admin_pw IDM_ADMIN_PASSWORD=$idm_pw" \
+      "op item edit --vault $OP_VAULT kanidm ADMIN_PASSWORD=$admin_pw IDM_ADMIN_PASSWORD=$idm_pw" \
+      "1. 1Password → coffre $OP_VAULT → + New Item → API Credential → title : kanidm" \
+      "2. Add Field → Text → label ADMIN_PASSWORD → valeur : $admin_pw" \
+      "3. Add Field → Text → label IDM_ADMIN_PASSWORD → valeur : $idm_pw"
 
     log "creating service-account kanidm-provision"
     export KANIDM_URL="{{ KANIDM_URL }}" KANIDM_NAME=idm_admin KANIDM_PASSWORD="$idm_pw"
@@ -116,13 +139,12 @@ bootstrap:
       exit 1
     fi
 
-    log "storing provision token (1Password + Secret fallback)"
-    if ! op item create --title kanidm-provision --category 'API Credential' --vault "$OP_VAULT" \
-        token="$token" >/dev/null 2>&1 \
-       && ! op item edit --vault "$OP_VAULT" kanidm-provision token="$token" >/dev/null 2>&1; then
-      echo "WARNING: cannot write to 1Password — create item kanidm-provision (field token) manually:" >&2
-      echo "  token=$token" >&2
-    fi
+    log "storing provision token in 1Password (item kanidm, field PROVISION_TOKEN)"
+    op_store "provision token" \
+      "op item edit --vault $OP_VAULT kanidm PROVISION_TOKEN=$token" \
+      "1. 1Password → coffre $OP_VAULT → item kanidm" \
+      "2. Add Field → Text → label PROVISION_TOKEN → valeur : $token"
+
     # Always materialise the Secret directly so the provision controller can
     # start even before the 1Password item exists (the ExternalSecret adopts
     # and re-syncs the same value once the item lands)
@@ -144,7 +166,7 @@ onboard user name email +groups="users":
     #!/usr/bin/env bash
     set -euo pipefail
     export KANIDM_URL="{{ KANIDM_URL }}" KANIDM_NAME=idm_admin
-    export KANIDM_PASSWORD="${KANIDM_PASSWORD:-$(op item get kanidm --vault home-ops --fields idm_admin_password --reveal 2>/dev/null || op read 'op://home-ops/kanidm/idm_admin_password')}"
+    export KANIDM_PASSWORD="${KANIDM_PASSWORD:-$(op item get kanidm --vault home-ops --fields IDM_ADMIN_PASSWORD --reveal 2>/dev/null || op read "op://home-ops/kanidm/IDM_ADMIN_PASSWORD")}"
     kcli() {
       if command -v kanidm >/dev/null 2>&1; then
         kanidm login >/dev/null 2>&1 || true
