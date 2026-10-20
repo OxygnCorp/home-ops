@@ -1,0 +1,149 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/siderolabs/talos/refs/heads/release-1.14/website/content/v1.14/schemas/config.schema.json
+#
+# Base Talos commune à tous les nœuds (rôles dans {controlplane,workers}.yaml.j2,
+# divergences par nœud dans nodes/<role>/<node>.yaml.j2). Composée via
+# `talosctl machineconfig patch` — cf. talos/mod.just render-config.
+# Règle de composition (strategic merge v1.14) : les LISTES sont en append,
+# donc chaque liste du fichier est définie ici UNE seule fois ; les maps
+# fusionnent par clé (les .ca des couches rôle apportent le pair crt+key complet).
+version: v1alpha1
+machine:
+  ca:
+    # Certificat partagé ; la clé privée machine CA ne va QUE sur les
+    # control-planes (couche rôle).
+    crt: ref+op://home-ops/talos/MACHINE_CA_CRT
+  features:
+    apidCheckExtKeyUsage: true
+    diskQuotaSupport: true
+    hostDNS:
+      enabled: true
+      forwardKubeDNSToHost: true
+      resolveMemberNames: true
+    kubePrism:
+      enabled: true
+      port: 7445
+    rbac: true
+  files:
+    - op: create
+      path: /etc/cri/conf.d/20-customization.part
+      content: |
+        [plugins."io.containerd.cri.v1.images"]
+          discard_unpacked_layers = false
+        [plugins."io.containerd.cri.v1.runtime"]
+          device_ownership_from_security_context = true
+    - op: overwrite
+      path: /etc/nfsmount.conf
+      permissions: 0o644
+      content: |
+        [NFSMount_Global_Options]
+        nfsvers=4.1
+        hard=True
+        nconnect=16
+        noatime=True
+        rsize=1048576
+        wsize=1048576
+  install:
+    disk: /dev/sdb
+    # renovate: talos-installer custom.talos-factory
+    image: factory.talos.dev/nocloud-installer/{{ ENV.SCHEMATIC }}:v1.14.4
+    wipe: false
+  kernel:
+    modules:
+      - name: nbd
+      - name: dm_thin_pool
+  kubelet:
+    defaultRuntimeSeccompProfileEnabled: true
+    disableManifestsDirectory: true
+    extraConfig:
+      serializeImagePulls: false
+      shutdownGracePeriod: 90s
+      shutdownGracePeriodCriticalPods: 60s
+      # Garbage-collect images unused for a week, independent of disk-pressure
+      # thresholds, so Renovate's superseded digests don't accumulate (ref onedr0p/home-ops#11439)
+      imageMaximumGCAge: 168h
+      # Cap CrashLoopBackOff at 60s instead of 300s so pods that crashed while a
+      # dependency (NFS, database) was down recover within a minute of it returning
+      crashLoopBackOff:
+        maxContainerRestartPeriod: 60s
+    image: ghcr.io/siderolabs/kubelet:v1.37.1
+    nodeIP:
+      validSubnets:
+        - 10.10.10.0/24
+  nodeLabels:
+    topology.kubernetes.io/region: main
+  sysctls:
+    fs.inotify.max_user_instances: "8192"
+    fs.inotify.max_user_watches: "1048576"
+    net.core.default_qdisc: fq
+    net.core.rmem_max: "67108864"
+    net.core.wmem_max: "67108864"
+    net.ipv4.ip_local_port_range: 1024 65535
+    net.ipv4.neigh.default.gc_thresh1: "4096"
+    net.ipv4.neigh.default.gc_thresh2: "8192"
+    net.ipv4.neigh.default.gc_thresh3: "16384"
+    net.ipv4.ping_group_range: 0 2147483647
+    net.ipv4.tcp_congestion_control: bbr
+    net.ipv4.tcp_fastopen: "3"
+    net.ipv4.tcp_mtu_probing: "1"
+    net.ipv4.tcp_notsent_lowat: "131072"
+    net.ipv4.tcp_rmem: 4096 131072 67108864
+    net.ipv4.tcp_slow_start_after_idle: "0"
+    net.ipv4.tcp_wmem: 4096 131072 67108864
+    user.max_user_namespaces: "11255"
+  token: ref+op://home-ops/talos/MACHINE_TOKEN
+cluster:
+  ca:
+    crt: ref+op://home-ops/talos/CLUSTER_CA_CRT
+  clusterName: main
+  controlPlane:
+    endpoint: https://k8s.internal:6443
+  discovery:
+    enabled: true
+    registries:
+      kubernetes:
+        disabled: true
+      service:
+        disabled: false
+  id: ref+op://home-ops/talos/CLUSTER_ID
+  network:
+    cni:
+      name: none
+    dnsDomain: cluster.local
+    podSubnets:
+      - 10.42.0.0/16
+    serviceSubnets:
+      - 10.43.0.0/16
+  secret: ref+op://home-ops/talos/CLUSTER_SECRET
+  token: ref+op://home-ops/talos/CLUSTER_TOKEN
+---
+apiVersion: v1alpha1
+kind: WatchdogTimerConfig
+device: /dev/watchdog0
+timeout: 5m
+---
+apiVersion: v1alpha1
+kind: ResolverConfig
+searchDomains:
+  domains: []
+---
+# Weekly XFS metadata scrubbing; runs are hash-staggered across volumes and
+# nodes (ref onedr0p/home-ops#11438)
+apiVersion: v1alpha1
+kind: FilesystemScrubConfig
+interval: 168h0m0s
+---
+# NFS bdi readahead (KiB), applied by nfsrahead extension mount time via
+# udev. Inert on extensions v1.14.x, whose build still applies its bundled
+# nfs4=16000 read-only path; becomes live — and REQUIRED to keep this
+# value — once extension ships siderolabs/extensions#1255 (reads
+# /etc/nfs.conf, no bundled defaults, fallback 128). Measured on cluster
+# (kopia blobs, 64k reads): ~50 MiB/s at 128 KiB, ~460-520 MiB/s at 16384 KiB.
+apiVersion: v1alpha1
+kind: EtcFileConfig
+name: nfs.conf
+mode: 0o644
+contents: |
+  [nfsrahead]
+  nfs4=16384
+  default=128

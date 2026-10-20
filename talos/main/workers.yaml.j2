@@ -1,0 +1,6 @@
+---
+# Couche rôle workers : apporte uniquement le type. Toute divergence
+# worker-spécifique (installer, modules, labels…) vit dans
+# nodes/workers/<node>.yaml.j2 — cf. k8s-3 (GPU, LACP, NVMe).
+machine:
+  type: worker
