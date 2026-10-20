@@ -24,10 +24,12 @@
     {
       addLabels: ["renovate/grafana-dashboard"],
       automerge: true,
-      automergeType: "branch",
+      // "pr" (not "branch"): dashboard bumps must go through a PR so konflate
+      // posts the rendered diff and the AI review runs before merge
+      automergeType: "pr",
       commitMessageExtra: "({{currentVersion}} ➔ {{newVersion}})",
       commitMessageTopic: "dashboard {{sourceDirectory}}",
-      ignoreTests: true,
+      ignoreTests: false,
       matchDatasources: ["custom.grafana-dashboards"],
       matchUpdateTypes: ["major"],
       semanticCommitScope: "grafana-dashboards",
