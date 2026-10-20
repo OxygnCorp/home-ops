@@ -18,17 +18,6 @@ machine:
     kubePrism:
       enabled: true
       port: 7445
-    {% if ENV.MACHINE_TYPE == "controlplane" %}
-    kubernetesTalosAPIAccess:
-      allowedKubernetesNamespaces:
-        - ai
-        - actions-runner-system
-        - system-upgrade
-      allowedRoles:
-        - os:admin
-        - os:reader
-      enabled: true
-    {% endif %}
     rbac: true
   files:
     - op: create
@@ -71,6 +60,13 @@ machine:
       serializeImagePulls: false
       shutdownGracePeriod: 90s
       shutdownGracePeriodCriticalPods: 60s
+      # Garbage-collect images unused for a week, independent of disk-pressure
+      # thresholds, so Renovate's superseded digests don't accumulate (ref onedr0p/home-ops#11439)
+      imageMaximumGCAge: 168h
+      # Cap CrashLoopBackOff at 60s instead of 300s so pods that crashed while a
+      # dependency (NFS, database) was down recover within a minute of it returning
+      crashLoopBackOff:
+        maxContainerRestartPeriod: 60s
     image: ghcr.io/siderolabs/kubelet:v1.37.1
     nodeIP:
       validSubnets:
@@ -94,7 +90,7 @@ machine:
     net.ipv4.tcp_notsent_lowat: "131072"
     net.ipv4.tcp_rmem: 4096 131072 67108864
     net.ipv4.tcp_slow_start_after_idle: "0"
-    net.ipv4.tcp_wmem: 4096 65536 67108864
+    net.ipv4.tcp_wmem: 4096 131072 67108864
     user.max_user_namespaces: "11255"
   token: ref+op://home-ops/talos/MACHINE_TOKEN
 cluster:
@@ -140,12 +136,10 @@ cluster:
     disablePodSecurityPolicy: true
     extraArgs:
       enable-aggregator-routing: "true"
-      feature-gates: HPAScaleToZero=true
     image: registry.k8s.io/kube-apiserver:v1.37.1
   controllerManager:
     extraArgs:
       bind-address: 0.0.0.0
-      feature-gates: HPAScaleToZero=true
     image: registry.k8s.io/kube-controller-manager:v1.37.1
   coreDNS:
     disabled: true
@@ -204,4 +198,22 @@ provisioning:
   diskSelector:
     match: disk.transport == "virtio" && !system_disk
   minSize: 200GB
+---
+# Replaces machine.features.kubernetesTalosAPIAccess (removed upstream in favor
+# of this document); roles/namespaces unchanged (ref onedr0p/home-ops#11437)
+apiVersion: v1alpha1
+kind: KubeTalosAPIAccessConfig
+allowedRoles:
+  - os:admin
+  - os:reader
+allowedKubernetesNamespaces:
+  - ai
+  - actions-runner-system
+  - system-upgrade
 {% endif %}
+---
+# Weekly XFS metadata scrubbing; runs are hash-staggered across volumes and
+# nodes (ref onedr0p/home-ops#11438)
+apiVersion: v1alpha1
+kind: FilesystemScrubConfig
+interval: 168h0m0s
