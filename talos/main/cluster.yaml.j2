@@ -1,13 +1,18 @@
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/siderolabs/talos/refs/heads/release-1.14/website/content/v1.14/schemas/config.schema.json
+#
+# Base Talos commune à tous les nœuds (rôles dans {controlplane,workers}.yaml.j2,
+# divergences par nœud dans nodes/<role>/<node>.yaml.j2). Composée via
+# `talosctl machineconfig patch` — cf. talos/mod.just render-config.
+# Règle de composition (strategic merge v1.14) : les LISTES sont en append,
+# donc chaque liste du fichier est définie ici UNE seule fois ; les maps
+# fusionnent par clé (les .ca des couches rôle apportent le pair crt+key complet).
 version: v1alpha1
 machine:
-  type: {{ ENV.MACHINE_TYPE }}
   ca:
+    # Certificat partagé ; la clé privée machine CA ne va QUE sur les
+    # control-planes (couche rôle).
     crt: ref+envsubst://$MACHINE_CA_CRT
-    {% if ENV.MACHINE_TYPE == "controlplane" %}
-    key: ref+envsubst://$MACHINE_CA_KEY
-    {% endif %}
   features:
     apidCheckExtKeyUsage: true
     diskQuotaSupport: true
@@ -47,12 +52,6 @@ machine:
     modules:
       - name: nbd
       - name: dm_thin_pool
-      {% if ENV.MACHINE_TYPE == "controlplane" %}
-      - name: drbd
-        parameters:
-          - usermode_helper=disabled
-      - name: drbd_transport_tcp
-      {% endif %}
   kubelet:
     defaultRuntimeSeccompProfileEnabled: true
     disableManifestsDirectory: true
@@ -96,9 +95,6 @@ machine:
 cluster:
   ca:
     crt: ref+envsubst://$CLUSTER_CA_CRT
-    {% if ENV.MACHINE_TYPE == "controlplane" %}
-    key: ref+envsubst://$CLUSTER_CA_KEY
-    {% endif %}
   clusterName: main
   controlPlane:
     endpoint: https://k8s.internal:6443
@@ -120,65 +116,6 @@ cluster:
       - 10.43.0.0/16
   secret: ref+envsubst://$CLUSTER_SECRET
   token: ref+envsubst://$CLUSTER_TOKEN
-  {% if ENV.MACHINE_TYPE == "controlplane" %}
-  aggregatorCA:
-    crt: ref+envsubst://$CLUSTER_AGGREGATORCA_CRT
-    key: ref+envsubst://$CLUSTER_AGGREGATORCA_KEY
-  allowSchedulingOnControlPlanes: true
-  apiServer:
-    auditPolicy:
-      apiVersion: audit.k8s.io/v1
-      kind: Policy
-      rules:
-        - level: Metadata
-    certSANs:
-      - k8s.internal
-    disablePodSecurityPolicy: true
-    extraArgs:
-      enable-aggregator-routing: "true"
-    image: registry.k8s.io/kube-apiserver:v1.37.1
-  controllerManager:
-    extraArgs:
-      bind-address: 0.0.0.0
-    image: registry.k8s.io/kube-controller-manager:v1.37.1
-  coreDNS:
-    disabled: true
-  etcd:
-    advertisedSubnets:
-      - 10.10.10.0/24
-    ca:
-      crt: ref+envsubst://$CLUSTER_ETCD_CA_CRT
-      key: ref+envsubst://$CLUSTER_ETCD_CA_KEY
-    extraArgs:
-      listen-metrics-urls: http://0.0.0.0:2381
-  proxy:
-    disabled: true
-    image: registry.k8s.io/kube-proxy:v1.37.1
-  scheduler:
-    config:
-      apiVersion: kubescheduler.config.k8s.io/v1
-      kind: KubeSchedulerConfiguration
-      profiles:
-        - schedulerName: default-scheduler
-          plugins:
-            score:
-              disabled:
-                - name: ImageLocality
-          pluginConfig:
-            - name: PodTopologySpread
-              args:
-                defaultingType: List
-                defaultConstraints:
-                  - maxSkew: 1
-                    topologyKey: kubernetes.io/hostname
-                    whenUnsatisfiable: ScheduleAnyway
-    extraArgs:
-      bind-address: 0.0.0.0
-    image: registry.k8s.io/kube-scheduler:v1.37.1
-  secretboxEncryptionSecret: ref+envsubst://$CLUSTER_SECRETBOXENCRYPTIONSECRET
-  serviceAccount:
-    key: ref+envsubst://$CLUSTER_SERVICEACCOUNT_KEY
-  {% endif %}
 ---
 apiVersion: v1alpha1
 kind: WatchdogTimerConfig
@@ -189,28 +126,6 @@ apiVersion: v1alpha1
 kind: ResolverConfig
 searchDomains:
   domains: []
-{% if ENV.MACHINE_TYPE == "controlplane" %}
----
-apiVersion: v1alpha1
-kind: RawVolumeConfig
-name: miroir-slow
-provisioning:
-  diskSelector:
-    match: disk.transport == "virtio" && !system_disk
-  minSize: 200GB
----
-# Replaces machine.features.kubernetesTalosAPIAccess (removed upstream in favor
-# of this document); roles/namespaces unchanged (ref onedr0p/home-ops#11437)
-apiVersion: v1alpha1
-kind: KubeTalosAPIAccessConfig
-allowedRoles:
-  - os:admin
-  - os:reader
-allowedKubernetesNamespaces:
-  - ai
-  - actions-runner-system
-  - system-upgrade
-{% endif %}
 ---
 # Weekly XFS metadata scrubbing; runs are hash-staggered across volumes and
 # nodes (ref onedr0p/home-ops#11438)

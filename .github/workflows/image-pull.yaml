@@ -17,7 +17,7 @@ permissions:
 env:
   # talosctl is pinned to the cluster's Talos version. This annotation makes
   # the pin join the Renovate "talos" group (groups.json5) together with the
-  # factory installer images (talos/main/machineconfig.yaml.j2), so Renovate
+  # factory installer images (talos/main/cluster.yaml.j2 + nodes/workers/k8s-3.yaml.j2), so Renovate
   # bumps it in the same PR as a Talos upgrade.
   # IMPORTANT: keep the `TALOS_VERSION: v...` format — the annotated-deps
   # custom manager (.renovate/customManagers.json5) only captures a value
