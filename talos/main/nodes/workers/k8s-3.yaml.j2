@@ -63,7 +63,7 @@ apiVersion: v1alpha1
 kind: BondConfig
 name: bond0
 # LACP 802.3ad sur les 2 jambes de la carte 2x1Gbps (switch UniFi en mode LACP,
-# LAG dédié vers k8s-3). Équipement physique balance-xor en secours (bondMode:
+# LAG dédié vers k8s-3). Equipement physique = balance-xor en secours (bondMode:
 # balance-xor) sans config LAG côté switch.
 links: [net0, net1]
 bondMode: 802.3ad

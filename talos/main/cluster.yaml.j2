@@ -133,7 +133,7 @@ apiVersion: v1alpha1
 kind: FilesystemScrubConfig
 interval: 168h0m0s
 ---
-# NFS bdi readahead (KiB), applied by nfsrahead extension mount time via
+# NFS bdi readahead (KiB), applied by the nfsrahead extension at mount time via
 # udev. Inert on extensions v1.14.x, whose build still applies its bundled
 # nfs4=16000 from a read-only path; becomes live — and REQUIRED to keep the
 # value — once the extension ships siderolabs/extensions#1255 (reads
