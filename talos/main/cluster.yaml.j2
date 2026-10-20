@@ -12,7 +12,7 @@ machine:
   ca:
     # Certificat partagé ; la clé privée machine CA ne va QUE sur les
     # control-planes (couche rôle).
-    crt: ref+op://home-ops/talos/MACHINE_CA_CRT
+    crt: ref+envsubst://$MACHINE_CA_CRT
   features:
     apidCheckExtKeyUsage: true
     diskQuotaSupport: true
@@ -91,10 +91,10 @@ machine:
     net.ipv4.tcp_slow_start_after_idle: "0"
     net.ipv4.tcp_wmem: 4096 131072 67108864
     user.max_user_namespaces: "11255"
-  token: ref+op://home-ops/talos/MACHINE_TOKEN
+  token: ref+envsubst://$MACHINE_TOKEN
 cluster:
   ca:
-    crt: ref+op://home-ops/talos/CLUSTER_CA_CRT
+    crt: ref+envsubst://$CLUSTER_CA_CRT
   clusterName: main
   controlPlane:
     endpoint: https://k8s.internal:6443
@@ -105,7 +105,7 @@ cluster:
         disabled: true
       service:
         disabled: false
-  id: ref+op://home-ops/talos/CLUSTER_ID
+  id: ref+envsubst://$CLUSTER_ID
   network:
     cni:
       name: none
@@ -114,8 +114,8 @@ cluster:
       - 10.42.0.0/16
     serviceSubnets:
       - 10.43.0.0/16
-  secret: ref+op://home-ops/talos/CLUSTER_SECRET
-  token: ref+op://home-ops/talos/CLUSTER_TOKEN
+  secret: ref+envsubst://$CLUSTER_SECRET
+  token: ref+envsubst://$CLUSTER_TOKEN
 ---
 apiVersion: v1alpha1
 kind: WatchdogTimerConfig
