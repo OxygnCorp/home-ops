@@ -156,12 +156,6 @@
         "name": "Puchu",
         "workspace": "/home/node/.openclaw/workspace",
         "agentDir": "/home/node/.openclaw/agents/main/agent",
-        "model": {
-          "primary": "litellm/mimo-v2.6-pro",
-          "fallbacks": [
-            "litellm/dsv41f"
-          ]
-        },
         "heartbeat": {
           "directPolicy": "allow",
           "every": "1h",
