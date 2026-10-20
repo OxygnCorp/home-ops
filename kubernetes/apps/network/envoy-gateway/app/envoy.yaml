@@ -145,6 +145,8 @@ spec:
     xForwardedFor:
       trustedCIDRs:
         - 10.42.0.0/16
+  connection:
+    bufferLimit: 4Mi
   http2:
     onInvalidMessage: TerminateStream
   http3: {}
@@ -152,6 +154,12 @@ spec:
     - group: gateway.networking.k8s.io
       kind: Gateway
   tcpKeepalive: {}
+  timeout:
+    http:
+      # Every request on envoy-external arrives through cloudflared, whose origin
+      # keep-alive is 3600s. Envoy must out-idle cloudflared so the client closes
+      # the connection first on every hop (ref onedr0p/home-ops#11703, #11704).
+      idleTimeout: 3900s
   tls:
     minVersion: "1.2"
     alpnProtocols:
