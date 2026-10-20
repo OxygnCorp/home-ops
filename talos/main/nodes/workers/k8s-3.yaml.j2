@@ -1,0 +1,91 @@
+---
+# Couche nœud k8s-3 : worker GPU (k8s-3), divergences matérielles.
+#
+# Installer metal (l'ISO USB occupe /dev/sda en mode maintenance — cf. machine.install.disk),
+# pas de schéma Siderolink/nocloud comme les CP, modules NVIDIA pour le GPU,
+# bond LACP 2×1Gbps, boot NVMe pour le volume Miroir cheap.
+machine:
+  install:
+    # SSD détecté comme /dev/sdb car la clé USB ISO occupe /dev/sda tant que Talos
+    # tourne en mode maintenance. Une fois installé sur le SSD et la clé retirée,
+    # le SSD redeviendra /dev/sda au prochain boot — Talos s'en fiche, il a déjà
+    # flashé le disque cible et boote dessus.
+    disk: /dev/sdb
+    # wipe: true assure une table de partitions vierge avant d'écrire le bootloader
+    # et l'image Talos. Indispensable sur un disque qui a déjà subi un apply partiel
+    # (apply-config avec wipe=false peut laisser un état inconsistent non bootable).
+    # Destructif : efface toutes les données du disque cible.
+    wipe: true
+    # renovate: talos-installer custom.talos-factory
+    image: factory.talos.dev/metal-installer/{{ ENV.SCHEMATIC }}:v1.14.4
+  kernel:
+    modules:
+      - name: nvidia
+      - name: nvidia_uvm
+      - name: nvidia_drm
+      - name: nvidia_modeset
+      # Modules DRBD pour Miroir (même config que les controlplanes)
+      - name: drbd
+        parameters:
+          - usermode_helper=disabled
+      - name: drbd_transport_tcp
+  kubelet:
+    extraArgs:
+      # Pose le taint workload=ai:NoSchedule au bootstrap via --register-with-taints.
+      # Sur un worker, machine.nodeTaints est bloqué par l'admission controller
+      # NodeRestriction (Forbidden sur Nodes().Update() fait par NodeApplyController
+      # avec l'identité system:node:<name>). --register-with-taints n'est
+      # qu'à la création autorisé par NodeRestriction ; il n'est pas re-appliqué
+      # au reset/rejoin, ré-appliqué manuellement si besoin.
+      register-with-taints: workload=ai:NoSchedule
+  nodeLabels:
+    topology.kubernetes.io/zone: m
+  sysctls:
+    net.core.bpf_jit_harden: "1"
+---
+apiVersion: v1alpha1
+kind: HostnameConfig
+hostname: k8s-3
+---
+apiVersion: v1alpha1
+kind: LinkAliasConfig
+name: net0
+selector:
+  match: mac(link.permanent_addr) == "a0:36:9f:53:3c:da"
+---
+apiVersion: v1alpha1
+kind: LinkAliasConfig
+name: net1
+selector:
+  match: mac(link.permanent_addr) == "a0:36:9f:53:3c:db"
+---
+apiVersion: v1alpha1
+kind: BondConfig
+name: bond0
+# LACP 802.3ad sur les 2 jambes de la carte 2x1Gbps (switch UniFi en mode LACP,
+# LAG dédié vers k8s-3). Équipement physique balance-xor en secours (bondMode:
+# balance-xor) sans config LAG côté switch.
+links: [net0, net1]
+bondMode: 802.3ad
+# Jumbo frames end-to-end (switch + vSwitch Proxmox) : aligne k8s-3 sur les
+# controlplanes (MTU 9000) pour que bigTCP Cilium (enableIPv4BIGTCP) ne soit
+# pas annulé sur les chemins CP <-> worker.
+mtu: 9000
+up: true
+---
+apiVersion: v1alpha1
+kind: DHCPv4Config
+name: bond0
+---
+# Volume brut pour le pool Miroir "slow" sur le NVMe dédié (adaptateur PCI).
+# Même nom que les controlplanes -> même partlabel r-miroir-slow, donc le
+# device /dev/disk/by-partlabel/r-miroir-slow du MiroirNodeGroup fonctionne tel quel.
+# Le transport nvme est unique sur ce nœud (le disque de boot est SATA), et
+# nvme0n1 n'est pas sujet au renumbering sda/sdb documenté plus haut.
+apiVersion: v1alpha1
+kind: RawVolumeConfig
+name: miroir-slow
+provisioning:
+  diskSelector:
+    match: disk.transport == "nvme" && !system_disk
+  minSize: 200GB
