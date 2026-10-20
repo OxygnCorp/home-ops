@@ -34,9 +34,9 @@ machine:
       # Pose le taint workload=ai:NoSchedule au bootstrap via --register-with-taints.
       # Sur un worker, machine.nodeTaints est bloqué par l'admission controller
       # NodeRestriction (Forbidden sur Nodes().Update() fait par NodeApplyController
-      # avec l'identité system:node:<name>). --register-with-taints n'est
-      # qu'à la création autorisé par NodeRestriction ; il n'est pas re-appliqué
-      # au reset/rejoin, ré-appliqué manuellement si besoin.
+      # avec l'identité system:node:<name>). --register-with-taints n'est soumis
+      # qu'à la création initiale du Node object, autorisée par NodeRestriction.
+      # Au reset/rejoin, le taint est automatiquement ré-appliqué.
       register-with-taints: workload=ai:NoSchedule
   nodeLabels:
     topology.kubernetes.io/zone: m
