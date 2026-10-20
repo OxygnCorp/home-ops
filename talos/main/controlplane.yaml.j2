@@ -9,6 +9,10 @@
 # ces 2 entrées s'ajoutent à [nbd, dm_thin_pool] de la base.
 machine:
   type: controlplane
+  # CP co-located on the same Supermicro host (hyper-converged) — cf. vieux
+  # role-patch controlplane/controlplane.yaml, porté dans cette couche.
+  nodeLabels:
+    topology.kubernetes.io/zone: m
   ca:
     crt: ref+op://home-ops/talos/MACHINE_CA_CRT
     key: ref+op://home-ops/talos/MACHINE_CA_KEY
