@@ -28,16 +28,48 @@ reboot-node node:
 [doc('Render Talos config for a node (machine type inferred from the subdirectory containing <node>.yaml)')]
 [script]
 render-config node:
+    #!/usr/bin/env bash
+    set -euo pipefail
     export MACHINE_TYPE="$(just talos machine-type {{ node }})"
     export SCHEMATIC="$(just talos schematic-id {{ node }})"
+    MAIN="{{ source_directory() }}/main"
+    CACHE_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/talos-cache"
+    mkdir -p "${CACHE_DIR}" && chmod 700 "${CACHE_DIR}"
+    SECRETS="$(just talos secrets-env)"
+    # Cache key: everything the rendered output depends on, including the secrets
+    # snapshot mtime so refreshing the 1Password item invalidates the cache.
+    KEY="$(cat "${MAIN}/machineconfig.yaml.j2" \
+        "${MAIN}/${MACHINE_TYPE}/schematic.yaml" \
+        "${MAIN}/${MACHINE_TYPE}/{{ node }}.yaml" \
+        "${MAIN}/${MACHINE_TYPE}/${MACHINE_TYPE}.yaml" 2>/dev/null | sha256sum | cut -d' ' -f1)"
+    OUT="${CACHE_DIR}/render-${MACHINE_TYPE}-$(stat -c %Y "${SECRETS}")-${KEY}.yaml"
+    if [ -f "${OUT}" ]; then
+        cat "${OUT}"
+        exit 0
+    fi
     PATCH_ARGS=()
-    TYPE_PATCH="{{ source_directory() }}/main/${MACHINE_TYPE}/${MACHINE_TYPE}.yaml"
+    TYPE_PATCH="${MAIN}/${MACHINE_TYPE}/${MACHINE_TYPE}.yaml"
     if [ -f "${TYPE_PATCH}" ]; then
         PATCH_ARGS+=(-p @"${TYPE_PATCH}")
     fi
-    talosctl machineconfig patch <(just template "{{ source_directory() }}/main/machineconfig.yaml.j2") \
+    # shellcheck disable=SC1090
+    set -a; source "${SECRETS}"; set +a
+    TMP="$(mktemp "${CACHE_DIR}/.render.XXXXXX")"
+    talosctl machineconfig patch <(just template "${MAIN}/machineconfig.yaml.j2" --strict) \
         "${PATCH_ARGS[@]}" \
-        -p @<(just template "{{ source_directory() }}/main/${MACHINE_TYPE}/{{ node }}.yaml")
+        -p @<(just template "${MAIN}/${MACHINE_TYPE}/{{ node }}.yaml" --strict) > "${TMP}"
+    chmod 600 "${TMP}"
+    mv -f "${TMP}" "${OUT}"
+    cat "${OUT}"
+
+[doc('Flush the talos render + secrets caches (they live in tmpfs and die with the session anyway)')]
+[script]
+flush-cache:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    CACHE_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/talos-cache"
+    rm -rf "${CACHE_DIR}"
+    just log info "Flushed" "${CACHE_DIR}"
 
 [confirm('Reset node ' + node + ' [y|N] ?')]
 [doc('Reset a node')]
@@ -85,5 +117,48 @@ machine-type node:
 machine-image node:
     #!/usr/bin/env bash
     set -euo pipefail
+    export MACHINE_TYPE="$(just talos machine-type {{ node }})"
     export SCHEMATIC="$(just talos schematic-id {{ node }})"
-    just template "{{ source_directory() }}/main/machineconfig.yaml.j2" | yq -e 'select(.machine) | .machine.install.image'
+    # shellcheck disable=SC1090
+    set -a; source "$(just talos secrets-env)"; set +a
+    just template "{{ source_directory() }}/main/machineconfig.yaml.j2" --strict | yq -e 'select(.machine) | .machine.install.image'
+
+[private]
+[doc('Fetch the talos 1Password item (1 API request) and cache it as a sourceable env file in tmpfs (TALOS_SECRETS_TTL seconds, default 3600; 0 forces a refresh). Requires all 14 talos fields; fails on missing or empty ones.')]
+[script]
+secrets-env:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    CACHE_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/talos-cache"
+    CACHE_FILE="${CACHE_DIR}/secrets.env"
+    TTL="${TALOS_SECRETS_TTL:-3600}"
+    mkdir -p "${CACHE_DIR}" && chmod 700 "${CACHE_DIR}"
+    if [ -f "${CACHE_FILE}" ]; then
+        AGE=$(( $(date +%s) - $(stat -c %Y "${CACHE_FILE}") ))
+        if [ "${AGE}" -lt "${TTL}" ]; then
+            echo "${CACHE_FILE}"
+            exit 0
+        fi
+    fi
+    TMP="$(mktemp "${CACHE_DIR}/.secrets.XXXXXX")"
+    op item get talos --vault home-ops --format json \
+        | jq -er '.fields[]
+            | select(.label | test("^[A-Z][A-Z0-9_]*$"))
+            | select(.value != null)
+            | .label + "=" + (.value | @sh)' > "${TMP}"
+    chmod 600 "${TMP}"
+    REQUIRED="MACHINE_CA_CRT MACHINE_CA_KEY MACHINE_TOKEN CLUSTER_CA_CRT CLUSTER_CA_KEY CLUSTER_ID CLUSTER_SECRET CLUSTER_TOKEN CLUSTER_AGGREGATORCA_CRT CLUSTER_AGGREGATORCA_KEY CLUSTER_ETCD_CA_CRT CLUSTER_ETCD_CA_KEY CLUSTER_SECRETBOXENCRYPTIONSECRET CLUSTER_SERVICEACCOUNT_KEY"
+    BROKEN=""
+    for field in ${REQUIRED}; do
+        grep -q "^${field}=" "${TMP}" || BROKEN="${BROKEN} ${field}(missing)"
+    done
+    while IFS= read -r line; do
+        BROKEN="${BROKEN} ${line%%=*}(empty)"
+    done < <(grep -oE "^[A-Z][A-Z0-9_]*=''$" "${TMP}" || true)
+    if [ -n "${BROKEN}" ]; then
+        rm -f "${TMP}"
+        echo "error: invalid 1Password item 'talos' (refusing to render):${BROKEN}" >&2
+        exit 1
+    fi
+    mv -f "${TMP}" "${CACHE_FILE}"
+    echo "${CACHE_FILE}"

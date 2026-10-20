@@ -36,12 +36,12 @@ talosctl machineconfig patch <(machineconfig.yaml.j2) \
     -p @<main/<role>/<node>.yaml
 ```
 
-The base template and the per-node patch pass through `just template` — i.e. `minijinja-cli` (strict Jinja; `ENV.MACHINE_TYPE` and `ENV.SCHEMATIC` are provided) followed by `vals eval` (resolves `ref+op://home-ops/talos/*` against 1Password) — before `talosctl` merges them; the role patch is merged as-is. Later patches strategic-merge into earlier ones: documents with the same kind/name are deep-merged, new documents are appended.
+The base template and the per-node patch pass through `just template` — i.e. `minijinja-cli` (strict Jinja; `ENV.MACHINE_TYPE` and `ENV.SCHEMATIC` are provided) followed by `vals eval`, which expands `ref+envsubst://$FIELD` references from the environment (fields of the single `talos` 1Password item, fetched once per secrets TTL window and cached in tmpfs — no per-ref API resolution at render time) — before `talosctl` merges them; the role patch is merged as-is. Later patches strategic-merge into earlier ones: documents with the same kind/name are deep-merged, new documents are appended.
 
 Two conventions keep the layers honest:
 
 - **Directory placement is the single source of truth for a node's role.** The role is inferred from which `main/<role>/` directory contains `<node>.yaml`, and `machine.type` is set in the base template from that role — a node cannot claim one role by filename and another by content.
-- **Secrets never live in this repo.** All sensitive values (CAs, tokens, cluster secret) are `ref+op://home-ops/talos/...` references resolved at render time by `vals`.
+- **Secrets never live in this repo.** All sensitive values (CAs, tokens, cluster secret) live in the single `talos` 1Password item, fetched once per secrets TTL window by `just talos secrets-env` (cached at `${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/talos-cache/secrets.env`, `TALOS_SECRETS_TTL` seconds — default 3600) and expanded by `vals` via `ref+envsubst://` at render time.
 
 Versions are pinned in the base template: Talos `v1.14.0` installer image and kubelet / control-plane component images `v1.37.0`.
 
@@ -65,6 +65,7 @@ The schematic defines the Image Factory build (system extensions, kernel args) a
 
 ```sh
 just talos render-config <node>         # render a node's full machine config to stdout
+just talos flush-cache                  # drop rendered-config + secrets caches (tmpfs)
 just talos apply-node <node>            # render and apply (talosctl apply-config)
 just talos upgrade-node <node>          # upgrade Talos using the node's schematic image
 just talos upgrade-k8s <version>        # upgrade Kubernetes across the cluster
