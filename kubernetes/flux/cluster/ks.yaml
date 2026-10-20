@@ -6,7 +6,11 @@ metadata:
   name: cluster-apps
   namespace: flux-system
 spec:
-  deletionPolicy: WaitForTermination
+  # Orphan: if this root Kustomization ever leaves an inventory (migration of the
+  # sync path, removal), its finalizer must not delete its 160+ owned objects —
+  # relabeling races with the taking-over Kustomization could wipe the cluster
+  # (ref onedr0p/home-ops#11863)
+  deletionPolicy: Orphan
   interval: 1h
   path: ./kubernetes/apps
   prune: true
