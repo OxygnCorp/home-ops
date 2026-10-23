@@ -31,7 +31,9 @@ jobs:
     # pull_request is the normal path; adding the `ai-review` label is the
     # normal re-review trigger (handled natively by the action). workflow_dispatch
     # remains as a manual force-review path.
-    if: ${{ (github.event_name == 'pull_request' && !github.event.pull_request.draft) || github.event_name == 'workflow_dispatch' }}
+    # Skip PRs already labeled `automerge` by Renovate (cheap bump PRs that
+    # merge on their own); workflow_dispatch stays as a manual force-review path.
+    if: ${{ (github.event_name == 'pull_request' && !github.event.pull_request.draft && !contains(github.event.pull_request.labels.*.name, 'automerge')) || github.event_name == 'workflow_dispatch' }}
     runs-on: home-ops-runner
     timeout-minutes: 35
 
