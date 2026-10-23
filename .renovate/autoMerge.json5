@@ -8,7 +8,7 @@
       automerge: true,
       automergeType: "pr",
       matchUpdateTypes: ["digest", "patch"],
-      matchPackageNames: ["/home-operations/"],
+      matchPackageNames: ["/^ghcr.io\\/home-operations\\//"],
       ignoreTests: false,
     },
     {
@@ -33,7 +33,7 @@
       description: "Auto-merge GitHub Actions",
       matchManagers: ["github-actions"],
       automerge: true,
-      automergeType: "branch",
+      automergeType: "pr",
       matchUpdateTypes: ["minor", "patch", "digest"],
       minimumReleaseAge: "3 days",
       ignoreTests: true,
@@ -46,7 +46,7 @@
         "/^renovatebot\\//",
       ],
       automerge: true,
-      automergeType: "branch",
+      automergeType: "pr",
       matchUpdateTypes: ["minor", "patch", "digest"],
       minimumReleaseAge: "1 minute",
       ignoreTests: true,
@@ -76,29 +76,37 @@
       matchUpdateTypes: ["minor", "patch"],
       ignoreTests: true,
     },
-    // ── Règle large (avant les exclusions : l'exclusion l'emporte en bas) ─
+    // ── Règle large (ne matche PAS les composants core : exclusion par
+    // negative lookahead, donc aucun addLabels n'hérite sur les exclusions) ─
     {
-      description: "Auto-merge minor/patch/digest container & chart updates (3-day release age)",
+      description: "Auto-merge minor/patch/digest updates (3-day release age, non-core packages)",
       matchDatasources: ["docker"],
       matchUpdateTypes: ["minor", "patch", "digest"],
+      matchPackageNames: [
+        "/^(?!.*(?:coredns|envoyproxy/gateway|envoy-gateway|gateway-api|cilium|authentik|1password|external-secrets|cert-manager|kanidm|cloudnative-pg|openebs|miroir|kopiur|tuppr|rook-ceph|litellm|toolhive|memini|mcp-grafana|unifi-network-mcp|konflate|gha-runner-scale-set|flux-operator|flux-instance|kube-apiserver|kube-controller-manager|kube-proxy|kube-scheduler|kubelet|envoy))/",
+      ],
       automerge: true,
       automergeType: "pr",
       minimumReleaseAge: "3 days",
       ignoreTests: false,
       addLabels: ["automerge"],
     },
-    // ── Exclusions core (dernier mot pour ces packages) ───────────────────
+    // ── Exclusions core — filet de sécurité (automerge déjà false via la
+    // règle large ci-dessus ; ce dernier mot est indépendant et sans label) ─
     {
       description: "Exclude core/sensitive components from automerge",
       matchDatasources: ["docker"],
       matchUpdateTypes: ["minor", "patch", "digest"],
-      matchPackagePatterns: [
+      matchPackageNames: [
         // Réseau / DNS / gateway
         "/coredns/",
         "/envoyproxy/envoy/",
+        "/envoyproxy/gateway/",
+        "/envoy-gateway/",
         "/gateway-api/",
         "/cilium/",
         // Secrets / identité
+        "/authentik/",
         "/1password/",
         "/external-secrets/",
         "/cert-manager/",

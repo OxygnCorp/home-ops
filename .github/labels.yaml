@@ -43,6 +43,11 @@
   color: "f6412d"
 # Uncategorized
 - name: hold
+  color: " "
+
+- name: automerge
+  color: "0e8a16"
+  description: "Renovate automerge (minor/patch/digest non-core); AI PR Review skipped"
   color: "ee0701"
 - name: ai-review
   color: "5319e7"
