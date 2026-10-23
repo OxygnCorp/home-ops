@@ -40,7 +40,7 @@ spec:
     requests:
       cpu: 100m
       memory: 128Mi
-  schedule: 0 * * * *
+  schedule: "*/30 * * * *"
   secretRef: mushu-bot-auth-token
   webhook:
     enabled: true

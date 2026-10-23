@@ -1,13 +1,14 @@
 {
   $schema: "https://docs.renovatebot.com/renovate-schema.json",
   packageRules: [
+    // ── Trusted rules (existantes, conservées) ────────────────────────────
     {
       description: "Auto-merge trusted container digests and patches",
       matchDatasources: ["docker"],
       automerge: true,
       automergeType: "pr",
       matchUpdateTypes: ["digest", "patch"],
-      matchPackageNames: ["/home-operations/"],
+      matchPackageNames: ["/^ghcr.io\\/home-operations\\//"],
       ignoreTests: false,
     },
     {
@@ -32,7 +33,7 @@
       description: "Auto-merge GitHub Actions",
       matchManagers: ["github-actions"],
       automerge: true,
-      automergeType: "branch",
+      automergeType: "pr",
       matchUpdateTypes: ["minor", "patch", "digest"],
       minimumReleaseAge: "3 days",
       ignoreTests: true,
@@ -41,11 +42,11 @@
       description: "Auto-merge trusted GitHub Actions",
       matchManagers: ["github-actions"],
       matchPackageNames: [
-        "/^actions\//",
-        "/^renovatebot\//",
+        "/^actions\\//",
+        "/^renovatebot\\//",
       ],
       automerge: true,
-      automergeType: "branch",
+      automergeType: "pr",
       matchUpdateTypes: ["minor", "patch", "digest"],
       minimumReleaseAge: "1 minute",
       ignoreTests: true,
@@ -54,7 +55,7 @@
       description: "Auto-merge GitHub Releases",
       matchDatasources: ["github-releases"],
       automerge: true,
-      automergeType: "branch",
+      automergeType: "pr",
       matchUpdateTypes: ["minor", "patch"],
       matchPackageNames: ["/external-dns/", "/gateway-api/", "/prometheus-operator/"],
       ignoreTests: true,
@@ -63,7 +64,7 @@
       description: "Auto-merge Mise Tools",
       matchManagers: ["mise"],
       automerge: true,
-      automergeType: "branch",
+      automergeType: "pr",
       matchUpdateTypes: ["minor", "patch"],
       ignoreTests: true,
     },
@@ -71,9 +72,78 @@
       description: "Auto-merge npm minor and patch",
       matchDatasources: ["npm"],
       automerge: true,
-      automergeType: "branch",
+      automergeType: "pr",
       matchUpdateTypes: ["minor", "patch"],
       ignoreTests: true,
+    },
+    // ── Règle large (ne matche PAS les composants core : exclusion par
+    // negative lookahead, donc aucun addLabels n'hérite sur les exclusions) ─
+    {
+      description: "Auto-merge minor/patch/digest updates (1-hour release age, non-core packages)",
+      matchDatasources: ["docker"],
+      matchUpdateTypes: ["minor", "patch", "digest"],
+      matchPackageNames: [
+        "/^(?!.*(?:coredns|envoyproxy/gateway|envoy-gateway|gateway-api|cilium|authentik|1password|external-secrets|cert-manager|kanidm|cloudnative-pg|openebs|miroir|kopiur|tuppr|rook-ceph|litellm|toolhive|memini|mcp-grafana|unifi-network-mcp|konflate|gha-runner-scale-set|flux-operator|flux-instance|kube-apiserver|kube-controller-manager|kube-proxy|kube-scheduler|kubelet|envoy))/",
+      ],
+      automerge: true,
+      automergeType: "pr",
+      minimumReleaseAge: "1 hour",
+      ignoreTests: false,
+      addLabels: ["automerge"],
+    },
+    // ── Exclusions core — filet de sécurité (automerge déjà false via la
+    // règle large ci-dessus ; ce dernier mot est indépendant et sans label) ─
+    {
+      description: "Exclude core/sensitive components from automerge",
+      matchDatasources: ["docker"],
+      matchUpdateTypes: ["minor", "patch", "digest"],
+      matchPackageNames: [
+        // Réseau / DNS / gateway
+        "/coredns/",
+        "/envoyproxy/envoy/",
+        "/envoyproxy/gateway/",
+        "/envoy-gateway/",
+        "/gateway-api/",
+        "/cilium/",
+        // Secrets / identité
+        "/authentik/",
+        "/1password/",
+        "/external-secrets/",
+        "/cert-manager/",
+        "/kanidm/",
+        // Stockage / données
+        "/cloudnative-pg/",
+        "/openebs/",
+        "/miroir/",
+        "/kopiur/",
+        "/tuppr/",
+        "/rook-ceph/",
+        // Chaîne d'IA / délégation (litellm fait tourner l'AI review)
+        "/litellm/",
+        "/toolhive/",
+        "/memini/",
+        "/mcp-grafana/",
+        "/unifi-network-mcp/",
+        "/konflate/",
+        // CI / GitOps core
+        "/gha-runner-scale-set/",
+        "/flux-operator/",
+        "/flux-instance/",
+        "/kube-apiserver/",
+        "/kube-controller-manager/",
+        "/kube-proxy/",
+        "/kube-scheduler/",
+        "/kubelet/",
+        "/factory\\.talos\\.dev/",
+        "/siderolabs/installer/",
+      ],
+      automerge: false,
+    },
+    // ── Défense en profondeur ─────────────────────────────────────────────
+    {
+      description: "Never auto-merge major updates",
+      matchUpdateTypes: ["major"],
+      automerge: false,
     },
   ],
 }
