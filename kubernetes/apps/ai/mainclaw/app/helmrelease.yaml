@@ -38,6 +38,15 @@ spec:
                 cp /tmp/openclaw.json /home/node/.openclaw/openclaw.json
                 chown 1000:100 /home/node/.openclaw/openclaw.json
                 chmod 400 /home/node/.openclaw/openclaw.json
+                # Retention: doctor creates a full recovery capture (~750M of
+                # agent sqlite) on every repair run and never prunes them; with
+                # frequent pod restarts the PVC filled to 91% (2026-10-23).
+                # Keep captures and pre-migration .bak DBs younger than 7 days
+                # (the newest capture is the only automatic rollback path).
+                find /home/node/.openclaw.update-captures -maxdepth 1 -name 'doctor-*' -mtime +7 -exec rm -rf {} +
+                find /home/node/.openclaw/agents -name '*.pre-startup-migration-*.bak' -mtime +7 -delete 2>/dev/null || true
+                # Stale sqlite readonly-check temp copies (orphaned fs-safe files)
+                find /home/node/.cache/openclaw -name '.fs-safe-*.tmp' -mtime +1 -delete 2>/dev/null || true
                 cp /kopiaignore/.kopiaignore /home/node/.kopiaignore
                 # Parent dir for the mise config subPath mount (install-tools needs it)
                 mkdir -p /home/node/.config/mise
