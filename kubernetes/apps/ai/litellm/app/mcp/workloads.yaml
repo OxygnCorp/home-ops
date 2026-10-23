@@ -169,6 +169,7 @@ spec:
       - 0.0.0.0
       - --port
       - "8000"
+      - --allow-unauthenticated
       - --read-only
     env:
       - name: MCP_K8S_PROVIDER
