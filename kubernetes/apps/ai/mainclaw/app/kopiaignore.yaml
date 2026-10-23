@@ -38,3 +38,7 @@ data:
 
     # memini version marker: absent after restore -> startup guard reinstalls the plugin
     .openclaw/extensions/memini/.clawver
+
+    # reinstallable tool artifacts
+    .local/bin/mise
+    .local/lib/python*/site-packages/

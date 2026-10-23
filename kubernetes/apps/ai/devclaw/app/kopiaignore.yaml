@@ -11,6 +11,11 @@ data:
     # npm cache (cacache, npx, logs)
     .npm/
 
+    # doctor pre-repair/update recovery captures (full agent sqlite copies)
+    .openclaw.update-captures/
+    # startup migration backups (.bak suffix, unlike *.bak-*)
+    *.pre-startup-migration-*.bak
+
     # dependency trees, restored via npm install / plugin reinstall
     node_modules/
 
@@ -33,4 +38,8 @@ data:
 
     # memini version marker: absent after restore -> startup guard reinstalls the plugin
     .openclaw/extensions/memini/.clawver
+
+    # reinstallable tool artifacts
+    .local/bin/mise
+    .local/lib/python*/site-packages/
 
