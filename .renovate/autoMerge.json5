@@ -79,7 +79,7 @@
     // ── Règle large (ne matche PAS les composants core : exclusion par
     // negative lookahead, donc aucun addLabels n'hérite sur les exclusions) ─
     {
-      description: "Auto-merge minor/patch/digest updates (3-day release age, non-core packages)",
+      description: "Auto-merge minor/patch/digest updates (1-hour release age, non-core packages)",
       matchDatasources: ["docker"],
       matchUpdateTypes: ["minor", "patch", "digest"],
       matchPackageNames: [
@@ -87,7 +87,7 @@
       ],
       automerge: true,
       automergeType: "pr",
-      minimumReleaseAge: "3 days",
+      minimumReleaseAge: "1 hour",
       ignoreTests: false,
       addLabels: ["automerge"],
     },

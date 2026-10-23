@@ -51,19 +51,19 @@ b. **Nouvelle règle large** — l'exclusion des composants core est faite
 
 ```json5
 {
-  description: "Auto-merge minor/patch/digest updates (3-day release age, non-core packages)",
+  description: "Auto-merge minor/patch/digest updates (1-hour release age, non-core packages)",
   matchDatasources: ["docker"],
   matchUpdateTypes: ["minor", "patch", "digest"],
   matchPackageNames: ["/^(?!.*(?:coredns|envoyproxy/gateway|envoy-gateway|gateway-api|cilium|authentik|1password|external-secrets|cert-manager|kanidm|cloudnative-pg|openebs|miroir|kopiur|tuppr|rook-ceph|litellm|toolhive|memini|mcp-grafana|unifi-network-mcp|konflate|gha-runner-scale-set|flux-operator|flux-instance|kube-apiserver|kube-controller-manager|kube-proxy|kube-scheduler|kubelet|envoy))/"],
   automerge: true,
   automergeType: "pr",
-  minimumReleaseAge: "3 days",
+  minimumReleaseAge: "1 hour",
   ignoreTests: false,
   addLabels: ["automerge"],
 }
 ```
 
-- `minimumReleaseAge: "3 days"` : filet contre les releases défectueuses des
+- `minimumReleaseAge: "1 hour"` : filet contre les releases défectueuses des
   3 premiers jours (incidents avec binaries "broken" publiés corrigés ensuite).
 - `addLabels: ["automerge"]` : sert de filtre au workflow AI review (§4) et
   permet à l'utilisateur de reconnaître d'un coup d'œil une PR à ne pas merger.
@@ -211,7 +211,7 @@ if: ${{ (github.event_name == 'pull_request' && !github.event.pull_request.draft
 
 | Risque | Mitigation |
 |---|---|
-| Breakage anticipé d'un composant "trusted" non-exclu | `minimumReleaseAge: 3 days` + revert one-click |
+| Breakage anticipé d'un composant "trusted" non-exclu | `minimumReleaseAge: 1 hour` (reduce par l'utilisateur depuis 3 days) + revert one-click |
 | Hallucination de liste d'exclusion (oubli d'un composant) | La liste est conservée explicite et documentée ; konflate commente les PRs de tout de façon ; audit simple via PR reviews visuelles du changelog cette PR |
 | Cadence 30 min augmente les runs ratés / rate limits | DiscoveryFilters reste sur `OxygnCorp/*`; log l'opérateur va atteindre les rate-limits éventuels (le problème existing "Error obtaining docker token" fait mention d'un souci qu'il faut investiguer à part) |
 | AI review skip sur PR automergée = perte de la seconde opinion | Volontaire ; le filet principal devient konflate (commentaire systématique) + release-age |
