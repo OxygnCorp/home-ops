@@ -33,13 +33,26 @@ spec:
                 chmod 400 /home/node/.openclaw/openclaw.json
                 # Retention: doctor creates a full recovery capture (~750M of
                 # agent sqlite) on every repair run and never prunes them; mainclaw
-                # hit 91% PVC usage this way (2026-10-23). Keep captures and
-                # pre-migration .bak DBs younger than 7 days (the newest capture
-                # is the only automatic rollback path).
-                find /home/node/.openclaw.update-captures -maxdepth 1 -name 'doctor-*' -mtime +7 -exec rm -rf {} +
-                find /home/node/.openclaw/agents -name '*.pre-startup-migration-*.bak' -mtime +7 -delete 2>/dev/null || true
+                # hit 91% PVC usage this way (2026-10-23). Always keep the newest
+                # capture (the only automatic rollback path) plus everything
+                # younger than 7 days; tolerates absent dirs (kopia restores now
+                # exclude them).
+                cutoff=$(( $(date +%s) - 604800 ))
+                newest=$(ls -1dt /home/node/.openclaw.update-captures/doctor-* 2>/dev/null | head -1)
+                for d in /home/node/.openclaw.update-captures/doctor-*; do
+                    [ -d "$d" ] || continue
+                    if [ "$d" = "$newest" ]; then continue; fi
+                    if [ "$(stat -c %Y "$d")" -lt "$cutoff" ]; then rm -rf "$d"; fi
+                done
+                for f in /home/node/.openclaw/agents/*/agent/*.pre-startup-migration-*.bak; do
+                    [ -e "$f" ] || continue
+                    keep=$(ls -1t "$(dirname "$f")"/*.pre-startup-migration-*.bak 2>/dev/null | head -1)
+                    if [ "$f" != "$keep" ] && [ "$(stat -c %Y "$f")" -lt "$cutoff" ]; then rm -f "$f"; fi
+                done
                 # Stale sqlite readonly-check temp copies (orphaned fs-safe files)
-                find /home/node/.cache/openclaw -name '.fs-safe-*.tmp' -mtime +1 -delete 2>/dev/null || true
+                if [ -d /home/node/.cache/openclaw ]; then
+                    find /home/node/.cache/openclaw -name '.fs-safe-*.tmp' -mtime +1 -delete 2>/dev/null || true
+                fi
                 cp /kopiaignore/.kopiaignore /home/node/.kopiaignore
 
         containers:
