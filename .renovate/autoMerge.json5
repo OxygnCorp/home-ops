@@ -94,7 +94,7 @@
       matchUpdateTypes: ["minor", "patch", "digest"],
       matchPackagePatterns: [
         // Réseau / DNS / gateway
-        "/^ghcr.io/coredns/",
+        "/coredns/",
         "/envoyproxy/envoy/",
         "/gateway-api/",
         "/cilium/",
