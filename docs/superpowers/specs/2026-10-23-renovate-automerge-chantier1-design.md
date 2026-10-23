@@ -43,14 +43,18 @@ a. **Conserver** les règles actuelles (home-operations digests/patches,
    kube-prometheus-stack, renovate, GH actions) telles quelles — elles
    fonctionnent.
 
-b. **Nouvelle règle large "trusted minor/patch/digest"** (placée avant les
-   exclusions) :
+b. **Nouvelle règle large** — l'exclusion des composants core est faite
+   **dans la règle elle-même** via une regex negative-lookahead sur
+   `matchPackageNames` (et non une règle additive séparée), car `addLabels`
+   est `mergeable` : un label posé sur la règle large hériterait sinon sur
+   les règles d'exclusion suivantes (leak). Verbatim :
 
 ```json5
 {
-  description: "Auto-merge minor/patch/digest container & chart updates (3-day release age)",
+  description: "Auto-merge minor/patch/digest updates (3-day release age, non-core packages)",
   matchDatasources: ["docker"],
   matchUpdateTypes: ["minor", "patch", "digest"],
+  matchPackageNames: ["/^(?!.*(?:coredns|envoyproxy/gateway|envoy-gateway|gateway-api|cilium|authentik|1password|external-secrets|cert-manager|kanidm|cloudnative-pg|openebs|miroir|kopiur|tuppr|rook-ceph|litellm|toolhive|memini|mcp-grafana|unifi-network-mcp|konflate|gha-runner-scale-set|flux-operator|flux-instance|kube-apiserver|kube-controller-manager|kube-proxy|kube-scheduler|kubelet|envoy))/"],
   automerge: true,
   automergeType: "pr",
   minimumReleaseAge: "3 days",
@@ -64,26 +68,27 @@ b. **Nouvelle règle large "trusted minor/patch/digest"** (placée avant les
 - `addLabels: ["automerge"]` : sert de filtre au workflow AI review (§4) et
   permet à l'utilisateur de reconnaître d'un coup d'œil une PR à ne pas merger.
 
-c. **Règle d'exclusion core** (placée après, l'emporte par-dessus la règle
-   large ; les exceptions déjà trusted par les règles existantes conservent
-   leur comportement car leurs règles sont antérieures et restent actives comme
-   pour toute règle — attention : une règle d'exclusion `automerge: false` plus
-   bas **neutralisera** aussi l'ancienne règle correspondante, d'où la
-   nécessité de placer les exclusions sensibles comme *dernières* rules et
-   d'être explicite sur les listes) :
+c. **Règle d'exclusion core — filet de sécurité** (placée après la règle
+   large ; sans `addLabels`, donc héritée par les packages core uniquement
+   via leur match : l'exclusion n'ajoute rien : les composants sont déjà
+   non-matchés par la règle large ; cette règle pose `automerge: false`
+   comme dernier mot, indépendamment du lookahead) :
 
 ```json5
 {
   description: "Exclude core/sensitive components from automerge",
   matchDatasources: ["docker"],
   matchUpdateTypes: ["minor", "patch", "digest"],
-  matchPackagePatterns: [
+  matchPackageNames: [
     // Réseau / DNS / gateway
-    "/^ghcr.io/coredns/",
+    "/coredns/",
     "/envoyproxy/envoy/",
+    "/envoyproxy/gateway/",
+    "/envoy-gateway/",
     "/gateway-api/",
     "/cilium/",
     // Secrets / identité
+    "/authentik/",
     "/1password/",
     "/external-secrets/",
     "/cert-manager/",
