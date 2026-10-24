@@ -30,10 +30,14 @@ l'AI PR Review l'approuve intégralement. Restent 100% manuels : tout bump
 | aucun fichier matchant `^talos/` ni `kubernetes/apps/system-upgrade/` | Pas d'upgrade Talos / Kubernetes automatique (tuppr inclut les bumps k8s). Vérifié par `actions/github-script` (paths listFiles), fail-closed. |
 | tous les status checks SUCCESS/SKIPPED/NEUTRAL (loop 25 min max) | Ne merger que sur CI verte (ci-status de la review n'attend pas les checks secondaires comme image-pull). |
 
-4. Token App : `permission-contents: write` (merge) — l'App a déjà le droit
-   au niveau installation, confirmé par l'utilisateur. Fail-closed naturel :
-   si l'AI est en panne ou sort `request_changes`, rien ne se passe et la PR
-   reste à fusionner manuellement.
+4. Tokens : le job review garde `contents: read` (review dirigée par le
+   modèle, read-only) ; seul le job `auto-merge` mint un token
+   `contents: write` pour le merge (least privilege, erreur de passe
+   corrigée suite à la review AI de la PR). Fail-closed naturel : si le
+   verdict ne sort pas à l'approve, rien ne se passe et la PR reste à
+   merger à la main. Le loop d'attente des checks exclut le check run du
+   job lui-même (IN_PROGRESS par définition) — sinon `pending` ne tombait
+   jamais à 0 et le merge était inatteignable (deadlock, review AI).
 5. `workflow_dispatch` (re-review manuel) : ne déclenche JAMAIS le merge
    (`github.event_name == 'pull_request'` requis) — un verdict obtenu à la
    main ne fusione pas hors contexte standard.
