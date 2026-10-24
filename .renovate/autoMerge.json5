@@ -143,6 +143,17 @@
     },
     // ── Défense en profondeur ─────────────────────────────────────────────
     {
+      description: "Auto-merge jdx/mise github-release (custom regex manager, .ci toolchain image-pull)",
+      matchManagers: ["custom.regex", "regex"],
+      matchDatasources: ["github-releases"],
+      matchDepNames: ["jdx/mise"],
+      matchUpdateTypes: ["minor", "patch", "digest"],
+      automerge: true,
+      automergeType: "pr",
+      minimumReleaseAge: "1 hour",
+      ignoreTests: false,
+    },
+    {
       description: "Never auto-merge major updates",
       matchUpdateTypes: ["major"],
       automerge: false,
