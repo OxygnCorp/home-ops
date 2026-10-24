@@ -28,11 +28,12 @@ permissions:
 jobs:
   review-pr:
     name: AI PR Review
-    # pull_request is the normal path; PRs labeled `automerge` by Renovate (cheap
-    # minor/patch/digest bumps that merge on their own) are skipped. The `ai-review`
-    # label re-review is NOT available for automerge-PRs; workflow_dispatch remains
-    # the manual force-review path for those and everyone else.
-    if: ${{ (github.event_name == 'pull_request' && !github.event.pull_request.draft && !contains(github.event.pull_request.labels.*.name, 'automerge')) || github.event_name == 'workflow_dispatch' }}
+    # pull_request is the normal path; PRs on `renovate/am-*` branches are the
+    # Renovate "trusted automerge" set (minor/patch/digest non-core, see
+    # .renovate/autoMerge.json5 additionalBranchPrefix) and are skipped. The
+    # `ai-review` label re-review is NOT available for those; workflow_dispatch
+    # remains the manual force-review path for everyone.
+    if: ${{ (github.event_name == 'pull_request' && !github.event.pull_request.draft && !startsWith(github.event.pull_request.head_ref, 'renovate/am-')) || github.event_name == 'workflow_dispatch' }}
     runs-on: home-ops-runner
     timeout-minutes: 35
 

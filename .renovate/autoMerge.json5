@@ -76,27 +76,29 @@
       matchUpdateTypes: ["minor", "patch"],
       ignoreTests: true,
     },
-    // ── Règle large (ne matche PAS les composants core : exclusion par
-    // negative lookahead, donc aucun addLabels n'hérite sur les exclusions) ─
+    // ── Règle large — marker de skip par PRÉFIXE DE BRANCHE ("renovate/am-"),
+    // NOT par label : Renovate rejette les regex avec lookahead dans
+    // matchPackageNames (config-validator: "Failed to parse regex pattern"),
+    // et addLabels est mergeable (le label fuiterait sur les exclusions) —
+    // un marker non mergeable (additionalBranchPrefix) se réinitialise à ""
+    // dans la règle d'exclusion en dessous. ─────────────────────────────────
     {
       description: "Auto-merge minor/patch/digest updates (1-hour release age, non-core packages)",
       matchDatasources: ["docker"],
       matchUpdateTypes: ["minor", "patch", "digest"],
-      matchPackageNames: [
-        "/^(?!.*(?:coredns|envoyproxy/gateway|envoy-gateway|gateway-api|cilium|authentik|1password|external-secrets|cert-manager|kanidm|cloudnative-pg|openebs|miroir|kopiur|tuppr|rook-ceph|litellm|toolhive|memini|mcp-grafana|unifi-network-mcp|konflate|gha-runner-scale-set|flux-operator|flux-instance|kube-apiserver|kube-controller-manager|kube-proxy|kube-scheduler|kubelet|envoy))/",
-      ],
       automerge: true,
       automergeType: "pr",
       minimumReleaseAge: "1 hour",
       ignoreTests: false,
-      addLabels: ["automerge"],
+      additionalBranchPrefix: "am-",
     },
-    // ── Exclusions core — filet de sécurité (automerge déjà false via la
-    // règle large ci-dessus ; ce dernier mot est indépendant et sans label) ─
+    // ── Exclusions core — réinitialise le marker de branche ("") et pose
+    // automerge: false en dernier mot ─────────────────────────────────────
     {
       description: "Exclude core/sensitive components from automerge",
       matchDatasources: ["docker"],
       matchUpdateTypes: ["minor", "patch", "digest"],
+      additionalBranchPrefix: "",
       matchPackageNames: [
         // Réseau / DNS / gateway
         "/coredns/",
