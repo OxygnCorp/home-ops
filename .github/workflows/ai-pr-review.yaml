@@ -92,9 +92,9 @@ jobs:
           client-id: ${{ secrets.APP_CLIENT_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
           repositories: ${{ github.repository }}
-          # contents: write — the auto-merge job uses this token to merge
-          # approved minor/patch bumps (gh pr merge --squash). Read-elsewhere.
-          permission-contents: write
+          # read-only model-directed review job; the auto-merge job mints its
+          # own token with contents: write for the merge (least privilege).
+          permission-contents: read
           permission-pull-requests: write
           # ci-status-check: "true" below reads check runs for CI evidence
           permission-checks: read
@@ -183,7 +183,7 @@ jobs:
       && !contains(github.event.pull_request.labels.*.name, 'type/major')
       && !contains(github.event.pull_request.title, '!')) }}
     runs-on: home-ops-runner
-    timeout-minutes: 10
+    timeout-minutes: 40
     steps:
       - name: Token
         id: app-token
@@ -216,12 +216,22 @@ jobs:
 
       - name: Wait for remaining checks (max ~25 min)
         if: steps.guard.outputs.blocked != 'true'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          # This job's own check run appears in statusCheckRollup as
+          # IN_PROGRESS — excluding it by name is required, otherwise
+          # `pending` never reaches 0 and the merge is unreachable.
+          OWN_CHECK: "AI Auto-Merge"
         run: |
+          pending=1
           for i in $(seq 1 25); do
-            pending="$(gh pr view ${{ github.event.pull_request.number }} --json statusCheckRollup --jq '[.statusCheckRollup[] | select(.status != "COMPLETED")] | length')"
-            skipped="$(gh pr view ${{ github.event.pull_request.number }} --json statusCheckRollup --jq '[.statusCheckRollup[] | select(.conclusion != "SUCCESS" and .conclusion != "SKIPPED" and .conclusion != "NEUTRAL") | select(.status == "COMPLETED")] | length')"
-            echo "pending=$pending failed=$skipped"
-            [ "$skipped" -gt 0 ] && { echo "::error::A check failed — no auto-merge."; exit 1; }
+            pending="$(gh pr view "$PR_NUMBER" --json statusCheckRollup \
+              --jq "[.statusCheckRollup[] | select(.status != \"COMPLETED\" and .name != \"${OWN_CHECK}\")] | length")"
+            failed="$(gh pr view "$PR_NUMBER" --json statusCheckRollup \
+              --jq "[.statusCheckRollup[] | select(.status == \"COMPLETED\" and .name != \"${OWN_CHECK}\" and .conclusion != \"SUCCESS\" and .conclusion != \"SKIPPED\" and .conclusion != \"NEUTRAL\")] | length")"
+            echo "pending=$pending failed=$failed"
+            [ "$failed" -gt 0 ] && { echo "::error::A check failed — no auto-merge."; exit 1; }
             [ "$pending" -eq 0 ] && break
             sleep 60
           done
@@ -232,8 +242,9 @@ jobs:
         if: steps.guard.outputs.blocked != 'true'
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
-          gh pr merge ${{ github.event.pull_request.number }} --squash \
+          gh pr merge "$PR_NUMBER" --squash \
             --delete-branch=false \
             --subject "$PR_TITLE"
