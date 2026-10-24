@@ -59,7 +59,7 @@ spec:
           app:
             image:
               repository: teslamate/teslamate
-              tag: 4.3.0@sha256:fb0d8fff2e3b412b7ca2cb80c56071482f24a7311ddd37f0eadf72e879be7c64
+              tag: 4.3.0@sha256:516fc9f0a14369f541b1a70ff2f65dd9b57c2e01c1f533b6d43b375445404955
             env:
               TZ: Europe/Paris
               DISABLE_MQTT: "false"
