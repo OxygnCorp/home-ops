@@ -28,6 +28,10 @@ permissions:
 jobs:
   review-pr:
     name: AI PR Review
+    outputs:
+      verdict: ${{ steps.analyze.outputs.verdict }}
+      review-result: ${{ steps.analyze.outputs.review-result }}
+      verdict-source: ${{ steps.analyze.outputs.verdict-source }}
     # pull_request is the normal path; PRs on `renovate/am-*` branches are the
     # Renovate "trusted automerge" set (minor/patch/digest non-core, see
     # .renovate/autoMerge.json5 additionalBranchPrefix) and are skipped. The
@@ -88,7 +92,9 @@ jobs:
           client-id: ${{ secrets.APP_CLIENT_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
           repositories: ${{ github.repository }}
-          permission-contents: read
+          # contents: write — the auto-merge job uses this token to merge
+          # approved minor/patch bumps (gh pr merge --squash). Read-elsewhere.
+          permission-contents: write
           permission-pull-requests: write
           # ci-status-check: "true" below reads check runs for CI evidence
           permission-checks: read
@@ -150,4 +156,84 @@ jobs:
           evidence-providers-file: .github/konflate-evidence-providers.json
           on-model-failure: notice
           inline-findings: "true"
-          publish-mode: review_comment
+          # Native APPROVE/REQUEST_CHANGES reviews: the verdict becomes a real
+          # review that audit trails can query, and the auto-merge job gates on
+          # the `verdict` + `review-result` step outputs.
+          publish-mode: review_verdict
+
+  auto-merge:
+    name: AI Auto-Merge
+    needs: [review-pr]
+    # Merge minor/patch bump PRs authored by the Renovate bot when the AI review
+    # fully approves them. Guards (fail-closed on every line):
+    # - verdict approve AND review-result clean|findings (vendor rule: never
+    #   gate on verdict alone — `partial` is an unfinished investigation).
+    # - renovate/ branch but NOT renovate/am- (those are already Renovate-
+    #   automerged; their workflow runs are skipped entirely).
+    # - bot author, no type/major label, no `!:` in title.
+    # - Files touching talos/ or kubernetes/apps/system-upgrade/ (talos + kubernetes
+    #   upgrade chains) abort the merge.
+    if: ${{ always() && (github.event_name == 'pull_request'
+      && needs.review-pr.result == 'success'
+      && needs.review-pr.outputs.verdict == 'approve'
+      && (needs.review-pr.outputs.review-result == 'clean' || needs.review-pr.outputs.review-result == 'findings')
+      && github.event.pull_request.user.login == 'mushu-bot[bot]'
+      && startsWith(github.event.pull_request.head_ref, 'renovate/')
+      && !startsWith(github.event.pull_request.head_ref, 'renovate/am-')
+      && !contains(github.event.pull_request.labels.*.name, 'type/major')
+      && !contains(github.event.pull_request.title, '!')) }}
+    runs-on: home-ops-runner
+    timeout-minutes: 10
+    steps:
+      - name: Token
+        id: app-token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ secrets.APP_CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          repositories: ${{ github.repository }}
+          permission-contents: write
+          permission-pull-requests: write
+          permission-checks: read
+
+      - name: Guard forbidden paths (talos / kubernetes upgrades)
+        id: guard
+        uses: actions/github-script@d746ffe35508b1917358783b479e04febd2b8f71 # v9.0.0
+        with:
+          github-token: ${{ steps.app-token.outputs.token }}
+          script: |
+            const pr = context.payload.pull_request;
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              owner: context.repo.owner, repo: context.repo.repo,
+              pull_number: pr.number, per_page: 100,
+            });
+            const forbidden = files.filter(f =>
+              f.filename.startsWith('talos/') ||
+              f.filename.startsWith('kubernetes/apps/system-upgrade/'));
+            core.setOutput('blocked', forbidden.length > 0 ? 'true' : 'false');
+            console.log('files:', files.map(f => f.filename).join(','));
+            if (forbidden.length > 0) console.log('BLOCKED by:', forbidden.map(f => f.filename).join(','));
+
+      - name: Wait for remaining checks (max ~25 min)
+        if: steps.guard.outputs.blocked != 'true'
+        run: |
+          for i in $(seq 1 25); do
+            pending="$(gh pr view ${{ github.event.pull_request.number }} --json statusCheckRollup --jq '[.statusCheckRollup[] | select(.status != "COMPLETED")] | length')"
+            skipped="$(gh pr view ${{ github.event.pull_request.number }} --json statusCheckRollup --jq '[.statusCheckRollup[] | select(.conclusion != "SUCCESS" and .conclusion != "SKIPPED" and .conclusion != "NEUTRAL") | select(.status == "COMPLETED")] | length')"
+            echo "pending=$pending failed=$skipped"
+            [ "$skipped" -gt 0 ] && { echo "::error::A check failed — no auto-merge."; exit 1; }
+            [ "$pending" -eq 0 ] && break
+            sleep 60
+          done
+          [ "$pending" -ne 0 ] && { echo "::error::Checks still pending after 25 min — no auto-merge."; exit 1; }
+          exit 0
+
+      - name: Merge (squash)
+        if: steps.guard.outputs.blocked != 'true'
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          gh pr merge ${{ github.event.pull_request.number }} --squash \
+            --delete-branch=false \
+            --subject "$PR_TITLE"
