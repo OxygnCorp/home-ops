@@ -43,7 +43,7 @@ jobs:
         uses: jdx/mise-action@fc42bcc7ddbf51124c30f95a877a0c5168a3bfde # v5.2.1
         with:
           # renovate: datasource=github-releases depName=jdx/mise
-          version: v2026.10.15
+          version: v2026.10.17
           cache: false
           # Only install what this job needs (version pinned in .mise/config.toml).
           # A bare `mise install` would pull every tool in .mise/config.toml and
@@ -75,7 +75,7 @@ jobs:
         uses: jdx/mise-action@fc42bcc7ddbf51124c30f95a877a0c5168a3bfde # v5.2.1
         with:
           # renovate: datasource=github-releases depName=jdx/mise
-          version: v2026.10.15
+          version: v2026.10.17
           cache: false
           # No checkout in this job: mise exec auto-installs the exact pinned
           # version from an empty directory (TALOS_VERSION env, above).
