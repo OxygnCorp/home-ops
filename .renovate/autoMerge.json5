@@ -108,25 +108,16 @@
         "/gateway-api/",
         "/cilium/",
         // Secrets / identité
-        "/authentik/",
         "/1password/",
         "/external-secrets/",
         "/cert-manager/",
         "/kanidm/",
         // Stockage / données
         "/cloudnative-pg/",
-        "/openebs/",
         "/miroir/",
         "/kopiur/",
         "/tuppr/",
         "/rook-ceph/",
-        // Chaîne d'IA / délégation (litellm fait tourner l'AI review)
-        "/litellm/",
-        "/toolhive/",
-        "/memini/",
-        "/mcp-grafana/",
-        "/unifi-network-mcp/",
-        "/konflate/",
         // CI / GitOps core
         "/gha-runner-scale-set/",
         "/flux-operator/",
