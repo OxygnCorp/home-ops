@@ -30,7 +30,7 @@ home-ops/
 | Ingress    | Envoy Gateway                | L7 proxy, ingress controller      |
 | DNS        | external-dns                 | Syncs ingress to Cloudflare/UniFi |
 | Secrets    | external-secrets + 1Password   | Secret management                 |
-| Storage    | OpenEBS + Miroir (DRBD)      | Local-path + replicated block storage |
+| Storage    | Miroir (DRBD)                | Replicated + local block storage (default class `miroir-slow`) |
 | Database   | CloudNativePG                | Postgres operator (`components/postgres`) |
 | Cache      | DragonflyDB                  | Redis-compatible in-memory cache (`components/dragonfly`) |
 | Backups    | kopiur (volsync fork)        | PVC backup/restore via Kopia → NFS (`components/kopiur`) |
@@ -52,6 +52,16 @@ Flux recursively searches `kubernetes/apps/` for `kustomization.yaml` files. Eac
 - SOPS used for encrypting sensitive values in Git
 - Apps use `HelmRelease` via Flux, rarely raw manifests
 - Each namespace is a subdirectory under `kubernetes/apps/`
+
+## Renovate Automerge (as of 2026-10-24)
+
+Renovate updates are auto-merged (traceable `renovate/am-*` branches, PRs ready) with these guarantees:
+
+- **Auto-merged without review**: trusted rules (home-operations container digests/patches, kube-prometheus-stack, renovate image updates, GH actions) + a broad rule for docker-chart minor/patch/digest updates with 1-hour `minimumReleaseAge` (see `.renovate/autoMerge.json5`).
+- **Branches `renovate/am-*`** skip the AI PR Review workflow entirely (branch prefix marker, `additionalBranchPrefix: "am-"` stays non-mergeable to avoid leaks — the Renovate config validates with `renovate-config-validator`).
+- **Always manual** (excluded from automerge by the last-word rule in `.renovate/autoMerge.json5`): network/DNS/gateway (coredns, envoy*, gateway-api, cilium), secrets/identity (1password, external-secrets, cert-manager, kanidm), storage/data (cloudnative-pg, miroir, kopiur, tuppr, rook-ceph), GitOps/k8s/Talos core (flux-*, kubelet/apiserver images, factory.talos.dev, siderolabs/installer) — plus **any `major` bump** (defense-in-depth rule).
+- `jdx/mise` toolchain bumps (custom regex manager, `.github/workflows/image-pull.yaml`) auto-merge minor/patch only.
+- Manual merges remain squash as the repo convention.
 
 ## Common Operations
 
@@ -147,7 +157,7 @@ _Flux automatically reconciles changes once the PR is merged._
 The cluster is a 4-node **Talos Linux** cluster running on Proxmox VE 8, semi-hyper-converged:
 
 - **3 control-plane nodes** (HA etcd): `k8s-0`, `k8s-1`, `k8s-2`
-- **Workloads + storage co-located** on the control-plane nodes: OpenEBS local-path (`openebs-hostpath`) and Miroir DRBD-replicated block storage (`miroir-slow` / `miroir-slow-local`, snapshot class `miroir`)
+- **Workloads + storage co-located** on the control-plane nodes: Miroir DRBD-replicated block storage only (`miroir-slow` is the default StorageClass, `miroir-slow-local` for local/read-mostly volumes, snapshot class `miroir`). OpenEBS is no longer deployed.
 - **1 dedicated GPU worker node**: `k8s-3` — tainted `workload=ai:NoSchedule` and reserved for AI workloads (NVIDIA GPU via `nvidia.com/gpu`). Workloads targeting it must set a matching toleration (and usually a `nodeSelector` on `kubernetes.io/hostname: k8s-3`); see the `nvidia-device-plugin` and the litellm MCP workloads (GPU-adjacent: `litellm-lightrag-mcp`) for the established pattern
 - **Separate NFS server** for file storage (not on Talos nodes)
 - **Proxmox VM provisioning** with the QEMU guest agent enabled (`siderolabs/qemu-guest-agent` system extension)
@@ -218,6 +228,7 @@ Reusable Flux components under `kubernetes/components/` are referenced from a `k
 | `kopiur` (`kopiur/backup` + `kopiur/secret`) | PVC backup via kopiur (volsync fork): hourly `SnapshotSchedule`, zstd `SnapshotPolicy`, Kopia → NFS `ClusterRepository nas` | Stateful apps (~24 apps) |
 | `postgres` | CloudNativePG (`postgresql.cnpg.io/v1`) cluster scaffolding with Barman recovery defaults | Apps that need Postgres |
 | `dragonfly` | DragonflyDB (`dragonflydb.io/v1alpha1`) Redis-compatible cache (2 replicas, emulated cluster mode); patches the consuming `HelmRelease` with `dependsOn: dragonfly-operator` | Apps that need a cache |
+| `oidc-kanidm` | Per-app OIDC SSO against Kanidm (`components/oidc-kanidm`): Flux Kustomization applying a `kanidm-${APP}-oidc` ConfigMap consumed by the kanidm-provision controller (creates the OAuth2 client + `kanidm-${APP}-oidc` Secret), optional `envoy/` component adds the Envoy Gateway `SecurityPolicy` with pinned token/authorize endpoints. Requires `APP`, `APP_NAMESPACE`, `SUBDOMAIN`, `DOMAIN` substitutions. Replaces the old Authentik-based `components/oidc` | Apps exposing HTTPRoutes behind Envoy |
 | `zeroscaler` | Scale-to-zero on idle via HPA (min 0 / max 1) driven by an external Prometheus probe | Low-traffic apps (download, media) |
 | `alerts` | Flux `Provider` + `Alert` wiring: Flux error events → Alertmanager (observability) and commit statuses → GitHub | All namespaces with Flux resources |
 
@@ -294,7 +305,7 @@ Diagnostic cheat-sheet for the most common issues encountered in this cluster:
 | Flux `Kustomization` not Ready | `flux get ks <n> -n <ns> -o yaml` → `.status.conditions[]` | Often a dependency cycle or missing source |
 | Pods stuck in `Pending` | `kubectl describe pod <n>` → check `Events` for `FailedScheduling` | Node pressure, taints, or insufficient resources |
 | PVC backup failures (kopiur) | `kubectl get snapshotschedule,snapshot -A` + mover Job logs in the app namespace | `KOPIA_PASSWORD` ExternalSecret drift or NFS mount issue |
-| PVC stuck `Pending` / wrong StorageClass | `kubectl get sc,volumesnapshotclass` then `kubectl describe pvc <n> -n <ns>` | `miroir-slow` (replicated) vs `openebs-hostpath` (local) mismatch |
+| PVC stuck `Pending` / wrong StorageClass | `kubectl get sc,volumesnapshotclass` then `kubectl describe pvc <n> -n <ns>` | Only `miroir-slow` (default, replicated) and `miroir-slow-local` exist — a wrong StorageClass reference (e.g. leftover `openebs-hostpath`) fails |
 | `etcd` alarms | `talosctl -n <cp-node> etcd alarm list` | `talosctl etcd alarm disarm` after fix |
 | 1Password Connect 401 | 1Password → Settings → Connect Servers → check token expiry | `kubectl get secret -n external-secrets onepassword-connect-token -o jsonpath='{.data.token}' | base64 -d` |
 
