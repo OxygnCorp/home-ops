@@ -1,8 +1,8 @@
 ---
 # yaml-language-server: $schema=https://json.schemastore.org/kustomization
 # Grouped by upstream provider:
-#   - opencode-go/ : 17 OpenCode Go models x 2 subscriptions (34 CRs sharing
-#                    17 modelNames, so litellm load-balances and fails over
+#   - opencode-go/ : 23 OpenCode Go models x 2 subscriptions (46 CRs sharing
+#                    23 modelNames, so litellm load-balances and fails over
 #                    between the two keys — see opencode-go/kustomization.yaml)
 #   - internal/    : 2 in-cluster services (embedding + reranker)
 apiVersion: kustomize.config.k8s.io/v1beta1

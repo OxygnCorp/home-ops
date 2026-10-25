@@ -376,25 +376,6 @@ data:
                 "output": 64000
               }
             },
-            "go-dsv4f-vision": {
-              "capabilities": {
-                "tools": true,
-                "input": [
-                  "text",
-                  "image"
-                ],
-                "output": [
-                  "text"
-                ]
-              },
-              "limit": {
-                "context": 1000000,
-                "output": 384000
-              },
-              "compatibility": {
-                "reasoningField": "reasoning_content"
-              }
-            },
             "go-minimax-m3": {
               "capabilities": {
                 "tools": true,
@@ -424,24 +405,6 @@ data:
               "limit": {
                 "context": 204800,
                 "output": 131072
-              }
-            },
-            "longcat-2.5-free": {
-              "capabilities": {
-                "tools": true,
-                "input": [
-                  "text"
-                ],
-                "output": [
-                  "text"
-                ]
-              },
-              "limit": {
-                "context": 262144,
-                "output": 32768
-              },
-              "compatibility": {
-                "reasoningField": "reasoning_content"
               }
             },
             "mimo-v2.6-flash": {

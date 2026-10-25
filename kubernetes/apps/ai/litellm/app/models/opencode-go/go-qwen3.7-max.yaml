@@ -1,0 +1,28 @@
+---
+apiVersion: litellm.home-operations.com/v1alpha1
+kind: LiteLLMModel
+metadata:
+  name: go-qwen3.7-max
+spec:
+  modelName: go-qwen3.7-max
+  proxyRef: litellm
+  params:
+    model: openai/qwen3.7-max
+    apiBase: https://opencode.ai/zen/go/v1
+    apiKey: os.environ/OPENCODE_MATT_API_KEY
+    additional:
+      # Served on zen/go /models but NO published Go pricing yet (absent from
+      # console/go pricing table). Estimated from Alibaba Model Studio
+      # international list pricing (2026-05 snapshot) — subscription only,
+      # tracking purposes, no max_budget set (would block requests). Revisit
+      # once OpenCode publishes the Go tier for this model.
+      input_cost_per_token: 0.0000025
+      output_cost_per_token: 0.0000075
+      cache_read_input_token_cost: 0.00000025
+  info:
+    mode: chat
+    maxInputTokens: 1000000
+    maxOutputTokens: 131072
+    supportsFunctionCalling: true
+    supportsVision: true
+    supportsPromptCaching: true

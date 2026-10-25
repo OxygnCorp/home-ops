@@ -130,46 +130,51 @@ spec:
     # is skipped and the request is served by the other subscription.
     optional_pre_call_checks:
       - session_affinity
-    # Three-tier fallback policy reduced to two tiers after the MiniMax
-    # subscription lapsed: tier 1 is implicit (every group's matt/agnes pair
-    # load-balances within the group itself), tier 2 is longcat-2.5-free,
-    # free and unmetered on the OpenCode Go promos (repoint at go-glm-5.3-flash
-    # if the promo ends).
+    # Two-tier fallback policy: tier 1 is implicit (every group's matt/agnes
+    # pair load-balances within the group itself), tier 2 is beam-free, free
+    # and unmetered on the current OpenCode Go promo (repoint at
+    # go-glm-5.3-flash if the promo ends).
     #
-    # Caveat: go-dsv4f-vision's fallbacks are not vision-capable — a vision
-    # request that exhausts the group will fail differently, which still beats
-    # having no net at all.
+    # Caveat: beam-free (the tier-2 fallback) is not vision-capable — a vision
+    # request that exhausts its group (dsv41f) will fail differently, which
+    # still beats having no net at all.
     fallbacks:
       # Flash-class OpenCode Go groups
       - dsv41f:
-          - longcat-2.5-free
+          - beam-free
       - dsv41f-nothink:
-          - longcat-2.5-free
+          - beam-free
       - go-glm-5.3-flash:
-          - longcat-2.5-free
+          - beam-free
       - go-qwen3.8-flash:
-          - longcat-2.5-free
+          - beam-free
+      - go-minimax-m3.1-flash:
+          - beam-free
       - mimo-v2.6-flash:
-          - longcat-2.5-free
-      - go-dsv4f-vision:
-          - longcat-2.5-free
+          - beam-free
       # Pro/heavy-class OpenCode Go groups
       - dsv4p:
-          - longcat-2.5-free
+          - beam-free
       - go-glm-5.3:
-          - longcat-2.5-free
+          - beam-free
       - go-qwen3.8-max:
-          - longcat-2.5-free
+          - beam-free
+      - go-qwen3.7-max:
+          - beam-free
       - go-kimi-k3:
-          - longcat-2.5-free
+          - beam-free
+      - go-kimi-k3.1-pro:
+          - beam-free
       - go-kimi-k2.7-code:
-          - longcat-2.5-free
+          - beam-free
+      - go-minimax-m3:
+          - beam-free
       - qwen3.7-plus:
-          - longcat-2.5-free
+          - beam-free
       - go-hy4-preview:
-          - longcat-2.5-free
+          - beam-free
       - mimo-v2.6-pro:
-          - longcat-2.5-free
+          - beam-free
   litellmSettings:
     # Semantic MCP tool filter: for /v1/responses and /v1/chat/completions
     # requests carrying MCP tools, narrow the per-request tool list to the
