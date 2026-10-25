@@ -61,12 +61,16 @@ spec:
   envFrom:
     - secretRef:
         name: litellm-secret
+  # Baseline is ~850Mi (gunicorn workers) with transient +1.4GiB spikes when
+  # a client sends a ~200k-token prompt (router token counting + request
+  # buffering). 2Gi got OOMKilled on 2026-10-25 (crash-loop while the client
+  # retried against the fresh pod); 4Gi absorbs a spike on top of the plateau.
   resources:
     requests:
       cpu: 10m
-      memory: 256Mi
+      memory: 1Gi
     limits:
-      memory: 2Gi
+      memory: 4Gi
   podAnnotations:
     reloader.stakater.com/auto: "true"
   podSecurityContext:
