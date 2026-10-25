@@ -114,7 +114,6 @@
         "/kanidm/",
         // Stockage / données
         "/cloudnative-pg/",
-        "/openebs/",
         "/miroir/",
         "/kopiur/",
         "/tuppr/",
