@@ -9,6 +9,11 @@ spec:
     kind: OCIRepository
     name: mainclaw
   interval: 1h
+  # The OpenClaw gateway only starts listening on its readiness port after
+  # the slow doctor/migration phase (~8+ min on a full pod recycle). Helm's
+  # default 5m timeout can fail the rollout on slow startups (devclaw got
+  # stuck+rolled back this way on 2026-10-23); 20m leaves sane margin.
+  timeout: 20m
   values:
     controllers:
       openclaw:
@@ -18,7 +23,9 @@ spec:
           init:
             image:
               repository: docker.io/library/alpine
-              tag: "3.24"
+              # Pinned to alpine:3.24 multi-arch manifest digest; parity with
+              # devclaw (tag ref can stall on Docker Hub slowness).
+              tag: 3.24@sha256:be2656061b536c1883c4034790e21d0a09c5aaaf51968b89368a3c0371ea2c9a
             securityContext:
               runAsUser: 0
             command:
