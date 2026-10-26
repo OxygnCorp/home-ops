@@ -22,7 +22,7 @@
         "lightContext": true
       },
       "imageModel": {
-        "primary": "litellm/go-dsv4f-vision",
+        "primary": "litellm/dsv41f",
         "fallbacks": [
           "litellm/go-glm-5.3-flash"
         ]
@@ -983,23 +983,6 @@
             "reasoning": true,
             "input": [
               "text"
-            ],
-            "cost": {
-              "input": 0,
-              "output": 0,
-              "cacheRead": 0,
-              "cacheWrite": 0
-            },
-            "contextWindow": 1000000,
-            "maxTokens": 384000
-          },
-          {
-            "id": "go-dsv4f-vision",
-            "name": "OpenCode Go DeepSeek V4 Flash Vision",
-            "reasoning": false,
-            "input": [
-              "text",
-              "image"
             ],
             "cost": {
               "input": 0,

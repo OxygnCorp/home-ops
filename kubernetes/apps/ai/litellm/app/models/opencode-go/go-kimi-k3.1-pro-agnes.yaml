@@ -1,0 +1,26 @@
+---
+apiVersion: litellm.home-operations.com/v1alpha1
+kind: LiteLLMModel
+metadata:
+  name: go-kimi-k3.1-pro-agnes
+spec:
+  modelName: go-kimi-k3.1-pro
+  proxyRef: litellm
+  params:
+    model: openai/kimi-k3.1-pro
+    apiBase: https://opencode.ai/zen/go/v1
+    apiKey: os.environ/OPENCODE_AGNES_API_KEY
+    additional:
+      # Real upstream pricing (USD/M ÷ 1M) — subscription only, tracking
+      # purposes, no max_budget set (would block requests)
+      input_cost_per_token: 0.000002
+      output_cost_per_token: 0.00001
+      cache_read_input_token_cost: 0.0000002
+      cache_creation_input_token_cost: 0.000002
+  info:
+    mode: chat
+    maxInputTokens: 1048576
+    maxOutputTokens: 131072
+    supportsFunctionCalling: true
+    supportsVision: true
+    supportsPromptCaching: true

@@ -2,24 +2,25 @@
 apiVersion: litellm.home-operations.com/v1alpha1
 kind: LiteLLMModel
 metadata:
-  name: go-dsv4f-vision
+  name: go-kimi-k3.1-pro
 spec:
-  modelName: go-dsv4f-vision
+  modelName: go-kimi-k3.1-pro
   proxyRef: litellm
   params:
-    model: openai/deepseek-v4-flash-vision-exp
+    model: openai/kimi-k3.1-pro
     apiBase: https://opencode.ai/zen/go/v1
     apiKey: os.environ/OPENCODE_MATT_API_KEY
     additional:
       # Real upstream pricing (USD/M ÷ 1M) — subscription only, tracking
       # purposes, no max_budget set (would block requests)
-      input_cost_per_token: 0.0000003
-      output_cost_per_token: 0.0000012
-      cache_read_input_token_cost: 0.000000006
+      input_cost_per_token: 0.000002
+      output_cost_per_token: 0.00001
+      cache_read_input_token_cost: 0.0000002
+      cache_creation_input_token_cost: 0.000002
   info:
     mode: chat
-    maxInputTokens: 1000000
-    maxOutputTokens: 384000
+    maxInputTokens: 1048576
+    maxOutputTokens: 131072
     supportsFunctionCalling: true
     supportsVision: true
     supportsPromptCaching: true

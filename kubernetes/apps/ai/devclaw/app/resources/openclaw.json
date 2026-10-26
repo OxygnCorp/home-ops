@@ -29,7 +29,7 @@
         ]
       },
       "imageModel": {
-        "primary": "litellm/go-dsv4f-vision",
+        "primary": "litellm/dsv41f",
         "fallbacks": [
           "litellm/go-glm-5.3-flash"
         ]
