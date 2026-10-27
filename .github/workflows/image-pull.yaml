@@ -24,7 +24,7 @@ env:
   # preceded by ": " or "=" on the line under the marker (the former inline
   # `tool_versions:` pin `talosctl 1.14.1` was never captured, hence the drift).
   # renovate: datasource=custom.talos-factory depName=siderolabs/talos
-  TALOS_VERSION: v1.14.4
+  TALOS_VERSION: v1.14.5
 
 jobs:
   extract:
