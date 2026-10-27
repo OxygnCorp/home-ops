@@ -1,0 +1,10 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+# In-app OIDC: provisions the Kanidm OAuth2 client (via ../base) without
+# the Envoy SecurityPolicy — the app consumes the `kanidm-${APP}-oidc`
+# Secret (client-id / client-secret) itself. Read from spec.components
+# of the consuming ks.yaml.
+resources:
+  - ../base

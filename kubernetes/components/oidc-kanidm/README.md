@@ -11,6 +11,7 @@ ConfigMaps + `${APP}-oidc` secrets from 1Password).
 |----------|---------------------|--------------------------------------------------------------------------------------------------------------------------------------|
 | `base/`  | shared template     | Flux Kustomization `kanidm-${APP}-oidc` (created in the consumer's namespace, `spec.targetNamespace: security`, `dependsOn`: kanidm) applying the kanidm-provision ConfigMap for this app. Included transitively by every consumer below. |
 | `envoy/` | kustomize Component | `../base` + Envoy Gateway `SecurityPolicy` `${APP}-oidc` (OIDC in front of the app's HTTPRoute). Included via `spec.components`.       |
+| `in-app/` | kustomize Component | `../base` only — for apps doing their own OIDC flow (no SecurityPolicy). Included via `spec.components`.                              |
 
 ## What gets created
 
@@ -76,8 +77,9 @@ spec:
 No 1Password item and no blueprint Kustomization needed — the provisioner
 creates the Kanidm client and its Secret from the ConfigMap. For in-app OIDC
 (the app consumes the provider itself rather than through Envoy), use
-`../../../../components/oidc-kanidm/base` and read
-`client-id` / `client-secret` from the Secret `kanidm-${APP}-oidc`.
+`../../../../components/oidc-kanidm/in-app` and read
+`client-id` / `client-secret` from the Secret `kanidm-${APP}-oidc`
+(e.g. `valueFrom.secretKeyRef` in the app's HelmRelease env).
 
 ## Troubleshooting
 
