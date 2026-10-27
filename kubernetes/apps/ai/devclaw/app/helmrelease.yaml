@@ -97,7 +97,7 @@ spec:
           app:
             image:
               repository: ghcr.io/openclaw/openclaw
-              tag: 2026.10.6@sha256:7dbff0fe5f5359b1badefe90a23efa9f203cd0d3c36bee095f4896c7a1d3864b
+              tag: 2026.10.8@sha256:82b6ce63048e75ca749dbc250e872ee21f4b1c098fc6bff94636e357bcb64bf5
             # The gateway only listens on 18789 after a slow doctor/migration
             # phase (~8 min); keep the pod NotReady until then so Envoy does
             # not route to a dead upstream during rollouts
