@@ -83,7 +83,13 @@
       matchStrings: [
         // # renovate: clawhub:@eleboucher/memini registryUrl=https://clawhub.ai/api/npm
         // MEMINI_PLUGIN_VERSION=v0.7.32
-        "clawhub:(?<depName>@\\S+)\\s+registryUrl=(?<registryUrl>https://\\S+)\\n\\s*MEMINI_PLUGIN_VERSION=(?<currentValue>v\\S+)",
+        // The ClawHub npm-compatible registry serves versions WITHOUT the "v"
+        // prefix, so autoreplace rewrites the pin to a bare semver
+        // (MEMINI_PLUGIN_VERSION=0.7.37). currentValue must accept an optional
+        // "v" or the post-replace re-extraction fails and the branch update
+        // errors on every run ("Did the autoreplace make the file
+        // unparseable?"). The chart runtime already strips an optional "v".
+        "clawhub:(?<depName>@\\S+)\\s+registryUrl=(?<registryUrl>https://\\S+)\\n\\s*MEMINI_PLUGIN_VERSION=(?<currentValue>v?[0-9]\\S+)",
       ],
       datasourceTemplate: "npm",
     },

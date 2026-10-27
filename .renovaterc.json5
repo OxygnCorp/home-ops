@@ -20,6 +20,16 @@
     ":timezone(Europe/Paris)",
   ],
   dependencyDashboardTitle: "Renovate Dashboard 🤖",
+  // The docker datasource only gets releaseTimestamps from Docker Hub
+  // (tag_last_pushed). Every other registry in use (ghcr.io, forgejo,
+  // gsoci.azurecr.io, mirror.gcr.io, private registries) — plus Docker Hub
+  // digest updates — exposes no timestamps. With Renovate v44 defaults
+  // (minimumReleaseAgeBehaviour "timestamp-required" + internalChecksFilter
+  // "strict"), every timestamp-less update matched by a minimumReleaseAge
+  // rule stays "pending" forever and its branch is never created (the
+  // "Pending Status Checks" flood on the dashboard). "timestamp-optional"
+  // keeps the age gate wherever a timestamp exists and proceeds otherwise.
+  minimumReleaseAgeBehaviour: "timestamp-optional",
   suppressNotifications: [
     "prEditedNotification",
     "prIgnoreNotification",
