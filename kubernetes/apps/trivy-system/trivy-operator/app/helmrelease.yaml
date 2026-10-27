@@ -40,7 +40,12 @@ spec:
       # How long reports are valid before re-scanning (default: 24h)
       scannerReportTTL: "72h"
       # Cluster SBOM cache TTL (default: 120h)
+      # Requires operator.clusterSbomCacheEnabled: true (below) to be effective
       cacheReportTTL: "168h"
+      # Generate ClusterSBOMReports (SBOM cached per image digest, shared by
+      # all scan jobs) - activates cacheReportTTL above and avoids re-pulling
+      # the same image layers on every scan
+      clusterSbomCacheEnabled: true
 
       # Time to keep completed/failed scan job pods before cleanup (default: 60s)
       scanJobTTL: 300s
@@ -87,9 +92,6 @@ spec:
       mode: ClientServer
 
       storageClassEnabled: false # ephemeral storage
-
-      # Enable SBOM generation with Rekor transparency log
-      sbomSources: "rekor"
 
       # Resource limits for ephemeral scan job pods
       # In ClientServer mode these are lightweight - the heavy lifting is done by the server
@@ -176,10 +178,6 @@ spec:
         prometheus: kube-prometheus-stack
       interval: 30s
       scrapeTimeout: 10s
-
-    # Vulnerability reports scanner
-    vulnerabilityReports:
-      scanner: Trivy
 
     # Compliance and RBAC Scanning
     compliance:
