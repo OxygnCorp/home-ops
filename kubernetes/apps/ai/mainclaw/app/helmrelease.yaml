@@ -52,7 +52,17 @@ spec:
                 # path) plus everything younger than 7 days. All globs/searches
                 # tolerate absence: kopia restores now exclude these dirs.
                 cutoff=$(( $(date +%s) - 604800 ))
-                newest=$(ls -1dt /home/node/.openclaw.update-captures/doctor-* 2>/dev/null | head -1)
+                # No `ls`/`find` with set -e + pipefail: when the glob matches
+                # nothing, ls exits 1 (stderr suppressed) and pipefail kills
+                # the whole init with no output — hang the rollout (seen on
+                # devclaw 2026-10-23 & 25). Compute newest by hand instead.
+                newest=""
+                for d in /home/node/.openclaw.update-captures/doctor-*; do
+                    [ -d "$d" ] || continue
+                    if [ -z "$newest" ] || [ "$(stat -c %Y "$d")" -gt "$(stat -c %Y "$newest")" ]; then
+                        newest="$d"
+                    fi
+                done
                 for d in /home/node/.openclaw.update-captures/doctor-*; do
                     [ -d "$d" ] || continue
                     if [ "$d" = "$newest" ]; then continue; fi
@@ -60,7 +70,12 @@ spec:
                 done
                 for f in /home/node/.openclaw/agents/*/agent/*.pre-startup-migration-*.bak; do
                     [ -e "$f" ] || continue
-                    keep=$(ls -1t "$(dirname "$f")"/*.pre-startup-migration-*.bak 2>/dev/null | head -1)
+                    keep=""
+                    for g in "$(dirname "$f")"/*.pre-startup-migration-*.bak; do
+                        if [ "$g" != "$f" ] && { [ -z "$keep" ] || [ "$(stat -c %Y "$g")" -gt "$(stat -c %Y "$keep")" ]; }; then
+                            keep="$g"
+                        fi
+                    done
                     if [ "$f" != "$keep" ] && [ "$(stat -c %Y "$f")" -lt "$cutoff" ]; then rm -f "$f"; fi
                 done
                 # Stale sqlite readonly-check temp copies (orphaned fs-safe files)
