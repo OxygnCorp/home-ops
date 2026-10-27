@@ -157,8 +157,6 @@ spec:
       - mimo-v2.6-flash:
           - beam-free
       # Pro/heavy-class OpenCode Go groups
-      - dsv4p:
-          - beam-free
       - go-glm-5.3:
           - beam-free
       - go-qwen3.8-max:
