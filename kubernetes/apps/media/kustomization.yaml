@@ -12,5 +12,6 @@ resources:
   - ./audiobookshelf/ks.yaml
   - ./seerr/ks.yaml
   - ./komga/ks.yaml
+  - ./maintainerr/ks.yaml
   - ./plex/ks.yaml
   - ./tautulli/ks.yaml

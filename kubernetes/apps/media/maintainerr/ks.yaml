@@ -1,0 +1,41 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: maintainerr
+spec:
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: maintainerr
+  components:
+    - ../../../../components/kopiur/backup
+    - ../../../../components/oidc-kanidm/envoy
+  dependsOn:
+    - name: kopiur
+      namespace: kopiur-system
+    - name: miroir-config
+      namespace: miroir-system
+    - name: kanidm
+      namespace: security
+  interval: 1h
+  path: ./kubernetes/apps/media/maintainerr/app
+  postBuild:
+    substitute:
+      APP: maintainerr
+      APP_NAMESPACE: media
+      DOMAIN: oxygn.dev
+      KOPIUR_CAPACITY: 2Gi
+      KOPIUR_PGID: "1000"
+      KOPIUR_PUID: "1000"
+      OIDC_CALLBACK: /oauth2/callback
+      OIDC_DISPLAY_NAME: Maintainerr
+      OIDC_ROUTE_NAME: maintainerr
+      SUBDOMAIN: maintainerr
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  targetNamespace: media
+  wait: false
