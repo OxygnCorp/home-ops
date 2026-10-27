@@ -118,7 +118,7 @@ data:
         // The marker must stay on the line immediately above the entry. Keep "npm" bare —
         // do NOT write "datasource=npm": the annotated-deps manager would double-capture this pin.
         // renovate: npm depName=@eleboucher/opencode-memini-v2
-        { "package": "@eleboucher/opencode-memini-v2@0.7.32", "options": { "base_url": "http://memini.ai:8080", "auto_update": false } },
+        { "package": "@eleboucher/opencode-memini-v2@0.7.37", "options": { "base_url": "http://memini.ai:8080", "auto_update": false } },
         "@tarquinen/opencode-dcp@3.2.0"
       ],
       "providers": {
