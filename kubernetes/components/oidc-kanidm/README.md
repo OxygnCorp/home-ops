@@ -81,6 +81,38 @@ creates the Kanidm client and its Secret from the ConfigMap. For in-app OIDC
 `client-id` / `client-secret` from the Secret `kanidm-${APP}-oidc`
 (e.g. `valueFrom.secretKeyRef` in the app's HelmRelease env).
 
+## Refresh token lifetime (manual, out-of-band)
+
+Kanidm defaults an OAuth2 client's refresh token to a **16h sliding expiry**
+(`OAUTH_REFRESH_TOKEN_EXPIRY`): after any absence longer than 16h the refresh
+grant hard-fails, and once the Kanidm auth session is gone too (24h default)
+the user is forced through a full passkey re-login. The attribute
+`oauth2_refresh_token_expiry` extends this, but it is **not part of the
+kanidm-provision `state.json` schema** — it must be set via the Kanidm API
+once per client, using the provision token:
+
+```bash
+kubectl port-forward -n security svc/kanidm 8443:8443 &
+TOKEN=$(kubectl get secret -n security kanidm-provision-token \
+  -o jsonpath='{.data.token}' | base64 -d)
+curl -sk -X PATCH \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"attrs": {"oauth2_refresh_token_expiry": ["604800"]}}' \
+  https://localhost:8443/v1/oauth2/<APP>
+```
+
+Applied so far (7d = 604800s): `mainclaw`, `opencode` (2026-10-27).
+Takes effect on the next token grant — no user re-login needed.
+
+**Re-apply the PATCH** if the client is deleted/re-provisioned by
+kanidm-provision or the Kanidm database is restored from backup.
+
+Envoy side, the refresh-token cookie `Max-Age` comes only from
+`defaultRefreshTokenTTL` (`envoy/securitypolicy.yaml`, set to `168h`):
+Kanidm never sends `refresh_token_expires_in`, so the cookie and the token
+TTL must be kept aligned by hand. Revoking a client's standing credentials
+is done with `kanidm system oauth2 reset-secrets <APP>`.
+
 ## Troubleshooting
 
 An Envoy `SecurityPolicy` does not re-run discovery: if it translated before
