@@ -188,24 +188,6 @@ data:
                 "reasoningField": "reasoning_content"
               }
             },
-            "dsv4p": {
-              "capabilities": {
-                "tools": true,
-                "input": [
-                  "text"
-                ],
-                "output": [
-                  "text"
-                ]
-              },
-              "limit": {
-                "context": 1000000,
-                "output": 384000
-              },
-              "compatibility": {
-                "reasoningField": "reasoning_content"
-              }
-            },
             "go-kimi-k3": {
               "capabilities": {
                 "tools": true,
@@ -392,7 +374,61 @@ data:
                 "output": 131072
               }
             },
-            "go-minimax-m2.7": {
+            "go-kimi-k3.1-pro": {
+              "capabilities": {
+                "tools": true,
+                "input": [
+                  "text",
+                  "image"
+                ],
+                "output": [
+                  "text"
+                ]
+              },
+              "limit": {
+                "context": 1048576,
+                "output": 131072
+              },
+              "compatibility": {
+                "reasoningField": "reasoning_content"
+              }
+            },
+            "go-minimax-m3.1-flash": {
+              "capabilities": {
+                "tools": true,
+                "input": [
+                  "text",
+                  "image"
+                ],
+                "output": [
+                  "text"
+                ]
+              },
+              "limit": {
+                "context": 1000000,
+                "output": 512000
+              },
+              "compatibility": {
+                "reasoningField": "reasoning_content"
+              }
+            },
+            "go-qwen3.7-max": {
+              "capabilities": {
+                "tools": true,
+                "input": [
+                  "text",
+                  "image"
+                ],
+                "output": [
+                  "text"
+                ]
+              },
+              "limit": {
+                "context": 1000000,
+                "output": 131072
+              }
+            },
+            "beam-free": {
               "capabilities": {
                 "tools": true,
                 "input": [
@@ -403,8 +439,11 @@ data:
                 ]
               },
               "limit": {
-                "context": 204800,
+                "context": 1048576,
                 "output": 131072
+              },
+              "compatibility": {
+                "reasoningField": "reasoning_content"
               }
             },
             "mimo-v2.6-flash": {

@@ -41,12 +41,6 @@
             "cache_prompt": true
           }
         },
-        "litellm/dsv4p": {
-          "alias": "dsv4p",
-          "params": {
-            "cache_prompt": true
-          }
-        },
         "litellm/go-glm-5.3-flash": {
           "alias": "go-glm-5.3-flash",
           "params": {
@@ -55,12 +49,6 @@
         },
         "litellm/go-minimax-m3": {
           "alias": "go-minimax-m3",
-          "params": {
-            "cache_prompt": true
-          }
-        },
-        "litellm/go-minimax-m2.7": {
-          "alias": "go-minimax-m2.7",
           "params": {
             "cache_prompt": true
           }
@@ -112,15 +100,42 @@
           "params": {
             "cache_prompt": true
           }
+        },
+        "litellm/beam-free": {
+          "alias": "beam-free",
+          "params": {
+            "cache_prompt": true
+          }
+        },
+        "litellm/go-kimi-k3.1-pro": {
+          "alias": "kimi-k3.1-pro",
+          "params": {
+            "cache_prompt": true
+          }
+        },
+        "litellm/go-minimax-m3.1-flash": {
+          "alias": "minimax-m3.1-flash",
+          "params": {
+            "cache_prompt": true
+          }
+        },
+        "litellm/go-qwen3.7-max": {
+          "alias": "qwen3.7-max",
+          "params": {
+            "cache_prompt": true
+          }
         }
       },
       "modelPolicy": {
         "allow": [
           "litellm/dsv41f",
-          "litellm/dsv4p",
+          "litellm/beam-free",
           "litellm/go-glm-5.3-flash",
           "litellm/go-minimax-m3",
-          "litellm/go-minimax-m2.7",
+          "litellm/go-kimi-k3.1-pro",
+          "litellm/go-minimax-m3",
+          "litellm/go-minimax-m3.1-flash",
+          "litellm/go-qwen3.7-max",
           "litellm/go-qwen3.8-flash",
           "litellm/go-qwen3.8-max",
           "litellm/qwen3.7-plus",
@@ -994,8 +1009,8 @@
             "maxTokens": 384000
           },
           {
-            "id": "dsv4p",
-            "name": "OpenCode Go DeepSeek V4 Pro",
+            "id": "beam-free",
+            "name": "OpenCode Go Beam Free",
             "reasoning": true,
             "input": [
               "text"
@@ -1006,8 +1021,8 @@
               "cacheRead": 0,
               "cacheWrite": 0
             },
-            "contextWindow": 1000000,
-            "maxTokens": 384000
+            "contextWindow": 1048576,
+            "maxTokens": 131072
           },
           {
             "id": "go-minimax-m3",
@@ -1026,11 +1041,12 @@
             "maxTokens": 131072
           },
           {
-            "id": "go-minimax-m2.7",
-            "name": "OpenCode Go MiniMax M2.7",
+            "id": "go-kimi-k3.1-pro",
+            "name": "OpenCode Go Kimi K3.1 Pro",
             "reasoning": true,
             "input": [
-              "text"
+              "text",
+              "image"
             ],
             "cost": {
               "input": 0,
@@ -1038,7 +1054,41 @@
               "cacheRead": 0,
               "cacheWrite": 0
             },
-            "contextWindow": 204800,
+            "contextWindow": 1048576,
+            "maxTokens": 131072
+          },
+          {
+            "id": "go-minimax-m3.1-flash",
+            "name": "OpenCode Go MiniMax M3.1 Flash",
+            "reasoning": true,
+            "input": [
+              "text",
+              "image"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1000000,
+            "maxTokens": 512000
+          },
+          {
+            "id": "go-qwen3.7-max",
+            "name": "OpenCode Go Qwen3.7 Max",
+            "reasoning": true,
+            "input": [
+              "text",
+              "image"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1000000,
             "maxTokens": 131072
           },
           {

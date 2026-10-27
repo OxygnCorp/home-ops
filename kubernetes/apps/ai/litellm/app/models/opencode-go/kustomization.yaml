@@ -34,8 +34,6 @@ resources:
   - ./dsv41f-max-agnes.yaml
   - ./dsv41f-nothink.yaml
   - ./dsv41f-nothink-agnes.yaml
-  - ./dsv4p.yaml
-  - ./dsv4p-agnes.yaml
   - ./go-claude-haiku-5-5.yaml
   - ./go-claude-haiku-5-5-agnes.yaml
   - ./beam-free.yaml
@@ -56,8 +54,6 @@ resources:
   - ./go-kimi-k3-agnes.yaml
   - ./go-kimi-k3.1-pro.yaml
   - ./go-kimi-k3.1-pro-agnes.yaml
-  - ./go-minimax-m2.7.yaml
-  - ./go-minimax-m2.7-agnes.yaml
   - ./go-minimax-m3.yaml
   - ./go-minimax-m3-agnes.yaml
   - ./go-minimax-m3.1-flash.yaml
