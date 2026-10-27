@@ -67,15 +67,25 @@ spec:
                     if [ "$d" = "$newest" ]; then continue; fi
                     if [ "$(stat -c %Y "$d")" -lt "$cutoff" ]; then rm -rf "$d"; fi
                 done
-                for f in /home/node/.openclaw/agents/*/agent/*.pre-startup-migration-*.bak; do
-                    [ -e "$f" ] || continue
+                # Prune startup-migration backups, keeping the NEWEST ONE
+                # overall within each agent dir (the only automatic rollback
+                # path) and everything younger than 7d. Newest-first walk
+                # (not `$(ls|head)`) so an empty set can't kill the init
+                # under set -e + pipefail (devclaw, 2026-10-23/25 & 27).
+                for d in /home/node/.openclaw/agents/*/agent; do
+                    [ -d "$d" ] || continue
                     keep=""
-                    for g in "$(dirname "$f")"/*.pre-startup-migration-*.bak; do
-                        if [ "$g" != "$f" ] && { [ -z "$keep" ] || [ "$(stat -c %Y "$g")" -gt "$(stat -c %Y "$keep")" ]; }; then
+                    for g in "$d"/*.pre-startup-migration-*.bak; do
+                        [ -e "$g" ] || continue
+                        if [ -z "$keep" ] || [ "$(stat -c %Y "$g")" -gt "$(stat -c %Y "$keep")" ]; then
                             keep="$g"
                         fi
                     done
-                    if [ "$f" != "$keep" ] && [ "$(stat -c %Y "$f")" -lt "$cutoff" ]; then rm -f "$f"; fi
+                    [ -n "$keep" ] || continue
+                    for f in "$d"/*.pre-startup-migration-*.bak; do
+                        [ -e "$f" ] || continue
+                        if [ "$f" != "$keep" ] && [ "$(stat -c %Y "$f")" -lt "$cutoff" ]; then rm -f "$f"; fi
+                    done
                 done
                 # Stale sqlite readonly-check temp copies (orphaned fs-safe files)
                 if [ -d /home/node/.cache/openclaw ]; then
