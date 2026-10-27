@@ -33,7 +33,17 @@ jobs:
     # .renovate/autoMerge.json5 additionalBranchPrefix) and are skipped. The
     # `ai-review` label re-review is NOT available for those; workflow_dispatch
     # remains the manual force-review path for everyone.
-    if: ${{ (github.event_name == 'pull_request' && !github.event.pull_request.draft && !startsWith(github.event.pull_request.head_ref, 'renovate/am-')) || github.event_name == 'workflow_dispatch' }}
+    #
+    # Branch gate must use `github.head_ref` (the documented source-branch
+    # property). `github.event.pull_request.head_ref` does NOT exist (the
+    # webhook payload path is `head.ref`) and dereferencing a nonexistent
+    # property evaluates to '' — so startsWith() was always false and this
+    # skip never fired: every am- PR got a full LLM review and Renovate's
+    # automerge waited on the check. The `labeled` guard restricts re-reviews
+    # to the `ai-review` label: Renovate/labeler add several labels at PR
+    # creation, and each `labeled` event would otherwise launch yet another
+    # full review run.
+    if: ${{ (github.event_name == 'pull_request' && !github.event.pull_request.draft && !startsWith(github.head_ref, 'renovate/am-') && (github.event.action != 'labeled' || github.event.label.name == 'ai-review')) || github.event_name == 'workflow_dispatch' }}
     runs-on: home-ops-runner
     timeout-minutes: 35
 
