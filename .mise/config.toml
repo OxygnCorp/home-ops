@@ -26,19 +26,21 @@ gum = "2.0.2"
 
 # 1Password
 "vals" = "0.50.0"
+"op" = "2.41.1"
 
 # Flux Stuff
 "aqua:fluxcd/flux2" = "2.10.0"
 "github:home-operations/flate" = "0.6.5"
 
 # Kubectl + Plugins
-"aqua:kubernetes/kubectl" = "1.32.3"
+"aqua:kubernetes/kubectl" = "1.37.1"
 "aqua:yannh/kubeconform" = "0.8.0"
 
 # Misc K8S Tools
 "aqua:kubernetes-sigs/kustomize" = "5.6.0"
 "aqua:helm/helm" = "4.3.1"
 "aqua:helmfile/helmfile" = "1.8.2"
+"aqua:mitsuhiko/minijinja" = "3.0.4" # minijinja-cli, used by `just template`
 
 # Talos Stuff
 "talosctl" = "1.14.5"
