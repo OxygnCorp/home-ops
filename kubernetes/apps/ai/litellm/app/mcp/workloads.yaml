@@ -16,7 +16,7 @@ spec:
   proxyRef: litellm
   transport: http
   workload:
-    image: ghcr.io/homeassistant-ai/ha-mcp:8.7.0
+    image: ghcr.io/homeassistant-ai/ha-mcp:9.0.0
     port: 8086
     command:
       - ha-mcp-web
