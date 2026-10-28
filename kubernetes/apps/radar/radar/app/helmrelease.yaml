@@ -32,6 +32,9 @@ spec:
     ingress:
       enabled: true
 
+    allowedHosts:
+      - radar.oxygn.dev
+
     rbac:
       podLogs: true
       podExec: true
