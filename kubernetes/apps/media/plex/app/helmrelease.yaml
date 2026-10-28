@@ -66,10 +66,10 @@ spec:
             resources:
               requests:
                 cpu: 100m
-                memory: 256Mi
+                memory: 512Mi
               limits:
                 # nvidia.com/gpu: 1
-                memory: 1Gi
+                memory: 4Gi
                 cpu: 2000m
     defaultPodOptions:
       securityContext:
