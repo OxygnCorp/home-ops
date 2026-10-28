@@ -60,8 +60,13 @@ spec:
             resources:
               requests:
                 cpu: 10m
+                # A real memory request raises the QoS class and keeps the pod
+                # out of node-pressure eviction ordering — OOMKills and
+                # evictions both restart Kanidm — and restarts lose the async
+                # session store (forced re-auth for every app).
+                memory: 256Mi
               limits:
-                memory: 144Mi
+                memory: 256Mi
             probes:
               liveness: &probe
                 enabled: true
@@ -73,7 +78,10 @@ spec:
                     scheme: HTTPS
                   initialDelaySeconds: 0
                   periodSeconds: 10
-                  timeoutSeconds: 1
+                  # /status can exceed 1s under DB mmap misses; a probe kill
+                  # here is a *whole-cluster* auth outage (all OIDC sessions
+                  # go down with the single instance)
+                  timeoutSeconds: 3
                   failureThreshold: 3
               readiness: *probe
             securityContext:

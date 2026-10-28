@@ -12,7 +12,20 @@ spec:
     type: Kubernetes
     kubernetes:
       envoyDeployment:
-        replicas: 2
+        # ONE data plane per gateway. Kanidm rotates refresh tokens with
+        # reuse-detection (a reused token revokes the whole user session) and
+        # the OIDC filter holds that token in a per-pod cookie: two Envoy
+        # replicas racing the same refresh (parallel browser requests hitting
+        # different endpoints via the LB-IPAM VIP) invalidate live sessions
+        # while the stale pod keeps POSTing the dead token to /oauth2/token
+        # -> 400 loop (observed live on 10.42.0.44/10.42.1.38).
+        # Recreate matters: maxSurge would briefly run TWO pods on every
+        # proxy image bump (Renovate), reintroducing the exact race.
+        # Temporary measure until the auth front-end moves off the Envoy OIDC
+        # filter (oauth2-proxy or in-app flows) — revisit before re-scaling.
+        replicas: 1
+        strategy:
+          type: Recreate
         container:
           # The proxy image follows the chart default (DefaultEnvoyProxyImage):
           # Envoy Gateway 1.9.3 appends distroless-v1.39.5, so an Envoy minor
