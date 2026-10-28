@@ -63,16 +63,24 @@ Other recipes: `bulk people.csv`, `reset <user>`, `group-add`, `group-rm`,
 
 ## Troubleshooting
 
-- Locked out of an app (stale/widely-revoked session): you do NOT need to
-  clear all cookies. Envoy Gateway's OIDC filter exposes `logoutPath:
+- Locked out of an app (stale/revoked session): you do NOT need to clear
+  all cookies. For apps using `components/oidc-kanidm/envoy` (SecurityPolicy
+  on the HTTPRoute), Envoy Gateway's OIDC filter exposes `logoutPath:
   /logout` — visit `https://<app-host>/logout` to clear that app's
-  credential cookies and get a fresh authorization flow. Full cookie
-  wiping is only needed if a zombie refresh-token cookie remains.
-- Racine des déconnexions forcées (race de rotation): Kanidm rotates its
-  refresh tokens (reuse ⇒ session revoked). While there are ≥2 gateway data
-  planes, concurrent refreshes of the same session can trip reuse-detection.
-  Until the front-end auth design changes (oauth2-proxy or in-app flows),
-  the gateways run a *single* replica (see `envoy-gateway` EnvoyProxy).
+  credential cookies and get a fresh authorization flow. Apps wired with
+  `components/oidc-kanidm/in-app` have no gateway `/logout`; clear that
+  app's cookies in the browser instead.
+- Forced re-auths (rotation race): Kanidm rotates refresh tokens with
+  reuse-detection — a reused token revokes the whole session. While there
+  are >= 2 gateway data planes, concurrent refreshes of the same session
+  can trip reuse-detection. Until the front-end auth design changes
+  (oauth2-proxy or in-app flows), the gateways run a *single* replica with
+  `strategy: Recreate` (see `envoy-gateway` EnvoyProxy); budget a short
+  ingress blip during proxy image bumps instead of session churn.
+- Node drains on the node hosting kanidm are intentionally blocked by
+  `PodDisruptionBudget kanidm` (maxUnavailable: 0): Kanidm is the cluster's
+  only auth authority and 1 instance only. Lift it explicitly
+  (`kubectl patch pdb/kanidm ...`) for a planned drain.
 - `provision` pod crashlooping → `kanidm-provision-token` missing: add the
   `PROVISION_TOKEN` field to the 1Password item `kanidm` and `kubectl -n
   security annotate externalsecret kanidm-provision-token

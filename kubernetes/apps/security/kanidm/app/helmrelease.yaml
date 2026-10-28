@@ -60,9 +60,12 @@ spec:
             resources:
               requests:
                 cpu: 10m
+                # A real memory request raises the QoS class and keeps the pod
+                # out of node-pressure eviction ordering — OOMKills and
+                # evictions both restart Kanidm — and restarts lose the async
+                # session store (forced re-auth for every app).
+                memory: 256Mi
               limits:
-                # Kanidm restarts lose the async session store (forced re-auth for
-                # every app); headroom avoids OOM/eviction-driven restarts.
                 memory: 256Mi
             probes:
               liveness: &probe
