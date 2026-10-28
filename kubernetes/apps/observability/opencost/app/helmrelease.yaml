@@ -1,0 +1,66 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: opencost
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: opencost
+  install:
+    remediation:
+      retries: -1
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  values:
+    opencost:
+      prometheus:
+        internal:
+          enabled: false
+        external:
+          enabled: true
+          url: http://kube-prometheus-stack-prometheus.observability.svc.cluster.local:9090
+      metrics:
+        serviceMonitor:
+          enabled: true
+      customPricing:
+        enabled: true
+        createConfigmap: true
+        costModel:
+          description: AWS us-east-1 on-demand reference (m5-class compute, EBS gp3)
+          CPU: "0.048"
+          spotCPU: "0.0144"
+          RAM: "0.012"
+          spotRAM: "0.0036"
+          GPU: "0.95"
+          storage: "0.0001096"
+          zoneNetworkEgress: "0.01"
+          regionNetworkEgress: "0.01"
+          internetNetworkEgress: "0.12"
+      exporter:
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            memory: 1Gi
+      ui:
+        resources:
+          requests:
+            cpu: 10m
+            memory: 55Mi
+          limits:
+            memory: 256Mi
+        httpRoute:
+          enabled: true
+          parentRefs:
+            - name: envoy-internal
+              namespace: network
+          hostnames:
+            - opencost.oxygn.dev
+      mcp:
+        enabled: true
