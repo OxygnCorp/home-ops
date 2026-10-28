@@ -63,6 +63,16 @@ Other recipes: `bulk people.csv`, `reset <user>`, `group-add`, `group-rm`,
 
 ## Troubleshooting
 
+- Locked out of an app (stale/widely-revoked session): you do NOT need to
+  clear all cookies. Envoy Gateway's OIDC filter exposes `logoutPath:
+  /logout` — visit `https://<app-host>/logout` to clear that app's
+  credential cookies and get a fresh authorization flow. Full cookie
+  wiping is only needed if a zombie refresh-token cookie remains.
+- Racine des déconnexions forcées (race de rotation): Kanidm rotates its
+  refresh tokens (reuse ⇒ session revoked). While there are ≥2 gateway data
+  planes, concurrent refreshes of the same session can trip reuse-detection.
+  Until the front-end auth design changes (oauth2-proxy or in-app flows),
+  the gateways run a *single* replica (see `envoy-gateway` EnvoyProxy).
 - `provision` pod crashlooping → `kanidm-provision-token` missing: add the
   `PROVISION_TOKEN` field to the 1Password item `kanidm` and `kubectl -n
   security annotate externalsecret kanidm-provision-token

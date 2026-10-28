@@ -61,7 +61,9 @@ spec:
               requests:
                 cpu: 10m
               limits:
-                memory: 144Mi
+                # Kanidm restarts lose the async session store (forced re-auth for
+                # every app); headroom avoids OOM/eviction-driven restarts.
+                memory: 256Mi
             probes:
               liveness: &probe
                 enabled: true
@@ -73,7 +75,10 @@ spec:
                     scheme: HTTPS
                   initialDelaySeconds: 0
                   periodSeconds: 10
-                  timeoutSeconds: 1
+                  # /status can exceed 1s under DB mmap misses; a probe kill
+                  # here is a *whole-cluster* auth outage (all OIDC sessions
+                  # go down with the single instance)
+                  timeoutSeconds: 3
                   failureThreshold: 3
               readiness: *probe
             securityContext:
