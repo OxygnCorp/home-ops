@@ -12,20 +12,20 @@ spec:
   values:
     excludeNamespaces: "kube-system,flux-system,cert-manager"
 
+    # Go runtime soft memory limit (chart key: extraEnv, passed to the operator
+    # container). GC gets more aggressive as the heap approaches this value,
+    # keeping RSS under the cgroup limit instead of a hard OOMKill.
+    # Must stay below operator.resources.limits.memory (1Gi).
+    extraEnv:
+      - name: GOMEMLIMIT
+        value: "768MiB"
+
     # Operator Configuration
     # The operator is a lightweight controller that watches for changes
     # and creates scan jobs - it does NOT perform scans itself.
     operator:
       annotations:
         reloader.stakater.com/auto: "true"
-
-      resources:
-        requests:
-          cpu: 100m
-          memory: 256Mi
-        limits:
-          cpu: 500m
-          memory: 512Mi
 
       # Replicas for HA
       replicas: 1
@@ -188,10 +188,17 @@ spec:
       failEntriesLimit: 10
       cron: "0 1 * * *"
 
+    # Operator container resources. NOTE: the chart's deployment template reads
+    # the TOP-LEVEL .Values.resources — there is no operator.resources key in
+    # chart 0.32.1, so anything under `operator:` would be silently ignored.
+    # 512Mi was OOMKilled: legitimate working set ~480-540MB (in-process
+    # Prometheus registry with ~10k trivy_vulnerability_id series, informer
+    # caches for all workload types, 5 scanners + 4 compliance reports;
+    # the daily 01:00 compliance cron tipped it over the limit).
     resources:
       requests:
         cpu: 100m
-        memory: 256Mi
+        memory: 512Mi
       limits:
         cpu: 500m
-        memory: 512Mi
+        memory: 1Gi
