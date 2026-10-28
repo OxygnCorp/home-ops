@@ -40,6 +40,13 @@ machine:
       register-with-taints: workload=ai:NoSchedule
   nodeLabels:
     topology.kubernetes.io/zone: m
+    # Labels statiques (ex-NFD NodeFeatureRules, supprimé) : consommés par
+    # nvidia-device-plugin (nvidia.com/gpu.present) et headroom (oxygen.dev/avx2,
+    # requis par ONNX Runtime). k8s-3 seul : NVIDIA RTX (PCI 10de) et Ivy-EP
+    # et seul CPU du cluster doté d'AVX2. Posés hors allowlist
+    # NodeRestriction (domaines nvidia.com / oxygen.dev non gouvernés).
+    nvidia.com/gpu.present: "true"
+    oxygen.dev/avx2: "true"
   sysctls:
     net.core.bpf_jit_harden: "1"
 ---
