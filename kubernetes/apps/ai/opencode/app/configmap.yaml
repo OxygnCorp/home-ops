@@ -8,6 +8,14 @@ data:
     #!/bin/bash
     set -euo pipefail
 
+    # mise-managed tooling (flate, just, rg, kustomize, vals) is installed on
+    # the home PVC by the mise-setup init container. PATH picks up the mise
+    # binary and the tool shims; MISE_AUTO_INSTALL=false keeps mise from
+    # auto-installing the ~25 repo-pinned tools (go/node/python compile from
+    # source on Alpine -> would blow the 5Gi PVC budget).
+    export PATH="$${HOME}/.local/bin:$${HOME}/.local/share/mise/shims:$${PATH}"
+    export MISE_AUTO_INSTALL=false
+
     git config --global user.name "puchu-ai"
     git config --global user.email "266989594+puchu-ai@users.noreply.github.com"
     git config --global init.defaultBranch main

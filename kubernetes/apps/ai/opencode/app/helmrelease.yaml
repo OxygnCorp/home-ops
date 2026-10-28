@@ -50,11 +50,66 @@ spec:
                 cp /kopiaignore/.kopiaignore /home/opencode/.kopiaignore
                 mkdir -p /home/opencode/.config/opencode
                 cp /etc/opencode/AGENTS.md /home/opencode/.config/opencode/AGENTS.md
-        containers:
-          app:
-            image:
+          # Installs mise + the pinned cluster tooling (flate, just, rg,
+          # kustomize, vals) into the home PVC so agent sessions can run
+          # GitOps validation locally (flate test/diff). Same image as the
+          # app container (shared via anchor) for bash+curl; nothing is baked
+          # into the image itself. Cluster credentials stay out on purpose
+          # (no kubeconfig/talosconfig in this pod; the MCP gateway covers
+          # cluster access).
+          mise-setup:
+            image: &opencode-image
               repository: ghcr.io/joryirving/opencode
               tag: 2.2.0@sha256:739d4f3b408826c4d10612dde3c8f935bf903b4e5eccd817844d1aaa59213280
+            command:
+              - /bin/bash
+              - -c
+              - |
+                set -euo pipefail
+                MISE_BIN=/home/opencode/.local/bin/mise
+                MISE_VERSION=2026.10.20
+                if ! command -v curl >/dev/null 2>&1; then
+                  echo "WARN: curl missing from the opencode image; cluster tooling not installed"
+                  exit 0
+                fi
+                # Not first-boot-only: re-download when the pinned version
+                # changes or the binary is missing/broken.
+                if [[ ! -x "$${MISE_BIN}" ]] || [[ "$("$${MISE_BIN}" --version 2>/dev/null || true)" != *"$${MISE_VERSION}"* ]]; then
+                  if ! curl -fsSL https://mise.run | MISE_INSTALL_PATH="$${MISE_BIN}" MISE_INSTALL_VERSION="$${MISE_VERSION}" sh; then
+                    echo "WARN: mise download failed; cluster tooling unavailable this boot"
+                    exit 0
+                  fi
+                fi
+                # Tool versions pinned to the repo .mise/config.toml. Keep
+                # auto_install=false: the repo checkout pins ~25 tools and
+                # go/node/python compile from source on Alpine, which would
+                # blow the 5Gi PVC budget. Sessions use MISE_AUTO_INSTALL=false
+                # for the same reason (see entrypoint.sh).
+                # This write is the only hard-fail step: without it, mise's
+                # auto_install defaults back to true and an in-repo exec would
+                # auto-install those ~25 tools behind the session env's back.
+                mkdir -p /home/opencode/.config/mise
+                cat > /home/opencode/.config/mise/config.toml <<'EOF'
+                # Managed by the mise-setup init container
+                # (kubernetes/apps/ai/opencode/app/helmrelease.yaml).
+                [settings]
+                auto_install = false
+                all_compile = false
+
+                [tools]
+                "github:home-operations/flate" = "0.6.5"
+                "just" = "1.59.0"
+                "rg" = "15.2.0"
+                "aqua:kubernetes-sigs/kustomize" = "5.6.0"
+                "vals" = "0.50.0"
+                EOF
+                if ! "$${MISE_BIN}" install; then
+                  echo "WARN: mise install failed; cluster tooling unavailable this boot"
+                fi
+                "$${MISE_BIN}" reshim || echo "WARN: mise reshim failed"
+        containers:
+          app:
+            image: *opencode-image
             command: ["/etc/opencode/entrypoint.sh"]
             env:
               HOME: &homepath /home/opencode

@@ -20,3 +20,9 @@ data:
     # error per run. Also kept out of backups on purpose: it is a credential,
     # regenerated at container start
     .git-credentials
+
+    # mise-managed toolchain (flate, just, rg, kustomize, vals), installed at
+    # every boot by the mise-setup init container -> re-creatable, so keep
+    # snapshots free of it. ~/.cache/mise is covered by the .cache/ rule above
+    .local/bin/mise
+    .local/share/mise/
