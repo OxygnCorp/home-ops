@@ -219,6 +219,18 @@ flux resume kustomization <name> -n <ns>     # Resume
 
 For deeper cluster-side investigation, see the `flux-debugger` skill in the agent workspace.
 
+## Radar Issues Noise Filter
+
+The `radar` MCP server has **no built-in mechanism to ignore or mute live Issues** (persistent suppression only exists for static audit findings: `radarhq.io/ignore-checks` annotations and the Checks settings). When querying `radar-issues`, exclude the known false positives with the CEL `filter` argument:
+
+```text
+filter: 'category != "pdb_blocks_evictions"'
+```
+
+**Why**: CloudNativePG clusters created by the `postgres` component get a `<cluster>-primary` PodDisruptionBudget with `minAvailable: 1` (the operator default, `enablePDB: true`). Radar flags it as a `pdb_blocks_evictions` warning ("voluntary evictions blocked"), but this is CNPG working as designed: on a node drain, the operator performs a switchover of the primary ahead of the eviction, then the drain resumes. The affected resources are the `PodDisruptionBudget/<cluster>-primary` objects in every namespace using the `postgres` component.
+
+Do **not** "fix" these warnings with `enablePDB: false` — upstream recommends keeping PDBs enabled for production Postgres clusters; disabling them trades a false-positive warning for a real unprotected primary.
+
 ## Component Reference
 
 Reusable Flux components under `kubernetes/components/` are referenced from a `ks.yaml` via the `components:` field:
