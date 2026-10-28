@@ -49,6 +49,30 @@ export OPENCODE_SERVER_PASSWORD="$(op read 'op://home-ops/opencode/password')"
 > client; it only renders the UI. The web UI password is the same 1Password
 > field.
 
+## Cluster tooling (mise)
+
+The `mise-setup` init container installs [mise](https://mise.jdx.dev) and a
+curated toolset on the home PVC at every boot, so agent sessions can run
+GitOps validation locally (flate test/diff): flate, just, rg, kustomize, vals
+(~400 MB total, static binaries).
+
+- Session PATH gets `~/.local/bin` + `~/.local/share/mise/shims`, with
+  `MISE_AUTO_INSTALL=false`: the repo checkout pins ~25 tools in
+  `.mise/config.toml` and go/node/python compile from source on Alpine, which
+  would blow the 5Gi PVC budget.
+- The init container's `~/.config/mise/config.toml` mirrors the repo
+  `.mise/config.toml` pins for those 5 tools. **Keep them in sync**: if the
+  repo bumps a pin, in-repo `mise exec -- <tool>` fails (no silent fallback)
+  until the init container config is updated to match. Renovate bumps for
+  these 5 tools are excluded from automerge (`.renovate/autoMerge.json5`) so
+  both files are updated in the same reviewed PR.
+- `~/.local/bin/mise` and `~/.local/share/mise/` are excluded from kopiur
+  backups (re-creatable at boot); `~/.config/mise/` stays backed up, though
+  it is also regenerated at every boot (backup only useful for DR).
+- Cluster credentials stay out of the pod on purpose (no
+  kubeconfig/talosconfig; the litellm MCP gateway covers cluster access) —
+  flate itself needs none (static Go binary, no kubectl/helm/kustomize).
+
 ## Monitoring
 
 - `opencode-health` HTTPRoute: unauthenticated `opencode.oxygn.dev/global/health`

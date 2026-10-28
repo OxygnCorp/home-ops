@@ -69,6 +69,18 @@
       ignoreTests: true,
     },
     {
+      description: "No automerge for the mise tools pinned in the opencode pod config (kubernetes/apps/ai/opencode) - .mise/config.toml and the mise-setup init container must be bumped in the same PR",
+      matchManagers: ["mise"],
+      matchPackageNames: [
+        "github:home-operations/flate",
+        "just",
+        "rg",
+        "aqua:kubernetes-sigs/kustomize",
+        "vals",
+      ],
+      automerge: false,
+    },
+    {
       description: "Auto-merge npm minor and patch",
       matchDatasources: ["npm"],
       automerge: true,
