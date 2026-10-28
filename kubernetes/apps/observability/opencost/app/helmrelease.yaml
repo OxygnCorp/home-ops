@@ -41,7 +41,20 @@ spec:
           zoneNetworkEgress: "0.01"
           regionNetworkEgress: "0.01"
           internetNetworkEgress: "0.12"
+      exporter:
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            memory: 1Gi
       ui:
+        resources:
+          requests:
+            cpu: 10m
+            memory: 55Mi
+          limits:
+            memory: 256Mi
         httpRoute:
           enabled: true
           parentRefs:
