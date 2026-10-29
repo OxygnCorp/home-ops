@@ -53,25 +53,30 @@ export OPENCODE_SERVER_PASSWORD="$(op read 'op://home-ops/opencode/password')"
 
 The `mise-setup` init container installs [mise](https://mise.jdx.dev) and a
 curated toolset on the home PVC at every boot, so agent sessions can run
-GitOps validation locally (flate test/diff): flate, just, rg, kustomize, vals
-(~400 MB total, static binaries).
+GitOps validation locally (flate test/diff) and the repo just recipes get
+past command-not-found: flate, just, rg, kustomize, vals + talosctl,
+kubectl, yq, jq, gh, op, minijinja-cli, gum, helmfile, helm (~780 MB
+total, static binaries).
 
 - Session PATH gets `~/.local/bin` + `~/.local/share/mise/shims`, with
   `MISE_AUTO_INSTALL=false`: the repo checkout pins ~25 tools in
   `.mise/config.toml` and go/node/python compile from source on Alpine, which
   would blow the 5Gi PVC budget.
 - The init container's `~/.config/mise/config.toml` mirrors the repo
-  `.mise/config.toml` pins for those 5 tools. **Keep them in sync**: if the
-  repo bumps a pin, in-repo `mise exec -- <tool>` fails (no silent fallback)
-  until the init container config is updated to match. Renovate bumps for
-  these 5 tools are excluded from automerge (`.renovate/autoMerge.json5`) so
-  both files are updated in the same reviewed PR.
+  `.mise/config.toml` pins for the 15 tools it installs. **Keep them in
+  sync**: if the repo bumps a pin, in-repo `mise exec -- <tool>` fails (no
+  silent fallback) until the init container config is updated to match.
+  Renovate bumps for these tools are excluded from automerge
+  (`.renovate/autoMerge.json5`) so both files are updated in the same
+  reviewed PR.
 - `~/.local/bin/mise` and `~/.local/share/mise/` are excluded from kopiur
   backups (re-creatable at boot); `~/.config/mise/` stays backed up, though
   it is also regenerated at every boot (backup only useful for DR).
-- Cluster credentials stay out of the pod on purpose (no
-  kubeconfig/talosconfig; the litellm MCP gateway covers cluster access) —
-  flate itself needs none (static Go binary, no kubectl/helm/kustomize).
+- The just-recipe CLIs stay credentialless on purpose (no
+  kubeconfig/talosconfig/`OP_SERVICE_ACCOUNT_TOKEN`; the litellm MCP gateway
+  covers cluster access) — flate itself needs none (static Go binary, no
+  kubectl/helm/kustomize); the talos/kube/1Password recipes need their
+  config or token supplied to actually run.
 
 ## Monitoring
 

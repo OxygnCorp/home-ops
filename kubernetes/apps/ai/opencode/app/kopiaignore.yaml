@@ -21,7 +21,8 @@ data:
     # regenerated at container start
     .git-credentials
 
-    # mise-managed toolchain (flate, just, rg, kustomize, vals), installed at
+    # mise-managed toolchain (see the mise-setup init container in
+    # app/helmrelease.yaml for the pinned list), installed at
     # every boot by the mise-setup init container -> re-creatable, so keep
     # snapshots free of it. ~/.cache/mise is covered by the .cache/ rule above
     .local/bin/mise
