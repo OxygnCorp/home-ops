@@ -153,7 +153,7 @@ spec:
                 # update so both stay aligned; the guard below keeps restarts
                 # offline and warns instead of failing on a transient drift.
                 # renovate: clawhub:@eleboucher/memini registryUrl=https://clawhub.ai/api/npm
-                MEMINI_PLUGIN_VERSION=0.7.37
+                MEMINI_PLUGIN_VERSION=0.7.38
                 # Strip the chart tag prefix at runtime; braced shell expansion does not survive
                 # the Flux postBuild variable substitution
                 MEMINI_PLUGIN_REL=$(printf '%s' "$MEMINI_PLUGIN_VERSION" | sed 's/^v//')
