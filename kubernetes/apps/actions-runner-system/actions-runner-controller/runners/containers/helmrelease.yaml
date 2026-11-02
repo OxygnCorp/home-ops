@@ -1,0 +1,93 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: containers-runner
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: containers-runner
+  values:
+    githubConfigUrl: https://github.com/OxygnCorp/containers
+    # Same runner GitHub App as home-ops-runner; the GitHub App installation
+    # must cover the OxygnCorp/containers repository as well.
+    githubConfigSecret: containers-runner-secret
+    minRunners: 1
+    maxRunners: 3
+    # DinD so image builds (docker buildx bake) work out of the box; the jobs
+    # run as privileged containers, acceptable in this dedicated namespace.
+    containerMode:
+      type: dind
+    template:
+      spec:
+        containers:
+          - name: runner
+            image: ghcr.io/home-operations/actions-runner:2.338.2@sha256:2dd7caa094a425c041539447cb0e6ae63cda10b5242773764683b695b8fa5613
+            command: ["/home/runner/run.sh"]
+            resources:
+              requests:
+                cpu: 100m
+                memory: 128Mi
+              limits:
+                memory: 512Mi
+    controllerServiceAccount:
+      name: actions-runner-controller
+      namespace: actions-runner-system
+  postRenderers:
+    # The chart hardcodes the DinD sidecar image as docker:dind; pin it by
+    # digest. initContainers is replaced wholesale (kustomize cannot index
+    # into CRD lists without a merge key), mirroring the chart's 0.15.1 dind
+    # pod spec — re-check on chart upgrades.
+    - kustomize:
+        patches:
+          - target:
+              kind: AutoscalingRunnerSet
+              name: containers-runner
+              namespace: actions-runner-system
+            patch: |-
+              - op: replace
+                path: /spec/template/spec/initContainers
+                value:
+                  - name: init-dind-externals
+                    image: ghcr.io/home-operations/actions-runner:2.338.2@sha256:2dd7caa094a425c041539447cb0e6ae63cda10b5242773764683b695b8fa5613
+                    command: ["cp"]
+                    args: ["-r", "/home/runner/externals/.", "/home/runner/tmpDir/"]
+                    volumeMounts:
+                      - name: dind-externals
+                        mountPath: /home/runner/tmpDir
+                  - name: dind
+                    image: docker.io/library/docker:29.9.2-dind@sha256:9e79b879b177fbd72c34376a3dd3d91747da5db49e1f560f76aea59561471977
+                    resources:
+                      requests:
+                        cpu: 500m
+                        memory: 512Mi
+                      limits:
+                        cpu: "2"
+                        memory: 4Gi
+                    args:
+                      - dockerd
+                      - --host=unix:///var/run/docker.sock
+                      - --group=$(DOCKER_GROUP_GID)
+                    env:
+                      - name: DOCKER_GROUP_GID
+                        value: "123"
+                    securityContext:
+                      privileged: true
+                    restartPolicy: Always
+                    startupProbe:
+                      exec:
+                        command:
+                          - docker
+                          - info
+                      initialDelaySeconds: 0
+                      failureThreshold: 24
+                      periodSeconds: 5
+                    volumeMounts:
+                      - name: work
+                        mountPath: /home/runner/_work
+                      - name: dind-sock
+                        mountPath: /var/run
+                      - name: dind-externals
+                        mountPath: /home/runner/externals
