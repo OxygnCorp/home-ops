@@ -63,10 +63,13 @@ jobs:
     # payload path is `head.ref`) and dereferencing a nonexistent property
     # evaluates to '' — so startsWith() would always be false and the gate
     # config would never fire.
-    # The last clause is the `hold` cost saver: while a PR is manually held,
-    # the full LLM review is skipped — the `hold` gate check alone carries the
-    # blocking semantics (see `hold` below in the automerge-gate job).
-    if: ${{ (github.event_name == 'pull_request' && !github.event.pull_request.draft && (github.event.action != 'labeled' || github.event.label.name == 'ai-review') && !contains(github.event.pull_request.labels.*.name, 'hold')) || github.event_name == 'workflow_dispatch' }}
+    # The `hold` clauses are the manual holding pattern: while a PR is held,
+    # the full LLM review is skipped (cost saver) — the `hold` gate check
+    # carries the blocking semantics (see `hold` in the automerge-gate job).
+    # Like `ai-review` for labels, `unlabeled` is whitelisted to `hold` only:
+    # any other label removal events a run, but never a fresh LLM review.
+    # workflow_dispatch overrides `hold` (manual force-review is deliberate).
+    if: ${{ (github.event_name == 'pull_request' && !github.event.pull_request.draft && (github.event.action != 'labeled' || github.event.label.name == 'ai-review') && (github.event.action != 'unlabeled' || github.event.label.name == 'hold') && !contains(github.event.pull_request.labels.*.name, 'hold')) || github.event_name == 'workflow_dispatch' }}
     runs-on: home-ops-runner
     # 45 min: ci-status-check waits up to 1200s + tool loop 600s + review
     # rounds must never exhaust the budget on slow multi-chart CI — a job
@@ -288,12 +291,16 @@ jobs:
           head_ref="$(echo "$pr" | jq -r .head.ref)"
 
           # ── `hold` label: manual holding pattern, independent of the AI review
-          # (the verdict branch table below it). Applies to ANY PR — Renovate or
-          # human: Renovate ignores labels for its automerge decision, so a
-          # manual hold is only real when it surfaces through this required
-          # check. Removing the label fires `unlabeled` (in the trigger types)
-          # which re-runs the gate here and unblocks.
-          if [[ "$(echo "$pr" | jq -r '[.labels[].name] | index("hold") != nil')" == "true" ]]; then
+          # verdict (branch decision table below it). Applies to ANY PR —
+          # Renovate or human: Renovate ignores labels for its automerge
+          # decision, so a manual hold is only real when it surfaces through
+          # this required check. Removing the label fires `unlabeled` (in the
+          # trigger types) which re-runs BOTH jobs — the review job re-arm is
+          # what republishes a verdict — so the unblock is self-healing.
+          # Case-insensitive on `hold` to mirror the job-level `contains()`.
+          hold="$(echo "$pr" | jq -r '[.labels[]?.name | ascii_downcase] | any(. == "hold")')" \
+            || { echo "::error::could not evaluate PR labels for 'hold'"; exit 1; }
+          if [[ "$hold" == "true" ]]; then
             echo "::error::PR carries the 'hold' label — merge is manually held (block independent of the AI review). Remove the label to re-open the gate."
             exit 1
           fi
