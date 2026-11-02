@@ -354,7 +354,7 @@ jobs:
           # (it blocks the merge button only where review protections
           # apply) but the required check greens upon any subsequent
           # event. m2-style residue, documented.
-          digest="$(echo "$pr" | jq -r '(.user.login == "mushu-bot[bot]") and (.user.type == "Bot") and ([.labels[]?.name | ascii_downcase] | any(. == "type/digest")))" \
+          digest="$(echo "$pr" | jq -r '(.user.login == "mushu-bot[bot]") and (.user.type == "Bot") and ([.labels[]?.name | ascii_downcase] | any(. == "type/digest"))')" \
             || { echo "::error::could not evaluate PR authorship/labels for the digest exemption"; exit 1; } \
             || { echo "::error::could not evaluate PR labels for 'type/digest'"; exit 1; }
           if [[ "$digest" == "true" ]]; then
