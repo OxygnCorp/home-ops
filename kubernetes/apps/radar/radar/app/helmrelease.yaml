@@ -21,6 +21,42 @@ spec:
     remediation:
       retries: 3
   values:
+    image:
+      repository: ghcr.io/oxygncorp/radar
+      tag: 1.17.0
+
+    env:
+      # Radar spawns the OpenCode agent CLI installed in the custom image
+      # (OxygnCorp/containers). State under $HOME lands on the /data PVC and
+      # OpenCode reads its minimal provider-only config from /etc/opencode
+      # (see ./opencode.yaml; the config must stay MCP-free — `opencode --auto`
+      # auto-approves every configured MCP server).
+      - name: HOME
+        value: /data
+      - name: TMPDIR
+        value: /data/tmp
+      - name: OPENCODE_CONFIG
+        value: /etc/opencode/opencode.json
+      - name: LITELLM_API_KEY
+        valueFrom:
+          secretKeyRef:
+            name: radar-litellm
+            key: LITELLM_API_KEY
+
+    extraVolumes:
+      - name: scratch
+        emptyDir: {}
+      - name: opencode-config
+        configMap:
+          name: radar-opencode-config
+
+    extraVolumeMounts:
+      - name: scratch
+        mountPath: /data/tmp
+      - name: opencode-config
+        mountPath: /etc/opencode
+        readOnly: true
+
     persistence:
       enabled: false
 
@@ -92,3 +128,9 @@ spec:
                 value:
                   name: data
                   mountPath: /data
+              # Digest pin (values.image.tag alone is tag-floating): the chart
+              # has no image.digest field, so replace the rendered
+              # repo:tag with the digest reference.
+              - op: replace
+                path: /spec/template/spec/containers/0/image
+                value: ghcr.io/oxygncorp/radar@sha256:af4527dce030b4039fcfbde52fa8767e152a18dd001390eb2c04c665517d544a

@@ -1,0 +1,63 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/external-secrets.io/externalsecret_v1.json
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: radar-litellm
+spec:
+  refreshInterval: 12h
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: onepassword
+  target:
+    name: radar-litellm
+    creationPolicy: Owner
+  data:
+    - secretKey: LITELLM_API_KEY
+      remoteRef:
+        key: litellm
+        property: KEY_RADAR
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: radar-opencode-config
+data:
+  # Minimal OpenCode config for Radar's spawned agent CLI (Radar points
+  # OPENCODE_CONFIG here and runs `opencode --auto`).
+  # `--auto` auto-approves every configured MCP server: this config MUST stay
+  # provider-only (no `mcp` block, no plugins). Defense-in-depth: the
+  # litellm virtual key is also not bound to any MCP team.
+  opencode.json: |
+    {
+      "$schema": "https://opencode.ai/config.json",
+      "model": "litellm/dsv41f-max",
+      "providers": {
+        "litellm": {
+          "name": "litellm",
+          "package": "aisdk:@ai-sdk/openai-compatible",
+          "settings": {
+            "baseURL": "http://litellm.ai:4000/v1",
+            "apiKey": "{env:LITELLM_API_KEY}",
+            "timeout": 1800000
+          },
+          "models": {
+            "dsv41f-max": {
+              "capabilities": { "tools": true, "input": ["text", "image"], "output": ["text"] },
+              "limit": { "context": 1000000, "output": 384000 },
+              "compatibility": { "reasoningField": "reasoning_content" }
+            },
+            "go-glm-5.3-flash": {
+              "capabilities": { "tools": true, "input": ["text", "image"], "output": ["text"] },
+              "limit": { "context": 1000000, "output": 131072 },
+              "compatibility": { "reasoningField": "reasoning_content" }
+            },
+            "go-glm-5.3": {
+              "capabilities": { "tools": true, "input": ["text"], "output": ["text"] },
+              "limit": { "context": 1000000, "output": 131072 },
+              "compatibility": { "reasoningField": "reasoning_content" }
+            }
+          }
+        }
+      }
+    }
