@@ -26,6 +26,12 @@ spec:
           - name: runner
             image: ghcr.io/home-operations/actions-runner:2.338.2@sha256:2dd7caa094a425c041539447cb0e6ae63cda10b5242773764683b695b8fa5613
             command: ["/home/runner/run.sh"]
+            resources:
+              requests:
+                cpu: 100m
+                memory: 128Mi
+              limits:
+                memory: 512Mi
     controllerServiceAccount:
       name: actions-runner-controller
       namespace: actions-runner-system
@@ -38,7 +44,8 @@ spec:
         patches:
           - target:
               kind: AutoscalingRunnerSet
-              name: containers
+              name: containers-runner
+              namespace: actions-runner-system
             patch: |-
               - op: replace
                 path: /spec/template/spec/initContainers
@@ -52,6 +59,13 @@ spec:
                         mountPath: /home/runner/tmpDir
                   - name: dind
                     image: docker.io/library/docker:29.9.2-dind@sha256:9e79b879b177fbd72c34376a3dd3d91747da5db49e1f560f76aea59561471977
+                    resources:
+                      requests:
+                        cpu: 500m
+                        memory: 512Mi
+                      limits:
+                        cpu: "2"
+                        memory: 4Gi
                     args:
                       - dockerd
                       - --host=unix:///var/run/docker.sock
