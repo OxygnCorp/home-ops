@@ -28,22 +28,32 @@ permissions:
 jobs:
   review-pr:
     name: AI PR Review
-    # pull_request is the normal path; PRs on `renovate/am-*` branches are the
-    # Renovate "trusted automerge" set (minor/patch/digest non-core, see
-    # .renovate/autoMerge.json5 additionalBranchPrefix) and are skipped. The
-    # `ai-review` label re-review is NOT available for those; workflow_dispatch
-    # remains the manual force-review path for everyone.
+    # pull_request is the normal path for every non-draft PR. On `renovate/am-*`
+    # branches (the Renovate "trusted automerge" set, see
+    # .renovate/autoMerge.json5 additionalBranchPrefix) the run doubles as the
+    # automerge gate: `publish-mode: review_blockers` + `fail-on-request-changes: true`
+    # below make the job fail when the final verdict is `request_changes`, and the
+    # "AI PR Review" check is required in `main` branch protection — so Renovate's
+    # automerge stays blocked until open blocker findings are resolved. On every
+    # other PR the review remains advisory (`review_comment`), and the job still
+    # runs so the required check exists and passes. A job-level `if:` skip still
+    # produces a check run with "skipped" conclusion, which satisfies the branch
+    # protection requirement — draft PRs therefore never wedge merges.
     #
-    # Branch gate must use `github.head_ref` (the documented source-branch
+    # workflow_dispatch runs (manual force-review) are advisory even on Renovate
+    # branches: `github.head_ref` is empty in that payload, so the ternaries below
+    # evaluate false and no gate is authored from a manual run. A blocked am- PR
+    # re-opens via the next `synchronize` re-review after the fix lands.
+    #
+    # The gate conditionals must use `github.head_ref` (the documented source-branch
     # property). `github.event.pull_request.head_ref` does NOT exist (the
     # webhook payload path is `head.ref`) and dereferencing a nonexistent
-    # property evaluates to '' — so startsWith() was always false and this
-    # skip never fired: every am- PR got a full LLM review and Renovate's
-    # automerge waited on the check. The `labeled` guard restricts re-reviews
+    # property evaluates to '' — so startsWith() would always be false and the
+    # gate would never fire. The `labeled` guard restricts re-reviews
     # to the `ai-review` label: Renovate/labeler add several labels at PR
     # creation, and each `labeled` event would otherwise launch yet another
     # full review run.
-    if: ${{ (github.event_name == 'pull_request' && !github.event.pull_request.draft && !startsWith(github.head_ref, 'renovate/am-') && (github.event.action != 'labeled' || github.event.label.name == 'ai-review')) || github.event_name == 'workflow_dispatch' }}
+    if: ${{ (github.event_name == 'pull_request' && !github.event.pull_request.draft && (github.event.action != 'labeled' || github.event.label.name == 'ai-review')) || github.event_name == 'workflow_dispatch' }}
     runs-on: home-ops-runner
     timeout-minutes: 35
 
@@ -160,4 +170,15 @@ jobs:
           evidence-providers-file: .github/konflate-evidence-providers.json
           on-model-failure: notice
           inline-findings: "true"
-          publish-mode: review_comment
+          # `renovate/am-*` PRs are the automerge gate: native REQUEST_CHANGES review
+          # (never APPROVE) and the step — therefore the job and the required
+          # "AI PR Review" check — fail on a `request_changes` verdict, so Renovate's
+          # automerge stays blocked while blockers exist. Everything else keeps the
+          # advisory comment behavior (never gates human merges).
+          # `on-model-failure: notice` above means a model outage produces a degraded
+          # "notice" verdict which counts as a degraded review: `fail-on-request-changes`
+          # warns and passes it (fail-open — an LLM outage never wedges the automerge
+          # queue). `publish-mode: review_blockers` still publishes REQUEST_CHANGES and
+          # never APPROVE, so humans keep merge authority.
+          publish-mode: ${{ startsWith(github.head_ref, 'renovate/am-') && 'review_blockers' || 'review_comment' }}
+          fail-on-request-changes: ${{ startsWith(github.head_ref, 'renovate/am-') && 'true' || 'false' }}
