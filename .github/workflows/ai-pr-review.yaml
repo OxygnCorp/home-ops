@@ -65,10 +65,28 @@ jobs:
     # The `hold` clauses are the manual holding pattern: while a PR is held,
     # the full LLM review is skipped (cost saver) — the `hold` gate check
     # carries the blocking semantics (see `hold` in the automerge-gate job).
-    # Like `ai-review` for labels, `unlabeled` is whitelisted to `hold` only:
-    # any other label removal events a run, but never a fresh LLM review.
     # workflow_dispatch overrides `hold` (manual force-review is deliberate).
-    if: ${{ (github.event_name == 'pull_request' && !github.event.pull_request.draft && (github.event.action != 'labeled' || github.event.label.name == 'ai-review') && (github.event.action != 'unlabeled' || github.event.label.name == 'hold') && !contains(github.event.pull_request.labels.*.name, 'hold')) || github.event_name == 'workflow_dispatch' }}
+    #
+    # Digest bumps: PRs on `renovate/am-*` branches that carry the `type/
+    # digest` label (Renovate applies it, see .renovate/labels.json5) skip
+    # the full LLM review entirely — deliberate policy: digest automerges
+    # are enforced by the trusted set in .renovate/autoMerge.json5 and carry
+    # no meaningful reviewable content. The `github.event.action != 'labeled'
+    # ` tail keeps an explicit `ai-review` label able to force a review of
+    # such a PR. On non am- branches, labels off the trusted set, this
+    # clause is inert, so the review behaves as before. If Renovate's
+    # labels lag the `opened` payload, the one-time full review still runs
+    # (fail-safe on the trust anchor). Once `type/digest` lands, the gate
+    # greens on authorship + label per the accepted edge documented at the
+    # gate site — a verdict from that lagged review is then overridden.
+    #
+    # Both digest sites (this `if:` and the gate script) require the PR
+    # author to be Renovate itself (`mushu-bot[bot]`, Bot type): label +
+    # branch prefix alone would let any collaborator green-pass real code
+    # with a hand-decorated PR. Authorship + trusted-prefix together are
+    # the exemption's trust anchor. Stale-verdict edge is accepted and
+    # documented at the gate site.
+    if: ${{ (github.event_name == 'pull_request' && !github.event.pull_request.draft && (github.event.action != 'labeled' || github.event.label.name == 'ai-review') && (github.event.action != 'unlabeled' || github.event.label.name == 'hold') && !contains(github.event.pull_request.labels.*.name, 'hold') && !(startsWith(github.head_ref, 'renovate/am-') && github.event.pull_request.user.login == 'mushu-bot[bot]' && github.event.pull_request.user.type == 'Bot' && contains(github.event.pull_request.labels.*.name, 'type/digest') && github.event.action != 'labeled')) || github.event_name == 'workflow_dispatch' }}
     permissions:
       contents: read
       # prctx `gh api` reads PR metadata; all writes (comments, reviews) are
@@ -315,6 +333,32 @@ jobs:
 
           if [[ "$head_ref" != renovate/am-* ]]; then
             echo "Not a Renovate automerge branch: gate passes (humans are not gated, unless 'hold')."
+            exit 0
+          fi
+
+          # Digest bumps are not AI-gated by policy: Renovate labels its
+          # digest update PRs with type/digest (.renovate/labels.json5) and
+          # admits them to the trusted automerge set on their own
+          # (.renovate/autoMerge.json5). The review job skips them (see the
+          # job comment) so no verdict exists to consult — the gate passes
+          # before any REVIEW_RESULT handling, whatever its value. Checked
+          # against the live payload as `hold`. Same trust anchor as the
+          # job if: the PR must be on a trusted-prefixed branch AND authored
+          # by Renovate itself (`mushu-bot[bot]` Bot type) — a hand-decorated
+          # PR (any collaborator can label) never satisfies authorship.
+          #
+          # Accepted edge: if a one-time review ran before the label
+          # existed (or on an am-, non-digest PR later re-purposed) and
+          # published a REQUEST_CHANGES, this pass-check outranks that
+          # verdict — the stale review remains visible on the PR timeline
+          # (it blocks the merge button only where review protections
+          # apply) but the required check greens upon any subsequent
+          # event. m2-style residue, documented.
+          digest="$(echo "$pr" | jq -r '(.user.login == "mushu-bot[bot]") and (.user.type == "Bot") and ([.labels[]?.name | ascii_downcase] | any(. == "type/digest")))" \
+            || { echo "::error::could not evaluate PR authorship/labels for the digest exemption"; exit 1; } \
+            || { echo "::error::could not evaluate PR labels for 'type/digest'"; exit 1; }
+          if [[ "$digest" == "true" ]]; then
+            echo "Renovate-authored digest automerge branch (label type/digest): not AI-gated by policy — gate passes."
             exit 0
           fi
 
