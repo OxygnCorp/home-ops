@@ -9,7 +9,16 @@ spec:
   chart:
     spec:
       chart: radar
-      version: 1.19.0
+      # Pinned to the upstream release the custom image grafts (see
+      # kubernetes/apps/radar/radar values image + OxygnCorp/containers);
+      # Renovate auto-bump is disabled in .renovate/overrides.json5 until a
+      # new graft image is built (chart 1.19.0 passes flags unknown to the
+      # 1.17.0 binary).
+      # NOTE while pinned: 1.18+ chart values (top-level allowedHosts /
+      # crdGroups groups) are unused by the 1.17.0 chart — the DNS-rebinding
+      # allowlist (plan 2026-10-28-radar-allowed-hosts) is NOT in force;
+      # both pins move together at the next graft bump.
+      version: 1.17.0
       sourceRef:
         kind: HelmRepository
         name: radar
@@ -68,9 +77,6 @@ spec:
     ingress:
       enabled: true
 
-    allowedHosts:
-      - radar.oxygn.dev
-
     rbac:
       podLogs: true
       podExec: true
@@ -81,10 +87,6 @@ spec:
       metrics: true
       viewRBAC: true
       viewWebhooks: true
-
-      crdGroups:
-        all: true
-
       additionalRules:
         - apiGroups: [""]
           resources: ["pods"]
