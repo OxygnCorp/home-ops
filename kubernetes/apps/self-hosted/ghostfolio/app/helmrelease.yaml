@@ -59,7 +59,7 @@ spec:
           app:
             image:
               repository: docker.io/ghostfolio/ghostfolio
-              tag: 3.89.0@sha256:2856376ab315b239e4d3dc00ab369b9902487db1bb45731420b8a8680a258297
+              tag: 3.96.0@sha256:97b9dd2e8b07610bfa383480b911065f7497070f53c302c037ab8a1b596ccae5
               pullPolicy: IfNotPresent
             env:
               NODE_ENV: production

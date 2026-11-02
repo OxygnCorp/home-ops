@@ -9,6 +9,13 @@ spec:
     kind: OCIRepository
     name: devclaw
   interval: 1h
+  # The OpenClaw gateway only starts listening on its readiness port after
+  # the (slow) doctor/migration phase (~8+ min on a full pod recycle that
+  # runs the startup migration). Helm's default 5m timeout made every
+  # rollout exceeding it fail and remediate into a rollback (2026-10-23,
+  # release stalled with pods stuck "PodInitializing"/not-Ready for ~5m).
+  # 20m covers the doctor phase + plugin install with margin under 1h.
+  timeout: 20m
   values:
     controllers:
       openclaw:
@@ -18,7 +25,11 @@ spec:
           init:
             image:
               repository: docker.io/library/alpine
-              tag: "3.24"
+              # Pinned to the multi-arch manifest digest of alpine:3.24 (repo
+              # policy: container images prefer @sha256 refs) — a tag ref on
+              # Docker Hub can stall on registry slowness and block the whole
+              # pod in PodInitializing during rollouts.
+              tag: 3.24@sha256:be2656061b536c1883c4034790e21d0a09c5aaaf51968b89368a3c0371ea2c9a
             securityContext:
               runAsUser: 0
             command:
@@ -31,13 +42,62 @@ spec:
                 cp /tmp/openclaw.json /home/node/.openclaw/openclaw.json
                 chown 1000:100 /home/node/.openclaw/openclaw.json
                 chmod 400 /home/node/.openclaw/openclaw.json
+                # Retention: doctor creates a full recovery capture (~750M of
+                # agent sqlite) on every repair run and never prunes them; mainclaw
+                # hit 91% PVC usage this way (2026-10-23). Always keep the newest
+                # capture (the only automatic rollback path) plus everything
+                # younger than 7 days; tolerates absent dirs (kopia restores now
+                # exclude them).
+                # No `ls`/`find` bottle-neck with set -e + pipefail: when the
+                # glob matches nothing, ls exits 1 with stderr suppressed and
+                # pipefail kills the whole init (devclaw had no captures after
+                # a kopia restore; the init crashed instantly with exit 1 and
+                # no output, hanging the rollout ~20min ×3 on 2026-10-23 & 25).
+                # Compute the newest capture by hand, tolerating an empty set.
+                cutoff=$(( $(date +%s) - 604800 ))
+                newest=""
+                for d in /home/node/.openclaw.update-captures/doctor-*; do
+                    [ -d "$d" ] || continue
+                    if [ -z "$newest" ] || [ "$(stat -c %Y "$d")" -gt "$(stat -c %Y "$newest")" ]; then
+                        newest="$d"
+                    fi
+                done
+                for d in /home/node/.openclaw.update-captures/doctor-*; do
+                    [ -d "$d" ] || continue
+                    if [ "$d" = "$newest" ]; then continue; fi
+                    if [ "$(stat -c %Y "$d")" -lt "$cutoff" ]; then rm -rf "$d"; fi
+                done
+                # Prune startup-migration backups, keeping the NEWEST ONE
+                # overall within each agent dir (the only automatic rollback
+                # path) and everything younger than 7d. Newest-first walk
+                # (not `$(ls|head)`) so an empty set can't kill the init
+                # under set -e + pipefail (devclaw, 2026-10-23/25 & 27).
+                for d in /home/node/.openclaw/agents/*/agent; do
+                    [ -d "$d" ] || continue
+                    keep=""
+                    for g in "$d"/*.pre-startup-migration-*.bak; do
+                        [ -e "$g" ] || continue
+                        if [ -z "$keep" ] || [ "$(stat -c %Y "$g")" -gt "$(stat -c %Y "$keep")" ]; then
+                            keep="$g"
+                        fi
+                    done
+                    [ -n "$keep" ] || continue
+                    for f in "$d"/*.pre-startup-migration-*.bak; do
+                        [ -e "$f" ] || continue
+                        if [ "$f" != "$keep" ] && [ "$(stat -c %Y "$f")" -lt "$cutoff" ]; then rm -f "$f"; fi
+                    done
+                done
+                # Stale sqlite readonly-check temp copies (orphaned fs-safe files)
+                if [ -d /home/node/.cache/openclaw ]; then
+                    find /home/node/.cache/openclaw -name '.fs-safe-*.tmp' -mtime +1 -delete 2>/dev/null || true
+                fi
                 cp /kopiaignore/.kopiaignore /home/node/.kopiaignore
 
         containers:
           app:
             image:
               repository: ghcr.io/openclaw/openclaw
-              tag: 2026.10.5@sha256:f40d1e66fd14d8c5b49c832f4100f83b53fdc01f5108f7db11de38fd0ee6dbe5
+              tag: 2026.10.9@sha256:1a2a3ce113e435039dbeac5ae261759bb4759908563d91c81059e896b38c5d98
             # The gateway only listens on 18789 after a slow doctor/migration
             # phase (~8 min); keep the pod NotReady until then so Envoy does
             # not route to a dead upstream during rollouts
@@ -62,7 +122,7 @@ spec:
                 # update so both stay aligned; the guard below keeps restarts
                 # offline and warns instead of failing on a transient drift.
                 # renovate: clawhub:@eleboucher/memini registryUrl=https://clawhub.ai/api/npm
-                MEMINI_PLUGIN_VERSION=v0.7.32
+                MEMINI_PLUGIN_VERSION=0.7.38
                 # Strip the chart tag prefix at runtime; braced shell expansion does not survive
                 # the Flux postBuild variable substitution
                 MEMINI_PLUGIN_REL=$(printf '%s' "$MEMINI_PLUGIN_VERSION" | sed 's/^v//')
@@ -112,7 +172,7 @@ spec:
           codeserver:
             image:
               repository: ghcr.io/coder/code-server
-              tag: 4.141.0@sha256:72ab24b5680ee597dd647b30d82625752f40109b5f61bef90ffbf1ea1f02dbb8
+              tag: 4.144.0@sha256:b9e8056bb74bd0c4f90284c7559eddeccd38400cfedc28e64c9d3ca50fef1f83
             env:
               TZ: Europe/Paris
             args:

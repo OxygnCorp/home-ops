@@ -25,7 +25,7 @@ spec:
           app:
             image:
               repository: ghcr.io/cobanov/teslamate-mcp
-              tag: 0.13.5@sha256:2c52ddb841630fe6fff4980bbda82551ef74198391265dcdeb24fb9b0ef856d3
+              tag: 0.17.0@sha256:2c10e4d8d22b0d6803f0330aa495c9407f4ced56020f344ad240fe8435f42e36
             # DATABASE_URL is composed at startup from the CloudNativePG
             # teslamate-app secret and pointed at the read-only replicas
             # service (teslamate-ro) for engine-level read-only access.

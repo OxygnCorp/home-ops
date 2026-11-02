@@ -1,0 +1,13 @@
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: kanidm
+spec:
+  # Single-instance authority for cluster auth: never allow voluntary
+  # disruptions (drains/evictions) to take the login path down with it.
+  maxUnavailable: 0
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: kanidm
+      app.kubernetes.io/name: kanidm

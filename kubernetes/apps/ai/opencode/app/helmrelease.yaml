@@ -50,11 +50,81 @@ spec:
                 cp /kopiaignore/.kopiaignore /home/opencode/.kopiaignore
                 mkdir -p /home/opencode/.config/opencode
                 cp /etc/opencode/AGENTS.md /home/opencode/.config/opencode/AGENTS.md
+          # Installs mise + the pinned cluster tooling into the home PVC so
+          # agent sessions can run GitOps validation locally (flate
+          # test/diff) and the repo just recipes get past command-not-found
+          # (talosctl, kubectl, yq, jq, gh, op, minijinja-cli, gum, helmfile,
+          # helm).
+          # Same image as the app container (shared via anchor) for
+          # bash+curl; nothing is baked into the image itself. The CLIs stay
+          # credentialless on purpose (no kubeconfig/talosconfig/
+          # OP_SERVICE_ACCOUNT_TOKEN in this pod; the MCP gateway covers
+          # cluster access).
+          mise-setup:
+            image: &opencode-image
+              repository: ghcr.io/joryirving/opencode
+              tag: 2.2.5@sha256:355c36f0f57828546e51cda5011ebc31b03dfbf15f74594c7515b793dca04038
+            command:
+              - /bin/bash
+              - -c
+              - |
+                set -euo pipefail
+                MISE_BIN=/home/opencode/.local/bin/mise
+                MISE_VERSION=2026.10.20
+                if ! command -v curl >/dev/null 2>&1; then
+                  echo "WARN: curl missing from the opencode image; cluster tooling not installed"
+                  exit 0
+                fi
+                # Not first-boot-only: re-download when the pinned version
+                # changes or the binary is missing/broken.
+                if [[ ! -x "$${MISE_BIN}" ]] || [[ "$("$${MISE_BIN}" --version 2>/dev/null || true)" != *"$${MISE_VERSION}"* ]]; then
+                  if ! curl -fsSL https://mise.run | MISE_INSTALL_PATH="$${MISE_BIN}" MISE_VERSION="$${MISE_VERSION}" sh; then
+                    echo "WARN: mise download failed; cluster tooling unavailable this boot"
+                    exit 0
+                  fi
+                fi
+                # Tool versions pinned to the repo .mise/config.toml. Keep
+                # auto_install=false: the repo checkout pins ~25 tools and
+                # go/node/python compile from source on Alpine, which would
+                # blow the 5Gi PVC budget. Sessions use MISE_AUTO_INSTALL=false
+                # for the same reason (see entrypoint.sh).
+                # This write is the only hard-fail step: without it, mise's
+                # auto_install defaults back to true and an in-repo exec would
+                # auto-install those ~25 tools behind the session env's back.
+                mkdir -p /home/opencode/.config/mise
+                cat > /home/opencode/.config/mise/config.toml <<'EOF'
+                # Managed by the mise-setup init container
+                # (kubernetes/apps/ai/opencode/app/helmrelease.yaml).
+                [settings]
+                auto_install = false
+                all_compile = false
+
+                [tools]
+                "github:home-operations/flate" = "0.6.5"
+                "just" = "1.59.0"
+                "rg" = "15.2.0"
+                "aqua:kubernetes-sigs/kustomize" = "5.6.0"
+                "vals" = "0.50.0"
+                # CLIs called by the repo just recipes (talos/, bootstrap/,
+                # kube/, kanidm/ modules) so they run past command-not-found
+                "talosctl" = "1.14.5"
+                "aqua:kubernetes/kubectl" = "1.37.1"
+                "yq" = "4.54.1"
+                "jq" = "1.8.2"
+                "gh" = "2.103.3"
+                "op" = "2.41.1"
+                "aqua:mitsuhiko/minijinja" = "3.0.4" # minijinja-cli, used by `just template`
+                "gum" = "2.0.2" # `just log`
+                "aqua:helmfile/helmfile" = "1.8.2" # bootstrap module
+                "aqua:helm/helm" = "4.3.1" # runtime dependency of helmfile
+                EOF
+                if ! "$${MISE_BIN}" install; then
+                  echo "WARN: mise install failed; cluster tooling unavailable this boot"
+                fi
+                "$${MISE_BIN}" reshim || echo "WARN: mise reshim failed"
         containers:
           app:
-            image:
-              repository: ghcr.io/joryirving/opencode
-              tag: 2.1.2@sha256:f70cb0b555ff0363c5d7ee54866d659cb1626b621173927c4f4d306abb3632f2
+            image: *opencode-image
             command: ["/etc/opencode/entrypoint.sh"]
             env:
               HOME: &homepath /home/opencode

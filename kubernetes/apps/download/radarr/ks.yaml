@@ -11,6 +11,7 @@ spec:
   components:
     - ../../../../components/zeroscaler
     - ../../../../components/kopiur/backup
+    - ../../../../components/oidc-kanidm/in-app
   dependsOn:
     - name: kopiur
       namespace: kopiur-system
@@ -21,7 +22,12 @@ spec:
   postBuild:
     substitute:
       APP: radarr
+      APP_NAMESPACE: download
+      DOMAIN: oxygn.dev
       KOPIUR_CAPACITY: 5Gi
+      OIDC_CALLBACK: /signin-oidc
+      OIDC_DISPLAY_NAME: Radarr
+      SUBDOMAIN: radarr
   prune: true
   sourceRef:
     kind: GitRepository

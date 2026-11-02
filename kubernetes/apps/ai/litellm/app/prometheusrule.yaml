@@ -58,6 +58,24 @@ spec:
               (auth/quota — check the upstream key or plan cap)
           labels:
             severity: warning
+        - alert: LiteLLMMemoryNearLimit
+          # Early warning for the 2026-10-25 OOMKill pattern: sustained
+          # pressure just under the cgroup limit before the kill. Fast spikes
+          # are covered by the cluster-wide OomKilled alert; this one catches
+          # the ride-the-limit plateau so the limit is raised (or the prompt
+          # compacted) first. Ratio (not absolute) survives limit changes.
+          expr: |-
+            max by (namespace, pod) (container_memory_working_set_bytes{namespace="ai",container="litellm"})
+              / on (namespace, pod)
+            max by (namespace, pod) (kube_pod_container_resource_limits{namespace="ai",container="litellm",resource="memory"})
+              > 0.85
+          for: 10m
+          annotations:
+            summary: >-
+              {{ $labels.pod }} has been using {{ $value | humanizePercentage }} of its memory
+              limit for 10m — OOM risk (giant prompts trigger worker spikes)
+          labels:
+            severity: warning
     - name: llamacpp.rules
       rules:
         - alert: LlamaCppRequestsDeferred

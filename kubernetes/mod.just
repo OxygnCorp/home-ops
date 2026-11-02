@@ -117,3 +117,8 @@ mirror-sync org:
             "${FORGEJO_URL}/api/v1/repos/{{ org }}/${repo}/mirror-sync" >/dev/null \
             && just log info "sync triggered" repo "${repo}"
     done
+
+[doc('Run the claws retention-init fixture tests (devclaw + mainclaw)')]
+[script]
+test-init:
+    bash -euo pipefail "{{ justfile_directory() }}/kubernetes/tests/test-retention-init.sh"

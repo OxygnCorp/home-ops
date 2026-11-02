@@ -7,7 +7,9 @@ on:
     branches: ["main"]
     # `labeled` enables the one-click re-review: add the `ai-review` label to
     # force a fresh review (only write/triage can label — self-authorizing).
-    types: [opened, reopened, synchronize, ready_for_review, labeled]
+    # `unlabeled` is required for the `hold` holding pattern below: removing
+    # the label must re-run the automerge gate to unblock the PR.
+    types: [opened, reopened, synchronize, ready_for_review, labeled, unlabeled]
   workflow_dispatch:
     inputs:
       pr_number:
@@ -15,25 +17,69 @@ on:
         required: true
 
 concurrency:
-  # `labeled` events each get their own group: net-new PRs are auto-labeled
-  # (Renovate adds several at creation), and with a shared group +
+  # `labeled`/`unlabeled` events each get their own group: net-new PRs are
+  # auto-labeled (Renovate adds several at creation), and with a shared group +
   # cancel-in-progress those label runs would cancel the real opened review.
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || inputs.pr_number || github.ref }}${{ github.event.action == 'labeled' && format('-label-{0}', github.run_id) || '' }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || inputs.pr_number || github.ref }}${{ endsWith(github.event.action, 'labeled') && format('-label-{0}', github.run_id) || '' }}
   cancel-in-progress: true
 
 permissions:
   contents: read
-  pull-requests: write
 
 jobs:
   review-pr:
     name: AI PR Review
-    # pull_request is the normal path; adding the `ai-review` label is the
-    # normal re-review trigger (handled natively by the action). workflow_dispatch
-    # remains as a manual force-review path.
-    if: ${{ (github.event_name == 'pull_request' && !github.event.pull_request.draft) || github.event_name == 'workflow_dispatch' }}
+    # ── Architecture ─────────────────────────────────────────────────────
+    # Two jobs, one workflow. The `automerge-gate` job below is the job whose
+    # check ("AI PR Review (automerge gate)") is required in `main` branch
+    # protection; combining them is what blocks Renovate's automerge while
+    # blocker findings stand on `renovate/am-*` branches (the Renovate
+    # "trusted automerge" set, see .renovate/autoMerge.json5
+    # additionalBranchPrefix).
+    #
+    # This job never produces the required-check conclusion, on purpose.
+    # GitHub resolves required checks by check-run name with "latest
+    # posted on the head SHA wins": a `skipped` job-level `if:` still emits
+    # a check run of the same name, conclusion "skipped", which GitHub
+    # treats as passing. Renovate labels Renovate PRs with a burst of
+    # `labeled` events in the seconds after creation, so a single-job
+    # design would have those instant skipped checks supersede a later
+    # REQUEST_CHANGES gate and re-open the automerge (verified empirically:
+    # PR #5378 head 68342c66 carries 4 "skipped" "AI PR Review" check runs
+    # on a single SHA). Skipped conclusions are harmless here because the
+    # required check has a distinct name owned exclusively by the gate job.
+    #
+    # This job keeps the cheap guard: full LLM reviews run for non-draft PRs
+    # on the normal events, and re-reviews only on the `ai-review` label or
+    # workflow_dispatch. On `renovate/am-*` branches the effective config is
+    # gate-like (see publish-mode / fail-on-request-changes ternaries:
+    # native REQUEST_CHANGES, never APPROVE, step fails on a `request_changes`
+    # verdict so the gate job sees a meaningful failure).
+    #
+    # The ternaries must use `github.head_ref` (the documented source-branch
+    # property) or the prctx-resolved branch for workflow_dispatch runs.
+    # `github.event.pull_request.head_ref` does NOT exist (the webhook
+    # payload path is `head.ref`) and dereferencing a nonexistent property
+    # evaluates to '' — so startsWith() would always be false and the gate
+    # config would never fire.
+    # The `hold` clauses are the manual holding pattern: while a PR is held,
+    # the full LLM review is skipped (cost saver) — the `hold` gate check
+    # carries the blocking semantics (see `hold` in the automerge-gate job).
+    # Like `ai-review` for labels, `unlabeled` is whitelisted to `hold` only:
+    # any other label removal events a run, but never a fresh LLM review.
+    # workflow_dispatch overrides `hold` (manual force-review is deliberate).
+    if: ${{ (github.event_name == 'pull_request' && !github.event.pull_request.draft && (github.event.action != 'labeled' || github.event.label.name == 'ai-review') && (github.event.action != 'unlabeled' || github.event.label.name == 'hold') && !contains(github.event.pull_request.labels.*.name, 'hold')) || github.event_name == 'workflow_dispatch' }}
+    permissions:
+      contents: read
+      # prctx `gh api` reads PR metadata; all writes (comments, reviews) are
+      # performed with the scoped app token created inside the job.
+      pull-requests: read
     runs-on: home-ops-runner
-    timeout-minutes: 35
+    # 45 min: ci-status-check waits up to 1200s + tool loop 600s + review
+    # rounds must never exhaust the budget on slow multi-chart CI — a job
+    # timeout would read as `failure` and red the gate (fail-closed on mere
+    # slowness).
+    timeout-minutes: 45
 
     steps:
       - name: Resolve PR head for re-review
@@ -43,8 +89,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ inputs.pr_number }}
         run: |
-          sha="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}" --jq '.head.sha')"
-          echo "head_sha=$sha" >> "$GITHUB_OUTPUT"
+          pr="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}")"
+          echo "head_sha=$(echo "$pr" | jq -r .head.sha)" >> "$GITHUB_OUTPUT"
+          # resolve the source branch for the gate config ternaries:
+          # `github.head_ref` is empty on workflow_dispatch payloads
+          echo "head_ref=$(echo "$pr" | jq -r .head.ref)" >> "$GITHUB_OUTPUT"
 
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -93,7 +142,7 @@ jobs:
 
       - name: Analyze PR with reusable AI reviewer
         id: analyze
-        uses: misospace/pr-reviewer-action@593f1b7b41bb05aa18d1f9278205e7204b1505ab # v3.5.0
+        uses: misospace/pr-reviewer-action@0a2d2732f7358e509e6a85e11160eb25cc5b1b80 # v3.8.0
         env:
           # konflate's read-only MCP endpoint — the konflate evidence provider
           # fetches the rendered (post-kustomize/Helm) Flux diff for this PR.
@@ -122,7 +171,12 @@ jobs:
           allowed-source-hosts: "github.com,api.github.com,gitlab.com,registry.terraform.io,artifacthub.io,talos.dev,www.talos.dev,docs.siderolabs.com"
           context-limit-mode: normal
           ci-status-check: "true"
-          ci-timeout-sec: "600"
+          # 10 min: multi-chart PRs routinely exceed 600s of CI. Beyond the
+          # timeout the review proceeds WITHOUT CI evidence (the action's
+          # ci-skip-on-timeout defaults to true) — fail-open by design; the
+          # gate derives its decision from the review verdict, and sibling
+          # CI checks remain required-check-agnostic.
+          ci-timeout-sec: "1200"
           search-url: "https://search.oxygn.dev/search"
           tool-mode: native_loop
           tool-max-rounds: "2"
@@ -148,4 +202,189 @@ jobs:
           evidence-providers-file: .github/konflate-evidence-providers.json
           on-model-failure: notice
           inline-findings: "true"
-          publish-mode: review_comment
+          # `renovate/am-*` PRs are the automerge gate candidates: native
+          # REQUEST_CHANGES review (never APPROVE) and — through
+          # fail-on-request-changes — a job failure on a `request_changes`
+          # verdict, which the `automerge-gate` job below turns into a red
+          # required check. Everything else keeps the advisory comment
+          # behavior (never gates human merges).
+          #
+          # Fail boundaries (verified against the action contract):
+          # - fail-open: `on-model-failure: notice` produces a degraded
+          #   "notice" verdict which `fail-on-request-changes` warns and
+          #   passes — a pure LLM outage never wedges the automerge queue.
+          #   `fail-on-degraded-review` is deliberately left unset (false).
+          # - fail-closed: a review that gathered no evidence on the primary
+          #   model, or a deterministic fail-closed enforcement (evidence
+          #   blocker, tool-harness failure, unmet required check) forces
+          #   `request_changes` and fails the gate regardless of degraded
+          #   review handling. Re-arm such a run via the `ai-review` label
+          #   (allowed on am- branches) or a rebase — the gate re-opens when
+          #   the review verdict is clean.
+          # On workflow_dispatch, `github.head_ref` is empty: the ternaries
+          # fall back to the branch resolved by the prctx step, so a manual
+          # force-review of a Renovate PR publishes a real gate verdict to the
+          # PR (native REQUEST_CHANGES on blockers). Its check runs attach to
+          # the dispatched ref's SHA, not the PR head SHA, so they can never
+          # supersede — or fake — the PR's required check; on the PR itself
+          # the concluding check always comes from the pull-request runs.
+          publish-mode: ${{ startsWith(steps.prctx.outputs.head_ref || github.head_ref, 'renovate/am-') && 'review_blockers' || 'review_comment' }}
+          fail-on-request-changes: ${{ startsWith(steps.prctx.outputs.head_ref || github.head_ref, 'renovate/am-') && 'true' || 'false' }}
+
+  # ── Automerge gate (this job's check is REQUIRED in main branch protection)
+  # -----------------------------------------------------------------------
+  # Decision table, for every event, exactly one conclusion per head SHA,
+  # with no "skipped" conclusions allowed (a skipped conclusion would be
+  # interpreted by GitHub's branch protection as a pass and is never
+  # authoritative for a merge gate):
+  #
+  #   non-`renovate/am-*` PR              → pass (free; humans are not gated)
+  #   review job failure / cancelled      → BLOCKED (fail-closed: real gate
+  #                                        verdict request_changes, or
+  #                                        review infra failure)
+  #   review job success                  → pass (a `request_changes` verdict
+  #                                        always fails the review job via
+  #                                        fail-on-request-changes; a success
+  #                                        means the verdict was clean — or
+  #                                        fail-open degraded "notice")
+  #   review job skipped (draft, or a     → BLOCKED only if a managed
+  #   non-ai-review label event)          REQUEST_CHANGES review exists at the
+  #                                       current head SHA (Bot-authored),
+  #                                       else pass
+  #   label `hold` present (any PR)       → BLOCKED (manual holding pattern,
+  #                                        first in the script — evaluated
+  #                                        before every other branch)
+  #
+  # The third line is the load-bearing one: Renovate fires `labeled` bursts
+  # right after PR creation, and every such event produces a gate run that
+  # must reproduce the verdict state of the SHA — the earlier check run
+  # naming collision that a single-job design would have had is avoided by
+  # construction because this check name belongs to this job alone.
+  #
+  # Unstick path for a falsely (or stale) blocked PR: label `ai-review` or
+  # rebase the branch → fresh full gate review publishes a clean verdict,
+  # the review cleanup dismisses the stale REQUEST_CHANGES, and the next
+  # gate run (same SHA query path) passes.
+  automerge-gate:
+    name: AI PR Review (automerge gate)
+    needs: review-pr
+    if: ${{ always() }}
+    permissions:
+      contents: read
+      # Read-only: the gate only queries PR metadata and reviews.
+      pull-requests: read
+    runs-on: home-ops-runner
+    # Serialize same-PR conclusions: parallel gates on one SHA complete in
+    # arbitrary order, and "last completed wins" would be unspecified.
+    # cancel-in-progress makes the newest event's gate authoritative; any
+    # transient cancelled conclusion is superseded by the surviving run.
+    concurrency:
+      group: ai-review-gate-${{ github.event.pull_request.number || inputs.pr_number || github.ref }}
+      cancel-in-progress: true
+    timeout-minutes: 10
+    steps:
+      - name: Evaluate gate decision
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number }}
+          REVIEW_RESULT: ${{ needs.review-pr.result }}
+        run: |
+          set -o pipefail
+          command -v gh >/dev/null || { echo "::error::gh not available on runner"; exit 1; }
+          command -v jq >/dev/null || { echo "::error::jq not available on runner"; exit 1; }
+
+          pr="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}")" \
+            || { echo "::error::could not read PR #${PR_NUMBER} metadata"; exit 1; }
+          head_sha="$(echo "$pr" | jq -r .head.sha)"
+          head_ref="$(echo "$pr" | jq -r .head.ref)"
+
+          # ── `hold` label: manual holding pattern, independent of the AI review
+          # verdict (branch decision table below it). Applies to ANY PR —
+          # Renovate or human: Renovate ignores labels for its automerge
+          # decision, so a manual hold is only real when it surfaces through
+          # this required check. Removing the label fires `unlabeled` (in the
+          # trigger types) which re-runs BOTH jobs — the review job re-arm is
+          # what republishes a verdict — so the unblock is self-healing.
+          # Case-insensitive on `hold` to mirror the job-level `contains()`.
+          hold="$(echo "$pr" | jq -r '[.labels[]?.name | ascii_downcase] | any(. == "hold")')" \
+            || { echo "::error::could not evaluate PR labels for 'hold'"; exit 1; }
+          if [[ "$hold" == "true" ]]; then
+            echo "::error::PR carries the 'hold' label — merge is manually held (block independent of the AI review). Remove the label to re-open the gate."
+            exit 1
+          fi
+
+          if [[ "$head_ref" != renovate/am-* ]]; then
+            echo "Not a Renovate automerge branch: gate passes (humans are not gated, unless 'hold')."
+            exit 0
+          fi
+
+          case "$REVIEW_RESULT" in
+            success)
+              echo "Review verdict clean (or fail-open degraded): gate passes."
+              exit 0
+              ;;
+            failure|cancelled)
+              echo "::error::AI review failed or was cancelled on a Renovate automerge branch — blocking automerge. Re-review via the 'ai-review' label or a rebase."
+              exit 1
+              ;;
+            skipped)
+              # Preserves a previously published verdict on this head SHA across
+              # events that skip the LLM review itself (draft, or non-ai-review
+              # label events).
+              #
+              # Managed-review identity matches the action's own contract
+              # (src/metadata/markers.ts isManagedBody): Bot-authored AND body
+              # starting with the "<!-- ai-pr-review" HTML marker, which covers
+              # both the current marker and the legacy "<!-- ai-pr-reviewer"
+              # prefix. Content-based identity is what upstream itself uses
+              # (#190): author identity can change across token types, and
+              # author.type == "Bot" alone would count a foreign App review
+              # (e.g. Copilot) — Bot matches humans out, marker matches foreign
+              # Apps out.
+              #
+              # Fore-seen open blockers BLOCK. The action's model-outage notice
+              # publishes a managed CHANGES_REQUESTED review (verified
+              # src/prompt/failure.ts); it MUST NOT gate — the chosen policy is
+              # fail-open on a pure LLM outage per operator decision. Such a
+              # notice is identifiable by its fixed first heading
+              # ("## AI review could not run", modelFailureNoticeMarkdown); if
+              # upstream ever reword that heading, the drift direction would be
+              # fail-closed (a label event post-outage goes red), never vice
+              # versa — acceptable and documented here.
+              #
+              # gh api --paginate --jq applies --jq PER PAGE and prints one
+              # value per page; counts must be summed over pages (evaluating a
+              # multi-line "0\n3" with [[ "$x" -gt 0 ]] is a silent bash
+              # arithmetic failure — false — which is exactly the direction
+              # this gate must never fail in).
+              marker='<!-- ai-pr-review'
+              notice='## AI review could not run'
+              reviewed="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/reviews?per_page=100" --paginate --jq \
+                "[.[] | select(.author.type == \"Bot\" and (.body | startswith(\"${marker}\")) and .commit_id == \"${head_sha}\")] | length" \
+                | awk '{s+=$1} END{print s+0}')" \
+                || { echo "::error::could not read PR reviews"; exit 1; }
+              blockers="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/reviews?per_page=100" --paginate --jq \
+                "[.[] | select(.author.type == \"Bot\" and (.body | startswith(\"${marker}\")) and .commit_id == \"${head_sha}\" and .state == \"CHANGES_REQUESTED\" and (.body | contains(\"${notice}\") | not))] | length" \
+                | awk '{s+=$1} END{print s+0}')" \
+                || { echo "::error::could not read PR reviews"; exit 1; }
+              if [[ "$blockers" -gt 0 ]]; then
+                echo "::error::Open blocker findings published by the AI review at ${head_sha:0:8} — blocking automerge. Re-review via the 'ai-review' label or a rebase."
+                exit 1
+              fi
+              if [[ "$reviewed" -eq 0 ]]; then
+                # Closes the residual hole "an infra-failed review re-armed to
+                # green by a random later label event": until the first managed
+                # review has published at this SHA, the pre-review label bursts
+                # stay red. The `opened` run in flight supersedes once its
+                # review completes.
+                echo "::error::Review skipped with no managed AI review yet at ${head_sha:0:8} — blocking automerge until the first review lands."
+                exit 1
+              fi
+              echo "Review skipped and managed review at this head SHA is clean: gate passes."
+              exit 0
+              ;;
+            *)
+              echo "::error::Unexpected review job result '$REVIEW_RESULT' — blocking automerge (fail-closed)."
+              exit 1
+              ;;
+          esac

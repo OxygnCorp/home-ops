@@ -72,7 +72,7 @@ data:
           model: go-glm-5.3-flash
         vision-local:
           provider: litellm
-          model: go-dsv4f-vision
+          model: dsv41f
           max_concurrent_children: 1
       max_iterations: 250
     gateway:
@@ -92,7 +92,7 @@ data:
     auxiliary:
       vision:
         provider: litellm
-        model: go-dsv4f-vision
+        model: dsv41f
       compression:
         provider: litellm
         model: go-qwen3.8-flash

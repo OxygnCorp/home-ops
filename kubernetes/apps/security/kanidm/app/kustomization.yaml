@@ -8,3 +8,4 @@ resources:
   - ./certificate.yaml
   - ./backendtlspolicy.yaml
   - ./externalsecret.yaml
+  - ./pdb.yaml

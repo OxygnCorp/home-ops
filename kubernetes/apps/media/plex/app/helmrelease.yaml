@@ -20,7 +20,7 @@ spec:
           kopiaignore:
             image:
               repository: mirror.gcr.io/alpine
-              tag: 3.24@sha256:294b683cb724975bec92580e1e685676bd4b50bda910ddb8c51d4cabeaec77e6
+              tag: 3.24@sha256:be2656061b536c1883c4034790e21d0a09c5aaaf51968b89368a3c0371ea2c9a
             command: ["/bin/sh", "-c"]
             args:
               - cp /kopiaignore/.kopiaignore /config/.kopiaignore
@@ -32,7 +32,7 @@ spec:
           app:
             image:
               repository: ghcr.io/home-operations/plex
-              tag: 1.43.5.11029@sha256:996656c7b98462bc726e5c63ae7778fc084cff4560677b4a4e45edf0f3fa67dc
+              tag: 1.43.5.11079@sha256:06ef0fc23e9af9bbaf284c3f27972f94e703d13d6f745edeb6818fcbebf6c673
             env:
               TZ: "Europe/Paris"
               PLEX_ADVERTISE_URL: "http://10.10.98.170:32400,https://plex.oxygn.dev:443,http://plex.media.svc.cluster.local:32400"
@@ -66,10 +66,10 @@ spec:
             resources:
               requests:
                 cpu: 100m
-                memory: 256Mi
+                memory: 512Mi
               limits:
                 # nvidia.com/gpu: 1
-                memory: 1Gi
+                memory: 4Gi
                 cpu: 2000m
     defaultPodOptions:
       securityContext:

@@ -24,6 +24,12 @@ spec:
       name: kanidm-${APP}-oidc
     redirectURL: https://${SUBDOMAIN}.${DOMAIN}${OIDC_CALLBACK}
     logoutPath: /logout
+    # Kanidm's refresh tokens are opaque JWEs (no exp claim Envoy can read, and
+    # no refresh_token_expires_in in the token response), so this is the Max-Age
+    # Envoy stamps on the refresh-token cookie. Must stay >= the Kanidm client
+    # attribute oauth2_refresh_token_expiry (604800s = 7d, set out-of-band via
+    # the Kanidm API — kanidm-provision does not support it; see the README).
+    defaultRefreshTokenTTL: 168h
     # Keep in sync with the OIDC_SCOPES default in base/ks.yaml (the SecurityPolicy
     # cannot be parameterized with a JSON array — see the component README)
     scopes: ["openid", "profile", "email", "groups"]

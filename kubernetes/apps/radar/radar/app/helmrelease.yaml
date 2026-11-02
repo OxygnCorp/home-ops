@@ -9,7 +9,7 @@ spec:
   chart:
     spec:
       chart: radar
-      version: 1.17.0
+      version: 1.19.0
       sourceRef:
         kind: HelmRepository
         name: radar
@@ -26,11 +26,14 @@ spec:
 
     timeline:
       storage: sqlite
-      retention: 720h
+      retention: 168h
       maxSize: 800Mi
 
     ingress:
       enabled: true
+
+    allowedHosts:
+      - radar.oxygn.dev
 
     rbac:
       podLogs: true
@@ -65,7 +68,7 @@ spec:
         cpu: 100m
         memory: 256Mi
       limits:
-        memory: 2Gi
+        memory: 4Gi
 
   postRenderers:
     - kustomize:
