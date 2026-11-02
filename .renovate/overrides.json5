@@ -20,8 +20,8 @@
       enabled: false,
     },
     {
-      description: "Disable Radar Helm Chart Auto-Bump (radar runs the OxygnCorp/containers graft image pinned to a specific upstream release; chart 1.19.0 passes --port/--allowed-hosts flags the 1.17.0 graft binary does not know. Chart bumps must ride along with a new graft image build, so they are handled in the containers repo, not auto-bumped here)",
-      matchManagers: ["helmrelease"],
+      description: "Disable Radar Helm Chart Auto-Bump (radar runs the OxygnCorp/containers graft image pinned to a specific upstream release; the chart and the graft binary must bump in lockstep because new charts pass flags older binaries reject. Chart bumps ride along with a new graft image build in the containers repo, not auto-bumped here)",
+      matchManagers: ["flux"],
       matchDepNames: ["radar"],
       enabled: false,
     },
