@@ -7,7 +7,9 @@ on:
     branches: ["main"]
     # `labeled` enables the one-click re-review: add the `ai-review` label to
     # force a fresh review (only write/triage can label — self-authorizing).
-    types: [opened, reopened, synchronize, ready_for_review, labeled]
+    # `unlabeled` is required for the `hold` holding pattern below: removing
+    # the label must re-run the automerge gate to unblock the PR.
+    types: [opened, reopened, synchronize, ready_for_review, labeled, unlabeled]
   workflow_dispatch:
     inputs:
       pr_number:
@@ -15,10 +17,10 @@ on:
         required: true
 
 concurrency:
-  # `labeled` events each get their own group: net-new PRs are auto-labeled
-  # (Renovate adds several at creation), and with a shared group +
+  # `labeled`/`unlabeled` events each get their own group: net-new PRs are
+  # auto-labeled (Renovate adds several at creation), and with a shared group +
   # cancel-in-progress those label runs would cancel the real opened review.
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || inputs.pr_number || github.ref }}${{ github.event.action == 'labeled' && format('-label-{0}', github.run_id) || '' }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || inputs.pr_number || github.ref }}${{ endsWith(github.event.action, 'labeled') && format('-label-{0}', github.run_id) || '' }}
   cancel-in-progress: true
 
 permissions:
@@ -61,7 +63,10 @@ jobs:
     # payload path is `head.ref`) and dereferencing a nonexistent property
     # evaluates to '' — so startsWith() would always be false and the gate
     # config would never fire.
-    if: ${{ (github.event_name == 'pull_request' && !github.event.pull_request.draft && (github.event.action != 'labeled' || github.event.label.name == 'ai-review')) || github.event_name == 'workflow_dispatch' }}
+    # The last clause is the `hold` cost saver: while a PR is manually held,
+    # the full LLM review is skipped — the `hold` gate check alone carries the
+    # blocking semantics (see `hold` below in the automerge-gate job).
+    if: ${{ (github.event_name == 'pull_request' && !github.event.pull_request.draft && (github.event.action != 'labeled' || github.event.label.name == 'ai-review') && !contains(github.event.pull_request.labels.*.name, 'hold')) || github.event_name == 'workflow_dispatch' }}
     runs-on: home-ops-runner
     # 45 min: ci-status-check waits up to 1200s + tool loop 600s + review
     # rounds must never exhaust the budget on slow multi-chart CI — a job
@@ -239,6 +244,9 @@ jobs:
   #   non-ai-review label event)          REQUEST_CHANGES review exists at the
   #                                       current head SHA (Bot-authored),
   #                                       else pass
+  #   label `hold` present (any PR)       → BLOCKED (manual holding pattern,
+  #                                        first in the script — evaluated
+  #                                        before every other branch)
   #
   # The third line is the load-bearing one: Renovate fires `labeled` bursts
   # right after PR creation, and every such event produces a gate run that
@@ -279,8 +287,19 @@ jobs:
           head_sha="$(echo "$pr" | jq -r .head.sha)"
           head_ref="$(echo "$pr" | jq -r .head.ref)"
 
+          # ── `hold` label: manual holding pattern, independent of the AI review
+          # (the verdict branch table below it). Applies to ANY PR — Renovate or
+          # human: Renovate ignores labels for its automerge decision, so a
+          # manual hold is only real when it surfaces through this required
+          # check. Removing the label fires `unlabeled` (in the trigger types)
+          # which re-runs the gate here and unblocks.
+          if [[ "$(echo "$pr" | jq -r '[.labels[].name] | index("hold") != nil')" == "true" ]]; then
+            echo "::error::PR carries the 'hold' label — merge is manually held (block independent of the AI review). Remove the label to re-open the gate."
+            exit 1
+          fi
+
           if [[ "$head_ref" != renovate/am-* ]]; then
-            echo "Not a Renovate automerge branch: gate passes (humans are not gated)."
+            echo "Not a Renovate automerge branch: gate passes (humans are not gated, unless 'hold')."
             exit 0
           fi
 
