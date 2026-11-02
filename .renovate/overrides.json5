@@ -20,6 +20,12 @@
       enabled: false,
     },
     {
+      description: "Disable Radar Helm Chart Auto-Bump (radar runs the OxygnCorp/containers graft image pinned to a specific upstream release; chart 1.19.0 passes --port/--allowed-hosts flags the 1.17.0 graft binary does not know. Chart bumps must ride along with a new graft image build, so they are handled in the containers repo, not auto-bumped here)",
+      matchManagers: ["helmrelease"],
+      matchDepNames: ["radar"],
+      enabled: false,
+    },
+    {
       description: "Cadence Weekly For llama.cpp Digests (Frequent Upstream Builds, Breaking CLI Changes)",
       matchDatasources: ["docker"],
       matchPackageNames: ["ghcr.io/ggml-org/llama.cpp"],
