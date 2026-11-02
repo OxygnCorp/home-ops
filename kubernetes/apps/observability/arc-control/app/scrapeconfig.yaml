@@ -1,0 +1,22 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/monitoring.coreos.com/scrapeconfig_v1alpha1.json
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: ScrapeConfig
+metadata:
+  name: arc-control
+spec:
+  scheme: https
+  metricsPath: /webman/3rdparty/arc-control/scripts/api.cgi
+  params:
+    format: ["prometheus"]
+  scrapeInterval: 1m
+  authorization:
+    type: Bearer
+    credentials:
+      name: arc-control-secret
+      key: token
+  tlsConfig:
+    insecureSkipVerify: true
+  staticConfigs:
+    - targets:
+        - 10.10.10.20:5001 # Synology NAS.
