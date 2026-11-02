@@ -65,10 +65,19 @@ jobs:
     # The `hold` clauses are the manual holding pattern: while a PR is held,
     # the full LLM review is skipped (cost saver) — the `hold` gate check
     # carries the blocking semantics (see `hold` in the automerge-gate job).
-    # Like `ai-review` for labels, `unlabeled` is whitelisted to `hold` only:
-    # any other label removal events a run, but never a fresh LLM review.
     # workflow_dispatch overrides `hold` (manual force-review is deliberate).
-    if: ${{ (github.event_name == 'pull_request' && !github.event.pull_request.draft && (github.event.action != 'labeled' || github.event.label.name == 'ai-review') && (github.event.action != 'unlabeled' || github.event.label.name == 'hold') && !contains(github.event.pull_request.labels.*.name, 'hold')) || github.event_name == 'workflow_dispatch' }}
+    #
+    # Digest bumps: `type/digest`-labeled PRs on `renovate/am-*` branches
+    # (Renovate labels them, see .renovate/labels.json5) skip the full LLM
+    # review entirely — deliberate policy: digest automerges are enforced by
+    # the trusted set in .renovate/autoMerge.json5 and carry no meaningful
+    # reviewable content. The `github.event.action != 'labeled'` tail keeps an
+    # explicit `ai-review` label able to force a review of such a PR. On non
+    # am- branches (or a hand-added `type/digest` label off the trusted set)
+    # this clause is inert, so the review behaves as before. If Renovate's
+    # labels lag the `opened` payload, the one-time full review still runs and
+    # the gate consults its verdict normally — fail-safe direction.
+    if: ${{ (github.event_name == 'pull_request' && !github.event.pull_request.draft && (github.event.action != 'labeled' || github.event.label.name == 'ai-review') && (github.event.action != 'unlabeled' || github.event.label.name == 'hold') && !contains(github.event.pull_request.labels.*.name, 'hold') && !(startsWith(github.head_ref, 'renovate/am-') && contains(github.event.pull_request.labels.*.name, 'type/digest') && github.event.action != 'labeled')) || github.event_name == 'workflow_dispatch' }}
     permissions:
       contents: read
       # prctx `gh api` reads PR metadata; all writes (comments, reviews) are
@@ -315,6 +324,23 @@ jobs:
 
           if [[ "$head_ref" != renovate/am-* ]]; then
             echo "Not a Renovate automerge branch: gate passes (humans are not gated, unless 'hold')."
+            exit 0
+          fi
+
+          # Digest bumps are not AI-gated by policy: Renovate labels its
+          # digest update PRs with type/digest (.renovate/labels.json5) and
+          # admits them to the trusted automerge set on their own
+          # (.renovate/autoMerge.json5). The review job skips them (see the
+          # job comment) so no verdict exists to consult — the gate passes
+          # before any REVIEW_RESULT handling, whatever its value. Checked
+          # against the live label state (same payload as `hold`), tighter
+          # than the event payload, and the label can only have been applied
+          # by Renovate on this branch (human `hold` was already screened
+          # above, which is the one manual lever that outranks this).
+          digest="$(echo "$pr" | jq -r '[.labels[]?.name | ascii_downcase] | any(. == "type/digest")')" \
+            || { echo "::error::could not evaluate PR labels for 'type/digest'"; exit 1; }
+          if [[ "$digest" == "true" ]]; then
+            echo "Renovate digest automerge branch (label type/digest): not AI-gated by policy — gate passes."
             exit 0
           fi
 
