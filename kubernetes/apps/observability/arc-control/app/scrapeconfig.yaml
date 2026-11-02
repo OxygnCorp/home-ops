@@ -23,4 +23,4 @@ spec:
       replacement: synology-nas # Stable label, bounces with IP otherwise.
   staticConfigs:
     - targets:
-        - 10.10.10.20:5001 # Synology NAS.
+        - funkstation.internal:5001 # Synology NAS.
