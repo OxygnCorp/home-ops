@@ -28,10 +28,10 @@ spec:
             command: ["/home/runner/run.sh"]
             resources:
               requests:
-                cpu: 100m
-                memory: 128Mi
+                cpu: 1
+                memory: 1Gi
               limits:
-                memory: 512Mi
+                memory: 3Gi
     controllerServiceAccount:
       name: actions-runner-controller
       namespace: actions-runner-system
