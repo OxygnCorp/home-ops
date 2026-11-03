@@ -54,12 +54,22 @@ spec:
   commonMetadata:
     labels:
       app.kubernetes.io/name: grafana-instance
+  components:
+    - ../../../../components/oidc-kanidm/in-app
   dependsOn:
     - name: grafana
     - name: miroir-config
       namespace: miroir-system
   interval: 1h
   path: ./kubernetes/apps/observability/grafana/instance
+  postBuild:
+    substitute:
+      APP: grafana
+      APP_NAMESPACE: observability
+      SUBDOMAIN: grafana
+      DOMAIN: oxygn.dev
+      OIDC_DISPLAY_NAME: Grafana
+      OIDC_CALLBACK: /login/generic_oauth
   prune: true
   sourceRef:
     kind: GitRepository
