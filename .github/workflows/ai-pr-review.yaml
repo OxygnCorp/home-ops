@@ -338,17 +338,21 @@ jobs:
           # the whole pre-verdict poll (caught in review). If either job name
           # below changes, change all of them together.
           review_job_name='AI PR Review'
-          # `--slurp` folds all pages into one array-of-arrays, so both counts
-          # derive from ONE paginated call, and page-wise summation (an
-          # --jq-applies-per-page pitfall) happens inside a single jq program.
+          # NOTE: no `gh api --slurp` here — the ARC runner's gh predates it
+          # (`--slurp` failed with a usage dump in production, PR #5424), so
+          # both counts use the two paginated `--jq` calls below. `--jq`
+          # applies PER PAGE, hence the awk page-wise summation; a literal
+          # multi-line "0\n3" with [[ "$x" -gt 0 ]] is a silent bash
+          # arithmetic failure — false — the direction this gate must
+          # never fail in.
           scan_reviews() {
-            local counts
-            counts="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/reviews?per_page=100" --paginate --slurp --jq \
-              "[.[][] | select(.author.type == \"Bot\" and (.body | startswith(\"${marker}\")) and .commit_id == \"${head_sha}\")] as \$managed | {reviewed: (\$managed | length), blockers: (\$managed | map(select(.state == \"CHANGES_REQUESTED\" and (.body | contains(\"${notice}\") | not))) | length)}")" \
+            reviewed="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/reviews?per_page=100" --paginate --jq \
+              "[.[] | select(.author.type == \"Bot\" and (.body | startswith(\"${marker}\")) and .commit_id == \"${head_sha}\")] | length" \
+              | awk '{s+=$1} END{print s+0}')" \
               || return 1
-            reviewed="$(echo "$counts" | jq -r .reviewed)" \
-              || return 1
-            blockers="$(echo "$counts" | jq -r .blockers)" \
+            blockers="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/reviews?per_page=100" --paginate --jq \
+              "[.[] | select(.author.type == \"Bot\" and (.body | startswith(\"${marker}\")) and .commit_id == \"${head_sha}\" and .state == \"CHANGES_REQUESTED\" and (.body | contains(\"${notice}\") | not))] | length" \
+              | awk '{s+=$1} END{print s+0}')" \
               || return 1
           }
           # True (0) iff some in-flight run of this workflow — this run
