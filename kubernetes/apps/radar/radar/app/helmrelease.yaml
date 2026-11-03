@@ -15,9 +15,10 @@ spec:
       # chart rides along with new graft image builds in OxygnCorp/containers
       # (new charts pass flags older binaries reject), so chart and graft
       # binary always bump in lockstep.
-      # NOTE: chart 1.18+ top-level allowedHosts / crdGroups values are not
-      # set in this HelmRelease — the DNS-rebinding allowlist (plan
-      # 2026-10-28-radar-allowed-hosts) remains to be wired up.
+      # NOTE: top-level allowedHosts is REQUIRED with the 1.19.0 chart (see
+      # the allowedHosts value below — no-auth DNS-rebinding check). Keep it
+      # on every graft/chart lockstep bump: it was added in #5304, dropped
+      # in #5405 during the 1.17.0 graft re-pin, and re-added in #5423.
       version: 1.19.0
       sourceRef:
         kind: HelmRepository
@@ -76,6 +77,13 @@ spec:
 
     ingress:
       enabled: true
+
+    allowedHosts:
+      # Public hostname served through the standalone HTTPRoute — the chart
+      # only auto-adds hosts it renders itself (httpRoute would conflict with
+      # ingress), and the 1.18+ DNS-rebinding check enforces it in no-auth
+      # mode (auth.mode: none).
+      - radar.oxygn.dev
 
     rbac:
       podLogs: true
