@@ -265,10 +265,18 @@ jobs:
   #                                        fail-on-request-changes; a success
   #                                        means the verdict was clean — or
   #                                        fail-open degraded "notice")
-  #   review job skipped (draft, or a     → BLOCKED only if a managed
+  #   review job skipped (draft, or a     → BLOCKED if a managed
   #   non-ai-review label event)          REQUEST_CHANGES review exists at the
-  #                                       current head SHA (Bot-authored),
-  #                                       else pass
+  #                                       current head SHA (Bot-authored), if
+  #                                       no managed review exists at that
+  #                                       SHA and no review run is in flight
+  #                                       there, or if the wait for the first
+  #                                       verdict exhausts the poll budget.
+  #                                       PASS only once a managed review at
+  #                                       that SHA has landed and is clean —
+  #                                       a pre-verdict event WAITS for the
+  #                                       verdict being produced before it
+  #                                       can turn green.
   #   label `hold` present (any PR)       → BLOCKED (manual holding pattern,
   #                                        first in the script — evaluated
   #                                        before every other branch)
@@ -299,17 +307,76 @@ jobs:
     concurrency:
       group: ai-review-gate-${{ github.event.pull_request.number || inputs.pr_number || github.ref }}
       cancel-in-progress: true
-    timeout-minutes: 10
+    # Must cover the poll budget below (pre-verdict bounded wait), which in
+    # turn covers a full-length review job (45 min timeout above) — otherwise
+    # multi-chart reviews that run long would wedge the gate red again.
+    # cancel-in-progress keeps only the newest gate, so the wait cannot pile
+    # up behind later gates.
+    timeout-minutes: 55
     steps:
       - name: Evaluate gate decision
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number }}
           REVIEW_RESULT: ${{ needs.review-pr.result }}
+          # How long the gate may wait for a verdict that is already being
+          # produced (see the pre-verdict branch below), the poll cadence,
+          # and how many consecutive API errors a polling gate may tolerate
+          # before failing closed. 2700 s = a full-length 45-min review job.
+          GATE_POLL_BUDGET_SEC: "2700"
+          GATE_POLL_INTERVAL_SEC: "15"
+          GATE_POLL_MAX_CONSEC_ERRORS: "4"
         run: |
           set -o pipefail
           command -v gh >/dev/null || { echo "::error::gh not available on runner"; exit 1; }
           command -v jq >/dev/null || { echo "::error::jq not available on runner"; exit 1; }
+
+          # ── Shared helpers for the `skipped` decision branch below.
+          # Rename note: the review job's display name is duplicated below on
+          # purpose — the `needs` context exposes no job `name` field, so a
+          # context lookup would silently evaluate empty string and dead-code
+          # the whole pre-verdict poll (caught in review). If either job name
+          # below changes, change all of them together.
+          review_job_name='AI PR Review'
+          # `--slurp` folds all pages into one array-of-arrays, so both counts
+          # derive from ONE paginated call, and page-wise summation (an
+          # --jq-applies-per-page pitfall) happens inside a single jq program.
+          scan_reviews() {
+            local counts
+            counts="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/reviews?per_page=100" --paginate --slurp --jq \
+              "[.[][] | select(.author.type == \"Bot\" and (.body | startswith(\"${marker}\")) and .commit_id == \"${head_sha}\")] as \$managed | {reviewed: (\$managed | length), blockers: (\$managed | map(select(.state == \"CHANGES_REQUESTED\" and (.body | contains(\"${notice}\") | not))) | length)}")" \
+              || return 1
+            reviewed="$(echo "$counts" | jq -r .reviewed)" \
+              || return 1
+            blockers="$(echo "$counts" | jq -r .blockers)" \
+              || return 1
+          }
+          # True (0) iff some in-flight run of this workflow — this run
+          # excluded — is running, or has not yet registered, its review job.
+          # Runs whose review job already completed (a skipped label-burst run
+          # parked behind this job's concurrency slot, an infra-failed run)
+          # can never publish a verdict, so they must neither keep the gate
+          # waiting nor let it pass; a run with NO jobs yet is counted as
+          # coming (it may be a queued review run; a skip-run registers its
+          # completed review job within seconds and stops matching). Exit
+          # code > 1 reports API failure — handled with tolerance at
+          # call sites, fail-closed in the limit.
+          review_in_flight() {
+            local ids id state
+            ids="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs?head_sha=${head_sha}&per_page=100" --paginate --jq \
+              '[.workflow_runs[] | select(.name == "'"${GITHUB_WORKFLOW}"'" and .id != '"${GITHUB_RUN_ID}"' and .status != "completed") | .id] | .[]' )" \
+              || return 2
+            for id in $ids; do
+              state="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${id}/jobs?filter=latest" --jq \
+                "[.jobs[] | select(.name == \"${review_job_name}\")] | {n: length, dirty: any(.status == \"queued\" or .status == \"in_progress\")}")" \
+                || return 3
+              case "$state" in
+                *'"dirty":true'*) return 0 ;;
+                *'"n":0'*) return 0 ;;
+              esac
+            done
+            return 1
+          }
 
           pr="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}")" \
             || { echo "::error::could not read PR #${PR_NUMBER} metadata"; exit 1; }
@@ -403,29 +470,101 @@ jobs:
               # this gate must never fail in).
               marker='<!-- ai-pr-review'
               notice='## AI review could not run'
-              reviewed="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/reviews?per_page=100" --paginate --jq \
-                "[.[] | select(.author.type == \"Bot\" and (.body | startswith(\"${marker}\")) and .commit_id == \"${head_sha}\")] | length" \
-                | awk '{s+=$1} END{print s+0}')" \
-                || { echo "::error::could not read PR reviews"; exit 1; }
-              blockers="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/reviews?per_page=100" --paginate --jq \
-                "[.[] | select(.author.type == \"Bot\" and (.body | startswith(\"${marker}\")) and .commit_id == \"${head_sha}\" and .state == \"CHANGES_REQUESTED\" and (.body | contains(\"${notice}\") | not))] | length" \
-                | awk '{s+=$1} END{print s+0}')" \
-                || { echo "::error::could not read PR reviews"; exit 1; }
+              # Initial verdict snapshot with the same bounded tolerance the
+              # poll loop below uses — a single API blip right after the
+              # label burst must not become the (terminal) red conclusion.
+              scan_ok=0
+              for _ in $(seq $(( GATE_POLL_MAX_CONSEC_ERRORS + 1 ))); do
+                if scan_reviews; then scan_ok=1; break; fi
+              done
+              [[ "$scan_ok" -eq 1 ]] || { echo "::error::could not read PR reviews"; exit 1; }
               if [[ "$blockers" -gt 0 ]]; then
                 echo "::error::Open blocker findings published by the AI review at ${head_sha:0:8} — blocking automerge. Re-review via the 'ai-review' label or a rebase."
                 exit 1
               fi
-              if [[ "$reviewed" -eq 0 ]]; then
-                # Closes the residual hole "an infra-failed review re-armed to
-                # green by a random later label event": until the first managed
-                # review has published at this SHA, the pre-review label bursts
-                # stay red. The `opened` run in flight supersedes once its
-                # review completes.
-                echo "::error::Review skipped with no managed AI review yet at ${head_sha:0:8} — blocking automerge until the first review lands."
-                exit 1
+              if [[ "$reviewed" -gt 0 ]]; then
+                echo "Review skipped and managed review at this head SHA is clean: gate passes."
+                exit 0
               fi
-              echo "Review skipped and managed review at this head SHA is clean: gate passes."
-              exit 0
+
+              # ── Pre-verdict event (no managed review at this HEAD yet).
+              # Renovate fires its `labeled` burst seconds after `opened`,
+              # while the first full review takes minutes; burst gates
+              # evaluate against a SHA that has no verdict yet. Two hard
+              # constraints shape what can go here:
+              #   • Branch protection resolves a required check against the
+              #     LAST run STARTED for the head SHA, not the last completed
+              #     one. The surviving burst gate (cancel-in-progress keeps
+              #     the newest event's gate) is that last-started run, so its
+              #     conclusion is TERMINAL for the SHA: a later green from
+              #     the `opened` run's own gate can never supersede a red
+              #     here, and vice versa. Failing immediately wedged the SHA
+              #     red permanently, even after a clean verdict landed minutes
+              #     later (m2.6, PR 5419).
+              #   • A one-shot pass before any verdict exists is FAIL-OPEN:
+              #     Renovate merges as soon as the required check turns green,
+              #     and a later REQUEST_CHANGES, timeout, or infra failure can
+              #     never turn the SHA red after the fact.
+              # So wait — bounded — for the verdict that is already being
+              # produced, then decide on the verdict itself. Green is only
+              # ever published from a landed clean verdict; every other exit
+              # stays fail-closed (self-healing via the `ai-review` label, a
+              # rebase, or the next review event). The schedule remains
+              # fail-open on a pure LLM outage upstream: a degraded "notice"
+              # verdict publishes a managed review at this SHA, which reads
+              # as clean here (as the blockers check above documents).
+              if review_in_flight; then :; else
+                rf="$?"
+                if [[ "$rf" -gt 1 ]]; then
+                  # Initial count blipped: enter the poll, which tolerates a
+                  # bounded number of consecutive API errors before closing.
+                  echo "::warning::could not inspect in-flight review runs at ${head_sha:0:8}; entering bounded poll"
+                else
+                  echo "::error::Review skipped with no managed AI review yet at ${head_sha:0:8} — blocking automerge until the first review lands."
+                  exit 1
+                fi
+              fi
+              deadline=$(( $(date +%s) + GATE_POLL_BUDGET_SEC ))
+              poll_errs=0
+              while :; do
+                sleep "${GATE_POLL_INTERVAL_SEC}"
+                scan_ok=0
+                if scan_reviews; then
+                  scan_ok=1
+                  poll_errs=0
+                else
+                  poll_errs=$(( poll_errs + 1 ))
+                fi
+                if [[ "$scan_ok" -eq 1 ]]; then
+                  if [[ "$blockers" -gt 0 ]]; then
+                    echo "::error::Open blocker findings published by the AI review at ${head_sha:0:8} — blocking automerge. Re-review via the 'ai-review' label or a rebase."
+                    exit 1
+                  fi
+                  if [[ "$reviewed" -gt 0 ]]; then
+                    echo "Managed review for ${head_sha:0:8} landed and is clean: gate passes."
+                    exit 0
+                  fi
+                elif (( poll_errs > GATE_POLL_MAX_CONSEC_ERRORS )); then
+                  echo "::error::could not read PR reviews (repeatedly) while waiting at ${head_sha:0:8} — blocking automerge (fail-closed). Re-review via the 'ai-review' label or a rebase."
+                  exit 1
+                fi
+                # Transient API failures while counting in-flight runs just
+                # keep polling — the budget bounds them in the fail-closed
+                # direction. A drained flight (return 1) acts on fresh
+                # evidence only (scan_ok), so a verdict that silently landed
+                # behind a transient read error is not raced into red.
+                review_in_flight
+                rf="$?"
+                if [[ "$rf" -eq 1 && "$scan_ok" -eq 1 ]]; then
+                  break
+                fi
+                if (( $(date +%s) >= deadline )); then
+                  echo "::error::Managed review at ${head_sha:0:8} did not land within the poll budget — blocking automerge (fail-closed). Re-review via the 'ai-review' label or a rebase."
+                  exit 1
+                fi
+              done
+              echo "::error::Review skipped with no managed AI review yet at ${head_sha:0:8} — blocking automerge until the first review lands."
+              exit 1
               ;;
             *)
               echo "::error::Unexpected review job result '$REVIEW_RESULT' — blocking automerge (fail-closed)."
