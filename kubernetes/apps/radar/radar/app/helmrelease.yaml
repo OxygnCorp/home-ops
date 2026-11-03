@@ -11,14 +11,14 @@ spec:
       chart: radar
       # Pinned to the upstream release the custom image grafts (see
       # kubernetes/apps/radar/radar values image + OxygnCorp/containers);
-      # Renovate auto-bump is disabled in .renovate/overrides.json5 until a
-      # new graft image is built (chart 1.19.0 passes flags unknown to the
-      # 1.17.0 binary).
-      # NOTE while pinned: 1.18+ chart values (top-level allowedHosts /
-      # crdGroups groups) are unused by the 1.17.0 chart — the DNS-rebinding
-      # allowlist (plan 2026-10-28-radar-allowed-hosts) is NOT in force;
-      # both pins move together at the next graft bump.
-      version: 1.17.0
+      # Renovate auto-bump is disabled in .renovate/overrides.json5: the
+      # chart rides along with new graft image builds in OxygnCorp/containers
+      # (new charts pass flags older binaries reject), so chart and graft
+      # binary always bump in lockstep.
+      # NOTE: chart 1.18+ top-level allowedHosts / crdGroups values are not
+      # set in this HelmRelease — the DNS-rebinding allowlist (plan
+      # 2026-10-28-radar-allowed-hosts) remains to be wired up.
+      version: 1.19.0
       sourceRef:
         kind: HelmRepository
         name: radar
@@ -135,4 +135,4 @@ spec:
               # repo:tag with the digest reference.
               - op: replace
                 path: /spec/template/spec/containers/0/image
-                value: ghcr.io/oxygncorp/radar@sha256:af4527dce030b4039fcfbde52fa8767e152a18dd001390eb2c04c665517d544a
+                value: ghcr.io/oxygncorp/radar@sha256:1908cfb81aa04daecde9b8000b4f505ae3862e788cb6005971b5235eb4e8eb5f
