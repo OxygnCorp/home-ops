@@ -9,16 +9,15 @@ spec:
   chart:
     spec:
       chart: radar
-      # Pinned to the upstream release the custom image grafts (see
-      # kubernetes/apps/radar/radar values image + OxygnCorp/containers);
-      # Renovate auto-bump is disabled in .renovate/overrides.json5: the
-      # chart rides along with new graft image builds in OxygnCorp/containers
-      # (new charts pass flags older binaries reject), so chart and graft
-      # binary always bump in lockstep.
+      # Upstream chart image (ghcr.io/skyhook-io/radar, tag defaults to the
+      # chart appVersion). NOTE: Renovate does NOT bump this chart
+      # automatically — the HelmRepository is a classic URL (not OCI) and
+      # namespaces are kustomize-injected, so the flux manager cannot link
+      # the dependency: chart bumps stay manual PRs.
       # NOTE: top-level allowedHosts is REQUIRED with the 1.19.0 chart (see
       # the allowedHosts value below — no-auth DNS-rebinding check). Keep it
-      # on every graft/chart lockstep bump: it was added in #5304, dropped
-      # in #5405 during the 1.17.0 graft re-pin, and re-added in #5423.
+      # on every chart bump: it was added in #5304, dropped in #5405, and
+      # re-added in #5423.
       version: 1.19.0
       sourceRef:
         kind: HelmRepository
@@ -31,42 +30,6 @@ spec:
     remediation:
       retries: 3
   values:
-    image:
-      repository: ghcr.io/oxygncorp/radar
-      tag: 1.19.0
-
-    env:
-      # Radar spawns the OpenCode agent CLI installed in the custom image
-      # (OxygnCorp/containers). State under $HOME lands on the /data PVC and
-      # OpenCode reads its minimal provider-only config from /etc/opencode
-      # (see ./opencode.yaml; the config must stay MCP-free — `opencode --auto`
-      # auto-approves every configured MCP server).
-      - name: HOME
-        value: /data
-      - name: TMPDIR
-        value: /data/tmp
-      - name: OPENCODE_CONFIG
-        value: /etc/opencode/opencode.json
-      - name: LITELLM_API_KEY
-        valueFrom:
-          secretKeyRef:
-            name: radar-litellm
-            key: LITELLM_API_KEY
-
-    extraVolumes:
-      - name: scratch
-        emptyDir: {}
-      - name: opencode-config
-        configMap:
-          name: radar-opencode-config
-
-    extraVolumeMounts:
-      - name: scratch
-        mountPath: /data/tmp
-      - name: opencode-config
-        mountPath: /etc/opencode
-        readOnly: true
-
     persistence:
       enabled: false
 
@@ -138,9 +101,3 @@ spec:
                 value:
                   name: data
                   mountPath: /data
-              # Digest pin (values.image.tag alone is tag-floating): the chart
-              # has no image.digest field, so replace the rendered
-              # repo:tag with the digest reference.
-              - op: replace
-                path: /spec/template/spec/containers/0/image
-                value: ghcr.io/oxygncorp/radar@sha256:1908cfb81aa04daecde9b8000b4f505ae3862e788cb6005971b5235eb4e8eb5f
