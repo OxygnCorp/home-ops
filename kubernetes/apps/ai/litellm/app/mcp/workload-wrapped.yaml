@@ -336,7 +336,7 @@ spec:
         # clients are native (their requests omit the Origin header, which
         # 0.13.3 validates separately from Host).
         # renovate: datasource=pypi depName=mcp-proxy
-        pip install --quiet mcp-proxy==0.13.3 "mcp<2" &&
+        pip install --quiet mcp-proxy==0.14.0 "mcp<2" &&
         exec mcp-proxy --host 0.0.0.0 --port 8050 \
           --allowed-host litellm-lightrag-mcp.ai.svc.cluster.local:8050 \
           --pass-environment -- sh -c '
