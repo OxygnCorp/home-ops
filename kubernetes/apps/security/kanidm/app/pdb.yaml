@@ -4,9 +4,16 @@ kind: PodDisruptionBudget
 metadata:
   name: kanidm
 spec:
-  # Single-instance authority for cluster auth: never allow voluntary
-  # disruptions (drains/evictions) to take the login path down with it.
-  maxUnavailable: 0
+  # Kanidm runs as a single replica (SQLite DB, no production-ready
+  # replication), so it is the SPOF for cluster auth regrettably — but
+  # already unavailable on any unplanned node loss regardless of this
+  # PDB. maxUnavailable: 1 lets planned drains/upgrades evict and
+  # reschedule the pod (data lives on replicated miroir-slow storage);
+  # the real availability guard is QoS (requests == limits) plus the
+  # reschedule-to-another-node path. A drain does cost one forced
+  # re-login bounce (async session store is lost on restart, see the
+  # HelmRelease memory comment).
+  maxUnavailable: 1
   selector:
     matchLabels:
       app.kubernetes.io/instance: kanidm
