@@ -160,7 +160,7 @@ spec:
       # Boot-time npm install + plain-binary child (no per-session npx): see
       # litellm-arr above for the npx cache race rationale.
       # renovate: datasource=npm depName=@doist/todoist-mcp
-      - npm install -g --no-audit --no-fund supergateway @doist/todoist-mcp@13.8.2 && exec supergateway --stdio todoist-mcp --outputTransport streamableHttp --streamableHttpPath /mcp --port 8020 --stateful --sessionTimeout 600000
+      - npm install -g --no-audit --no-fund supergateway @doist/todoist-mcp@13.10.1 && exec supergateway --stdio todoist-mcp --outputTransport streamableHttp --streamableHttpPath /mcp --port 8020 --stateful --sessionTimeout 600000
     # Tool exclusion happens on the CR itself (spec.params.disallowed_tools —
     # formerly handled by the toolhive VirtualMCPServer aggregation config),
     # not on the workload.
@@ -208,7 +208,7 @@ spec:
       # Boot-time npm install + plain-binary child (no per-session npx): see
       # litellm-arr above for the npx cache race rationale.
       # renovate: datasource=npm depName=@upstash/context7-mcp
-      - npm install -g --no-audit --no-fund supergateway @upstash/context7-mcp@4.4.4 && exec supergateway --stdio context7-mcp --outputTransport streamableHttp --streamableHttpPath /mcp --port 8030 --stateful --sessionTimeout 600000
+      - npm install -g --no-audit --no-fund supergateway @upstash/context7-mcp@4.5.0 && exec supergateway --stdio context7-mcp --outputTransport streamableHttp --streamableHttpPath /mcp --port 8030 --stateful --sessionTimeout 600000
     env:
       - name: HOME
         value: /tmp
@@ -326,9 +326,20 @@ spec:
       # placement, so no working renovate automation was lost — coverage
       # was already zero before the wrapper.
       - |
+        # mcp-proxy 0.13.3 validates Host authorities before routing and
+        # session creation: wildcard bind 0.0.0.0 trusts loopback only and
+        # requires explicit --allowed-host (upstream v0.13.3 release notes /
+        # PR 284). litellm proxy addresses this server as
+        # http://litellm-lightrag-mcp.ai.svc.cluster.local:8050/mcp (operator-
+        # generated litellm config), and that is the only non-loopback Host
+        # authority: no kubelet probes exist on the pod, and in-cluster MCP
+        # clients are native (their requests omit the Origin header, which
+        # 0.13.3 validates separately from Host).
         # renovate: datasource=pypi depName=mcp-proxy
-        pip install --quiet mcp-proxy==0.13.0 "mcp<2" &&
-        exec mcp-proxy --host 0.0.0.0 --port 8050 --pass-environment -- sh -c '
+        pip install --quiet mcp-proxy==0.14.0 "mcp<2" &&
+        exec mcp-proxy --host 0.0.0.0 --port 8050 \
+          --allowed-host litellm-lightrag-mcp.ai.svc.cluster.local:8050 \
+          --pass-environment -- sh -c '
         exec uv run --with "mcp<2" --with lightrag-mcp==0.1.1 python -c "
         from lightrag_mcp.client.light_rag_server_api_client.client import AuthenticatedClient
         _orig_init = AuthenticatedClient.__init__

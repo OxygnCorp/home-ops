@@ -103,7 +103,7 @@ spec:
           install-tools:
             image:
               repository: ghcr.io/openclaw/openclaw
-              tag: 2026.10.9@sha256:1a2a3ce113e435039dbeac5ae261759bb4759908563d91c81059e896b38c5d98
+              tag: 2026.10.10@sha256:1e5ee6c7d02d5b5f64f9cf26a30c7ef7d4ec292f0d25fa590f4b7e103e8bf799
             env:
               HOME: /home/node
               PATH: /home/node/.local/bin:/home/node/.local/share/mise/shims:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
@@ -126,7 +126,7 @@ spec:
           app:
             image:
               repository: ghcr.io/openclaw/openclaw
-              tag: 2026.10.9@sha256:1a2a3ce113e435039dbeac5ae261759bb4759908563d91c81059e896b38c5d98
+              tag: 2026.10.10@sha256:1e5ee6c7d02d5b5f64f9cf26a30c7ef7d4ec292f0d25fa590f4b7e103e8bf799
             # The gateway does not listen on 18789 until the doctor phase
             # and gateway bootstrap have completed (~2-3 min warm boot, with
             # margin for a cold boot from a restored PVC); keep the pod
@@ -153,7 +153,7 @@ spec:
                 # update so both stay aligned; the guard below keeps restarts
                 # offline and warns instead of failing on a transient drift.
                 # renovate: clawhub:@eleboucher/memini registryUrl=https://clawhub.ai/api/npm
-                MEMINI_PLUGIN_VERSION=0.7.37
+                MEMINI_PLUGIN_VERSION=0.7.38
                 # Strip the chart tag prefix at runtime; braced shell expansion does not survive
                 # the Flux postBuild variable substitution
                 MEMINI_PLUGIN_REL=$(printf '%s' "$MEMINI_PLUGIN_VERSION" | sed 's/^v//')
@@ -201,7 +201,7 @@ spec:
           codeserver:
             image:
               repository: ghcr.io/coder/code-server
-              tag: 4.144.0@sha256:b9e8056bb74bd0c4f90284c7559eddeccd38400cfedc28e64c9d3ca50fef1f83
+              tag: 4.145.0@sha256:992796b850b8b7ec6f7393b8dd2295840a65cf5071981990ff41ef52dd566c43
             env:
               TZ: Europe/Paris
             args:

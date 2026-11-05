@@ -1,0 +1,33 @@
+---
+apiVersion: litellm.home-operations.com/v1alpha1
+kind: LiteLLMVirtualKey
+metadata:
+  name: radar
+spec:
+  proxyRef: litellm
+  keyAlias: Radar
+  # Deliberately NOT bound to a team (like lightrag): the key is consumed by
+  # the OpenCode CLI spawned by Radar's AI investigations. It only needs the
+  # OpenAI-compatible chat-completions surface, not the gateway MCP servers.
+  secretName: litellm-key-radar
+  secretKey: api-key
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/external-secrets.io/pushsecret_v1alpha1.json
+apiVersion: external-secrets.io/v1alpha1
+kind: PushSecret
+metadata:
+  name: radar
+spec:
+  refreshInterval: 1h
+  secretStoreRefs:
+    - name: onepassword
+      kind: ClusterSecretStore
+  selector:
+    secret:
+      name: litellm-key-radar
+  data:
+    - match:
+        secretKey: api-key
+        remoteRef:
+          remoteKey: litellm
+          property: KEY_RADAR

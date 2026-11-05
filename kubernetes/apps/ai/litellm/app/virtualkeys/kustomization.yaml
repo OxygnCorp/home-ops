@@ -11,4 +11,5 @@ resources:
   - ./pr-review.yaml
   - ./memini.yaml
   - ./lightrag.yaml
+  - ./radar.yaml
   - ./repo-wiki.yaml
