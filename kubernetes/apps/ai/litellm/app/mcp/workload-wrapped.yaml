@@ -35,7 +35,7 @@ spec:
   workload:
     # Digest pin verified against Docker Hub tag `node:24-alpine`
     # (multi-arch index, last updated 2026-09-18).
-    image: docker.io/library/node:26-alpine@sha256:7ed4edf2b680417bf06d3f465de09bb113f877ff265b15f72a27a4c6fb76fb04
+    image: docker.io/library/node:26-alpine@sha256:8996bb5821d62a8fd9bb27c1cb07462f3fdce6e47d640c6a881ead0b064ce216
     port: 8000
     command:
       - sh
@@ -100,7 +100,7 @@ spec:
   proxyRef: litellm
   transport: http
   workload:
-    image: docker.io/library/node:26-alpine@sha256:7ed4edf2b680417bf06d3f465de09bb113f877ff265b15f72a27a4c6fb76fb04
+    image: docker.io/library/node:26-alpine@sha256:8996bb5821d62a8fd9bb27c1cb07462f3fdce6e47d640c6a881ead0b064ce216
     port: 8010
     command:
       - sh
@@ -152,7 +152,7 @@ spec:
     disallowed_tools:
       - get-overview
   workload:
-    image: docker.io/library/node:26-alpine@sha256:7ed4edf2b680417bf06d3f465de09bb113f877ff265b15f72a27a4c6fb76fb04
+    image: docker.io/library/node:26-alpine@sha256:8996bb5821d62a8fd9bb27c1cb07462f3fdce6e47d640c6a881ead0b064ce216
     port: 8020
     command:
       - sh
@@ -200,7 +200,7 @@ spec:
   proxyRef: litellm
   transport: http
   workload:
-    image: docker.io/library/node:26-alpine@sha256:7ed4edf2b680417bf06d3f465de09bb113f877ff265b15f72a27a4c6fb76fb04
+    image: docker.io/library/node:26-alpine@sha256:8996bb5821d62a8fd9bb27c1cb07462f3fdce6e47d640c6a881ead0b064ce216
     port: 8030
     command:
       - sh
