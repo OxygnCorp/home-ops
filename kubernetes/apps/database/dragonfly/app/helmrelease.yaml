@@ -11,6 +11,12 @@ spec:
   interval: 1h
   dependsOn: []
   values:
+    # Sidecar metrics: v0.20.2 embarque les CVE stdlib Go (2 critical / 48 high);
+    # la v0.23.1 les corrige (GO-2026-6809 crypto/x509, GO-2026-6617 net/http HPACK, etc.)
+    rbacProxy:
+      image:
+        repository: quay.io/brancz/kube-rbac-proxy
+        tag: v0.23.1@sha256:c280684dd23793fb2f287d1f4efc84b7800b3e01205d770b98694827bfe514cb
     manager:
       image:
         repository: ghcr.io/dragonflydb/operator
