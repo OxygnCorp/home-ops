@@ -10,11 +10,8 @@ spec:
     model: openai/deepseek-v4.1-flash
     apiBase: https://opencode.ai/zen/go/v1
     apiKey: os.environ/OPENCODE_AGNES_API_KEY
-    # Same upstream as dsv41f, with the reasoning effort pinned so the
-    # foreman escalation coder (which sends no per-request param) always runs
-    # at the strongest mode. OpenCode Go serves a single model id but honours
-    # reasoning_effort (probe-tested: max accepted, none disables reasoning);
-    # litellm passes it through unchanged (verified 200 end-to-end).
+    # (no per-request param) — the strongest mode. OpenCode Go serves a single model id but honours
+    # reasoning_effort (verified 200 end-to-end).
     additional:
       reasoning_effort: max
       # Real upstream pricing (USD/M ÷ 1M) — subscription only, tracking
