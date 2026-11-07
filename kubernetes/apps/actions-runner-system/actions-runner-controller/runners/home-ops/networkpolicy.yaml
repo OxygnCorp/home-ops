@@ -1,0 +1,33 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/cilium.io/ciliumnetworkpolicy_v2.json
+# Lateral-movement firewall for the GH runner pods (structure from onedr0p/home-ops).
+# The runner holds cluster-admin-grade credentials (Talos os:admin talosconfig) — this
+# policy does NOT contain that compromise path; it only denies egress to the rest of
+# the LAN (10/8 minus cluster + infra carve-outs, 172.16/12, 192.168/16).
+# Deviations from onedr0p's version:
+#   + 10.10.10.0/24  Talos node network (talosctl --nodes status.hostIP in image-pull.yaml)
+#   + 10.10.98.0/24  Cilium LB VIPs (external-dns dual-provider cloudflare+unifi resolves
+#                    *.oxygn.dev hostnames used by ai-pr-review.yaml to these VIPs)
+#   - 192.168.42.0/24  onedr0p-specific mgmt subnet, no equivalent here
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: &name home-ops-runner
+spec:
+  endpointSelector:
+    matchLabels:
+      runner: *name
+  enableDefaultDeny:
+    egress: false
+  egressDeny:
+    - toCIDRSet:
+        - cidr: 10.0.0.0/8
+          except:
+            - 10.42.0.0/16
+            - 10.43.0.0/16
+            - 10.10.10.0/24
+            - 10.10.98.0/24
+    - toCIDR:
+        - 172.16.0.0/12
+    - toCIDRSet:
+        - cidr: 192.168.0.0/16

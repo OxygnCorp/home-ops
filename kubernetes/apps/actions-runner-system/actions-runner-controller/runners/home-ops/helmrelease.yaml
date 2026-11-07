@@ -27,6 +27,10 @@ spec:
       name: actions-runner-controller
       namespace: actions-runner-system
     template:
+      metadata:
+        # Selected by networkpolicy.yaml (CNP home-ops-runner)
+        labels:
+          runner: home-ops-runner
       spec:
         containers:
           - name: runner
