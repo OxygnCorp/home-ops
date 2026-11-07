@@ -9,6 +9,9 @@
 #   + 10.10.98.0/24  Cilium LB VIPs (external-dns dual-provider cloudflare+unifi resolves
 #                    *.oxygn.dev hostnames used by ai-pr-review.yaml to these VIPs)
 #   - 192.168.42.0/24  onedr0p-specific mgmt subnet, no equivalent here
+# Coupling: endpointSelector matches the label set in the corresponding
+# HelmRelease template.metadata.labels — update both in lockstep; a selector
+# drift would silently disable this policy (deny-only, no default-deny fuse).
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -17,6 +20,8 @@ spec:
   endpointSelector:
     matchLabels:
       runner: *name
+  # deny-only stance: anything outside the denied RFC1918 ranges is allowed,
+  # internet egress (github / ghcr / mise tools) remains open.
   enableDefaultDeny:
     egress: false
   egressDeny:
@@ -29,5 +34,5 @@ spec:
             - 10.10.98.0/24
     - toCIDR:
         - 172.16.0.0/12
-    - toCIDRSet:
-        - cidr: 192.168.0.0/16
+    - toCIDR:
+        - 192.168.0.0/16
