@@ -3,10 +3,12 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: home-ops-runner
-  # Intentionally NOT bound to cluster-admin (removed: vestige of the deleted
-  # schemas.yaml workflow). The SA token is not even mounted from the pods
-  # (helmrelease.yaml automount: false → token never mounted in runner pods). The only elevated
-  # identity pods need is the talos ServiceAccount below (talosctl image pull).
+  # No k8s identity: not bound to any ClusterRole (removed: vestige of the
+  # deleted schemas.yaml workflow — no workflow calls kubectl), and the SA token
+  # is never mounted in runner pods (see automountServiceAccountToken: false in
+  # helmrelease.yaml). The only elevated access is the talos.dev ServiceAccount
+  # below, which generates a talosconfig Secret (os:admin) mounted readonly for
+  # `talosctl image pull` in image-pull.yaml.
 ---
 apiVersion: talos.dev/v1alpha1
 kind: ServiceAccount

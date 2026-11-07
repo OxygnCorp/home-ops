@@ -48,8 +48,13 @@ spec:
                 name: talos
                 readOnly: true
         serviceAccountName: home-ops-runner
-        # No k8s API dependency: jobs run in-pod (ACTIONS_RUNNER_REQUIRE_JOB_CONTAINER=false)
-        # and OOB pulls use the mounted talosconfig, not the SA token.
+        # Kubernetes-only runner: the SA never mounts a token, so jobs that
+        # declare `container:` / `services:` are NOT supported here — the
+        # runner's k8s job-container hook (ACTIONS_RUNNER_CONTAINER_HOOKS,
+        # still injected by the chart) has no kube credentials to auth with.
+        # Plain jobs run in the runner pod itself
+        # (ACTIONS_RUNNER_REQUIRE_JOB_CONTAINER=false); image pulls go through
+        # the mounted talosconfig, not the SA token.
         automountServiceAccountToken: false
         securityContext:
           fsGroup: 1001
