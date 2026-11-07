@@ -30,7 +30,7 @@ Notes:
   rejects `-` in server names, so hyphenated aliases became underscores.
 - **`models: []` on the teams**: the operator otherwise sends `models: null` to
   `POST /team/new`, which litellm rejects with 422 `list_type`.
-- **No teamID** on `foreman`, `pr-review`, `memini`, `lightrag`, `repo-wiki`
+- **No teamID** on `pr-review`, `memini`, `lightrag`, `repo-wiki`
   keys: none of them consume MCP tools today (ruling 2026-10-03). They keep
   unrestricted model access only. Onboarding one later = add `spec.teamID` to
   its `virtualkeys/*.yaml` and let the operator update the remote key in place.
