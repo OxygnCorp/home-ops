@@ -48,6 +48,9 @@ spec:
                 name: talos
                 readOnly: true
         serviceAccountName: home-ops-runner
+        # No k8s API dependency: jobs run in-pod (ACTIONS_RUNNER_REQUIRE_JOB_CONTAINER=false)
+        # and OOB pulls use the mounted talosconfig, not the SA token.
+        automountServiceAccountToken: false
         securityContext:
           fsGroup: 1001
           fsGroupChangePolicy: OnRootMismatch
