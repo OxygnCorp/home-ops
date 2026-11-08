@@ -1,0 +1,39 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/cilium.io/ciliumnetworkpolicy_v2.json
+# Lateral-movement firewall for the containers-runner DinD pods (sibling of
+# runners/home-ops/networkpolicy.yaml, same onedr0p/home-ops structure —
+# keep both policies in lockstep when updating the carve-outs).
+# This pod runs a PRIVILEGED docker:dind sidecar: Cilium filters at the pod
+# level (whole pod network namespace), so daemons/containers started inside
+# DinD are covered by the same egress deny.
+# The runner holds no elevated credentials (no talosconfig, no cluster-admin,
+# SA token not mounted) — this policy denies egress to the rest of the LAN
+# (10/8 minus cluster + infra carve-outs, 172.16/12, 192.168/16).
+# Same carve-outs as the home-ops policy:
+# + 10.42.0.0/16 / 10.43.0.0/16  cluster pods / services
+# + 10.10.10.0/24  Talos node network
+# + 10.10.98.0/24  Cilium LB VIPs (*.oxygn.dev resolved internally)
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: &name containers-runner
+spec:
+  endpointSelector:
+    matchLabels:
+      runner: *name
+  # deny-only stance: anything outside the denied RFC1918 ranges is allowed,
+  # internet egress (github / ghcr / docker.io buildx base images) remains open.
+  enableDefaultDeny:
+    egress: false
+  egressDeny:
+    - toCIDRSet:
+        - cidr: 10.0.0.0/8
+          except:
+            - 10.42.0.0/16
+            - 10.43.0.0/16
+            - 10.10.10.0/24
+            - 10.10.98.0/24
+    - toCIDR:
+        - 172.16.0.0/12
+    - toCIDR:
+        - 192.168.0.0/16
