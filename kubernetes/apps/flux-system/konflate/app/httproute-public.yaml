@@ -1,0 +1,39 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/gateway.networking.k8s.io/httproute_v1.json
+# Public path split for Konflate on konflate.oxygn.dev. The chart-named
+# HTTPRoute (catch-all) is OIDC-protected via components/oidc-kanidm/envoy;
+# the two paths that MUST stay unauthenticated live here:
+#
+#   /mcp   — read-only MCP endpoint, consumed unauthenticated by CI evidence
+#            providers (ai-pr-review konflate_evidence.py => KONFLATE_MCP_URL).
+#   /hooks — forge webhook sink (POST, verified against KONFLATE_WEBHOOK_SECRET
+#            inside konflate; 501 when unset). Live proof: envoy-external access
+#            logs show POST /hooks, user-agent GitHub-Hookshot/*, code 202 on
+#            this hostname; OIDC on these would break GitHub deliveries.
+#
+# Envoy Gateway precedence: matching this route's pathPrefix rules beats the
+# catch-all "/" of the OIDC route, so only the web UI (/, /api, /ws, ...) goes
+# through konflate-oidc. Both routes share the hostname, so external-dns
+# publications and the Kanidm redirect URI are unaffected.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: konflate-public
+spec:
+  hostnames:
+    - konflate.oxygn.dev
+  parentRefs:
+    - name: envoy-external
+      namespace: network
+      sectionName: https
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /mcp
+        - path:
+            type: PathPrefix
+            value: /hooks
+      backendRefs:
+        - name: konflate
+          port: 8080

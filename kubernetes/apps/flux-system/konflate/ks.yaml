@@ -8,9 +8,13 @@ spec:
   commonMetadata:
     labels:
       app.kubernetes.io/name: konflate
+  components:
+    - ../../../../components/oidc-kanidm/envoy
   dependsOn:
     - name: onepassword
       namespace: external-secrets
+    - name: kanidm
+      namespace: security
   healthCheckExprs:
     - apiVersion: helm.toolkit.fluxcd.io/v2
       kind: HelmRelease
@@ -18,6 +22,15 @@ spec:
       current: status.conditions.filter(e, e.type == 'Ready').all(e, e.status == 'True')
   interval: 1h
   path: ./kubernetes/apps/flux-system/konflate/app
+  postBuild:
+    substitute:
+      APP: konflate
+      APP_NAMESPACE: flux-system
+      DOMAIN: oxygn.dev
+      OIDC_CALLBACK: /oauth2/callback
+      OIDC_DISPLAY_NAME: Konflate
+      OIDC_ROUTE_NAME: konflate
+      SUBDOMAIN: konflate
   prune: true
   retryInterval: 2m
   sourceRef:
