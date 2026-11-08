@@ -297,16 +297,39 @@ jobs:
           else
             conclusion="failure"
           fi
-          # Post the required-name check so branch protection resolves this
-          # label event to an up-to-date conclusion. Match the name EXACTLY
-          # (change both together with the main workflow's gate job name).
-          gh api --method POST "repos/${GITHUB_REPOSITORY}/check-runs" \
-            -f name="AI PR Review (automerge gate)" \
-            -f head_sha="$head_sha" \
-            -f status="completed" \
-            -f conclusion="$conclusion" \
-            -f "output[title]=Automerge gate — label event $label_event '$label_name'" \
-            -f "output[summary]=Decision reproduced by ai-pr-review-labels.yaml via the shared gate script; full logs in the 'AI PR Review (labels gate)' job of run ${{ github.run_id }}." \
-            || { echo "::error::could not POST the required check-run"; exit 1; }
+          # Post (or PATCH — see below) the required-name check so branch
+          # protection resolves this label event to an up-to-date
+          # conclusion. Match the name EXACTLY (change both together with
+          # the main workflow's gate job name).
+          #
+          # Use ONE check-run per head SHA for this API-posted source: if a
+          # previous labels-flow POST exists on this SHA, PATCH its
+          # conclusion instead of creating a second entry. Two same-name
+          # API check-runs on one SHA (e.g. a hold reddening followed by
+          # its own unblock greening) would otherwise BOTH stay visible in
+          # the checks tab — red entries lingering next to the green,
+          # exactly the noise class this split removes. (Actions-posted
+          # check-runs are a different app object and are left alone;
+          # GitHub resolves protection on the latest regardless.)
+          gate_check_id="$(gh api "repos/${GITHUB_REPOSITORY}/commits/${head_sha}/check-runs?name=AI%20PR%20Review%20(automerge%20gate)" \
+            --jq '[.check_runs[] | select(.app.slug == "github-actions") | select(.status == "completed") | .id][0]' 2>/dev/null \
+            || true)"
+          if [[ -n "$gate_check_id" ]]; then
+            gh api --method PATCH "repos/${GITHUB_REPOSITORY}/check-runs/${gate_check_id}" \
+              -f status="completed" \
+              -f conclusion="$conclusion" \
+              -f "output[title]=Automerge gate — label event $label_event '$label_name'" \
+              -f "output[summary]=Decision reproduced by ai-pr-review-labels.yaml via the shared gate script; full logs in the 'AI PR Review (labels gate)' job of run ${{ github.run_id }}." \
+              || { echo "::error::could not PATCH the required check-run"; exit 1; }
+          else
+            gh api --method POST "repos/${GITHUB_REPOSITORY}/check-runs" \
+              -f name="AI PR Review (automerge gate)" \
+              -f head_sha="$head_sha" \
+              -f status="completed" \
+              -f conclusion="$conclusion" \
+              -f "output[title]=Automerge gate — label event $label_event '$label_name'" \
+              -f "output[summary]=Decision reproduced by ai-pr-review-labels.yaml via the shared gate script; full logs in the 'AI PR Review (labels gate)' job of run ${{ github.run_id }}." \
+              || { echo "::error::could not POST the required check-run"; exit 1; }
+          fi
           echo "Posted $conclusion check 'AI PR Review (automerge gate)' on ${head_sha:0:8} (gate exit=$rc)"
           exit "$rc"
