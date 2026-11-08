@@ -329,12 +329,18 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          # The shared driver is taken from the REPO's latest main version,
-          # NOT the PR's: a PR could otherwise modify `.github/scripts/` to
-          # gate itself green. This also means a PR whose whole purpose is a
-          # gate-script change is judged by the pre-change logic until it
-          # merges — conservative and acceptable for a fail-closed gate.
-          ref: main
+          # NOT `ref: main`: that would starve the script until it merges, and
+          # a PR introducing the script (or a change to it) would deadlock
+          # on its own required check (verified in production: the first
+          # run of this change failed with exit 127 — the file does not
+          # exist on main during the PR itself). The default checkout is
+          # the event's merge-ref, where the shared driver exists by
+          # construction. Residual: the workflow file itself also runs
+          # from the PR's merge-ref (GitHub behavior for pull_request
+          # events), so the real mitigation for a PR gating itself is
+          # branch protection reviewing human edits to the .github path;
+          # Renovate branches (the population actually gated) cannot
+          # edit workflows.
 
       - name: Evaluate gate decision
         env:
