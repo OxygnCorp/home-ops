@@ -103,7 +103,7 @@ spec:
           install-tools:
             image:
               repository: ghcr.io/openclaw/openclaw
-              tag: 2026.11.1@sha256:db0e0809fbd0df375445e9eea8daf2a278ac7ac3a263fa6bfce8fb344ad3ad77
+              tag: 2026.11.2@sha256:55294524dac01370288fb4beb16714b60f75cec0e96e07e662054cf29900965a
             env:
               HOME: /home/node
               PATH: /home/node/.local/bin:/home/node/.local/share/mise/shims:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
@@ -126,7 +126,7 @@ spec:
           app:
             image:
               repository: ghcr.io/openclaw/openclaw
-              tag: 2026.11.1@sha256:db0e0809fbd0df375445e9eea8daf2a278ac7ac3a263fa6bfce8fb344ad3ad77
+              tag: 2026.11.2@sha256:55294524dac01370288fb4beb16714b60f75cec0e96e07e662054cf29900965a
             # The gateway does not listen on 18789 until the doctor phase
             # and gateway bootstrap have completed (~2-3 min warm boot, with
             # margin for a cold boot from a restored PVC); keep the pod
