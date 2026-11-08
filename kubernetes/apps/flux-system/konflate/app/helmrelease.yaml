@@ -33,7 +33,11 @@ spec:
       enabled: true
       annotations:
         gatus.home-operations.com/endpoint: |-
-          conditions: ["[STATUS] == 200"]
+          # Unauthenticated GET / is redirected to Kanidm (302) by the
+          # konflate-oidc SecurityPolicy (public paths /mcp and /hooks live in
+          # httproute-public.yaml) — probing the redirect proves gateway + IdP
+          # alive end-to-end.
+          conditions: ["[STATUS] == 302"]
       parentRefs:
         - name: envoy-external
           namespace: network
