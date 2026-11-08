@@ -24,7 +24,7 @@ metadata:
 spec:
   modelRef: qwen3-embedding-0.6b
   runtime: llamacpp
-  image: ghcr.io/ggml-org/llama.cpp:server-cuda@sha256:cf035137358175224180e800314aa6d0fbd46698d1b9e0f503b955a6c5965327
+  image: ghcr.io/ggml-org/llama.cpp:server-cuda@sha256:0af2e40f750bbce612875391cb2e9fd9ee8e15af4c2f0ea960c95498648dbb5a
   runtimeClassName: nvidia
   replicas: 1
   nodeSelector:
