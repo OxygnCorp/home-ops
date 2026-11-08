@@ -23,6 +23,8 @@ spec:
     template:
       metadata:
         # Selected by networkpolicy.yaml (CNP containers-runner)
+        # Update the endpointSelector there in lockstep: this label and the
+        # selector drift -> policy silently inert (deny-only, no fuse).
         labels:
           runner: containers-runner
       spec:
