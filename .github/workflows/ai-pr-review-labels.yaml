@@ -1,0 +1,276 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: AI PR Review (labels)
+
+# ── Architecture ─────────────────────────────────────────────────────────
+# Label-driven companion of ai-pr-review.yaml. The main workflow deliberately
+# no longer triggers on `labeled`/`unlabeled` events: Renovate fires a burst
+# of label events seconds after opening a PR, and each one used to spawn a
+# full review+gate run — seven runs per Renovate PR, posting a wall of
+# duplicate (and cancelled → red "checks failed") conclusions on the head
+# SHA. GitHub cannot filter label events by label name at the trigger
+# level, so this workflow receives every label event and skips the noise
+# cheaply; it only does real work for the two labels that carry semantics:
+#
+#   • `ai-review` (added by a human intent on an explicit re-review) → runs
+#     the full review job (same action configuration as the main workflow),
+#     then gate-refresh posts the required check accordingly.
+#   • `hold` (manual holding pattern) → gate-refresh re-evaluates and posts
+#     the required check: RED while the label stands, re-evaluated as
+#     soon as it is removed (the review job re-arms on removal, so the
+#     unblock is self-healing — same contract as before the split).
+#
+# The required check ("AI PR Review (automerge gate)") is POSTED via the
+# checks API with the exact name, on the PR head SHA. This is load-bearing:
+# branch protection resolves required checks by check-run NAME, and a
+# manually posted check-run counts the same as an Actions-produced one.
+# The evaluator job must NOT be named like the required check — a skipped
+# job would otherwise emit a `skipped` check-run of the required name, and
+# GitHub's "latest posted wins" rule would let that skip supersede a real
+# REQUEST_CHANGES gate (the bug the main workflow's comment at PR #5378
+# documents). Differently-named skip conclusions are harmless.
+#
+# Concurrency: NOT cancel-in-progress. A cancelled run would lack its
+# check-run POST — and Actions still emits a `cancelled` check-run for the
+# job name, which renders as a red X in the PR checks tab (the exact noise
+# this split exists to remove). Queuing keeps conclusions serialized and
+# last-completed reflects the newest label event.
+on:
+  pull_request:
+    branches: ["main"]
+    types: [labeled, unlabeled]
+
+permissions:
+  contents: read
+
+jobs:
+  review-pr:
+    name: AI PR Review (labels)
+    # Only the two semantic labels warrant a full review. Burst labels
+    # (Renovate auto-labeling, labeler) fall through to skipped — grey
+    # check-runs, no runner, no LLM call.
+    if: ${{ github.event_name == 'pull_request' && !github.event.pull_request.draft && ((github.event.action == 'labeled' && github.event.label.name == 'ai-review' && !contains(github.event.pull_request.labels.*.name, 'hold')) || (github.event.action == 'unlabeled' && github.event.label.name == 'hold')) }}
+    permissions:
+      contents: read
+      # prctx uses `github.token` only for reads; all writes (comments,
+      # reviews) go through the scoped app token created inside the job.
+      pull-requests: read
+    runs-on: home-ops-runner
+    # 45 min: ci-status-check waits up to 1200s + tool loop 600s + review
+    # rounds must never exhaust the budget on slow multi-chart CI — a job
+    # timeout would read as `failure` and red the gate (fail-closed on mere
+    # slowness).
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      # NOTE (keep in sync): "Setup review tooling", "Generate bot token"
+      # and "Analyze PR with reusable AI reviewer" below are the main
+      # workflow's review-pr steps, verbatim. They are duplicated (not
+      # reusable-workflow'd) so each workflow owns its own permission
+      # surface and its own trigger contract; if the action's downstream
+      # configuration changes, change BOTH copies.
+      - name: Setup review tooling
+        # ARC runners lack helm/PyYAML (preinstalled on ubuntu-latest); the
+        # upgrade-impact evidence provider needs them for chart-values drift.
+        # Best-effort: the provider degrades gracefully when they are absent,
+        # so this step must never fail the job — only warn.
+        run: |
+          if ! command -v helm >/dev/null 2>&1; then
+            curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash \
+              || echo "::warning::helm install failed — chart-values drift will be skipped"
+          fi
+          if ! python3 -c 'import yaml' >/dev/null 2>&1; then
+            python3 -m pip install --user --break-system-packages pyyaml >/dev/null 2>&1 \
+              || python3 -m pip install --user pyyaml >/dev/null 2>&1 \
+              || { python3 -m ensurepip --user >/dev/null 2>&1 \
+                   && python3 -m pip install --user pyyaml >/dev/null 2>&1; } \
+              || { sudo apt-get update -qq >/dev/null 2>&1 \
+                   && sudo apt-get install -y -qq python3-yaml >/dev/null 2>&1; } \
+              || true
+          fi
+          python3 -c 'import yaml' >/dev/null 2>&1 \
+            && echo "PyYAML OK" \
+            || echo "::warning::PyYAML unavailable — chart-values drift will be skipped (advisory-only)"
+          command -v helm >/dev/null 2>&1 \
+            && echo "helm OK" \
+            || echo "::warning::helm unavailable — chart-values drift will be skipped (advisory-only)"
+
+      - name: Generate bot token
+        id: app-token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ secrets.APP_CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          repositories: ${{ github.repository }}
+          permission-contents: read
+          permission-pull-requests: write
+          # ci-status-check: "true" below reads check runs for CI evidence
+          permission-checks: read
+
+      - name: Analyze PR with reusable AI reviewer
+        id: analyze
+        uses: misospace/pr-reviewer-action@0a2d2732f7358e509e6a85e11160eb25cc5b1b80 # v3.8.0
+        env:
+          # konflate's read-only MCP endpoint — the konflate evidence provider
+          # fetches the rendered (post-kustomize/Helm) Flux diff for this PR.
+          KONFLATE_MCP_URL: https://konflate.oxygn.dev/mcp
+        with:
+          github-token: ${{ steps.app-token.outputs.token }}
+          pr-number: ${{ github.event.pull_request.number }}
+          # Label-driven runs are EXPLICIT re-review requests (the
+          # `ai-review` label exists precisely to force a verdict, and hold
+          # removal re-arms the review) — force past the action's own
+          # same-SHA dedup so a verdict is always (re)published.
+          force-review: "true"
+          ai-primary-retries: "3"
+          ai-primary-retry-delay-sec: "15"
+          ai-base-url: ${{ vars.LITELLM_URL }}
+          ai-api-format: openai
+          ai-model: ${{ vars.PRIMARY_MODEL }}
+          ai-api-key: ${{ secrets.LITELLM_API_KEY }}
+          ai-response-format: json_object
+          ai-max-tokens: "16000"
+          ai-fallback-base-url: ${{ vars.LITELLM_URL }}
+          ai-fallback-api-format: openai
+          ai-fallback-model: ${{ vars.FALLBACK_MODEL }}
+          ai-fallback-api-key: ${{ secrets.LITELLM_API_KEY }}
+          review-routing-mode: auto
+          ai-smart-base-url: ${{ vars.LITELLM_URL }}
+          ai-smart-api-format: openai
+          ai-smart-model: ${{ vars.SMART_MODEL }}
+          ai-smart-api-key: ${{ secrets.LITELLM_API_KEY }}
+          allowed-source-hosts: "github.com,api.github.com,gitlab.com,registry.terraform.io,artifacthub.io,talos.dev,www.talos.dev,docs.siderolabs.com"
+          context-limit-mode: normal
+          ci-status-check: "true"
+          # 10 min: multi-chart PRs routinely exceed 600s of CI. Beyond the
+          # timeout the review proceeds WITHOUT CI evidence (the action's
+          # ci-skip-on-timeout defaults to true) — fail-open by design; the
+          # gate derives its decision from the review verdict, and sibling
+          # CI checks remain required-check-agnostic.
+          ci-timeout-sec: "1200"
+          search-url: "https://search.oxygn.dev/search"
+          tool-mode: native_loop
+          tool-max-rounds: "2"
+          tool-max-requests: "4"
+          tool-loop-wall-clock-sec: "600"
+          tool-max-response-bytes: "12000"
+          tool-allowed-gh-api-repos: "OxygnCorp/home-ops"
+          tool-request-timeout-sec: "15"
+          tool-enable-for-forks: "false"
+          # Read-only konflate MCP tools for the native loop (advertised as
+          # mcp__konflate__get_pr_summary / get_pr_diff / list_pull_requests).
+          # Complements the evidence provider below: the provider injects the
+          # rendered-diff summary deterministically; MCP lets the model do
+          # follow-up digging (e.g. pull the full rendered diff on demand).
+          tool-mcp-servers: "konflate=https://konflate.oxygn.dev/mcp"
+          system-prompt-file: .agents/instructions/pr-review.instructions.md
+          system-prompt-mode: append
+          standards-file-candidates: "AGENTS.md"
+          # Read-only konflate MCP: injects the rendered Flux YAML diff (the
+          # resources Flux will actually apply) as advisory evidence. Never
+          # gates — the provider exits clean with no findings on any failure
+          # or for PRs konflate isn't tracking.
+          evidence-providers-file: .github/konflate-evidence-providers.json
+          on-model-failure: notice
+          inline-findings: "true"
+          # `renovate/am-*` PRs are the automerge gate candidates: native
+          # REQUEST_CHANGES review (never APPROVE) and — through
+          # fail-on-request-changes — a job failure on a `request_changes`
+          # verdict, which the gate-refresh job below turns into a red
+          # required check. Everything else keeps the advisory comment
+          # behavior (never gates human merges).
+          #
+          # Fail boundaries (verified against the action contract):
+          # - fail-open: `on-model-failure: notice` produces a degraded
+          #   "notice" verdict which `fail-on-request-changes` warns and
+          #   passes — a pure LLM outage never wedges the automerge queue.
+          #   `fail-on-degraded-review` is deliberately left unset (false).
+          # - fail-closed: a review that gathered no evidence on the primary
+          #   model, or a deterministic fail-closed enforcement (evidence
+          #   blocker, tool-harness failure, unmet required check) forces
+          #   `request_changes` and fails the gate regardless of degraded
+          #   review handling. Re-arm such a run via the `ai-review` label
+          #   (allowed on am- branches) or a rebase — the gate re-opens when
+          #   the review verdict is clean.
+          publish-mode: ${{ startsWith(github.head_ref, 'renovate/am-') && 'review_blockers' || 'review_comment' }}
+          fail-on-request-changes: ${{ startsWith(github.head_ref, 'renovate/am-') && 'true' || 'false' }}
+
+  # ── Gate refresh: POSTS the required check ("AI PR Review (automerge
+  # gate)", same conclusions as the main workflow's gate job) informed by
+  # the full decision logic of .github/scripts/ai-review-gate.sh.
+  gate-refresh:
+    name: AI PR Review (labels gate)
+    needs: review-pr
+    if: ${{ always() }}
+    permissions:
+      contents: read
+      # Read-only PR/review queries; the single write is the required-name
+      # check-run POST below.
+      pull-requests: read
+      checks: write
+    runs-on: home-ops-runner
+    # Serialized per PR at job level (no cancel-in-progress — a cancelled
+    # run would emit a cancelled check-run, i.e. the red noise this split
+    # removes; see the file comment). Must cover the poll budget (2700s =
+    # a full-length 45-min review job by the main workflow).
+    timeout-minutes: 55
+    concurrency:
+      group: ai-review-labels-${{ github.event.pull_request.number }}
+      cancel-in-progress: false
+    steps:
+      - name: Checkout gate script
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          # The shared driver must be the REPO's latest main version, NOT the
+          # PR's: a PR could otherwise modify `.github/scripts/` to post a
+          # fake green check under its own logic. (The review job above
+          # intentionally checks out the PR head instead — the reviewer
+          # inspects the PR's own content.)
+          ref: main
+
+      - name: Evaluate gate decision and refresh required check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REVIEW_RESULT: ${{ needs.review-pr.result }}
+          # In-flight verdict detection must look at the MAIN workflow's
+          # runs (its review job is what produces verdicts on the default
+          # events), not at this workflow's own name.
+          GATE_REVIEW_WORKFLOW_NAME: "AI PR Review"
+          GATE_POLL_BUDGET_SEC: "2700"
+          GATE_POLL_INTERVAL_SEC: "15"
+          GATE_POLL_MAX_CONSEC_ERRORS: "4"
+          label_event: ${{ github.event.action }}
+          label_name: ${{ github.event.label.name }}
+        run: |
+          set -o pipefail
+          if ! bash .github/scripts/ai-review-gate.sh; then
+            rc=1
+          else
+            rc=0
+          fi
+          head_sha="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}" --jq .head.sha)"
+          if [[ "$rc" -eq 0 ]]; then
+            conclusion="success"
+          else
+            conclusion="failure"
+          fi
+          # Post the required-name check so branch protection resolves this
+          # label event to an up-to-date conclusion. Match the name EXACTLY
+          # (change both together with the main workflow's gate job name).
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/check-runs" \
+            -f name="AI PR Review (automerge gate)" \
+            -f head_sha="$head_sha" \
+            -f status="completed" \
+            -f conclusion="$conclusion" \
+            -f "output[title]=Automerge gate — label event $label_event '$label_name'" \
+            -f "output[summary]=Decision reproduced by ai-pr-review-labels.yaml via the shared gate script; full logs in the 'AI PR Review (labels gate)' job of run ${{ github.run_id }}."
+          echo "Posted $conclusion check 'AI PR Review (automerge gate)' on $head_sha (gate exit=$rc)"
+          exit "$rc"
