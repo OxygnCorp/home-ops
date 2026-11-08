@@ -19,6 +19,10 @@ apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
   name: konflate-public
+  annotations:
+    # Same-hostname sibling route: keep external-dns publication owned by the
+    # chart route (pattern: opencode/httproute-health.yaml).
+    external-dns.kubernetes.io/controller: none
 spec:
   hostnames:
     - konflate.oxygn.dev
