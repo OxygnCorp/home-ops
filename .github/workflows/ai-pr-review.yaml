@@ -308,8 +308,13 @@ jobs:
     if: ${{ always() }}
     permissions:
       contents: read
-      # Read-only: the gate only queries PR metadata and reviews.
+      # Read-only: the gate only queries PR metadata, reviews and Actions
+      # runs. `pull-requests: read` covers PRs/reviews; `actions: read`
+      # covers the gate script's in-flight review probe (`/actions/runs`).
+      # The probe works today without it because the repo is public, but
+      # the grant keeps the gate correct if that ever changes.
       pull-requests: read
+      actions: read
     runs-on: home-ops-runner
     # Serialize same-PR conclusions: parallel gates on one SHA complete in
     # arbitrary order, and "last completed wins" would be unspecified.

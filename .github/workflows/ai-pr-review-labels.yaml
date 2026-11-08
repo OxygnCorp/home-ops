@@ -291,6 +291,14 @@ jobs:
               echo "::warning::head SHA moved while the gate was deciding ('${decided:0:8}' → '${head_sha:0:8}') — no check posted; the synchronize run evaluates the new SHA."
               exit 0
             fi
+          else
+            # No anchor = the script exited before snapshotting (missing
+            # gh/jq, failed PR read, hold/digest jq error paths). Its
+            # conclusion is not bound to any SHA — posting it against the
+            # live head would re-open the fail-open drift hole the guard
+            # exists to close. Fail-safe: post nothing.
+            echo "::warning::gate anchor SHA unavailable (script did not snapshot its decision) — no check posted; a later run evaluates this SHA."
+            exit 0
           fi
           if [[ "$rc" -eq 0 ]]; then
             conclusion="success"
@@ -308,12 +316,20 @@ jobs:
           # API check-runs on one SHA (e.g. a hold reddening followed by
           # its own unblock greening) would otherwise BOTH stay visible in
           # the checks tab — red entries lingering next to the green,
-          # exactly the noise class this split removes. (Actions-posted
-          # check-runs are a different app object and are left alone;
-          # GitHub resolves protection on the latest regardless.)
-          gate_check_id="$(gh api "repos/${GITHUB_REPOSITORY}/commits/${head_sha}/check-runs?name=AI%20PR%20Review%20(automerge%20gate)" \
-            --jq '[.check_runs[] | select(.app.slug == "github-actions") | select(.status == "completed") | .id][0]' 2>/dev/null \
-            || true)"
+          # exactly the noise class this split removes.
+          #
+          # Workflow-produced check-runs of the same name (main gate job)
+          # are NOT patched: API-POSTed check-runs with GITHUB_TOKEN carry
+          # the same `github-actions` app identity as workflow-produced
+          # ones, so selection must NOT rely on app slug. We tag our own
+          # POSTs with `external_id` and select on that instead; the REST
+          # filter parameter is `check_name` (`name` is silently ignored).
+          # `filter=latest` is enough: on this SHA the newest required-name
+          # run is ours until the main workflow produces its own, after
+          # which that newer Actions conclusion governs protection anyway.
+          gate_check_id="$(gh api "repos/${GITHUB_REPOSITORY}/commits/${head_sha}/check-runs?check_name=AI%20PR%20Review%20(automerge%20gate)" \
+            --jq '[.check_runs[] | select(.external_id == "ai-review-labels-gate") | select(.status == "completed") | .id][0]' \
+            || { echo "::error::could not look up the previously posted gate check-run (POST/PATCH impossible — failing loudly rather than silently skipping the required check)"; exit 1; })"
           if [[ -n "$gate_check_id" ]]; then
             gh api --method PATCH "repos/${GITHUB_REPOSITORY}/check-runs/${gate_check_id}" \
               -f status="completed" \
@@ -324,6 +340,7 @@ jobs:
           else
             gh api --method POST "repos/${GITHUB_REPOSITORY}/check-runs" \
               -f name="AI PR Review (automerge gate)" \
+              -f external_id="ai-review-labels-gate" \
               -f head_sha="$head_sha" \
               -f status="completed" \
               -f conclusion="$conclusion" \
