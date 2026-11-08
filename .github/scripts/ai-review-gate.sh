@@ -84,6 +84,15 @@ pr="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}")" \
   || { echo "::error::could not read PR #${PR_NUMBER} metadata"; exit 1; }
 head_sha="$(echo "$pr" | jq -r .head.sha)"
 head_ref="$(echo "$pr" | jq -r .head.ref)"
+# Publish the decision's anchor SHA (GATE_STATE_FILE published by the caller).
+# Everything below is decided AGAINST this snapshot; the caller (the labels
+# workflow's gate-refresh) checks before POSTing that the live head SHA has
+# not moved, so a decision made for one SHA can never be published on
+# another. The main workflow does not need this — its check-run is an
+# Actions run naturally bound to the run's head SHA.
+if [[ -n "${GATE_STATE_FILE:-}" ]]; then
+  printf '%s' "$head_sha" > "$GATE_STATE_FILE" 2>/dev/null || true
+fi
 
 # ── `hold` label: manual holding pattern, independent of the AI review
 # verdict (branch decision table below it). Applies to ANY PR —
@@ -223,8 +232,19 @@ case "$REVIEW_RESULT" in
         # bounded number of consecutive API errors before closing.
         echo "::warning::could not inspect in-flight review runs at ${head_sha:0:8}; entering bounded poll"
       else
-        echo "::error::Review skipped with no managed AI review yet at ${head_sha:0:8} — blocking automerge until the first review lands."
-        exit 1
+        # Grace: the review run of the main workflow may exist but not
+        # yet be registered in the Actions API if this gate was picked
+        # up within seconds of PR creation. Give the registry one poll
+        # interval, then re-check; only then fail closed.
+        sleep "${GATE_POLL_INTERVAL_SEC}"
+        if review_in_flight; then :; else
+          rf2="$?"
+          if [[ "$rf2" -le 1 ]]; then
+            echo "::error::Review skipped with no managed AI review yet at ${head_sha:0:8} — blocking automerge until the first review lands."
+            exit 1
+          fi
+          echo "::warning::could not inspect in-flight review runs at ${head_sha:0:8}; entering bounded poll"
+        fi
       fi
     fi
     deadline=$(( $(date +%s) + GATE_POLL_BUDGET_SEC ))

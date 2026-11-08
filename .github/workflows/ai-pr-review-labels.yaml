@@ -61,6 +61,14 @@ jobs:
     # timeout would read as `failure` and red the gate (fail-closed on mere
     # slowness).
     timeout-minutes: 45
+    # Serialize same-PR reviews: rapid ai-review label flapping must not run
+    # concurrent full LLM reviews of one PR (duplicate comments + spend). No
+    # cancel-in-progress — same parity as the gate below: a cancelled run
+    # would emit a cancelled check-run, the red noise this file exists to
+    # avoid.
+    concurrency:
+      group: ai-review-labels-review-${{ github.event.pull_request.number }}
+      cancel-in-progress: false
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -207,7 +215,13 @@ jobs:
   gate-refresh:
     name: AI PR Review (labels gate)
     needs: review-pr
-    if: ${{ always() }}
+    # Runs only for events that CARRY semantics (the change's whole point is
+    # to skip Renovate's label burst): a verdict-producing event (ai-review
+    # re-review or hold removal — anything but a skipped review job), or a
+    # `hold` add (immediate red, review job correctly skipped). Fork PRs are
+    # skipped: GITHUB_TOKEN for pull_request events cannot POST check-runs
+    # against fork-head SHAs.
+    if: ${{ always() && (needs.review-pr.result != 'skipped' || github.event.label.name == 'hold') && github.event.pull_request.head.repo.full_name == github.repository }}
     permissions:
       contents: read
       # Read-only PR/review queries; the single write is the required-name
@@ -230,9 +244,12 @@ jobs:
           persist-credentials: false
           # The shared driver must be the REPO's latest main version, NOT the
           # PR's: a PR could otherwise modify `.github/scripts/` to post a
-          # fake green check under its own logic. (The review job above
-          # intentionally checks out the PR head instead — the reviewer
-          # inspects the PR's own content.)
+          # fake green check under its own logic. Defense is partial (a PR
+          # adding its OWN workflow file also runs for pull_request events,
+          # and this step is itself PR-sourced) — the documented residual
+          # mitigation is branch protection reviewing human edits to the
+          # .github/workflows path; Renovate branches (the population
+          # actually gated) cannot edit workflows.
           ref: main
 
       - name: Evaluate gate decision and refresh required check
@@ -249,6 +266,7 @@ jobs:
           GATE_POLL_MAX_CONSEC_ERRORS: "4"
           label_event: ${{ github.event.action }}
           label_name: ${{ github.event.label.name }}
+          GATE_STATE_FILE: ${{ runner.temp }}/gate-head-sha
         run: |
           set -o pipefail
           if ! bash .github/scripts/ai-review-gate.sh; then
@@ -256,7 +274,23 @@ jobs:
           else
             rc=0
           fi
-          head_sha="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}" --jq .head.sha)"
+          head_sha="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}" --jq .head.sha)" \
+            || { echo "::error::could not re-fetch PR head SHA"; exit 1; }
+          # The decision was made against the head SHA the script snapped at
+          # entry (published via GATE_STATE_FILE). POST it ONLY on that SHA:
+          # if the PR moved during the (possibly 45-min) evaluation, a
+          # synchronize run of the main workflow already evaluates the newer
+          # SHA with a fresh conclusion — posting a stale (fail-open) green
+          # onto the new SHA must never happen. On drift: post nothing; the
+          # new SHA stays without a required check (unmergeable) until its
+          # own evaluation lands.
+          if [[ -s "$GATE_STATE_FILE" ]]; then
+            decided="$(cat "$GATE_STATE_FILE")"
+            if [[ "$decided" != "$head_sha" ]]; then
+              echo "::warning::head SHA moved while the gate was deciding ('${decided:0:8}' → '${head_sha:0:8}') — no check posted; the synchronize run evaluates the new SHA."
+              exit 0
+            fi
+          fi
           if [[ "$rc" -eq 0 ]]; then
             conclusion="success"
           else
@@ -271,6 +305,7 @@ jobs:
             -f status="completed" \
             -f conclusion="$conclusion" \
             -f "output[title]=Automerge gate — label event $label_event '$label_name'" \
-            -f "output[summary]=Decision reproduced by ai-pr-review-labels.yaml via the shared gate script; full logs in the 'AI PR Review (labels gate)' job of run ${{ github.run_id }}."
-          echo "Posted $conclusion check 'AI PR Review (automerge gate)' on $head_sha (gate exit=$rc)"
+            -f "output[summary]=Decision reproduced by ai-pr-review-labels.yaml via the shared gate script; full logs in the 'AI PR Review (labels gate)' job of run ${{ github.run_id }}." \
+            || { echo "::error::could not POST the required check-run"; exit 1; }
+          echo "Posted $conclusion check 'AI PR Review (automerge gate)' on ${head_sha:0:8} (gate exit=$rc)"
           exit "$rc"
