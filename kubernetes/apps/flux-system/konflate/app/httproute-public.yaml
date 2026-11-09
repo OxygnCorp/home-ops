@@ -27,8 +27,12 @@ metadata:
     # the FIRST match of the route (precedent comment in opencode-health): for
     # this route that is GET /mcp, which answers 400 by design when konflate
     # is up (down backend = 503 from envoy). Without this annotation the
-    # sidecar default [STATUS] == 200 fails on every probe.
+    # sidecar default [STATUS] == 200 fails on every probe. Pin the probe
+    # target explicitly (`path:` override, supported by sidecar 0.6.1):
+    # first-match is an implicit ordering that breaks silently if public
+    # paths are added or reordered above /mcp.
     gatus.home-operations.com/endpoint: |-
+      path: /mcp
       conditions: ["[STATUS] == 400"]
 spec:
   hostnames:
