@@ -85,9 +85,15 @@ spec:
       # (mcp-apps virtual key) for the inter-VLAN segmentation (new zone
       # "Restricted" for IOT/Cameras + allowlist rules), with
       # UNIFI_TOOL_PERMISSION_MODE=confirm still requiring preview+confirm.
+      # DELETE is needed for rule cleanup: dead/duplicate segmentation rules
+      # (e.g. rules created after a BLOCK that are never reached, replaced
+      # CLIENT-MAC targeting) cannot be retired otherwise, and reorder via
+      # the API needs cleanup of superseded rules — not just disable.
       - name: UNIFI_POLICY_NETWORK_FIREWALL_POLICIES_CREATE
         value: "true"
       - name: UNIFI_POLICY_NETWORK_FIREWALL_POLICIES_UPDATE
+        value: "true"
+      - name: UNIFI_POLICY_NETWORK_FIREWALL_POLICIES_DELETE
         value: "true"
       - name: UNIFI_TOOL_PERMISSION_MODE
         value: confirm
