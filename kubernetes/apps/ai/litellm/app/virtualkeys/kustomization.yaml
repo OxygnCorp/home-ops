@@ -12,3 +12,4 @@ resources:
   - ./lightrag.yaml
   - ./radar.yaml
   - ./repo-wiki.yaml
+  - ./mealie.yaml
