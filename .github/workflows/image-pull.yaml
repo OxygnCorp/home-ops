@@ -44,13 +44,20 @@ jobs:
         with:
           # renovate: datasource=github-releases depName=jdx/mise
           version: v2026.11.2
-          # Keep the cache enabled (warm runs restore the mise binary, its
-          # signed SHASUMS and the pinned tools without touching github.com).
-          # Cold runs must still hit github.com release downloads, which have
-          # intermittently failed with 504s for anonymous traffic (GitHub
-          # incident 2026-11-09, "Increased timeouts due to surge in anonymous
-          # users"); the cache limits exposure to that failure mode.
+          # Sole cache writer of this workflow (`pull` uses install: false
+          # and never saves). The explicit shared cache_key lets `pull` and
+          # this job restore the mise binary, its signed SHASUMS and the
+          # pinned tools without touching github.com, whose anonymous
+          # release downloads 504'd during the 2026-11-09 incident
+          # ("Increased timeouts due to surge in anonymous users"). With
+          # `version` pinned there is no CDN fallback, so cold runs remain
+          # exposed (the action retries each download 5x).
           cache: true
+          # Non-blocking: cache save failures (reservation conflicts between
+          # concurrent PR runs, cache-service outage) must not fail this job.
+          cache_save_post: true
+          cache_save_retry_budget: 60s
+          cache_key: mise-pull-{{platform}}-{{version}}-p{{cache_period}}
           # Only install what this job needs (version pinned in .mise/config.toml).
           # A bare `mise install` would pull every tool in .mise/config.toml and
           # fail the job on any unrelated tool breaking upstream.
@@ -82,11 +89,15 @@ jobs:
         with:
           # renovate: datasource=github-releases depName=jdx/mise
           version: v2026.11.2
-          # Cache the mise binary (no-config key: no checkout in this job).
-          # Warm runs skip the github.com release download, which has
-          # intermittently 504'd for anonymous traffic (GitHub incident
-          # 2026-11-09); cold runs retry (5x) and stay exposed meanwhile.
+          # With `install: false` this job never saves the cache (mise-action
+          # only saves when install runs), so it relies on the shared key
+          # written by the `extract` job: a warm restore serves the mise
+          # binary + signed SHASUMS straight from actions/cache instead of
+          # the github.com release downloads, which 504'd for anonymous
+          # traffic during the 2026-11-09 GitHub incident. Cold runs (cache
+          # period rollover) are exposed — the action retries downloads 5x.
           cache: true
+          cache_key: mise-pull-{{platform}}-{{version}}-p{{cache_period}}
           # No checkout in this job: mise exec auto-installs the exact pinned
           # version from an empty directory (TALOS_VERSION env, above).
           install: false
