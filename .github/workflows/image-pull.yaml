@@ -44,7 +44,13 @@ jobs:
         with:
           # renovate: datasource=github-releases depName=jdx/mise
           version: v2026.11.2
-          cache: false
+          # Keep the cache enabled (warm runs restore the mise binary, its
+          # signed SHASUMS and the pinned tools without touching github.com).
+          # Cold runs must still hit github.com release downloads, which have
+          # intermittently failed with 504s for anonymous traffic (GitHub
+          # incident 2026-11-09, "Increased timeouts due to surge in anonymous
+          # users"); the cache limits exposure to that failure mode.
+          cache: true
           # Only install what this job needs (version pinned in .mise/config.toml).
           # A bare `mise install` would pull every tool in .mise/config.toml and
           # fail the job on any unrelated tool breaking upstream.
@@ -76,7 +82,11 @@ jobs:
         with:
           # renovate: datasource=github-releases depName=jdx/mise
           version: v2026.11.2
-          cache: false
+          # Cache the mise binary (no-config key: no checkout in this job).
+          # Warm runs skip the github.com release download, which has
+          # intermittently 504'd for anonymous traffic (GitHub incident
+          # 2026-11-09); cold runs retry (5x) and stay exposed meanwhile.
+          cache: true
           # No checkout in this job: mise exec auto-installs the exact pinned
           # version from an empty directory (TALOS_VERSION env, above).
           install: false
