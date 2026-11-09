@@ -49,15 +49,19 @@ jobs:
           # this job restore the mise binary, its signed SHASUMS and the
           # pinned tools without touching github.com, whose anonymous
           # release downloads 504'd during the 2026-11-09 incident
-          # ("Increased timeouts due to surge in anonymous users"). With
-          # `version` pinned there is no CDN fallback, so cold runs remain
-          # exposed (the action retries each download 5x).
+          # ("Increased timeouts due to surge in anonymous users"). The
+          # default key segments by ImageOS (ubuntu26 here vs ubuntu24 on
+          # the ARC runner) which would make the cross-job hit impossible;
+          # hardcoding the platform instead is safe: the mise release
+          # binary only requires glibc >= 2.18. With `version` pinned there
+          # is no CDN fallback, so cold runs remain exposed (the action
+          # retries each download 5x).
           cache: true
           # Non-blocking: cache save failures (reservation conflicts between
           # concurrent PR runs, cache-service outage) must not fail this job.
           cache_save_post: true
           cache_save_retry_budget: 60s
-          cache_key: mise-pull-{{platform}}-{{version}}-p{{cache_period}}
+          cache_key: mise-pull-linux-x64-{{version}}-p{{cache_period}}
           # Only install what this job needs (version pinned in .mise/config.toml).
           # A bare `mise install` would pull every tool in .mise/config.toml and
           # fail the job on any unrelated tool breaking upstream.
@@ -94,10 +98,16 @@ jobs:
           # written by the `extract` job: a warm restore serves the mise
           # binary + signed SHASUMS straight from actions/cache instead of
           # the github.com release downloads, which 504'd for anonymous
-          # traffic during the 2026-11-09 GitHub incident. Cold runs (cache
-          # period rollover) are exposed — the action retries downloads 5x.
+          # traffic during the 2026-11-09 GitHub incident. Sharing a cache
+          # across the runners (ImageOS ubuntu24 vs ubuntu26) is fine for
+          # the mise release binary (glibc >= 2.18). Cold runs (cache period
+          # rollover) are exposed — downloads are retried 5x. Note the
+          # tradeoff: a hard restore failure (cache-service outage, beyond
+          # the HTTP 429 retries) now fails this job where `cache: false`
+          # previously did not.
           cache: true
-          cache_key: mise-pull-{{platform}}-{{version}}-p{{cache_period}}
+          cache_restore_retry_budget: 60s
+          cache_key: mise-pull-linux-x64-{{version}}-p{{cache_period}}
           # No checkout in this job: mise exec auto-installs the exact pinned
           # version from an empty directory (TALOS_VERSION env, above).
           install: false
