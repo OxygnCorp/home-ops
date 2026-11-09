@@ -43,7 +43,7 @@ jobs:
         uses: jdx/mise-action@f5be966e4a917d54244728e6a5fdcd1d93a35e6c # v5.2.6
         with:
           # renovate: datasource=github-releases depName=jdx/mise
-          version: v2026.11.2
+          version: v2026.11.3
           # Sole cache writer of this workflow (`pull` uses install: false
           # and never saves). The explicit shared cache_key lets `pull` and
           # this job restore the mise binary, its signed SHASUMS and the
@@ -92,7 +92,7 @@ jobs:
         uses: jdx/mise-action@f5be966e4a917d54244728e6a5fdcd1d93a35e6c # v5.2.6
         with:
           # renovate: datasource=github-releases depName=jdx/mise
-          version: v2026.11.2
+          version: v2026.11.3
           # With `install: false` this job never saves the cache (mise-action
           # only saves when install runs), so it relies on the shared key
           # written by the `extract` job: a warm restore serves the mise
