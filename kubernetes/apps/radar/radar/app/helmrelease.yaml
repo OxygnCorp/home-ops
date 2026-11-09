@@ -18,7 +18,7 @@ spec:
       # the allowedHosts value below — no-auth DNS-rebinding check). Keep it
       # on every chart bump: it was added in #5304, dropped in #5405, and
       # re-added in #5423.
-      version: 1.20.1
+      version: 1.20.2
       sourceRef:
         kind: HelmRepository
         name: radar
