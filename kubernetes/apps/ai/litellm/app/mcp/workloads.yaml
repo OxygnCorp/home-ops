@@ -80,6 +80,15 @@ spec:
         value: "true"
       - name: UNIFI_POLICY_NETWORK_SWITCH_UPDATE
         value: "true"
+      # Granular override (category+action beats the global flags above).
+      # Opens ONLY firewall policy mutations — needed by the Puchu agent
+      # (mcp-apps virtual key) for the inter-VLAN segmentation (new zone
+      # "Restricted" for IOT/Cameras + allowlist rules), with
+      # UNIFI_TOOL_PERMISSION_MODE=confirm still requiring preview+confirm.
+      - name: UNIFI_POLICY_NETWORK_FIREWALL_POLICIES_CREATE
+        value: "true"
+      - name: UNIFI_POLICY_NETWORK_FIREWALL_POLICIES_UPDATE
+        value: "true"
       - name: UNIFI_TOOL_PERMISSION_MODE
         value: confirm
       - name: UNIFI_NETWORK_USERNAME
