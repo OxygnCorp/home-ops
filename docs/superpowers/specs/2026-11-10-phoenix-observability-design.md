@@ -84,9 +84,9 @@ Résultat : **tous les appels LLM de tous les agents tracés sans modification d
 
 | App | Mécanisme | Statut MVP |
 |---|---|---|
-| mainclaw (openclaw) | plugin `diagnostics-otel` (traces/metrics/logs OTLP natif) | activé |
+| mainclaw, devclaw (openclaw) | plugin `diagnostics-otel` (traces/metrics/logs OTLP natif) | activé |
 | n8n | OTEL env vars natif | activé |
-| hermes, foreman, devclaw, opencode, llmkube, memini, lightrag, headroom | support OTel varié | **non MVP** — couvert côté LLM par litellm ; ajout app-level seulement si support natif confirmé (PR par app) |
+| hermes, foreman, opencode, llmkube, memini, lightrag, headroom | support OTel varié | **non MVP** — couvert côté LLM par litellm ; ajout app-level seulement si support natif confirmé (PR par app) |
 
 Un projet Phoenix par agent quand le mécanisme de routing le permet ; projet par défaut sinon.
 
@@ -140,7 +140,7 @@ Un projet Phoenix par agent quand le mécanisme de routing le permet ; projet pa
 ## 9. Évolutions prévues (dette documentée, pas dans le MVP)
 
 1. **OTel Collector central** (approche B du brainstorming) : buffering/sampling/multi-backend. Impact attendu : les apps changent **une seule** env var (`OTEL_EXPORTER_OTLP_ENDPOINT`), rien d'autre.
-2. Instrumentation app-level pour hermes, foreman, devclaw, opencode, … au support natif confirmé.
+2. Instrumentation app-level pour hermes, foreman, opencode, … au support natif confirmé.
 3. Gestion de prompts Phoenix si le besoin arrive.
 4. Dashboards Grafana corrélant litellm metrics ↔ datasets/évals Phoenix si le besoin arrive.
 
@@ -148,7 +148,7 @@ Un projet Phoenix par agent quand le mécanisme de routing le permet ; projet pa
 
 1. **PR 1 — Infra Phoenix** : `kubernetes/apps/observability/phoenix` (chart, CNPG, secrets, HTTPRoute SSO, PrometheusRule) + smoke ingestion.
 2. **PR 2 — litellm** : callback OTel + env vars → vérifier spans segmentés par agent.
-3. **PR 3 — mainclaw (openclaw `diagnostics-otel`) + n8n (OTEL env vars)**.
+3. **PR 3 — mainclaw + devclaw (openclaw `diagnostics-otel`) + n8n (OTEL env vars)**.
 4. **PR 4 — CronJob `phoenix-evals`** (évals nightly + datasets) + README de la boucle d'amélioration.
 5. **PR 5+n — instrumentation app-level incrémentale**, app par app selon support natif.
 

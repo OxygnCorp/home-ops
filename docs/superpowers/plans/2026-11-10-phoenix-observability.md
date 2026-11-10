@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Déployer Arize Phoenix self-hosted (OSS) comme backend de traces LLM/agents + activer l'export OTel de litellm/mainclaw/n8n + boucle d'évals LLM-as-judge nightly, selon la spec `docs/superpowers/specs/2026-11-10-phoenix-observability-design.md`.
+**Goal:** Déployer Arize Phoenix self-hosted (OSS) comme backend de traces LLM/agents + activer l'export OTel de litellm/mainclaw/devclaw/n8n + boucle d'évals LLM-as-judge nightly, selon la spec `docs/superpowers/specs/2026-11-10-phoenix-observability-design.md`.
 
 **Architecture:** Phoenix (chart Helm officiel OCI, 1 replica) dans `kubernetes/apps/observability/phoenix`, avec Postgres CNPG via le composant `postgres`, auth app (clé système pour l'ingestion OTLP, Secret `phoenix-secret` pré-existant via external-secrets), UI derrière `envoy-internal` + SSO Kanidm (composant `oidc-kanidm/envoy`). Les apps exportent en OTLP/HTTP direct vers `http://phoenix.observability:4318` (pas de collector — dette documentée §9 de la spec). Un CronJob `phoenix-evals` note les traces nightly via litellm et alimente datasets/annotations Phoenix.
 
@@ -196,7 +196,7 @@ spec:
         property: PHOENIX_DEFAULT_ADMIN_INITIAL_PASSWORD
 ```
 
-- [ ] **Step 5: `externalsecret-otel.yaml`** (clé système pour l'ingestion — consommée par litellm/mainclaw/n8n en Tasks 2-3 via leur propre ExternalSecret qui pointe le même item `phoenix`, et par le smoke test ci-dessous)
+- [ ] **Step 5: `externalsecret-otel.yaml`** (clé système pour l'ingestion — consommée par litellm/mainclaw/devclaw/n8n en Tasks 2-3 via leur propre ExternalSecret qui pointe le même item `phoenix`, et par le smoke test ci-dessous)
 
 ```yaml
 ---
@@ -566,26 +566,29 @@ gh pr create --fill
 3. Vérifier que les callbacks Prometheus existants restent opérationnels et que les pods litellm ne loggent pas d'erreur côté `opentelemetry` : `kubectl logs -n ai <pod litellm> | grep -i otel` (attendu : pas d'export failure en boucle ; un `ETELEM`/timeout ponctuel est tolérable, Phoenix étant hors chemin).
 
 ---
-### Task 3: mainclaw (openclaw `diagnostics-otel`) + n8n OTEL (PR 3)
+### Task 3: mainclaw + devclaw (openclaw `diagnostics-otel`) + n8n OTEL (PR 3)
 
 **Files:**
 - Modify: `kubernetes/apps/ai/mainclaw/app/resources/openclaw.json` (plugin enable)
 - Modify: `kubernetes/apps/ai/mainclaw/app/helmrelease.yaml` (env OTLP)
 - Modify: `kubernetes/apps/ai/mainclaw/app/externalsecret.yaml` (append doc `phoenix-otel`)
+- Modify: `kubernetes/apps/ai/devclaw/app/resources/openclaw.json` (plugin enable — même image openclaw que mainclaw, même mécanique)
+- Modify: `kubernetes/apps/ai/devclaw/app/helmrelease.yaml` (env OTLP)
+- Modify: `kubernetes/apps/ai/devclaw/app/externalsecret.yaml` (append doc `phoenix-otel`)
 - Modify: `kubernetes/apps/ai/n8n/app/helmrelease.yaml` (env OTEL)
 - Modify: `kubernetes/apps/ai/n8n/app/externalsecret.yaml` (append doc `phoenix-otel`)
 
 **Interfaces:**
-- Consumes: Service `phoenix.observability:4318`, Secret `phoenix-otel` (Task 1 pattern, recopié dans les namespaces `ai` via les 2 icherExternalSecret docs), plugin openclaw `diagnostics-otel`.
-- Produces: traces agent-level mainclaw (tool calls, sessions) + traces n8n workflows dans Phoenix (projets `mainclaw`/`n8n`), en complément des traces LLM litellm (Task 2).
+- Consumes: Service `phoenix.observability:4318`, Secret `phoenix-otel` (Task 1 pattern, recopié dans le namespace `ai` via l'ExternalSecret doc `phoenix-otel`), plugin openclaw `diagnostics-otel`.
+- Produces: traces agent-level mainclaw + devclaw (tool calls, sessions) + traces n8n workflows dans Phoenix (projets `mainclaw`/`devclaw`/`n8n`), en complément des traces LLM litellm (Task 2).
 
 - [ ] **Step 1: doc plugin openclaw (vérifier la shape exacte à l'écriture)**
 
-Consulter `https://github.com/openclaw/openclaw/tree/main/plugins/diagnostics-otel` (or doc bundled: `node /app/openclaw.mjs plugin show diagnostics-otel` depuis le pod mainclaw) pour connaître les clés de config attendues (`endpoint`, `protocol`, `headers`?). Son default est d'épander les env OTel standard si présent — sinon config explicites dans `openclaw.json`.
+Consulter `https://github.com/openclaw/openclaw/tree/main/plugins/diagnostics-otel` (ou doc bundled: `node /app/openclaw.mjs plugin show diagnostics-otel` depuis le pod mainclaw — même image que devclaw) pour connaître les clés de config attendues (`endpoint`, `protocol`, `headers`?). Le plugin étend les env OTel standard si présentes — sinon config explicites dans `openclaw.json`.
 
-- [ ] **Step 2: `openclaw.json` — activer le plugin**
+- [ ] **Step 2: `openclaw.json` — activer le plugin (mainclaw ET devclaw)**
 
-Dans `plugins.allow` (ajouter `diagnostics-otel` après `discord` alphabet的形象 préservé) ; dans `plugins.entries`:
+Dans les deux fichiers `resources/openclaw.json` : ajouter `diagnostics-otel` dans `plugins.allow` en gardant l'ordre alphabétique (dans mainclaw comme dans devclaw : entre `browser` et `discord`) ; dans `plugins.entries` (les deux) :
 ```json
       "diagnostics-otel": {
         "enabled": true,
@@ -601,11 +604,11 @@ Dans `plugins.allow` (ajouter `diagnostics-otel` après `discord` alphabet的形
 
 ```yaml
             env:
-              ...aura déjà des env...               # (bloc précédent)
+              # ... (env existantes conservées) ...
               # Phoenix OTLP ingestion (app kubernetes/apps/observability/phoenix)
               OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
               OTEL_EXPORTER_OTLP_ENDPOINT: http://phoenix.observability:4318
-              # Routing Phoenix: un projet `mainclaw` fait le projeture openinference
+              # Routing Phoenix: projet `mainclaw` via l'attribut openinference
               OTEL_RESOURCE_ATTRIBUTES: openinference.project.name=mainclaw
               OTEL_EXPORTER_OTLP_HEADERS:
                 valueFrom:
@@ -613,11 +616,29 @@ Dans `plugins.allow` (ajouter `diagnostics-otel` après `discord` alphabet的形
                     name: phoenix-otel
                     key: OTEL_EXPORTER_OTLP_HEADERS
 ```
-⚠️ synced `secret.reloader.stakater.com/reload: "mainclaw-secret, mainclaw-config"` — si le secret `phoenix-otel` change (rotation clé), un rollout manuel est requis (le reloader ne surveille que mainclaw-*). Le refreshInterval 12h + la clé système à rotation draft documenté (bas fréquence), pas d'automatization MVP.
+⚠️ annotation `secret.reloader.stakater.com/reload: "mainclaw-secret, mainclaw-config"` — si le secret `phoenix-otel` change (rotation clé), un rollout manuel est requis (le reloader ne surveille que mainclaw-*). Le refreshInterval 12h + rotation clé système documentée (bas fréquence), pas d'automatisation MVP.
 
 - [ ] **Step 4: `mainclaw/app/externalsecret.yaml` — append doc `phoenix-otel`** (identique à Task 1 Step 5)
 
-- [ ] **Step 5: `n8n/app/helmrelease.yaml` — env** (container `main`, en bloc `env`)
+- [ ] **Step 5: `devclaw/app/helmrelease.yaml` — env** (container `app`, en bloc `env:` — même campagne d'env que mainclaw Step 3)
+
+```yaml
+              # Phoenix OTLP ingestion (app kubernetes/apps/observability/phoenix)
+              OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+              OTEL_EXPORTER_OTLP_ENDPOINT: http://phoenix.observability:4318
+              # Routing Phoenix: projet `devclaw` via l'attribut openinference
+              OTEL_RESOURCE_ATTRIBUTES: openinference.project.name=devclaw
+              OTEL_EXPORTER_OTLP_HEADERS:
+                valueFrom:
+                  secretKeyRef:
+                    name: phoenix-otel
+                    key: OTEL_EXPORTER_OTLP_HEADERS
+```
+⚠️ annotation `secret.reloader.stakater.com/reload: "devclaw-secret, devclaw-config"` — même caveat de rotation que mainclaw (rollout manuel si la clé change).
+
+- [ ] **Step 6: `devclaw/app/externalsecret.yaml` — append doc `phoenix-otel`** (identique à Task 1 Step 5)
+
+- [ ] **Step 7: `n8n/app/helmrelease.yaml` — env** (container `main`, en bloc `env:`)
 
 ```yaml
               # Phoenix OTLP ingestion (kubernetes/apps/observability/phoenix)
@@ -630,17 +651,18 @@ Dans `plugins.allow` (ajouter `diagnostics-otel` après `discord` alphabet的形
                     name: phoenix-otel
                     key: OTEL_EXPORTER_OTLP_HEADERS
 ```
-⚠️ Vérifier à l'implémentation les noms de env exacts n8n (https://docs.n8n.io — recherche "OpenTelemetry") : n8n expose ses propres variables (`N8N_OTEL_*`?) en versions récentes; si doc n8n expose des vars spécifiques, les déclarer à la place/en complément du standard `OTEL_*`. (n8n est en 3.0.1, la doc actuelle : https://docs.n8n.io/hosting/monitoring/ opentelemetry-instrumentation).
+⚠️ Vérifier à l'implémentation les noms de env exacts n8n (https://docs.n8n.io — recherche "OpenTelemetry") : n8n expose ses propres variables (`N8N_OTEL_*`?) en versions récentes ; si la doc n8n expose des vars spécifiques, les déclarer à la place/en complément du standard `OTEL_*`. (n8n est en 3.0.1, doc actuelle : https://docs.n8n.io/hosting/monitoring/ opentelemetry-instrumentation).
 
-- [ ] **Step 6: `n8n/app/externalsecret.yaml` — append doc `phoenix-otel`** (identique)
+- [ ] **Step 8: `n8n/app/externalsecret.yaml` — append doc `phoenix-otel`** (identique)
 
-- [ ] **Step 7: flate + commit + push + PR 3** (même mécanique que Task 2 Step 4)
+- [ ] **Step 9: flate + commit + push + PR 3** (même mécanique que Task 2 Step 4)
 
-- [ ] **Step 8: Smoke test agent-level spans**
+- [ ] **Step 10: Smoke test agent-level spans**
 
 1. Déclencher une action mainclaw (message discord ou commande gateway) → attendre le batch export → voir dans Phoenix projet `mainclaw` des spans non-LLM (tool calls, session) + LLM spans déjà via litellm.
-2. Déclencher un workflow n8n → vérifier spans projet `n8n` (workflow execution, ai-nodes).
-3. Confirmer `kubectl logs -n ai deployment/mainclaw -c openclaw` **sans erreur** de type `otel` / `diagnostics-otel` ; pareil pour n8n.
+2. Déclencher une action devclaw (idem) → vérifier spans projet `devclaw` (spans non-LLM agent-level).
+3. Déclencher un workflow n8n → vérifier spans projet `n8n` (workflow execution, ai-nodes).
+4. Confirmer `kubectl logs -n ai deployment/mainclaw -c openclaw` et `kubectl logs -n ai deployment/devclaw -c app` **sans erreur** de type `otel` / `diagnostics-otel` ; pareil pour n8n.
 
 ---
 ### Task 4: CronJob `phoenix-evals` — boucle d'amélioration (PR 4)
@@ -1007,7 +1029,7 @@ Si une route `/v1/...` renvoie 404/422 → corriger `evals.py` selon les paths c
 |---|---|---|---|
 | 1 | PR 1 | Infra Phoenix + SSO + CNPG + clés + alerts | ingestion OTLP ok, UI SSO ok, no-key refusée |
 | 2 | PR 2 | litellm OTel callback | spans litellm (aliases, tokens) visibles |
-| 3 | PR 3 | mainclaw `diagnostics-otel` + n8n OTEL | spans agent-level main + workflows n8n |
+| 3 | PR 3 | mainclaw + devclaw `diagnostics-otel` + n8n OTEL | spans agent-level mainclaw/devclaw + workflows n8n |
 | 4 | PR 4 | CronJob `phoenix-evals` + virtual key + README loop | annotations + dataset + experiment UI |
 
-PR 5+ (spec §10, hors scope de ce plan): instrumentation app-level incrémentale (hermes, foreman, devclaw, opencode, llmkube, memini, lightrag, headroom) — une PR par app après confirmation du support natif OTel, s'inspirer de Task 3 acceptée par prototypes Task 3.
+PR 5+ (spec §10, hors scope de ce plan) : instrumentation app-level incrémentale (hermes, foreman, opencode, llmkube, memini, lightrag, headroom) — une PR par app après confirmation du support natif OTel, en s'inspirant de Task 3 comme prototype.
