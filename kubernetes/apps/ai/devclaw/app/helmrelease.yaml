@@ -157,6 +157,16 @@ spec:
               PIP_BREAK_SYSTEM_PACKAGES: "1"
               TERM: xterm-256color
               TZ: Europe/Paris
+              # Phoenix OTLP ingestion (app kubernetes/apps/observability/phoenix)
+              OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+              OTEL_EXPORTER_OTLP_ENDPOINT: http://phoenix-svc.observability:6006
+              # Routing Phoenix: projet `devclaw` via l'attribut openinference
+              OTEL_RESOURCE_ATTRIBUTES: openinference.project.name=devclaw
+              OTEL_EXPORTER_OTLP_HEADERS:
+                valueFrom:
+                  secretKeyRef:
+                    name: phoenix-otel
+                    key: OTEL_EXPORTER_OTLP_HEADERS
             envFrom:
               - secretRef:
                   name: "{{ .Release.Name }}-secret"
