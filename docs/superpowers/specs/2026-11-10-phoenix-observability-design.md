@@ -35,13 +35,13 @@ Le cluster héberge une dizaine d'agents IA (mainclaw/openclaw, opencode, hermes
 
 ```
 apps ai (litellm, mainclaw, n8n, …)
-   │  OTLP/HTTP : http://phoenix.observability:4318/v1/traces
+   │  OTLP/HTTP : http://phoenix-svc.observability:6006/v1/traces
    │  header  Authorization: Bearer <clé système Phoenix>
    ▼
 Phoenix (namespace observability) ── Postgres CNPG (composant postgres)
    │
    ├─ UI  : HTTPRoute envoy-internal (https://phoenix.<domain>) + SecurityPolicy OIDC Kanidm
-   ├─ OTLP: Service cluster-internal ports 4318 (http) / 4317 (grpc) — pas d'exposition gateway
+   ├─ OTLP: Service `phoenix-svc` cluster-internal ports 6006 (http, `/v1/traces`) / 4317 (grpc) — pas d'exposition gateway
    └─ API : REST v1 — consommée par le CronJob phoenix-evals
 
 phoenix-evals (CronJob nightly) ── litellm (LLM-as-judge)
@@ -51,7 +51,7 @@ phoenix-evals (CronJob nightly) ── litellm (LLM-as-judge)
 Points clés :
 
 - Phoenix est **hors chemin des requêtes** : export batch asynchrone ; Phoenix down ⇒ les exporters OTel perdent leurs batchs et les apps n'en sont pas impactées.
-- L'ingestion OTLP reste cluster-internal (pas de HTTPRoute sur 4318) ; la protection est la clé système (`authorization` header) + la policy réseau par défaut du cluster.
+- L'ingestion OTLP reste cluster-internal (ingestion via le Service `phoenix-svc`, pas via la gateway) ; la protection est la clé système (`authorization` header) + la policy réseau par défaut du cluster.
 - Single-tenant Phoenix (un foyer, un instance — le multi-tenant exigerait des instances séparées) ; projets = découpage par app, pas par orga.
 
 ## 4. Composants livrés
@@ -74,7 +74,7 @@ Points clés :
 Dans `kubernetes/apps/ai/litellm/app/` (config litellm) :
 
 - `success_callback: ["otel"]` (+ `failure_callback` pour capturer aussi les échecs) ;
-- `OTEL_EXPORTER_OTLP_ENDPOINT=http://phoenix.observability:4318` ;
+- `OTEL_EXPORTER_OTLP_ENDPOINT=http://phoenix-svc.observability:6006` ;
 - headers d'auth via `OTEL_EXPORTER_OTLP_HEADERS` (clé système Phoenix) ;
 - le span porte l'identité de l'appelant (clés virtuelles existantes : `litellm-key-mainclaw`, `litellm-key-hermes`, `litellm-key-opencode`, …) → segmentation par agent côté Phoenix (project ou metadata selon mécanique confirmée au §6).
 

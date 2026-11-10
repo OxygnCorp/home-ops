@@ -4,7 +4,7 @@
 
 **Goal:** Déployer Arize Phoenix self-hosted (OSS) comme backend de traces LLM/agents + activer l'export OTel de litellm/mainclaw/devclaw/n8n + boucle d'évals LLM-as-judge nightly, selon la spec `docs/superpowers/specs/2026-11-10-phoenix-observability-design.md`.
 
-**Architecture:** Phoenix (chart Helm officiel OCI, 1 replica) dans `kubernetes/apps/observability/phoenix`, avec Postgres CNPG via le composant `postgres`, auth app (clé système pour l'ingestion OTLP, Secret `phoenix-secret` pré-existant via external-secrets), UI derrière `envoy-internal` + SSO Kanidm (composant `oidc-kanidm/envoy`). Les apps exportent en OTLP/HTTP direct vers `http://phoenix.observability:4318` (pas de collector — dette documentée §9 de la spec). Un CronJob `phoenix-evals` note les traces nightly via litellm et alimente datasets/annotations Phoenix.
+**Architecture:** Phoenix (chart Helm officiel OCI, 1 replica) dans `kubernetes/apps/observability/phoenix`, avec Postgres CNPG via le composant `postgres`, auth app (clé système pour l'ingestion OTLP, Secret `phoenix-secret` pré-existant via external-secrets), UI derrière `envoy-internal` + SSO Kanidm (composant `oidc-kanidm/envoy`). Les apps exportent en OTLP/HTTP direct vers `http://phoenix-svc.observability:6006/v1/traces` (port principal du Service `phoenix-svc`, même port que l'UI ; pas de collector — dette documentée §9 de la spec). Un CronJob `phoenix-evals` note les traces nightly via litellm et alimente datasets/annotations Phoenix.
 
 **Tech Stack:** Flux (Kustomization/HelmRelease/OCIRepository), chart `phoenix-helm` v13.0.0 (appVersion 21.0.0), CloudNativePG, external-secrets + 1Password, Envoy Gateway SecurityPolicy OIDC, litellm OTel callback, openclaw plugin `diagnostics-otel`, n8n OTEL env vars, Python stdlib (CronJob).
 
@@ -18,7 +18,7 @@
   - `PHOENIX_DEFAULT_ADMIN_INITIAL_PASSWORD` (généré, 12+ caractères, upper/lower/digit/special — strong password policy)
   - `PHOENIX_SYSTEM_API_KEY` (créé post-déploiement en Task 1, step 16)
 - **Chart** : OCI officiel `oci://registry-1.docker.io/arizephoenix/phoenix-helm` pin **par tag** (13.0.0 au moment de l'écriture ; les charts OCI sont exempt de la policy digest). Valeurs vérifiées contre `helm/values.yaml` upstream (main, version 13.0.0) : `replicaCount`, `postgresql.enabled` (groundhog2k — à **désactiver**, on branche CNPG), `persistence.enabled:false` (sqlite — à désactiver), `database.defaultRetentionPolicyDays`, `database.postgres.{db,host,port,user}`, `auth.secret[].valueFrom`, `auth.createSecret`, `server.enablePrometheus`, `service.type`, `additionalEnv` (supporte `valueFrom: secretKeyRef`), `image.{registry,repository,tag}` (tag défaut `version-21.0.0-nonroot`).
-- **Ports Phoenix** : UI/API 6006, OTLP/HTTP 4318, OTLP/gRPC 4317. Ingestion = `http://phoenix.observability:4318` (cluster-internal, **pas** d'HTTPRoute sur 4318). Header ingestion : `authorization: Bearer <PHOENIX_SYSTEM_API_KEY>` (lowercase exigé par Phoenix).
+- **Ports Phoenix** : UI/API + OTLP/HTTP 6006 (port principal, chemin `/v1/traces`), OTLP/gRPC 4317. Ingestion = `http://phoenix-svc.observability:6006/v1/traces` (cluster-internal via le Service `phoenix-svc`, **pas** via la gateway/HTTPRoute). Header ingestion : `authorization: Bearer <PHOENIX_SYSTEM_API_KEY>` (lowercase exigé par Phoenix).
 - **Rétention** : spans/trace-data 90 jours (`database.defaultRetentionPolicyDays: 90`). Datasets/annotations/experimentations : non purgés.
 - **Images container** : pin par `@sha256:` digest (policy repo). La digest python pour le CronJob est à relever à l'implémentation (step dédié). Le tag d'image Phoenix est porté par le chart OCI (exempt).
 - **Domaine** : `phoenix.oxygn.dev`, OIDC Kanidm client `phoenix` (`kanidm-phoenix-oidc`), HTTPRoute name `phoenix` (cible `OIDC_ROUTE_NAME`).
@@ -55,7 +55,7 @@
 - 1Password (manuel) : item `phoenix` (API Credential) avec `PHOENIX_SECRET` + `PHOENIX_DEFAULT_ADMIN_INITIAL_PASSWORD`.
 
 **Interfaces:**
-- Produces: Service `phoenix-server` (UI/API 6006, à confirmer par render — chaque step référence le nom réel après vérification), Service OTLP ports 4318/4317, Secret `phoenix-secret` (keys `PHOENIX_SECRET`, `PHOENIX_DEFAULT_ADMIN_INITIAL_PASSWORD`), Secret `phoenix-otel` (key `PHOENIX_SYSTEM_API_KEY`), CNPG Cluster `phoenix` + Secret `phoenix-app` (composant postgres), HTTPRoute `phoenix`, item 1Password `phoenix` dont le champ `PHOENIX_SYSTEM_API_KEY` est consommé par Tasks 2-4.
+- Produces: Service `phoenix-svc` (UI/API + OTLP/HTTP 6006, nom confirmé par render — le chart nomme le Service "<release>-svc"), ports OTLP HTTP 6006 (`/v1/traces`) / gRPC 4317, Secret `phoenix-secret` (keys `PHOENIX_SECRET`, `PHOENIX_DEFAULT_ADMIN_INITIAL_PASSWORD`), Secret `phoenix-otel` (key `PHOENIX_SYSTEM_API_KEY`), CNPG Cluster `phoenix` + Secret `phoenix-app` (composant postgres), HTTPRoute `phoenix`, item 1Password `phoenix` dont le champ `PHOENIX_SYSTEM_API_KEY` est consommé par Tasks 2-4.
 - Consumes: composants `postgres`, `oidc-kanidm/envoy`, `alerts` (inclus au niveau ns), ClusterSecretStore `onepassword`.
 
 - [ ] **Step 1: Créer l'item 1Password `phoenix`**
@@ -244,9 +244,9 @@ spec:
     - phoenix.oxygn.dev
   rules:
     - backendRefs:
-        # Nom du Service du chart = "<release>-server"? CONFIRMÉ à l'étape
-        # render (Step 8) — ajuster ici si le real name diffère.
-        - name: phoenix-server
+        # Nom du Service du chart = "<release>-svc", confirmé par render
+        # (Step 8) — le Service expose UI/API + OTLP HTTP sur 6006, gRPC sur 4317.
+        - name: phoenix-svc
           kind: Service
           port: 6006
 ```
@@ -303,7 +303,7 @@ mise exec -- helm template phoenix oci://registry-1.docker.io/arizephoenix/phoen
 (puis inspecter les secrets/env via les `auth.secret.valueFrom` — la `-f <values yaml>` : voir alternative, extraire les 3 valueFrom manuellement — si le template exige un Secret logique in-chart plutôt que les valueFrom deploy env directement, **ajuster le helmrelease**.)
 
 Vérifier :
-1. Le **nom du Service server** (`grep -A3 "kind: Service"` → attendu `phoenix-server`) → corriger `httproute.yaml` si nécessaire.
+1. Le **nom du Service server** (`grep -A3 "kind: Service"` → attendu `phoenix-svc` — confirmé par render : le chart nomme le Service "<release>-svc") → corriger `httproute.yaml` si nécessaire.
 2. Les env du deployment (grep `PHOENIX_`) : `PHOENIX_POSTGRES_HOST`/`DB`/`USER`/`PORT` présents, aucune `PHOENIX_SQL_DATABASE_URL` en double, les env `PHOENIX_SECRET`, `PHOENIX_DEFAULT_ADMIN_INITIAL_PASSWORD`, `PHOENIX_POSTGRES_PASSWORD` référencent bien `secretKeyRef` vers `phoenix-secret`/`phoenix-app`.
 3. Les 2 secrets manquants à la création (phoenix-secret via ExternalSecret, phoenix-app via CNPG) → si le template reference une Auth secret autre nom, aligner.
 
@@ -382,10 +382,10 @@ resources:
 ```
 
 - [ ] **Step 11: `app/README.md`** — en regard de `litellm/app/README.md`. Contenu attendu (rédiger en anglais, style concis du repo) :
-  1. Qu'est-ce que phoenix backend (traces LLM/agents), ingestion OTLP cluster-internal 4318/4317 protégée par clé système (header `authorization`), **hors chemin des requêtes** (exporters drop their batches if down).
+  1. Qu'est-ce que phoenix backend (traces LLM/agents), ingestion OTLP cluster-internal 6006 (http, `/v1/traces`) / 4317 (grpc) protégée par clé système (header `authorization`), **hors chemin des requêtes** (exporters drop their batches if down).
   2. Credentials : 1Password item `phoenix` (`PHOENIX_SECRET`, `PHOENIX_DEFAULT_ADMIN_INITIAL_PASSWORD`, `PHOENIX_SYSTEM_API_KEY`), description de chaque ExternalSecret (`phoenix-secret` deploy env, `phoenix-otel` ingestion).
   3. Postgres : constitué par le composant `postgres` — CNPG Cluster `phoenix` (initdb, label `cnpg: init` à retirer après le 1er backup Barman, cf. README composant), retention spans 90j (`defaultRetentionPolicyDays`), datasets/annotations non purgés.
-  4. Où noter les endpoints : UI `https://phoenix.oxygn.dev` (OIDC Envoy, kanidm client `phoenix`), ingestion `http://phoenix.observability:4318` (http) / 4317 (grpc). Comment ajouter un project côté exporter (`OTEL_RESOURCE_ATTRIBUTES=openinference.project.name=<app>`), comment la segmentation litellm prefère par key alias est documentée dans Task 2.
+  4. Où noter les endpoints : UI `https://phoenix.oxygn.dev` (OIDC Envoy, kanidm client `phoenix`), ingestion `http://phoenix-svc.observability:6006/v1/traces` (http) / 4317 (grpc). Comment ajouter un project côté exporter (`OTEL_RESOURCE_ATTRIBUTES=openinference.project.name=<app>`), comment la segmentation litellm prefère par key alias est documentée dans Task 2.
   5. Les 3 évolutions suivantes restent hors MVP : OTel Collector central (spec §9), instrumentation app-level pour les apps non-MVP (spec §4.3), dashboards Grafana corrélant litellm ↔ Phoenix (spec §9).
   6. Auth applicative Phoenix (`PHOENIX_OAUTH2_*`, auth.oauth2 du chart) : ** volontairement non activée** — l'Envoy SecurityPolicy couvre l'UI ; reactiver seulement si (a) utile et (b) support Kanidm confirmé (spec §6).
 
@@ -448,8 +448,8 @@ provider = TracerProvider(resource=Resource.create({
     "openinference.project.name": "smoke",
 }))
 provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter(
-    # Phoenix expose l'OTLP HTTP standard sur /v1/traces (port 4318)
-    endpoint="http://phoenix.observability:4318/v1/traces")))
+    # Phoenix expose l'OTLP HTTP standard sur /v1/traces (port 6006, même port que l'UI)
+    endpoint="http://phoenix-svc.observability:6006/v1/traces")))
 with trace.get_tracer("smoke-otlp").start_as_current_span("smoke/hello"):
     pass
 provider.shutdown()
@@ -462,7 +462,7 @@ Vérifier aussi l'**ingestion refusée sans clé** :
 ```bash
 kubectl run -n observability smoke-otlp-noauth --rm -i --restart=Never \
   --image=docker.io/library/python:3.13 -- bash -c 'curl -s -o /dev/null -w "%{http_code}\n" \
-  -X POST http://phoenix.observability:4318/v1/traces -H "content-type: application/x-protobuf" \
+  -X POST http://phoenix-svc.observability:6006/v1/traces -H "content-type: application/x-protobuf" \
   --data-binary @/dev/null'
 # attendu: 401/403 (pas 200)
 ```
@@ -497,7 +497,7 @@ git -C /home/opencode/projects/home-ops-phoenix-observability grep -n "cnpg: ini
 - Create: `kubernetes/apps/observability/phoenix/app/README.md` — append "Day-1 wiring: litellm exports OTLP → Phoenix" (optionnel, cohérence cross-app)
 
 **Interfaces:**
-- Consumes: Service `phoenix.observability:4318` + Secret `phoenix-otel` (Task 1), item 1Password `phoenix`.
+- Consumes: Service `phoenix-svc.observability:6006` + Secret `phoenix-otel` (Task 1), item 1Password `phoenix`.
 - Produces: spans litellm OTLP/HTTP visibles dans Phoenix projet défaut (litellm), callback ajouté au CR existant sans autre mod.
 
 - [ ] **Step 1: Modifier `litellmproxy.yaml` — callbacks**
@@ -533,7 +533,7 @@ Dans `spec.litellmSettings`. (Extraits avec le contexte clé, à insérer dans l
     - name: OTEL_EXPORTER_OTLP_PROTOCOL
       value: http/protobuf
     - name: OTEL_EXPORTER_OTLP_ENDPOINT
-      value: http://phoenix.observability:4318
+      value: http://phoenix-svc.observability:6006
     - name: OTEL_EXPORTER_OTLP_HEADERS
       valueFrom:
         secretKeyRef:
@@ -579,7 +579,7 @@ gh pr create --fill
 - Modify: `kubernetes/apps/ai/n8n/app/externalsecret.yaml` (append doc `phoenix-otel`)
 
 **Interfaces:**
-- Consumes: Service `phoenix.observability:4318`, Secret `phoenix-otel` (Task 1 pattern, recopié dans le namespace `ai` via l'ExternalSecret doc `phoenix-otel`), plugin openclaw `diagnostics-otel`.
+- Consumes: Service `phoenix-svc.observability:6006`, Secret `phoenix-otel` (Task 1 pattern, recopié dans le namespace `ai` via l'ExternalSecret doc `phoenix-otel`), plugin openclaw `diagnostics-otel`.
 - Produces: traces agent-level mainclaw + devclaw (tool calls, sessions) + traces n8n workflows dans Phoenix (projets `mainclaw`/`devclaw`/`n8n`), en complément des traces LLM litellm (Task 2).
 
 - [ ] **Step 1: doc plugin openclaw (vérifier la shape exacte à l'écriture)**
@@ -593,7 +593,7 @@ Dans les deux fichiers `resources/openclaw.json` : ajouter `diagnostics-otel` da
       "diagnostics-otel": {
         "enabled": true,
         "config": {
-          "endpoint": "http://phoenix.observability:4318",
+          "endpoint": "http://phoenix-svc.observability:6006",
           "protocol": "http"
         }
       },
@@ -607,7 +607,7 @@ Dans les deux fichiers `resources/openclaw.json` : ajouter `diagnostics-otel` da
               # ... (env existantes conservées) ...
               # Phoenix OTLP ingestion (app kubernetes/apps/observability/phoenix)
               OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
-              OTEL_EXPORTER_OTLP_ENDPOINT: http://phoenix.observability:4318
+              OTEL_EXPORTER_OTLP_ENDPOINT: http://phoenix-svc.observability:6006
               # Routing Phoenix: projet `mainclaw` via l'attribut openinference
               OTEL_RESOURCE_ATTRIBUTES: openinference.project.name=mainclaw
               OTEL_EXPORTER_OTLP_HEADERS:
@@ -625,7 +625,7 @@ Dans les deux fichiers `resources/openclaw.json` : ajouter `diagnostics-otel` da
 ```yaml
               # Phoenix OTLP ingestion (app kubernetes/apps/observability/phoenix)
               OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
-              OTEL_EXPORTER_OTLP_ENDPOINT: http://phoenix.observability:4318
+              OTEL_EXPORTER_OTLP_ENDPOINT: http://phoenix-svc.observability:6006
               # Routing Phoenix: projet `devclaw` via l'attribut openinference
               OTEL_RESOURCE_ATTRIBUTES: openinference.project.name=devclaw
               OTEL_EXPORTER_OTLP_HEADERS:
@@ -643,7 +643,7 @@ Dans les deux fichiers `resources/openclaw.json` : ajouter `diagnostics-otel` da
 ```yaml
               # Phoenix OTLP ingestion (kubernetes/apps/observability/phoenix)
               OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
-              OTEL_EXPORTER_OTLP_ENDPOINT: http://phoenix.observability:4318
+              OTEL_EXPORTER_OTLP_ENDPOINT: http://phoenix-svc.observability:6006
               OTEL_RESOURCE_ATTRIBUTES: openinference.project.name=n8n
               OTEL_EXPORTER_OTLP_HEADERS:
                 valueFrom:
@@ -788,7 +788,7 @@ import sys
 import urllib.error
 import urllib.request
 
-PHOENIX = os.environ["PHOENIX_BASE_URL"].rstrip("/")          # http://phoenix.observability:6006
+PHOENIX = os.environ["PHOENIX_BASE_URL"].rstrip("/")          # http://phoenix-svc.observability:6006
 PHX_API_KEY = os.environ["PHOENIX_SYSTEM_API_KEY"]
 LITELLM_BASE = os.environ["LITELLM_BASE_URL"].rstrip("/")    # http://litellm.ai.svc.cluster.local:4000
 LITELLM_KEY = os.environ["LITELLM_API_KEY"]
@@ -909,7 +909,7 @@ spec:
                 - name: TZ
                   value: Europe/Paris
                 - name: PHOENIX_BASE_URL
-                  value: http://phoenix.observability:6006
+                  value: http://phoenix-svc.observability:6006
                 - name: LITELLM_BASE_URL
                   value: http://litellm.ai.svc.cluster.local:4000
                 - name: PHI_PRETTY
