@@ -49,6 +49,20 @@ OTEL_RESOURCE_ATTRIBUTES: openinference.project.name=<app>
 
 litellm's per-key-alias project segmentation is documented in Task 2.
 
+## Day-1 wiring: litellm exports OTLP → Phoenix
+
+litellm ships instrumented from day one (Task 2):
+`kubernetes/apps/ai/litellm/app/litellmproxy.yaml` adds the native
+`otel` callback to `litellmSettings.success_callback`/`failure_callback`
+and the `OTEL_EXPORTER_OTLP_*` env vars from the recipe above; the auth
+header comes from litellm's own copy of the `phoenix-otel` ExternalSecret
+(`kubernetes/apps/ai/litellm/app/externalsecret.yaml`). Spans land in the
+default project (dedicated `litellm` project rejected as MVP). The exact
+span attribute carrying the litellm virtual-key alias — the per-agent
+segmentation basis for evals (Task 4 / spec §4.2/§6) — is to be captured
+from a span in the Phoenix UI during the deferred post-merge smoke test
+and recorded here.
+
 ## Out of MVP scope
 
 - central OTel Collector (spec §9)
