@@ -85,6 +85,9 @@ def judge(span):
     except (KeyError, TypeError, IndexError) as e:
         print(f"judge response shape error ({e}); skipping span", file=sys.stderr)
         return None, None
+    if not isinstance(content, str):
+        print("judge returned non-string content; skipping span", file=sys.stderr)
+        return None, None
     # Strip markdown fences if present.
     text = content.strip()
     if text.startswith("```"):
@@ -202,7 +205,7 @@ def main():
             "inputs": inputs,
             "outputs": outputs,
             "metadata": metadata,
-            "span_ids": span_ids_fail,
+            "span_ids": [sid for sid in span_ids_fail if sid],
         }
         req("POST", f"{PHOENIX}/v1/datasets/upload?sync=true", PHX_API_KEY, body)
 
