@@ -12,3 +12,4 @@ resources:
   - ./memini.yaml
   - ./lightrag.yaml
   - ./repo-wiki.yaml
+  - ./phoenix-evals.yaml

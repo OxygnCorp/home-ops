@@ -1,0 +1,77 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/batch/v1/cronjob.json
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: phoenix-evals
+spec:
+  # Nightly 03:02 Europe/Paris — après le pic d'usage des agents soir.
+  schedule: "2 3 * * *"
+  timeZone: Europe/Paris
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: app
+              # renovate: image=docker.io/library/python tag=3.13
+              image: docker.io/library/python:3.13@sha256:ecbe213fb818d557fd19db4078244339e2e2e52874f9c81052d3094ea114d797
+              command: ["python3", "/config/evals.py"]
+              env:
+                - name: TZ
+                  value: Europe/Paris
+                - name: PYTHONDONTWRITEBYTECODE
+                  value: "1"
+                - name: PHOENIX_BASE_URL
+                  value: http://phoenix-svc.observability:6006
+                - name: LITELLM_BASE_URL
+                  value: http://litellm.ai.svc.cluster.local:4000
+                - name: PHOENIX_EVALS_JUDGE_MODEL
+                  value: dsv41f
+                - name: PHOENIX_EVALS_PROJECT
+                  value: default
+                - name: PHOENIX_EVALS_DATASET
+                  value: phoenix-evals-failures
+                - name: PHOENIX_EVALS_MAX_SPANS
+                  value: "50"
+                - name: PHOENIX_EVALS_THRESHOLD
+                  value: "0.5"
+                - name: PHOENIX_SYSTEM_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: phoenix-evals
+                      key: PHOENIX_SYSTEM_API_KEY
+                - name: LITELLM_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: phoenix-evals
+                      key: LITELLM_API_KEY
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 64Mi
+                limits:
+                  memory: 256Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop:
+                    - ALL
+              volumeMounts:
+                - name: config
+                  mountPath: /config
+                  readOnly: true
+                - name: tmp
+                  mountPath: /tmp
+          volumes:
+            - name: config
+              configMap:
+                name: phoenix-evals-config
+            - name: tmp
+              emptyDir: {}
