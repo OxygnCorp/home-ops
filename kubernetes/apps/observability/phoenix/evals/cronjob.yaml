@@ -20,7 +20,7 @@ spec:
           containers:
             - name: app
               # renovate: image=docker.io/library/python tag=3.13
-              image: docker.io/library/python:3.13@sha256:ecbe213fb818d557fd19db4078244339e2e2e52874f9c81052d3094ea114d797
+              image: docker.io/library/python:3.15@sha256:8c9a3bf2d6dea60d60a2ae2a07c2b2fb1e7d8daed64b146b6792c74ae0d62ac4
               command: ["python3", "/config/evals.py"]
               env:
                 - name: TZ
