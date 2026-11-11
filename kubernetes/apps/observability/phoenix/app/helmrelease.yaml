@@ -66,6 +66,15 @@ spec:
       # future ServiceMonitor; MVP: PrometheusRule "deployment down" via
       # kube-state-metrics only.
       enablePrometheus: true
+    healthChecks:
+      # Cold start (unpack of the ~330 MB image + schema migrations on a
+      # fresh CNPG database) takes well over the chart's 30 s startup-probe
+      # budget (periodSeconds 1 × failureThreshold 30); kubelet then SIGKILLs
+      # the container (exit 137). Give the startup probe a 5-minute budget.
+      startupProbe:
+        enabled: true
+        periodSeconds: 5
+        failureThreshold: 60
     service:
       # Chart default NodePort → ClusterIP (cluster-internal ingestion, UI
       # behind envoy-internal). helm template confirms the Service is named
