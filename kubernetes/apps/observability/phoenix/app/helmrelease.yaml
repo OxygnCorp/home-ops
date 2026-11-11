@@ -1,0 +1,84 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: &app phoenix
+spec:
+  dependsOn: []
+  # ^ Empty on purpose: the postgres component patches its cloudnative-pg
+  # dependency in here (see kubernetes/apps/ai/lightrag for the pattern).
+  chartRef:
+    kind: OCIRepository
+    name: *app
+  interval: 1h
+  values:
+    replicaCount: 1
+    # Chart persistence strategy 3 (external DB): no in-chart groundhog2k
+    # postgres and no SQLite. Data lives in the CNPG Cluster `phoenix`
+    # provisioned by the postgres component.
+    postgresql:
+      enabled: false
+    persistence:
+      enabled: false
+    # No chart-rendered Ingress: the UI is exposed through Envoy Gateway
+    # (httproute.yaml below); the chart default is enabled=true.
+    ingress:
+      enabled: false
+    database:
+      # Automatic 90-day trace purge (spans + trace data). Datasets,
+      # annotations and experiments are not covered by the purge.
+      defaultRetentionPolicyDays: 90
+      postgres:
+        db: phoenix
+        host: phoenix-rw
+        port: 5432
+        user: phoenix
+    auth:
+      enableAuth: true
+      enableStrongPasswordPolicy: true
+      # Secure cookies: the UI is served through envoy-internal with TLS
+      # terminated at Envoy.
+      useSecureCookies: true
+      # Pre-existing secrets provided by external-secrets (repo policy: no
+      # chart-generated secret, everything comes from 1Password). The chart
+      # `auth.name` default (phoenix-secret) matches the ExternalSecret
+      # target below.
+      createSecret: false
+      secret:
+        - key: PHOENIX_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: phoenix-secret
+              key: PHOENIX_SECRET
+        - key: PHOENIX_DEFAULT_ADMIN_INITIAL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: phoenix-secret
+              key: PHOENIX_DEFAULT_ADMIN_INITIAL_PASSWORD
+        - key: PHOENIX_POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: phoenix-app
+              key: password
+    server:
+      # Prometheus /metrics on :9090 (PHOENIX_ENABLE_PROMETHEUS) for a
+      # future ServiceMonitor; MVP: PrometheusRule "deployment down" via
+      # kube-state-metrics only.
+      enablePrometheus: true
+    service:
+      # Chart default NodePort → ClusterIP (cluster-internal ingestion, UI
+      # behind envoy-internal). helm template confirms the Service is named
+      # `phoenix-svc` with ports 6006 (UI + OTLP HTTP), 4317 (OTLP gRPC)
+      # and 9090 (metrics) — there is no 4318.
+      type: ClusterIP
+    additionalEnv:
+      - name: TZ
+        value: Europe/Paris
+    resources:
+      requests:
+        cpu: 100m
+        memory: 512Mi
+      limits:
+        cpu: 1
+        memory: 2Gi

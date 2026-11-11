@@ -618,6 +618,7 @@
     "allow": [
       "brave",
       "browser",
+      "diagnostics-otel",
       "discord",
       "file-transfer",
       "litellm",
@@ -631,6 +632,9 @@
         "enabled": true
       },
       "browser": {
+        "enabled": true
+      },
+      "diagnostics-otel": {
         "enabled": true
       },
       "litellm": {
@@ -928,6 +932,12 @@
   "browser": {
     "extensionRelay": {
       "allowLegacyAuth": false
+    }
+  },
+  "diagnostics": {
+    "enabled": true,
+    "otel": {
+      "enabled": true
     }
   },
   "meta": {

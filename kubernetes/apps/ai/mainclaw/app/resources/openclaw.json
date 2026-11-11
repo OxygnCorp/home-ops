@@ -1256,6 +1256,7 @@
       "brave",
       "browser",
       "device-pair",
+      "diagnostics-otel",
       "discord",
       "document-extract",
       "litellm",
@@ -1269,6 +1270,9 @@
       "browser": {
         "enabled": true,
         "config": {}
+      },
+      "diagnostics-otel": {
+        "enabled": true
       },
       "brave": {
         "enabled": true
@@ -1614,6 +1618,12 @@
   },
   "talk": {
     "agentId": "main"
+  },
+  "diagnostics": {
+    "enabled": true,
+    "otel": {
+      "enabled": true
+    }
   },
   "meta": {
     "migrations": {

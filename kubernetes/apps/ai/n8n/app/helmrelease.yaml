@@ -46,6 +46,17 @@ spec:
                   secretKeyRef:
                     name: *app
                     key: N8N_ENCRYPTION_KEY
+              # Phoenix OTLP ingestion (kubernetes/apps/observability/phoenix)
+              N8N_OTEL_ENABLED: "true"
+              N8N_OTEL_EXPORTER_OTLP_ENDPOINT: http://phoenix-svc.observability:6006
+              N8N_OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+              N8N_OTEL_EXPORTER_OTLP_HEADERS:
+                valueFrom:
+                  secretKeyRef:
+                    name: phoenix-otel
+                    key: OTEL_EXPORTER_OTLP_HEADERS
+              N8N_OTEL_EXPORTER_SERVICE_NAME: n8n
+              OTEL_RESOURCE_ATTRIBUTES: openinference.project.name=n8n
               DB_TYPE: postgresdb
               DB_POSTGRESDB_HOST: n8n-rw.ai.svc
               DB_POSTGRESDB_PORT: "5432"
