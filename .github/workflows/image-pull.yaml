@@ -70,8 +70,24 @@ jobs:
       - name: Extract Images
         id: extract
         run: |
+          # The cloudflare-tunnel Kustomization substitutes from the Secret
+          # `network/cloudflare-tunnel-id-secret`, which intentionally lives
+          # only in the cluster (never in Git). flate >= 0.7 fails hard on
+          # missing substituteFrom sources, breaking every PR that adds a new
+          # Flux Kustomization — even ones unrelated to that app. Supplying a
+          # stub (value is not used for image extraction) keeps the diff green.
+          cat <<'YAML' > /tmp/cloudflare-tunnel-id-stub.yaml
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: cloudflare-tunnel-id-secret
+            namespace: network
+          type: Opaque
+          data:
+            CLOUDFLARE_TUNNEL_ID: REVNTw==
+          YAML
           echo 'images<<EOF' >> $GITHUB_OUTPUT
-          flate diff images -p ./kubernetes/flux/cluster -o json >> $GITHUB_OUTPUT
+          flate diff images -p ./kubernetes/flux/cluster -o json --supply /tmp/cloudflare-tunnel-id-stub.yaml >> $GITHUB_OUTPUT
           echo 'EOF' >> $GITHUB_OUTPUT
 
   pull:
