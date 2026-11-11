@@ -8,10 +8,10 @@ components:
 
 resources:
   - ./namespace.yaml
+  - ./arc-control/ks.yaml
   - ./blackbox-exporter/ks.yaml
   - ./gatus-sidecar/ks.yaml
   - ./grafana/ks.yaml
-  - ./kromgo/ks.yaml
   - ./kube-prometheus-stack/ks.yaml
   - ./opencost/ks.yaml
   - ./prometheus-adapter/ks.yaml

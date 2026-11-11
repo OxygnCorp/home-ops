@@ -25,7 +25,7 @@ spec:
       APP: *app
       APP_NAMESPACE: ai
       DOMAIN: oxygn.dev
-      KOPIUR_CAPACITY: 5Gi
+      KOPIUR_CAPACITY: 10Gi
       OIDC_CALLBACK: /oauth2/callback
       OIDC_DISPLAY_NAME: OpenCode
       OIDC_ROUTE_NAME: opencode

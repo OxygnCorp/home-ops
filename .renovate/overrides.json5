@@ -25,5 +25,11 @@
       matchPackageNames: ["ghcr.io/ggml-org/llama.cpp"],
       schedule: ["before 6am on monday"],
     },
+    {
+      description: "SearxNG Uses Rolling date+commit Tags (Unique Hash Suffix Per Build, Default Docker Versioning Never Matches The Suffix)",
+      matchDatasources: ["docker"],
+      matchPackageNames: ["docker.io/searxng/searxng"],
+      versioning: "loose",
+    },
   ],
 }

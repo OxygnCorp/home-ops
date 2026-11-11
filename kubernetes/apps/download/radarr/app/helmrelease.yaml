@@ -20,7 +20,7 @@ spec:
           kopiaignore:
             image:
               repository: mirror.gcr.io/alpine
-              tag: 3.24@sha256:be2656061b536c1883c4034790e21d0a09c5aaaf51968b89368a3c0371ea2c9a
+              tag: 3.24@sha256:f59abe656b692d901e184be3445e084786602108599d2a51d229c0f5a48c71bf
             command: ["/bin/sh", "-c"]
             args:
               - cp /kopiaignore/.kopiaignore /config/.kopiaignore
@@ -32,7 +32,7 @@ spec:
           app:
             image:
               repository: ghcr.io/home-operations/radarr
-              tag: 7.0.0.10815@sha256:c044b4df8e7b2546ef389481626a56fabe291575ff2d65481b1555432d6161ff
+              tag: 7.0.2.10888@sha256:69ea515df6e2a3ea1490cfa127ffaaf9597a9db84fffa2fa150a6fae98fe04cb
             env:
               RADARR__APP__INSTANCENAME: Radarr
               RADARR__APP__THEME: dark

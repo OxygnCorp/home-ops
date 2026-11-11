@@ -1,0 +1,26 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/monitoring.coreos.com/scrapeconfig_v1alpha1.json
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: ScrapeConfig
+metadata:
+  name: arc-control
+spec:
+  scheme: https
+  metricsPath: /webman/3rdparty/arc-control/scripts/api.cgi
+  params:
+    format: ["prometheus"]
+  scrapeInterval: 1m
+  scrapeTimeout: 30s
+  authorization:
+    type: Bearer
+    credentials:
+      name: arc-control-secret
+      key: token
+  tlsConfig:
+    insecureSkipVerify: true
+  relabelings:
+    - targetLabel: instance
+      replacement: synology-nas # Stable label, bounces with IP otherwise.
+  staticConfigs:
+    - targets:
+        - funkstation.internal:5001 # Synology NAS.

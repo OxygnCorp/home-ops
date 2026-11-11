@@ -5,11 +5,12 @@ kind: Kustomization
 resources:
   - ./mainclaw.yaml
   - ./devclaw.yaml
-  - ./foreman.yaml
   - ./hermes.yaml
   - ./opencode.yaml
   - ./pr-review.yaml
   - ./memini.yaml
   - ./lightrag.yaml
+  - ./radar.yaml
   - ./repo-wiki.yaml
+  - ./mealie.yaml
   - ./phoenix-evals.yaml

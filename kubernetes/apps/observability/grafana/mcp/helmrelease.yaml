@@ -20,7 +20,7 @@ spec:
               # upstream image (Docker catalog's mcp/grafana lacks --allowed-hosts);
               # pinned by digest per image policy, tags: 1.5.1 = stable release
               repository: docker.io/grafana/mcp-grafana
-              tag: 2.1.1@sha256:71a3f4e6f412d253611314233df709ec2571fb50e39742d23fa2940f670646dc
+              tag: 2.3.0@sha256:c27248b5919d09d64ea273ca1b128b32902c6796f6e2dfcd11849d4f1363f9ed
             args:
               - "-transport"
               - "sse"

@@ -63,7 +63,7 @@ spec:
           mise-setup:
             image: &opencode-image
               repository: ghcr.io/joryirving/opencode
-              tag: 2.2.5@sha256:355c36f0f57828546e51cda5011ebc31b03dfbf15f74594c7515b793dca04038
+              tag: 2.2.7@sha256:d3ace7e4dc9fa146b7532bc812f5d3796eb29e7fe67c92f5b4e2a0281b54181f
             command:
               - /bin/bash
               - -c

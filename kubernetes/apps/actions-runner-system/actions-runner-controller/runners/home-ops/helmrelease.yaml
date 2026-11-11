@@ -14,7 +14,7 @@ spec:
     githubConfigUrl: https://github.com/OxygnCorp/home-ops
     githubConfigSecret: home-ops-runner-secret
     minRunners: 1
-    maxRunners: 3
+    maxRunners: 5
     containerMode:
       type: kubernetes
       kubernetesModeWorkVolumeClaim:
@@ -27,6 +27,10 @@ spec:
       name: actions-runner-controller
       namespace: actions-runner-system
     template:
+      metadata:
+        # Selected by networkpolicy.yaml (CNP home-ops-runner)
+        labels:
+          runner: home-ops-runner
       spec:
         containers:
           - name: runner
@@ -44,6 +48,14 @@ spec:
                 name: talos
                 readOnly: true
         serviceAccountName: home-ops-runner
+        # Kubernetes-only runner: the SA never mounts a token, so jobs that
+        # declare `container:` / `services:` are NOT supported here — the
+        # runner's k8s job-container hook (ACTIONS_RUNNER_CONTAINER_HOOKS,
+        # still injected by the chart) has no kube credentials to auth with.
+        # Plain jobs run in the runner pod itself
+        # (ACTIONS_RUNNER_REQUIRE_JOB_CONTAINER=false); image pulls go through
+        # the mounted talosconfig, not the SA token.
+        automountServiceAccountToken: false
         securityContext:
           fsGroup: 1001
           fsGroupChangePolicy: OnRootMismatch
