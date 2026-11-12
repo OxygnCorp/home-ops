@@ -5,7 +5,7 @@ metadata:
   name: &app litellm
 spec:
   applyMode: file
-  image: ghcr.io/berriai/litellm-database:v1.106.6@sha256:7ef0e78fe00ad5ea7ea45666cc1d1f02cb7076aee69091543bf397de52db33ce
+  image: ghcr.io/berriai/litellm-database:v1.109.1@sha256:932c54440654f8f8466a85887612d95dcfb04ae2fc01257844332f4bf3b96986
   # 2 replicas: one prefers the dedicated AI worker (k8s-3, closest to the
   # GPU embedding/reranker models it routes to), the other is forced onto a
   # different node by the hostname podAntiAffinity for HA.
@@ -58,6 +58,16 @@ spec:
         secretKeyRef:
           key: uri
           name: litellm-app
+    # --- Phoenix OTLP ingestion (kubernetes/apps/observability/phoenix) ---
+    - name: OTEL_EXPORTER_OTLP_PROTOCOL
+      value: http/protobuf
+    - name: OTEL_EXPORTER_OTLP_ENDPOINT
+      value: http://phoenix-svc.observability:6006
+    - name: OTEL_EXPORTER_OTLP_HEADERS
+      valueFrom:
+        secretKeyRef:
+          key: OTEL_EXPORTER_OTLP_HEADERS
+          name: phoenix-otel
   envFrom:
     - secretRef:
         name: litellm-secret
@@ -195,8 +205,15 @@ spec:
       - hooks.session_hook.service_session_injector
     success_callback:
       - prometheus
+      # Phoenix ingestion — OTLP/HTTP direct (spec §4.2). Lossless async
+      # batching: Phoenix down ⇒ exporters retry-limit, apps not impacted
+      # (spec §7).
+      - otel
     failure_callback:
       - prometheus
+      # Also capture failed LLM calls (4xx/5xx spans) to feed the eval
+      # loop's failure datasets (Task 4 / spec §4.4).
+      - otel
     prometheus_adapter: true
     require_auth_for_metrics_endpoint: false
     cache: true

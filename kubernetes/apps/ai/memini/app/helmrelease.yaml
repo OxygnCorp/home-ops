@@ -105,6 +105,15 @@ spec:
     persistence:
       data:
         existingClaim: *app
+      # SQLite spills large sorts/result sets to a temp file. The chart sets
+      # readOnlyRootFilesystem and ships no writable /tmp, so that spill fails
+      # with "sqlite3: disk I/O error" — which is what killed the daily fsck
+      # job (it lists every memory of a namespace) and the hourly dedup sweep
+      # once the home-ops namespace passed ~900 rows.
+      tmp:
+        type: emptyDir
+        globalMounts:
+          - path: /tmp
     serviceMonitor:
       main:
         enabled: true

@@ -1,0 +1,13 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ./cronjob.yaml
+  - ./externalsecret.yaml
+configMapGenerator:
+  - name: phoenix-evals-config
+    files:
+      - evals.py=./resources/evals.py
+generatorOptions:
+  disableNameSuffixHash: true

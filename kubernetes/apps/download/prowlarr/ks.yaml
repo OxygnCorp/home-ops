@@ -11,17 +11,26 @@ spec:
   components:
     - ../../../../components/zeroscaler
     - ../../../../components/kopiur/backup
+    - ../../../../components/oidc-kanidm/envoy
   dependsOn:
     - name: kopiur
       namespace: kopiur-system
     - name: miroir-config
       namespace: miroir-system
+    - name: kanidm
+      namespace: security
   interval: 1h
   path: ./kubernetes/apps/download/prowlarr/app
   postBuild:
     substitute:
       APP: prowlarr
+      APP_NAMESPACE: download
+      DOMAIN: oxygn.dev
       KOPIUR_CAPACITY: 5Gi
+      OIDC_CALLBACK: /oauth2/callback
+      OIDC_DISPLAY_NAME: Prowlarr
+      OIDC_ROUTE_NAME: prowlarr
+      SUBDOMAIN: prowlarr
   prune: true
   sourceRef:
     kind: GitRepository

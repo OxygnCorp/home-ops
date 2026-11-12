@@ -1,0 +1,32 @@
+---
+apiVersion: litellm.home-operations.com/v1alpha1
+kind: LiteLLMVirtualKey
+metadata:
+  name: phoenix-evals
+spec:
+  proxyRef: litellm
+  keyAlias: Phoenix-Evals
+  # Pas de teamID: le juge litellm ne consomme pas d'outils MCP à jour —
+  # cf. virtualkeys/README.md (le pattern "No teamID").
+  secretName: litellm-key-phoenix-evals
+  secretKey: api-key
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/external-secrets.io/pushsecret_v1alpha1.json
+apiVersion: external-secrets.io/v1alpha1
+kind: PushSecret
+metadata:
+  name: phoenix-evals
+spec:
+  refreshInterval: 1h
+  secretStoreRefs:
+    - name: onepassword
+      kind: ClusterSecretStore
+  selector:
+    secret:
+      name: litellm-key-phoenix-evals
+  data:
+    - match:
+        secretKey: api-key
+        remoteRef:
+          remoteKey: litellm
+          property: KEY_PHOENIX_EVALS

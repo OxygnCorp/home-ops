@@ -24,7 +24,7 @@ env:
   # preceded by ": " or "=" on the line under the marker (the former inline
   # `tool_versions:` pin `talosctl 1.14.1` was never captured, hence the drift).
   # renovate: datasource=custom.talos-factory depName=siderolabs/talos
-  TALOS_VERSION: v1.14.5
+  TALOS_VERSION: v1.14.6
 
 jobs:
   extract:
@@ -40,11 +40,28 @@ jobs:
           persist-credentials: false
 
       - name: Setup Mise
-        uses: jdx/mise-action@6be3c7ed4c21d4f76b208d351d95aac273ebb76d # v5.2.4
+        uses: jdx/mise-action@b44d12e7d0d8ee7461bb893e1b1993500433185b # v5.2.7
         with:
           # renovate: datasource=github-releases depName=jdx/mise
-          version: v2026.10.21
-          cache: false
+          version: v2026.11.6
+          # Sole cache writer of this workflow (`pull` uses install: false
+          # and never saves). The explicit shared cache_key lets `pull` and
+          # this job restore the mise binary, its signed SHASUMS and the
+          # pinned tools without touching github.com, whose anonymous
+          # release downloads 504'd during the 2026-11-09 incident
+          # ("Increased timeouts due to surge in anonymous users"). The
+          # default key segments by ImageOS (ubuntu26 here vs ubuntu24 on
+          # the ARC runner) which would make the cross-job hit impossible;
+          # hardcoding the platform instead is safe: the mise release
+          # binary only requires glibc >= 2.18. With `version` pinned there
+          # is no CDN fallback, so cold runs remain exposed (the action
+          # retries each download 5x).
+          cache: true
+          # Non-blocking: cache save failures (reservation conflicts between
+          # concurrent PR runs, cache-service outage) must not fail this job.
+          cache_save_post: true
+          cache_save_retry_budget: 60s
+          cache_key: mise-pull-linux-x64-{{version}}-p{{cache_period}}
           # Only install what this job needs (version pinned in .mise/config.toml).
           # A bare `mise install` would pull every tool in .mise/config.toml and
           # fail the job on any unrelated tool breaking upstream.
@@ -53,8 +70,24 @@ jobs:
       - name: Extract Images
         id: extract
         run: |
+          # The cloudflare-tunnel Kustomization substitutes from the Secret
+          # `network/cloudflare-tunnel-id-secret`, which intentionally lives
+          # only in the cluster (never in Git). flate >= 0.7 fails hard on
+          # missing substituteFrom sources, breaking every PR that adds a new
+          # Flux Kustomization — even ones unrelated to that app. Supplying a
+          # stub (value is not used for image extraction) keeps the diff green.
+          cat <<'YAML' > /tmp/cloudflare-tunnel-id-stub.yaml
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: cloudflare-tunnel-id-secret
+            namespace: network
+          type: Opaque
+          data:
+            CLOUDFLARE_TUNNEL_ID: REVNTw==
+          YAML
           echo 'images<<EOF' >> $GITHUB_OUTPUT
-          flate diff images -p ./kubernetes/flux/cluster -o json >> $GITHUB_OUTPUT
+          flate diff images -p ./kubernetes/flux/cluster -o json --supply /tmp/cloudflare-tunnel-id-stub.yaml >> $GITHUB_OUTPUT
           echo 'EOF' >> $GITHUB_OUTPUT
 
   pull:
@@ -72,11 +105,25 @@ jobs:
       fail-fast: false
     steps:
       - name: Setup Mise
-        uses: jdx/mise-action@6be3c7ed4c21d4f76b208d351d95aac273ebb76d # v5.2.4
+        uses: jdx/mise-action@b44d12e7d0d8ee7461bb893e1b1993500433185b # v5.2.7
         with:
           # renovate: datasource=github-releases depName=jdx/mise
-          version: v2026.10.21
-          cache: false
+          version: v2026.11.6
+          # With `install: false` this job never saves the cache (mise-action
+          # only saves when install runs), so it relies on the shared key
+          # written by the `extract` job: a warm restore serves the mise
+          # binary + signed SHASUMS straight from actions/cache instead of
+          # the github.com release downloads, which 504'd for anonymous
+          # traffic during the 2026-11-09 GitHub incident. Sharing a cache
+          # across the runners (ImageOS ubuntu24 vs ubuntu26) is fine for
+          # the mise release binary (glibc >= 2.18). Cold runs (cache period
+          # rollover) are exposed — downloads are retried 5x. Note the
+          # tradeoff: a hard restore failure (cache-service outage, beyond
+          # the HTTP 429 retries) now fails this job where `cache: false`
+          # previously did not.
+          cache: true
+          cache_restore_retry_budget: 60s
+          cache_key: mise-pull-linux-x64-{{version}}-p{{cache_period}}
           # No checkout in this job: mise exec auto-installs the exact pinned
           # version from an empty directory (TALOS_VERSION env, above).
           install: false

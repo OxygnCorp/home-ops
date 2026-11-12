@@ -20,7 +20,7 @@ spec:
           kopiaignore:
             image:
               repository: mirror.gcr.io/alpine
-              tag: 3.24@sha256:be2656061b536c1883c4034790e21d0a09c5aaaf51968b89368a3c0371ea2c9a
+              tag: 3.24@sha256:f59abe656b692d901e184be3445e084786602108599d2a51d229c0f5a48c71bf
             command: ["/bin/sh", "-c"]
             args:
               - cp /kopiaignore/.kopiaignore /config/.kopiaignore
@@ -32,7 +32,7 @@ spec:
           app:
             image:
               repository: ghcr.io/home-operations/sonarr
-              tag: 5.0.0.2870@sha256:d90a762127d86cd3b7e27cc05b7acd2cf5cf33766cc8d5a5e23a0254e6a61f97
+              tag: 5.0.0.2941@sha256:93b0923dd12afd43247739e19dac59d74c52a15ea12e036b7ced264cffb42574
             env:
               SONARR__APP__INSTANCENAME: Sonarr
               SONARR__APP__THEME: dark

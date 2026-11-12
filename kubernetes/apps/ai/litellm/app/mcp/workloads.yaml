@@ -16,7 +16,7 @@ spec:
   proxyRef: litellm
   transport: http
   workload:
-    image: ghcr.io/homeassistant-ai/ha-mcp:9.0.0
+    image: ghcr.io/homeassistant-ai/ha-mcp:9.2.0
     port: 8086
     command:
       - ha-mcp-web
@@ -45,7 +45,7 @@ spec:
   proxyRef: litellm
   transport: http
   workload:
-    image: ghcr.io/sirkirby/unifi-network-mcp:0.43.1@sha256:eec0ade2b2a85e9515ed040de55bdf6fd828843338e6313cc8fc1973bbafebbf
+    image: ghcr.io/sirkirby/unifi-network-mcp:0.45.0@sha256:6455c8815669760dfef7de1b794f47a01a5b7f7b1dd8a8719fa5188204db3807
     port: 3000
     env:
       - name: UNIFI_NETWORK_HOST
@@ -72,6 +72,29 @@ spec:
         value: "false"
       - name: UNIFI_POLICY_DELETE
         value: "false"
+      # Granular override (category+action beats the global flags above).
+      # Opens ONLY networks and switch-port mutations — needed by the Puchu
+      # agent (mcp-apps virtual key) for the Mngt -> VLAN 100 migration, with
+      # UNIFI_TOOL_PERMISSION_MODE=confirm still requiring preview+confirm.
+      - name: UNIFI_POLICY_NETWORK_NETWORKS_UPDATE
+        value: "true"
+      - name: UNIFI_POLICY_NETWORK_SWITCH_UPDATE
+        value: "true"
+      # Granular override (category+action beats the global flags above).
+      # Opens ONLY firewall policy mutations — needed by the Puchu agent
+      # (mcp-apps virtual key) for the inter-VLAN segmentation (new zone
+      # "Restricted" for IOT/Cameras + allowlist rules), with
+      # UNIFI_TOOL_PERMISSION_MODE=confirm still requiring preview+confirm.
+      # DELETE is needed for rule cleanup: dead/duplicate segmentation rules
+      # (e.g. rules created after a BLOCK that are never reached, replaced
+      # CLIENT-MAC targeting) cannot be retired otherwise, and reorder via
+      # the API needs cleanup of superseded rules — not just disable.
+      - name: UNIFI_POLICY_NETWORK_FIREWALL_POLICIES_CREATE
+        value: "true"
+      - name: UNIFI_POLICY_NETWORK_FIREWALL_POLICIES_UPDATE
+        value: "true"
+      - name: UNIFI_POLICY_NETWORK_FIREWALL_POLICIES_DELETE
+        value: "true"
       - name: UNIFI_TOOL_PERMISSION_MODE
         value: confirm
       - name: UNIFI_NETWORK_USERNAME

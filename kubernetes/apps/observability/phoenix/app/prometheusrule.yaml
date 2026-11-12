@@ -1,0 +1,29 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/monitoring.coreos.com/prometheusrule_v1.json
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: phoenix
+spec:
+  groups:
+    - name: phoenix.rules
+      rules:
+        - alert: PhoenixDeploymentUnavailable
+          expr: |-
+            kube_deployment_status_replicas_available{namespace="observability", deployment=~"phoenix.*"} == 0
+          for: 15m
+          annotations:
+            summary: Phoenix deployment has no available replica (UI + OTLP ingestion down, exporters drop batches)
+          labels:
+            severity: warning
+        - alert: PhoenixEvalsJobFailed
+          # The nightly CronJob tolerates an occasional failure; more than
+          # two in 24h means the improvement loop is stalled (traces stay
+          # available, they wait for the next nightly run).
+          expr: |-
+            increase(kube_job_status_failed{namespace="observability", job_name=~"phoenix-evals-.*"}[24h]) > 2
+          for: 15m
+          annotations:
+            summary: phoenix-evals job failed more than twice in 24h — eval loop stalled
+          labels:
+            severity: warning

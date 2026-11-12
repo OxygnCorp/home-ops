@@ -13,4 +13,3 @@ resources:
   - ./omni-tools/ks.yaml
   - ./repo-wiki/ks.yaml
   - ./stirling-pdf/ks.yaml
-  - ./webhook/ks.yaml

@@ -95,23 +95,12 @@
       group: {
         commitMessageTopic: "{{{groupName}}} group",
       },
-      minimumGroupSize: 2,
     },
     {
       description: "Servarr Stack Group",
       groupName: "servarr",
       matchDatasources: ["docker"],
       matchPackageNames: ["/sonarr", "/prowlarr", "/radarr"],
-      group: {
-        commitMessageTopic: "{{{groupName}}} group",
-      },
-      minimumGroupSize: 2,
-    },
-    {
-      description: "LLMKube Group",
-      groupName: "llmkube",
-      matchDatasources: ["docker"],
-      matchPackageNames: ["/charts/foreman$", "/charts/llmkube$", "/llmkube-coder$"],
       group: {
         commitMessageTopic: "{{{groupName}}} group",
       },

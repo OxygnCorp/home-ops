@@ -9,7 +9,16 @@ spec:
   chart:
     spec:
       chart: radar
-      version: 1.19.0
+      # Upstream chart image (ghcr.io/skyhook-io/radar, tag defaults to the
+      # chart appVersion). NOTE: Renovate does NOT bump this chart
+      # automatically — the HelmRepository is a classic URL (not OCI) and
+      # namespaces are kustomize-injected, so the flux manager cannot link
+      # the dependency: chart bumps stay manual PRs.
+      # NOTE: top-level allowedHosts is REQUIRED with the 1.19.0 chart (see
+      # the allowedHosts value below — no-auth DNS-rebinding check). Keep it
+      # on every chart bump: it was added in #5304, dropped in #5405, and
+      # re-added in #5423.
+      version: 1.20.2
       sourceRef:
         kind: HelmRepository
         name: radar
@@ -33,6 +42,10 @@ spec:
       enabled: true
 
     allowedHosts:
+      # Public hostname served through the standalone HTTPRoute — the chart
+      # only auto-adds hosts it renders itself (httpRoute would conflict with
+      # ingress), and the 1.18+ DNS-rebinding check enforces it in no-auth
+      # mode (auth.mode: none).
       - radar.oxygn.dev
 
     rbac:
@@ -45,10 +58,6 @@ spec:
       metrics: true
       viewRBAC: true
       viewWebhooks: true
-
-      crdGroups:
-        all: true
-
       additionalRules:
         - apiGroups: [""]
           resources: ["pods"]

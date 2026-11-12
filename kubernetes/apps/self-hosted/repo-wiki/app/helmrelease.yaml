@@ -23,7 +23,7 @@ spec:
           app:
             image:
               repository: docker.io/squidfunk/mkdocs-material
-              tag: 9.8.0@sha256:dc3b5de76c6e30d18dc0922d4c4a7bed817e5e155f9ff0e594a53eb56e537e64
+              tag: 9.8.1@sha256:f797da217ff01b20b298d2185eb9d88fb81f5a322c439eba854f2e4de8a48e65
             command: ["mkdocs"]
             args:
               [
@@ -64,7 +64,7 @@ spec:
           app:
             image:
               repository: docker.io/library/python
-              tag: "3.15@sha256:f17ec845ebdd4f3347431579e1c22eaeec82913f039f2a54b937c7ff870bacdb"
+              tag: "3.15@sha256:df3f05ff4d74833f52146edd195c8f7913581b57796a820fb7e373457ace9bad"
             command: ["python3", "/config/generate.py"]
             env:
               OPENAI_BASE_URL: http://litellm.ai:4000/v1

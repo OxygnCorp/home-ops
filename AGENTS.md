@@ -53,17 +53,28 @@ Flux recursively searches `kubernetes/apps/` for `kustomization.yaml` files. Eac
 - Apps use `HelmRelease` via Flux, rarely raw manifests
 - Each namespace is a subdirectory under `kubernetes/apps/`
 
-## Renovate Automerge (as of 2026-10-24)
+## Renovate Automerge (as of 2026-11-03)
 
 Renovate updates are auto-merged (traceable `renovate/am-*` branches, PRs ready) with these guarantees:
 
-- **Auto-merged without review**: trusted rules (home-operations container digests/patches, kube-prometheus-stack, renovate image updates, GH actions) + a broad rule for docker-chart minor/patch/digest updates with 24-hour `minimumReleaseAge` (see `.renovate/autoMerge.json5`).
+- **Auto-merged without manual review**: trusted rules (home-operations container digests/patches, kube-prometheus-stack, renovate image updates, GH actions) + a broad rule for docker-chart minor/patch/digest updates with 24-hour `minimumReleaseAge` (see `.renovate/autoMerge.json5`).
 - **Emergency security patch fast-path**: `minimumReleaseAge` only delays PR creation — it never blocks a manual merge. For a zero-day patch, edit the image directly in Git (pin the digest), merge, and `just kube sync`; don't wait on Renovate.
 - **Caveat**: `minimumReleaseAgeBehaviour: "timestamp-optional"` (`.renovaterc.json5`) means the age gate only applies where a release timestamp exists — and even Docker Hub digest updates lack one (see the comment in `.renovaterc.json5`). The real supply-chain defenses are the always-manual core exclusions and digest pinning.
-- **Branches `renovate/am-*`** skip the AI PR Review workflow entirely (branch prefix marker, `additionalBranchPrefix: "am-"` stays non-mergeable to avoid leaks — the Renovate config validates with `renovate-config-validator`).
+- **Branches `renovate/am-*` are AI-gated, not skipped**: `.github/workflows/ai-pr-review.yaml` runs an LLM review whose `AI PR Review (automerge gate)` check blocks automerge on open blocker findings. The gate waits (bounded, ≤ 2700 s) for the first verdict after a PR opens — burst `labeled` events no longer wedge red pre-verdict, and a green is only ever published from a landed clean verdict at the head SHA. **Exception**: digest-only bumps (label `type/digest` + bot authorship) are exempt from AI gating by policy. The decision table lives in the workflow file's header comments — keep prose out of sync with it at your peril:
+  - The `skipped` gate branch must never fail-closed while the first review run is still producing its verdict, and never pass before a verdict exists (both wedge automerge differently — red is terminal because branch protection resolves against the LAST run *started* for the head SHA).
+  - The ARC runner's `gh` does not support `gh api --slurp` (bit in prod, PR #5424) — stick to the two paginated `--jq` + awk calls in `scan_reviews`.
 - **Always manual** (excluded from automerge by the last-word rule in `.renovate/autoMerge.json5`): network/DNS/gateway (coredns, envoy*, gateway-api, cilium), secrets/identity (1password, external-secrets, cert-manager, kanidm), storage/data (cloudnative-pg, miroir, kopiur, tuppr, rook-ceph), GitOps/k8s/Talos core (flux-*, kubelet/apiserver images, factory.talos.dev, siderolabs/installer) — plus **any `major` bump** (defense-in-depth rule).
 - `jdx/mise` toolchain bumps (custom regex manager, `.github/workflows/image-pull.yaml`) auto-merge minor/patch only.
 - Manual merges remain squash as the repo convention.
+
+### Unsticking a wedged Renovate automerge PR
+
+If the required gate check is red (or a run died on infra — cancelled conclusions also wedge, and nothing later supersedes them under the latest-started-run resolution):
+
+1. **Preferred**: tick the rebase/retry checkbox in the PR description (`<!-- rebase-check -->`) — Renovate force-pushes, the `synchronize` run does a fresh full review, and the new SHA starts with clean checks; automerge follows (pattern proven on PRs #5419/#5424/#5428).
+2. A new PR event (rebase push, close/reopen, `synchronize`) also works; adding the `ai-review` label re-runs the review, but **Renovate strips foreign labels within ~20 s**, so don't rely on it.
+3. Manual merge as last resort for routine bumps.
+
 
 ## Common Operations
 

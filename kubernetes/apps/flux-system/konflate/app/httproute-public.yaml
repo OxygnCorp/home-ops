@@ -1,0 +1,54 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/gateway.networking.k8s.io/httproute_v1.json
+# Public path split for Konflate on konflate.oxygn.dev. The chart-named
+# HTTPRoute (catch-all) is OIDC-protected via components/oidc-kanidm/envoy;
+# the two paths that MUST stay unauthenticated live here:
+#
+#   /mcp   — read-only MCP endpoint, consumed unauthenticated by CI evidence
+#            providers (ai-pr-review konflate_evidence.py => KONFLATE_MCP_URL).
+#   /hooks — forge webhook sink (POST, verified against KONFLATE_WEBHOOK_SECRET
+#            inside konflate; 501 when unset). Live proof: envoy-external access
+#            logs show POST /hooks, user-agent GitHub-Hookshot/*, code 202 on
+#            this hostname; OIDC on these would break GitHub deliveries.
+#
+# Envoy Gateway precedence: matching this route's pathPrefix rules beats the
+# catch-all "/" of the OIDC route, so only the web UI (/, /api, /ws, ...) goes
+# through konflate-oidc. Both routes share the hostname, so external-dns
+# publications and the Kanidm redirect URI are unaffected.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: konflate-public
+  annotations:
+    # Same-hostname sibling route: keep external-dns publication owned by the
+    # chart route (pattern: opencode/httproute-health.yaml).
+    external-dns.kubernetes.io/controller: none
+    # gatus-sidecar auto-creates endpoints for annotated HTTPRoutes and probes
+    # the FIRST match of the route (precedent comment in opencode-health): for
+    # this route that is GET /mcp, which answers 400 by design when konflate
+    # is up (down backend = 503 from envoy). Without this annotation the
+    # sidecar default [STATUS] == 200 fails on every probe. Pin the probe
+    # target explicitly (`path:` override, supported by sidecar 0.6.1):
+    # first-match is an implicit ordering that breaks silently if public
+    # paths are added or reordered above /mcp.
+    gatus.home-operations.com/endpoint: |-
+      path: /mcp
+      conditions: ["[STATUS] == 400"]
+spec:
+  hostnames:
+    - konflate.oxygn.dev
+  parentRefs:
+    - name: envoy-external
+      namespace: network
+      sectionName: https
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /mcp
+        - path:
+            type: PathPrefix
+            value: /hooks
+      backendRefs:
+        - name: konflate
+          port: 8080

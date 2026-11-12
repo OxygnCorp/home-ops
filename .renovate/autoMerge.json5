@@ -101,6 +101,14 @@
       matchUpdateTypes: ["minor", "patch"],
       ignoreTests: true,
     },
+    {
+      description: "Auto-merge pypi minor and patch (annotated custom manager, e.g. mcp-proxy)",
+      matchDatasources: ["pypi"],
+      automerge: true,
+      automergeType: "pr",
+      matchUpdateTypes: ["minor", "patch"],
+      ignoreTests: true,
+    },
     // ── Règle large — marker de skip par PRÉFIXE DE BRANCHE ("renovate/am-"),
     // NOT par label : Renovate rejette les regex avec lookahead dans
     // matchPackageNames (config-validator: "Failed to parse regex pattern"),
