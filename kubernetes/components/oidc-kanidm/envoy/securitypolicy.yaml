@@ -17,6 +17,12 @@ spec:
       # TLS-certificate rollouts (see eleboucher/homelab oidc component)
       authorizationEndpoint: https://idm.oxygn.dev/ui/oauth2
       tokenEndpoint: https://idm.oxygn.dev/oauth2/token
+      # Kanidm does not advertise an RP-initiated logout (end_session_endpoint) in
+      # discovery (kanidm#1997/#3752/#4240); its functional equivalent is the UI
+      # logout page, which destroys the whole Kanidm session. Point Envoy's
+      # end-session there so /logout clears the app session AND the IdP session,
+      # instead of bouncing straight back in via the still-alive Kanidm session.
+      endSessionEndpoint: https://idm.oxygn.dev/ui/logout
     # Kanidm uses the OAuth2 system name as the client ID; the kanidm-provision
     # controller writes the matching secret into the app namespace
     clientID: ${APP}
