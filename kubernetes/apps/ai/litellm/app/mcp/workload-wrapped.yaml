@@ -48,7 +48,7 @@ spec:
       # 2026-10-05 with a fresh emptyDir). The version pin must stay the last
       # <pkg>@<version> token on the line right below the renovate marker.
       # renovate: datasource=npm depName=mcp-arr-server
-      - npm install -g --no-audit --no-fund supergateway mcp-arr-server@1.7.3 && exec supergateway --stdio mcp-arr --outputTransport streamableHttp --streamableHttpPath /mcp --port 8000 --stateful --sessionTimeout 600000
+      - npm install -g --no-audit --no-fund supergateway mcp-arr-server@1.7.4 && exec supergateway --stdio mcp-arr --outputTransport streamableHttp --streamableHttpPath /mcp --port 8000 --stateful --sessionTimeout 600000
     env:
       - name: HOME
         value: /tmp
