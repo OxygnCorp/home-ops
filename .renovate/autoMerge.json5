@@ -9,6 +9,7 @@
       automergeType: "pr",
       matchUpdateTypes: ["digest", "patch"],
       matchPackageNames: ["/^ghcr.io\\/home-operations\\//"],
+      minimumReleaseAge: "1 hour",
       ignoreTests: false,
     },
     {
@@ -18,6 +19,7 @@
       automergeType: "pr",
       matchUpdateTypes: ["minor", "patch"],
       matchPackageNames: ["/kube-prometheus-stack/"],
+      minimumReleaseAge: "1 hour",
       ignoreTests: false,
     },
     {
@@ -27,6 +29,7 @@
       automergeType: "pr",
       matchUpdateTypes: ["minor", "patch", "digest"],
       matchPackageNames: ["/renovatebot/renovate/", "/renovate-operator/"],
+      minimumReleaseAge: "1 hour",
       ignoreTests: false,
     },
     {
@@ -113,12 +116,17 @@
     // un marker non mergeable (additionalBranchPrefix) se réinitialise à ""
     // dans la règle d'exclusion en dessous. ─────────────────────────────────
     {
-      description: "Auto-merge minor/patch/digest updates (1-hour release age, non-core packages)",
+      // 24h: captures releases pulled quickly (broken tags, yanked images)
+      // while keeping the window short for legit patches. Only bites on
+      // Docker Hub (timestamp-optional: ghcr.io et al. expose no
+      // releaseTimestamp). Urgent security patches: bump the image
+      // manually in Git — this delay never blocks a manual merge.
+      description: "Auto-merge minor/patch/digest updates (24h release age, non-core packages)",
       matchDatasources: ["docker"],
       matchUpdateTypes: ["minor", "patch", "digest"],
       automerge: true,
       automergeType: "pr",
-      minimumReleaseAge: "1 hour",
+      minimumReleaseAge: "24 hours",
       ignoreTests: false,
       additionalBranchPrefix: "am-",
     },
