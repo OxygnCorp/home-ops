@@ -81,6 +81,12 @@ spec:
       # `phoenix-svc` with ports 6006 (UI + OTLP HTTP), 4317 (OTLP gRPC)
       # and 9090 (metrics) — there is no 4318.
       type: ClusterIP
+      # Chart adds the `app: phoenix` label to the Service only when
+      # service.labels is non-empty — required for the ServiceMonitor
+      # (app/servicemonitor.yaml) selector. Use a distinct key to avoid a
+      # duplicate `app:` key in the rendered labels.
+      labels:
+        app.kubernetes.io/name: phoenix
     additionalEnv:
       - name: TZ
         value: Europe/Paris
