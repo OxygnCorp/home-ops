@@ -67,7 +67,11 @@ Other recipes: `bulk people.csv`, `reset <user>`, `group-add`, `group-rm`,
   all cookies. For apps using `components/oidc-kanidm/envoy` (SecurityPolicy
   on the HTTPRoute), Envoy Gateway's OIDC filter exposes `logoutPath:
   /logout` — visit `https://<app-host>/logout` to clear that app's
-  credential cookies and get a fresh authorization flow. Apps wired with
+  credential cookies **and end the whole Kanidm session**
+  (`provider.endSessionEndpoint: https://idm.oxygn.dev/ui/logout`).
+  Kanidm has no RP-initiated logout (kanidm#1997/#3752/#4240), so this is
+  the upstream-recommended workaround: you land on Kanidm's UI after the
+  session is destroyed, then log back in as needed. Apps wired with
   `components/oidc-kanidm/in-app` have no gateway `/logout`; clear that
   app's cookies in the browser instead.
 - Forced re-auths (rotation race): Kanidm rotates refresh tokens with
