@@ -57,7 +57,9 @@ Flux recursively searches `kubernetes/apps/` for `kustomization.yaml` files. Eac
 
 Renovate updates are auto-merged (traceable `renovate/am-*` branches, PRs ready) with these guarantees:
 
-- **Auto-merged without review**: trusted rules (home-operations container digests/patches, kube-prometheus-stack, renovate image updates, GH actions) + a broad rule for docker-chart minor/patch/digest updates with 1-hour `minimumReleaseAge` (see `.renovate/autoMerge.json5`).
+- **Auto-merged without review**: trusted rules (home-operations container digests/patches, kube-prometheus-stack, renovate image updates, GH actions) + a broad rule for docker-chart minor/patch/digest updates with 24-hour `minimumReleaseAge` (see `.renovate/autoMerge.json5`).
+- **Emergency security patch fast-path**: `minimumReleaseAge` only delays PR creation — it never blocks a manual merge. For a zero-day patch, edit the image directly in Git (pin the digest), merge, and `just kube sync`; don't wait on Renovate.
+- **Caveat**: `minimumReleaseAgeBehaviour: "timestamp-optional"` (`.renovaterc.json5`) means the age gate only applies where a release timestamp exists (Docker Hub). ghcr.io and other registries expose no timestamps, so the delay is a no-op for most images — the real supply-chain defenses are the always-manual core exclusions and digest pinning.
 - **Branches `renovate/am-*`** skip the AI PR Review workflow entirely (branch prefix marker, `additionalBranchPrefix: "am-"` stays non-mergeable to avoid leaks — the Renovate config validates with `renovate-config-validator`).
 - **Always manual** (excluded from automerge by the last-word rule in `.renovate/autoMerge.json5`): network/DNS/gateway (coredns, envoy*, gateway-api, cilium), secrets/identity (1password, external-secrets, cert-manager, kanidm), storage/data (cloudnative-pg, miroir, kopiur, tuppr, rook-ceph), GitOps/k8s/Talos core (flux-*, kubelet/apiserver images, factory.talos.dev, siderolabs/installer) — plus **any `major` bump** (defense-in-depth rule).
 - `jdx/mise` toolchain bumps (custom regex manager, `.github/workflows/image-pull.yaml`) auto-merge minor/patch only.
