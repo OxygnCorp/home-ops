@@ -28,6 +28,15 @@ ConfigMaps + `${APP}-oidc` secrets from 1Password).
   endpoints are pinned explicitly so Envoy never re-discovers through the
   gateway during Kanidm TLS-certificate rollouts (Envoy Gateway does not
   retry a failed discovery).
+- **Logout is global.** The SecurityPolicy sets `logoutPath: /logout` and
+  `provider.endSessionEndpoint: https://idm.oxygn.dev/ui/logout`, so
+  `https://<app-host>/logout` clears that app's gateway cookies **and
+  destroys the whole Kanidm session** (every app). Kanidm has no
+  RP-initiated logout (kanidm#1997/#3752/#4240); `/ui/logout` is the
+  upstream-recommended workaround — the user lands on Kanidm's UI and logs
+  back in. There is deliberately no per-app opt-out: per-app logout without
+  killing the IdP session is what Kanidm's SSO model gives by default
+  anyway (the no-op `/logout` pre-dating this change).
 
 ## Substitution variables
 
