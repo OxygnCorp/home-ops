@@ -58,16 +58,25 @@ spec:
         secretKeyRef:
           key: uri
           name: litellm-app
-    # --- Phoenix OTLP ingestion (kubernetes/apps/observability/phoenix) ---
-    - name: OTEL_EXPORTER_OTLP_PROTOCOL
-      value: http/protobuf
-    - name: OTEL_EXPORTER_OTLP_ENDPOINT
+    # --- Phoenix OTel v2 ingestion (kubernetes/apps/observability/phoenix) ---
+    # OTel v2 + arize_phoenix preset: OpenInference vocabulary (model, token
+    # counts, cost, messages, tool calls rendered natively by the Phoenix UI),
+    # gen_ai.cost.* breakdown, and automatic key-alias identity attributes.
+    - name: LITELLM_OTEL_V2
+      value: "true"
+    - name: PHOENIX_COLLECTOR_HTTP_ENDPOINT
       value: http://phoenix-svc.observability:6006
-    - name: OTEL_EXPORTER_OTLP_HEADERS
+    - name: PHOENIX_API_KEY
       valueFrom:
         secretKeyRef:
-          key: OTEL_EXPORTER_OTLP_HEADERS
+          key: PHOENIX_API_KEY
           name: phoenix-otel
+    - name: PHOENIX_PROJECT_NAME
+      value: default
+    # Opt-in: capture prompts/responses as span attributes (input.value /
+    # output.value) so the UI shows message content and tool calls.
+    - name: OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT
+      value: span_only
   envFrom:
     - secretRef:
         name: litellm-secret
@@ -205,15 +214,15 @@ spec:
       - hooks.session_hook.service_session_injector
     success_callback:
       - prometheus
-      # Phoenix ingestion — OTLP/HTTP direct (spec §4.2). Lossless async
-      # batching: Phoenix down ⇒ exporters retry-limit, apps not impacted
-      # (spec §7).
-      - otel
+      # Phoenix ingestion — OTel v2 arize_phoenix preset (OpenInference
+      # vocabulary, cost, key-alias identity). Lossless async batching:
+      # Phoenix down ⇒ exporters retry-limit, apps not impacted (spec §7).
+      - arize_phoenix
     failure_callback:
       - prometheus
       # Also capture failed LLM calls (4xx/5xx spans) to feed the eval
       # loop's failure datasets (Task 4 / spec §4.4).
-      - otel
+      - arize_phoenix
     prometheus_adapter: true
     require_auth_for_metrics_endpoint: false
     cache: true

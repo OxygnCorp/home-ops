@@ -51,17 +51,29 @@ litellm's per-key-alias project segmentation is documented in Task 2.
 
 ## Day-1 wiring: litellm exports OTLP → Phoenix
 
-litellm ships instrumented from day one (Task 2):
-`kubernetes/apps/ai/litellm/app/litellmproxy.yaml` adds the native
-`otel` callback to `litellmSettings.success_callback`/`failure_callback`
-and the `OTEL_EXPORTER_OTLP_*` env vars from the recipe above; the auth
-header comes from litellm's own copy of the `phoenix-otel` ExternalSecret
-(`kubernetes/apps/ai/litellm/app/externalsecret.yaml`). Spans land in the
-default project (dedicated `litellm` project rejected as MVP). The exact
-span attribute carrying the litellm virtual-key alias — the per-agent
-segmentation basis for evals (Task 4 / spec §4.2/§6) — is to be captured
-from a span in the Phoenix UI during the deferred post-merge smoke test
-and recorded here.
+litellm ships instrumented from day one (Task 2, upgraded to OTel v2):
+`kubernetes/apps/ai/litellm/app/litellmproxy.yaml` uses the **OTel v2**
+integration (`LITELLM_OTEL_V2=true`) with the **`arize_phoenix` preset**
+(`success_callback`/`failure_callback`), so LLM-call spans carry the
+OpenInference vocabulary Phoenix renders natively: model
+(`llm.model_name` / `gen_ai.request.model`), token counts
+(`llm.token_count.*`), cost (`gen_ai.cost.*`), prompts/responses
+(`input.value`/`output.value`, capture via
+`OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=span_only`) and the
+caller identity (`metadata.user_api_key_alias`, `litellm.team.alias`) —
+the per-agent segmentation basis for evals (Task 4 / spec §4.2/§6).
+Auth uses the raw system key (`PHOENIX_API_KEY`, litellm builds the
+Bearer header itself); spans land in the default project
+(`PHOENIX_PROJECT_NAME=default`). Config lives in
+`kubernetes/apps/ai/litellm/app/litellmproxy.yaml`, the key in litellm's
+own copy of the `phoenix-otel` ExternalSecret.
+
+## Prometheus metrics
+
+A `ServiceMonitor` scrapes `phoenix-svc:9090` (`phoenix-metrics` port)
+every 30s: `phoenix_bulk_loader_span_insertion_time_seconds`,
+`phoenix_span_queue_size`, `phoenix_span_exceptions_total`, etc. Dashboards
+correlating litellm ↔ Phoenix remain out of scope (spec §9).
 
 ## Out of MVP scope
 
