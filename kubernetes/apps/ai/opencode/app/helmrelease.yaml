@@ -130,6 +130,21 @@ spec:
               HOME: &homepath /home/opencode
               OPENCODE_CONFIG: /etc/opencode/opencode.json
               TZ: Europe/Paris
+              # Phoenix OTel: opencode v2 exports Effect traces/logs over
+              # OTLP/HTTP when OTEL_EXPORTER_OTLP_ENDPOINT is set. Endpoint is
+              # the base URL — opencode appends /v1/traces itself (the exporter
+              # is always HTTP/protobuf, no OTEL_EXPORTER_OTLP_PROTOCOL needed).
+              # Headers come from the shared phoenix-otel secret. Note: Phoenix
+              # does not accept OTLP logs (/v1/logs -> 405); the opencode logs
+              # exporter is tied to the endpoint and cannot be disabled until
+              # upstream honors OTEL_LOGS_EXPORTER.
+              OTEL_EXPORTER_OTLP_ENDPOINT: http://phoenix-svc.observability:6006
+              OTEL_RESOURCE_ATTRIBUTES: openinference.project.name=opencode
+              OTEL_EXPORTER_OTLP_HEADERS:
+                valueFrom:
+                  secretKeyRef:
+                    name: phoenix-otel
+                    key: OTEL_EXPORTER_OTLP_HEADERS
             envFrom:
               - secretRef:
                   name: *app
