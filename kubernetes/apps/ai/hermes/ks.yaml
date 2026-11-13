@@ -18,6 +18,9 @@ spec:
     - name: memini
     - name: kopiur
       namespace: kopiur-system
+    # The dashboard container reads the Secret this provisions; without the
+    # ordering it starts in CreateContainerConfigError on a fresh sync.
+    - name: kanidm-hermes-ui-oidc
   interval: 1h
   path: ./kubernetes/apps/ai/hermes/app
   postBuild:
@@ -37,4 +40,48 @@ spec:
     namespace: flux-system
   targetNamespace: ai
   timeout: 15m
+  wait: false
+---
+# Second Kanidm OAuth2 client for the Hermes dashboard, which now lives on its
+# own hostname (hermes-ui.oxygn.dev). A Kanidm client is bound to the callback
+# hostname registered in its originUrl, so the dashboard cannot reuse the
+# `hermes` client that now serves the Webapp. This is a copy of the nested
+# Kustomization that components/oidc-kanidm renders: Flux substitutions are
+# per-Kustomization, so including the component twice with different APP
+# values is not possible.
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: kanidm-hermes-ui-oidc
+spec:
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: hermes-ui
+  dependsOn:
+    - name: kanidm
+      namespace: security
+  interval: 1h
+  path: ./kubernetes/components/oidc-kanidm/base/kanidm
+  postBuild:
+    substitute:
+      APP: hermes-ui
+      APP_NAMESPACE: ai
+      SUBDOMAIN: hermes-ui
+      DOMAIN: oxygn.dev
+      DISPLAY_NAME: Hermes Dashboard
+      CALLBACK: /auth/callback
+      ORIGIN: "/"
+      SHORT_USERNAME: "false"
+      GROUP: users
+      SCOPES: '["openid", "profile", "email", "groups"]'
+      CLIENT_ID_KEY: client-id
+      CLIENT_SECRET_KEY: client-secret
+  prune: true
+  retryInterval: 2m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  targetNamespace: security
+  timeout: 5m
   wait: false
