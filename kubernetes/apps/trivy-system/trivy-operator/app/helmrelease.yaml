@@ -82,6 +82,13 @@ spec:
       # flag is to use less CPU/memory for scanning though it takes more time than normal scanning
       slow: true
 
+      # Scan timeout (default: 5m). Large images (e.g. lightrag, ~GB .venv)
+      # exceed 5m in slow mode (parallel 1) with the CPU limit throttling the
+      # scan job, failing with "semaphore acquire: context deadline exceeded"
+      # → BackoffLimitExceeded. Must stay <= scanJobTimeout (20m) above, else
+      # the operator kills the job before Trivy finishes.
+      timeout: "15m"
+
       # Ignore vulnerabilities without available fixes to reduce noise
       ignoreUnfixed: true
 
@@ -95,12 +102,14 @@ spec:
 
       # Resource limits for ephemeral scan job pods
       # In ClientServer mode these are lightweight - the heavy lifting is done by the server
+      # CPU limit raised to 1000m: at 500m the scan is throttled and large
+      # images (lightrag) blow the 5m timeout (now 15m, see trivy.timeout)
       resources:
         requests:
           cpu: 100m
           memory: 256Mi
         limits:
-          cpu: 500m
+          cpu: 1000m
           memory: 512Mi
 
       # Trivy Server (StatefulSet) - the central component that holds the vuln DB
