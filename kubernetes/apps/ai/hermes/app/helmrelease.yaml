@@ -79,6 +79,20 @@ spec:
               HERMES_HOME: /opt/data
               HOME: /opt/data
               TZ: Europe/Paris
+              # The Webapp is served by this gateway process and shares the
+              # dashboard sign-in providers: without one the gateway only
+              # serves native clients, so the browser listener stays off.
+              HERMES_DASHBOARD_OIDC_ISSUER: https://idm.oxygn.dev/oauth2/openid/hermes
+              HERMES_DASHBOARD_OIDC_CLIENT_ID:
+                valueFrom:
+                  secretKeyRef:
+                    name: kanidm-hermes-oidc
+                    key: client-id
+              HERMES_DASHBOARD_OIDC_CLIENT_SECRET:
+                valueFrom:
+                  secretKeyRef:
+                    name: kanidm-hermes-oidc
+                    key: client-secret
             envFrom:
               - secretRef:
                   name: hermes
@@ -91,28 +105,32 @@ spec:
               - containerPort: &port 8642
                 name: http
                 protocol: TCP
+              - containerPort: &webapp_port 9120
+                name: webapp
+                protocol: TCP
           dashboard:
             image: *image
             env:
               GATEWAY_HEALTH_URL: http://localhost:8642
               # Explicit public URL: used verbatim for the OAuth redirect_uri
-              # (https://hermes.oxygn.dev/auth/callback, registered strict in
+              # (https://hermes-ui.oxygn.dev/auth/callback, registered strict in
               # Kanidm by the provision controller) instead of request-header
               # reconstruction behind Envoy
-              HERMES_DASHBOARD_PUBLIC_URL: https://hermes.oxygn.dev
+              HERMES_DASHBOARD_PUBLIC_URL: https://hermes-ui.oxygn.dev
               # Dashboard OIDC (self-hosted provider plugin; env vars win over
-              # config.yaml). The kanidm-provision controller provisions the
-              # OAuth2 client and writes the secret into this namespace.
-              HERMES_DASHBOARD_OIDC_ISSUER: https://idm.oxygn.dev/oauth2/openid/hermes
+              # config.yaml). A Kanidm client holds one callback hostname, so
+              # the dashboard has its own hermes-ui client — the hermes one is
+              # now the Webapp's (see the app container above).
+              HERMES_DASHBOARD_OIDC_ISSUER: https://idm.oxygn.dev/oauth2/openid/hermes-ui
               HERMES_DASHBOARD_OIDC_CLIENT_ID:
                 valueFrom:
                   secretKeyRef:
-                    name: kanidm-hermes-oidc
+                    name: kanidm-hermes-ui-oidc
                     key: client-id
               HERMES_DASHBOARD_OIDC_CLIENT_SECRET:
                 valueFrom:
                   secretKeyRef:
-                    name: kanidm-hermes-oidc
+                    name: kanidm-hermes-ui-oidc
                     key: client-secret
               TZ: Europe/Paris
             envFrom:
@@ -164,6 +182,8 @@ spec:
         ports:
           http:
             port: *port
+          webapp:
+            port: *webapp_port
           codeserver:
             port: *codeserverPort
       dashboard:
@@ -174,6 +194,15 @@ spec:
     route:
       app:
         hostnames: ["hermes.oxygn.dev"]
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
+        rules:
+          - backendRefs:
+              - identifier: app
+                port: webapp
+      dashboard:
+        hostnames: ["hermes-ui.oxygn.dev"]
         parentRefs:
           - name: envoy-internal
             namespace: network

@@ -89,6 +89,17 @@ data:
         url: http://litellm.ai:4000/mcp
         headers:
           Authorization: "Bearer $${LITELLM_API_KEY}"
+    # Hermes Desktop served in a browser by the gateway process (port 9120).
+    # host must stay 0.0.0.0 in a container: the default 127.0.0.1 is the
+    # container's own loopback, unreachable from Envoy. public_url is used
+    # verbatim for the sign-in callback (https://hermes.oxygn.dev/auth/callback,
+    # the Kanidm client registered by the oidc-kanidm component) instead of
+    # reconstructing it from request headers behind the proxy.
+    webapp:
+      enabled: true
+      host: 0.0.0.0
+      port: 9120
+      public_url: https://hermes.oxygn.dev
     auxiliary:
       vision:
         provider: litellm
