@@ -130,6 +130,23 @@ spec:
               HOME: &homepath /home/opencode
               OPENCODE_CONFIG: /etc/opencode/opencode.json
               TZ: Europe/Paris
+              # Phoenix OTel: opencode v2 exports Effect traces/logs over
+              # OTLP/HTTP when OTEL_EXPORTER_OTLP_ENDPOINT is set. Endpoint is
+              # the base URL — opencode appends /v1/traces itself (the exporter
+              # is always HTTP/protobuf, no OTEL_EXPORTER_OTLP_PROTOCOL needed).
+              # No app-level ExternalSecret here: the `phoenix-otel` Secret
+              # already exists in ns ai, synced by the other apps' copies
+              # (shared invariant; a 5th same-name ES would fight the prunes).
+              # valueFrom matches the mainclaw/devclaw pattern (app-template
+              # env map supports it; only `optional` is not allowed in the
+              # schema). Telemetry-only dependency.
+              OTEL_EXPORTER_OTLP_ENDPOINT: http://phoenix-svc.observability:6006
+              OTEL_RESOURCE_ATTRIBUTES: openinference.project.name=opencode
+              OTEL_EXPORTER_OTLP_HEADERS:
+                valueFrom:
+                  secretKeyRef:
+                    name: phoenix-otel
+                    key: OTEL_EXPORTER_OTLP_HEADERS
             envFrom:
               - secretRef:
                   name: *app
