@@ -25,7 +25,7 @@ gum = "2.0.2"
 "gh" = "2.104.0"
 
 # 1Password
-"vals" = "0.51.0"
+"vals" = "0.51.1"
 "op" = "2.41.1"
 
 # Flux Stuff
