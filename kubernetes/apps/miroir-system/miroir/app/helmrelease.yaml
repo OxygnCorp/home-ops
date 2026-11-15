@@ -30,7 +30,8 @@ spec:
       alExtents: 6007
       verify:
         # weekly online verify of every replicated volume (crc32c default algorithm)
-        schedule: "0 4 * * 0"
+        # 04:15 sits between hourly kopiur mover runs (H * * * * lands on :46)
+        schedule: "15 4 * * 0"
     groupSnapshots:
       enabled: true
     monitoring:
