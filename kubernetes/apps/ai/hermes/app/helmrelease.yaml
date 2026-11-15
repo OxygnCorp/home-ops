@@ -74,8 +74,17 @@ spec:
               tag: v0.23.1@sha256:276d44685c65c0cb2a25f190b63c65c8906f9dc76486fb1c05ae71b5826bda08
             args: ["gateway", "run"]
             env:
-              MEMINI_URL: http://memini.ai:8080
-              MEMINI_NAMESPACE: hermes
+              # The Hermes memini plugin only reads MEMINI_BASE_URL; under any
+              # other name it falls back to http://localhost:8080 and fails
+              # soft (no handshake, no recall, no capture).
+              MEMINI_BASE_URL: http://memini.ai:8080
+              # Writes go to a dedicated namespace for this agent.
+              MEMINI_NAMESPACE: hermes-foyer
+              # Read-only home leg: merges the shared namespace's semantic +
+              # procedural tiers into every recall (flat names do not cascade,
+              # so this is how the agent inherits household-wide memories).
+              # Verified with GET /v1/namespaces/readset.
+              MEMINI_HOME: hermes
               HERMES_HOME: /opt/data
               HOME: /opt/data
               TZ: Europe/Paris
