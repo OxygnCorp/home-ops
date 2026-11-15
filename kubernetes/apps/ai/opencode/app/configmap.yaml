@@ -69,6 +69,16 @@ data:
     {
       "$schema": "https://opencode.ai/config.json",
       "model": "litellm/go-glm-5.3-flash",
+      // Every LLM must go through LiteLLM. Declaring only the litellm provider is
+      // not enough: a saved OpenCode Console login (the Go subscription) or an
+      // auto-detected GITHUB_TOKEN (GitHub Copilot) re-adds direct providers that
+      // bypass the gateway. provider.use policies apply however a provider became
+      // known (catalog, env vars, saved accounts) and remove denied providers from
+      // the catalog. Broad deny first, exception last: last match wins.
+      "policies": [
+        { "action": "provider.use", "resource": "*", "effect": "deny" },
+        { "action": "provider.use", "resource": "litellm", "effect": "allow" }
+      ],
       "agents": {
         "title": {
           "model": "litellm/dsv41f"
