@@ -44,19 +44,23 @@ spec:
                 # (fsGroup children like ~/.config, ~/.local are created
                 # group-writable), so 3775 = setgid + sticky.
                 chmod 3775 /home/node
-                # Same doctor refusal, one level down: the staging
-                # ancestors doctor actually probes are the temp roots
-                # themselves (.cache is the default temp root, .openclaw/tmp
-                # the state fallback). Devclaw hit this on 2026-11-16
-                # 05:09-05:47 (CrashLoopBackOff x30, "No safe OpenClaw temp
-                # root is available" → doctor could not enter maintenance
-                # → gateway exit 1). Sticky keeps g+w for fsGroup children:
-                # 1775 = sticky + setgid + g+w. Tolerate absent dirs (kopia
-                # restores exclude them, see retention notes below).
-                [ -d /home/node/.cache ] && chmod 1775 /home/node/.cache || true
-                mkdir -p /home/node/.openclaw
-                [ -d /home/node/.openclaw/tmp ] && chmod 1775 /home/node/.openclaw/tmp || true
-                rm -f /home/node/.openclaw/openclaw.json
+                # Same doctor refusal, one level down: doctor probes the
+                # temp roots themselves (.cache is the default temp root,
+                # .openclaw/tmp the state fallback). Devclaw hit this on
+                # 2026-11-16 05:09-05:47 (CrashLoopBackOff x30, "No safe
+                # OpenClaw temp root is available" → doctor could not
+                # enter maintenance → gateway exit 1). Create them if
+                # absent (kopia restores exclude them), normalize
+                # ownership, then sticky — a failed mkdir/chown/chmod
+                # stays fatal under set -e so a real failure is visible
+                # instead of silently reproducing the crash. Sticky keeps
+                # g+w for fsGroup children: 1775 = sticky + setgid + g+w.
+                # (mainclaw only needs the root chmod today — its sticky
+                # root satisfied doctor since 933bd6ffd — but apply the
+                # same logic here defensively.)
+                mkdir -p /home/node/.cache /home/node/.openclaw/tmp
+                chown 1000:100 /home/node/.cache /home/node/.openclaw/tmp
+                chmod 1775 /home/node/.cache /home/node/.openclaw/tmp
                 rm -f /home/node/.openclaw/openclaw.json
                 cp /tmp/openclaw.json /home/node/.openclaw/openclaw.json
                 chown 1000:100 /home/node/.openclaw/openclaw.json
