@@ -156,6 +156,10 @@
         "/kopiur/",
         "/tuppr/",
         "/rook-ceph/",
+        // AI runtime (openclaw 2026.11.5 hard-fails on the legacy
+        // heartbeat config when doctor is blocked by a stale gateway
+        // lease; keep bumps manual until that is resolved)
+        "/openclaw/",
         // CI / GitOps core
         "/gha-runner-scale-set/",
         "/flux-operator/",
