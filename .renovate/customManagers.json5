@@ -60,8 +60,10 @@
         "/\\.yaml(?:\\.j2)?$/",
       ],
       matchStrings: [
-        // # renovate: datasource=npm depName=@doist/todoist-mcp
-        // - "npx -y -p @doist/todoist-mcp@13.4.1 -- todoist-mcp"
+        // # renovate: datasource=npm depName=@todoist/mcp
+        // - "npx -y -p @todoist/mcp@16.1.0 -- todoist-mcp"
+        // # renovate: datasource=npm depName=@todoist/mcp
+        // - npm install -g @todoist/mcp@16.1.0 && exec supergateway --stdio todoist-mcp
         // # renovate: datasource=npm depName=mcp-arr-server
         // - mcp-arr-server@1.7.3
         // The pin is the last <pkg>@<numeric-version> token on the line right

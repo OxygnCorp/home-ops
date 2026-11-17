@@ -102,6 +102,13 @@
       ignoreTests: true,
     },
     {
+      description:
+        "Soak young @todoist/mcp releases (package re-scoped 2026-11-11, ships near-daily)",
+      matchDatasources: ["npm"],
+      matchPackageNames: ["@todoist/mcp"],
+      minimumReleaseAge: "24 hours",
+    },
+    {
       description: "Auto-merge pypi minor and patch (annotated custom manager, e.g. mcp-proxy)",
       matchDatasources: ["pypi"],
       automerge: true,

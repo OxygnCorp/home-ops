@@ -18,8 +18,8 @@
     },
     {
       description: "Changelog URL for todoist-mcp",
-      matchPackageNames: ["@doist/todoist-mcp"],
-      changelogUrl: "https://github.com/doist/todoist-mcp",
+      matchPackageNames: ["@todoist/mcp"],
+      changelogUrl: "https://github.com/todoist/todoist-mcp",
     },
     {
       description: "Changelog URL for mcp-arr-server",

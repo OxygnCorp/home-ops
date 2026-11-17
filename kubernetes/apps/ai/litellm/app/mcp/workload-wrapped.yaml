@@ -33,8 +33,8 @@ spec:
   proxyRef: litellm
   transport: http
   workload:
-    # Digest pin verified against Docker Hub tag `node:24-alpine`
-    # (multi-arch index, last updated 2026-09-18).
+    # Digest pin verified against Docker Hub tag `node:26-alpine`
+    # (multi-arch index, tag last updated 2026-11-11).
     image: docker.io/library/node:26-alpine@sha256:6bd9ab43c0ec0190ca7b2d193906cb8b7edf6e7f4afa43ddeccd6452710bffb5
     port: 8000
     command:
@@ -159,8 +159,8 @@ spec:
       - -c
       # Boot-time npm install + plain-binary child (no per-session npx): see
       # litellm-arr above for the npx cache race rationale.
-      # renovate: datasource=npm depName=@doist/todoist-mcp
-      - npm install -g --no-audit --no-fund supergateway @doist/todoist-mcp@14.0.5 && exec supergateway --stdio todoist-mcp --outputTransport streamableHttp --streamableHttpPath /mcp --port 8020 --stateful --sessionTimeout 600000
+      # renovate: datasource=npm depName=@todoist/mcp
+      - npm install -g --no-audit --no-fund supergateway @todoist/mcp@16.1.0 && exec supergateway --stdio todoist-mcp --outputTransport streamableHttp --streamableHttpPath /mcp --port 8020 --stateful --sessionTimeout 600000
     # Tool exclusion happens on the CR itself (spec.params.disallowed_tools —
     # formerly handled by the toolhive VirtualMCPServer aggregation config),
     # not on the workload.
