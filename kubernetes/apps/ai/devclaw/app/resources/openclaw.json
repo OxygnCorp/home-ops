@@ -339,10 +339,7 @@
         },
         "api": "openai-completions",
         "request": {
-          "allowPrivateNetwork": true,
-          "headers": {
-            "x-opencode-session": "openclaw-devclaw"
-          }
+          "allowPrivateNetwork": true
         },
         "timeoutSeconds": 1800,
         "models": [
@@ -921,7 +918,8 @@
   "diagnostics": {
     "enabled": true,
     "otel": {
-      "enabled": true
+      "enabled": true,
+      "captureContent": true
     }
   },
   "meta": {

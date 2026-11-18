@@ -6,6 +6,11 @@ metadata:
 spec:
   proxyRef: litellm
   keyAlias: Memini
+  # Phoenix : route les spans de la passerelle vers le projet applicatif de
+  # l'agent (même nom) via l'en-tête OTLP x-project-name, pour que les spans
+  # applicatifs et les spans LLM retombent dans la même trace.
+  metadata:
+    phoenix_project_name: memini
   secretName: litellm-key-memini
   secretKey: api-key
 ---

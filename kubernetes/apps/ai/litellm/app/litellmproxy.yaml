@@ -146,12 +146,20 @@ spec:
     # Pin each conversation to one OpenCode Go subscription so its upstream
     # prompt cache stays coherent, instead of re-rolling the dice on every
     # request. Requires a session id in `metadata.session_id`, which the
-    # session hook injects from the client's x-opencode-session header.
+    # session hook only sets when the client declared a real conversation
+    # (`x-opencode-session` / `x-session-affinity` / `x-session-id`).
+    #
+    # Callers without a conversation identity (openclaw, memini, lightrag, ...)
+    # are pinned per virtual key instead. That keeps the same upstream cache
+    # coherence without the hook having to invent a session id, which would
+    # otherwise be exported to Phoenix as `gen_ai.conversation.id` and collapse
+    # every conversation of an agent into one mega-session.
     #
     # Failover is unaffected: the pin only ever narrows the candidate list to
     # deployments that are currently healthy, so a benched (429/5xx) deployment
     # is skipped and the request is served by the other subscription.
     optional_pre_call_checks:
+      - deployment_affinity
       - session_affinity
     # Two-tier fallback policy: tier 1 is implicit (every group's matt/agnes
     # pair load-balances within the group itself), tier 2 is beam-free, free

@@ -1243,10 +1243,7 @@
           }
         ],
         "request": {
-          "allowPrivateNetwork": true,
-          "headers": {
-            "x-opencode-session": "openclaw-mainclaw"
-          }
+          "allowPrivateNetwork": true
         }
       }
     }
@@ -1622,7 +1619,8 @@
   "diagnostics": {
     "enabled": true,
     "otel": {
-      "enabled": true
+      "enabled": true,
+      "captureContent": true
     }
   },
   "meta": {

@@ -14,6 +14,51 @@ Two operator CRs drive the cluster (`litellm.home-operations.com/v1alpha1`):
   binds it to a team. The operator passes the binding on key create/update in
   place (no key rotation, 1Password `KEY_*` fields unchanged).
 
+## Phoenix projects and session identity
+
+Phoenix (`observability/phoenix`) is the trace-level microscope; aggregate
+cost/token/cache KPIs stay in the Grafana dashboard of this app.
+
+- **Project routing** — each `LiteLLMVirtualKey` sets
+  `spec.metadata.phoenix_project_name` to its agent name. The operator forwards
+  the metadata, litellm's Phoenix preset turns it into the OTLP `x-project-name`
+  header, so the gateway spans land in the **same** Phoenix project as the
+  agent's own spans (the name in its `openinference.project.name` resource
+  attribute). Gateway and agent emit their own traces, so they are separate
+  traces that share a project, not one joined trace. Keys without the metadata
+  (e.g. the evals judge) stay in `default`.
+- **Session identity** — `resources/session_hook.py` forwards a client-declared
+  conversation id (`x-opencode-session`, `x-session-affinity`, `x-session-id`)
+  as `metadata.session_id`; litellm exports it as `gen_ai.conversation.id` and
+  Phoenix maps that to a session. The hook never invents one: a synthetic id
+  would collapse every conversation of an agent into a single session and,
+  because a Phoenix trace's session is fixed by the first span that lands,
+  shadow the real conversation id carried by the agent's own spans.
+  opencode sends it on every model request — `x-opencode-session` is the
+  session's affinity, i.e. the root `ses_...` id, shared by subagents and forks
+  (`anomalyco/opencode`, `packages/core/src/session/model-request.ts` and
+  `session/affinity.ts`) — so opencode conversations get real sessions.
+- **Upstream session header (OpenCode Go requirement)** — Go requires a
+  stable `x-opencode-session` on every request ("requests missing it may
+  error" since 2026-09-06) to route a conversation and reuse its prompt cache
+  ([opencode.ai/docs/console/go](https://opencode.ai/docs/console/go)). The hook
+  therefore always injects it: the client's conversation id when it sends one,
+  otherwise a stable `litellm-<key_alias>` per virtual key. openclaw cannot do
+  better on its own — its native header injection
+  (`packages/ai/src/transports/session-affinity.ts`) only fires when the base
+  URL is `opencode.ai`, and provider `request.headers` are static strings, so a
+  custom base URL (this proxy) only ever gets a constant. Upstream ask: let
+  openclaw send its `sessionId` to custom base URLs (a `sessionHeader` field),
+  which would also give Phoenix per-conversation sessions for it. Until then its
+  Phoenix sessions come from its own spans (`gen_ai.conversation.id`, requires
+  `diagnostics.otel.captureContent: true`), not from the gateway.
+- **Deployment pinning** — `session_affinity` pins real conversations (opencode);
+  `deployment_affinity` pins everything else per virtual key, so the constant
+  upstream header never has to double as the router key. Both pins live 1 h
+  (litellm default `deployment_affinity_ttl_seconds`), shorter than the upstream
+  prompt-cache TTL; worth raising once the setting is confirmed through the
+  operator.
+
 ## MCP
 
 The MCP gateway is multiplexed by teams, mirroring the old toolhive groups:

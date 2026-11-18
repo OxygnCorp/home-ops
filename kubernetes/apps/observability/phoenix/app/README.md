@@ -63,10 +63,25 @@ OpenInference vocabulary Phoenix renders natively: model
 caller identity (`metadata.user_api_key_alias`, `litellm.team.alias`) —
 the per-agent segmentation basis for evals (Task 4 / spec §4.2/§6).
 Auth uses the raw system key (`PHOENIX_API_KEY`, litellm builds the
-Bearer header itself); spans land in the default project
-(`PHOENIX_PROJECT_NAME=default`). Config lives in
+Bearer header itself). Spans are routed **per agent**, not to `default`: each
+virtual key sets `spec.metadata.phoenix_project_name`
+(`kubernetes/apps/ai/litellm/app/virtualkeys/`), which litellm's Phoenix preset
+turns into the OTLP `x-project-name` header, so the gateway spans join the
+agent's own spans in the project named after it (`mainclaw`, `devclaw`,
+`opencode`, ...). `PHOENIX_PROJECT_NAME=default` remains the fallback for keys
+without the metadata (the evals judge). Sessions come from
+`gen_ai.conversation.id` → `session.id`, which only a real per-conversation id
+provides (see the litellm app README). Config lives in
 `kubernetes/apps/ai/litellm/app/litellmproxy.yaml`, the key in litellm's
 own copy of the `phoenix-otel` ExternalSecret.
+
+Prompt/response **content** is captured for openclaw agents
+(`diagnostics.otel.captureContent: true` in `mainclaw`/`devclaw`) and by litellm
+(`span_only`): everything an agent reads or writes — tool output, MCP results,
+environment values it touches — lands in Phoenix, bounded and redacted by the
+agent's own OTLP pipeline, and kept for the 90-day retention window. That is
+the prerequisite for model-change evals on those agents; treat the Phoenix
+database accordingly (access, backups, retention).
 
 ## Prometheus metrics
 
