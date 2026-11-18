@@ -15,12 +15,6 @@
       "contextPruning": {
         "mode": "off"
       },
-      "heartbeat": {
-        "directPolicy": "allow",
-        "every": "60m",
-        "isolatedSession": true,
-        "lightContext": true
-      },
       "maxConcurrent": 4,
       "model": {
         "primary": "litellm/dsv41f",
@@ -170,16 +164,6 @@
         "name": "Puchu",
         "workspace": "/home/node/.openclaw/workspace",
         "agentDir": "/home/node/.openclaw/agents/main/agent",
-        "heartbeat": {
-          "directPolicy": "allow",
-          "every": "1h",
-          "activeHours": {
-            "start": "06:00",
-            "end": "22:00"
-          },
-          "target": "discord",
-          "to": "channel:{{ .DISCORD_DEVOPS_CHANNEL_ID }}"
-        },
         "identity": {
           "name": "Puchu",
           "emoji": "🛠️"
