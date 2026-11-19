@@ -39,6 +39,13 @@ after the first Barman backup, see the component README). Trace retention is
 90 days (`database.defaultRetentionPolicyDays: 90`); datasets, annotations
 and experiments are **not** purged.
 
+Sizing deviates from the component defaults via `spec.patches` in `ks.yaml`:
+30Gi storage and `max_wal_size=2GB` (component default 5Gi/5GB). Phoenix
+ingests the cluster's whole OTLP span stream (~0.5 GiB/day of Postgres data),
+so 5Gi filled within 37 h and took the primary down on 2026-11-19. 30Gi buys
+~50 days at the current rate — raise it or lower the retention if span volume
+grows.
+
 ## Wiring an exporter (Tasks 2-3)
 
 ```yaml

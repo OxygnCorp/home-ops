@@ -31,6 +31,25 @@ spec:
       kind: Cluster
       failed: status.conditions.filter(e, e.type == 'Ready').all(e, e.status == 'False')
       current: status.conditions.filter(e, e.type == 'Ready').all(e, e.status == 'True')
+  # Phoenix is the busiest DB in the cluster: every OTel span of every
+  # instrumented app lands here (90-day trace retention), whereas the
+  # component defaults target low-write app DBs. 5Gi with the component's
+  # max_wal_size=5GB fills up (phoenix-1 hit "no free disk space for WALs"
+  # and the whole cluster lost its primary — 2026-11-19). Storage class
+  # allows expansion, CNPG grows the PVCs in place.
+  patches:
+    - target:
+        group: postgresql.cnpg.io
+        version: v1
+        kind: Cluster
+        name: phoenix
+      patch: |-
+        - op: replace
+          path: /spec/storage/size
+          value: 30Gi
+        - op: replace
+          path: /spec/postgresql/parameters/max_wal_size
+          value: 2GB
   interval: 1h
   path: ./kubernetes/apps/observability/phoenix/app
   postBuild:
