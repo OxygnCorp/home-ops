@@ -1272,7 +1272,7 @@
         "config": {}
       },
       "diagnostics-otel": {
-        "enabled": true
+        "enabled": false
       },
       "brave": {
         "enabled": true
@@ -1620,10 +1620,7 @@
     "agentId": "main"
   },
   "diagnostics": {
-    "enabled": true,
-    "otel": {
-      "enabled": true
-    }
+    "enabled": true
   },
   "meta": {
     "migrations": {
