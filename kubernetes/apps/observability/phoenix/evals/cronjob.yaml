@@ -5,6 +5,10 @@ kind: CronJob
 metadata:
   name: phoenix-evals
 spec:
+  # Suspended 2026-11-20 along with the Phoenix deployment (replicaCount: 0):
+  # the judge needs the Phoenix API and the traces it evaluates. Set back to
+  # false when Phoenix is resumed.
+  suspend: true
   # Nightly 03:02 Europe/Paris — après le pic d'usage des agents soir.
   schedule: "2 3 * * *"
   timeZone: Europe/Paris
