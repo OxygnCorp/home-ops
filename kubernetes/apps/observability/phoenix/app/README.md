@@ -17,6 +17,31 @@ Runs on the official `arizephoenix/phoenix-helm` chart (pinned `13.0.0` via
 - Phoenix is **not on the request path** of instrumented apps: OTLP exporters
   buffer and drop batches when it is down.
 
+## Paused (2026-11-20)
+
+Phoenix is switched off for now while its value is reassessed:
+
+- `helmrelease.yaml` runs `replicaCount: 0` → no UI, no OTLP ingestion.
+- the `phoenix-evals` CronJob is `suspend: true` (its judge needs the API).
+- the CNPG Cluster `phoenix` (and its Barman backups) still runs, so the
+  traces already collected are kept — nothing is pruned.
+- `PhoenixDeploymentUnavailable` now also requires
+  `kube_deployment_spec_replicas > 0`, so the intentional scale-down does not
+  page.
+
+Exporters (litellm, opencode, openclaw, n8n) are left untouched: they buffer
+and drop batches, and will resume on their own. Two consequences worth knowing:
+`https://phoenix.oxygn.dev` answers 503 (the HTTPRoute and the Kanidm client
+stay provisioned), and the 90-day retention sweeper lives in the Phoenix
+server, so nothing is purged while it sleeps — old traces simply accumulate in
+the CNPG cluster. The `ServiceMonitor` is also left in place: with no ready pod
+the Service has no endpoints, so Prometheus creates no target for it (hence no
+`TargetDown`); if a stale target does linger, silence `job="phoenix"` for the
+pause instead of editing the manifest.
+
+To re-enable: set `replicaCount: 1`, drop `suspend: true` from the CronJob, and
+revert the PrometheusRule guard (optional, it stays correct either way).
+
 ## Credentials (1Password item `phoenix`)
 
 | Field | Purpose |

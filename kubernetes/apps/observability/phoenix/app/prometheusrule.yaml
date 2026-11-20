@@ -9,8 +9,12 @@ spec:
     - name: phoenix.rules
       rules:
         - alert: PhoenixDeploymentUnavailable
+          # A deliberate scale-down (replicaCount: 0 in the HelmRelease) must
+          # not page: only alert while the Deployment is expected to run.
           expr: |-
             kube_deployment_status_replicas_available{namespace="observability", deployment=~"phoenix.*"} == 0
+              and on(namespace, deployment)
+            kube_deployment_spec_replicas{namespace="observability", deployment=~"phoenix.*"} > 0
           for: 15m
           annotations:
             summary: Phoenix deployment has no available replica (UI + OTLP ingestion down, exporters drop batches)

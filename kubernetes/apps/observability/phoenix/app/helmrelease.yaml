@@ -13,7 +13,11 @@ spec:
     name: *app
   interval: 1h
   values:
-    replicaCount: 1
+    # Paused 2026-11-20: the UI + OTLP ingestion are switched off (no
+    # replica), but the CNPG Cluster `phoenix` and its 90 days of traces
+    # stay in place. Put back to 1 and unsuspend the phoenix-evals
+    # CronJob to resume; see app/README.md.
+    replicaCount: 0
     # Chart persistence strategy 3 (external DB): no in-chart groundhog2k
     # postgres and no SQLite. Data lives in the CNPG Cluster `phoenix`
     # provisioned by the postgres component.
