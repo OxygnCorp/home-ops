@@ -619,7 +619,7 @@
         "enabled": true
       },
       "diagnostics-otel": {
-        "enabled": true
+        "enabled": false
       },
       "litellm": {
         "enabled": true
@@ -919,10 +919,7 @@
     }
   },
   "diagnostics": {
-    "enabled": true,
-    "otel": {
-      "enabled": true
-    }
+    "enabled": true
   },
   "meta": {
     "migrations": {

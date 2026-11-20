@@ -13,4 +13,3 @@ resources:
   - ./radar.yaml
   - ./repo-wiki.yaml
   - ./mealie.yaml
-  - ./phoenix-evals.yaml
