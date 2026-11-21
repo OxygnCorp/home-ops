@@ -127,6 +127,15 @@ kubectl rollout restart deployment -n ai -l app.kubernetes.io/name=litellm
   enregistrement > 1 MiB est droppé. Un prompt ou une sortie d'outil énorme
   n'apparaît pas dans la trace. En contrepartie, Lens injoignable ou disque
   plein ne bloque **jamais** les requêtes LLM.
+- **ClickHouse = AVX2 obligatoire ≥ 26.6** : les images amd64 de ClickHouse
+  ≥ 26.6 sont compilées pour x86-64-v3. Sur un vCPU sans AVX2 (VM Proxmox en
+  `kvm64`), le conteneur meurt en `Illegal instruction` (exit 132) et Lens
+  boucle sur `Error: Storage(Storage(Transport))`. D'où le pin
+  `clickhouse.image` sur **26.3.62** (LTS, x86-64-v2) dans `helmrelease.yaml`.
+  Correctif de fond : passer les VMs en CPU `host` côté Proxmox, puis revenir
+  au digest du chart. Il n'existe **pas** d'image Docker « compat » sans AVX2
+  (issue ClickHouse #130104, not planned) ; les binaires `amd64compat` de
+  builds.clickhouse.com ne sont pas packagés en conteneur.
 - **Premier démarrage** : Lens peut redémarrer plusieurs fois avec
   `Error: Storage(Storage(Transport))` tant que ClickHouse n'est pas ready
   (documenté upstream) — c'est normal, `wait: true` couvre l'attente.
