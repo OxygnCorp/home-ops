@@ -130,6 +130,21 @@ spec:
               HOME: &homepath /home/opencode
               OPENCODE_CONFIG: /etc/opencode/opencode.json
               TZ: Europe/Paris
+              # LiteLLM Lens ingestion. Agents upload straight to Lens: the
+              # gateway's /v1/traces and /v1/logs answer 410 by design, so this
+              # must be the in-cluster Lens service, not litellm.ai:4000. The SDK
+              # appends /v1/traces and /v1/logs itself, and it pipes every
+              # application log line to /v1/logs too (no OTEL_LOGS_EXPORTER
+              # switch) — wanted here, Lens folds session events into the trace.
+              # serviceName is hardcoded by the SDK, hence no OTEL_SERVICE_NAME.
+              # $(OPENCODE_TRACING_KEY) resolves from the secretRef above (envFrom
+              # is expanded first); if that 1Password field disappears the literal
+              # $(OPENCODE_TRACING_KEY) is sent and every batch gets a 401, the
+              # traces are just dropped. Spans still buffered die with the pod,
+              # and span payloads carry prompt/completion content.
+              OTEL_EXPORTER_OTLP_ENDPOINT: http://lens.ai.svc.cluster.local:4318
+              OTEL_EXPORTER_OTLP_HEADERS: Authorization=Bearer $(OPENCODE_TRACING_KEY)
+              OTEL_RESOURCE_ATTRIBUTES: gen_ai.agent.name=opencode
             envFrom:
               - secretRef:
                   name: *app
