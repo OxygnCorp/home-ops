@@ -50,7 +50,7 @@ spec:
       # des VMs Proxmox en type `kvm64`. 26.3.62 est la LTS en x86-64-v2.
       # Correctif systémique côté infra : passer les VMs en CPU `host`
       # (stop/start), puis on pourra revenir au digest du chart.
-      image: clickhouse/clickhouse-server:26.3.62@sha256:de3e47c64078aa196dae2349e048fc98ba81947f651f5c20e06e46baea8ae40a
+      image: clickhouse/clickhouse-server:26.10.8@sha256:cb030c0616aa80d8daf03033ba68d6297a1c86735b142a8e82b96f4cf119ec98
       # PV local : les traces sont assumées perdues si le node qui porte le
       # volume disparaît (pas de composant kopiur sur ce PVC). Le PVC est
       # épinglé au node du premier consumer — d'où le dependsOn miroir-config
