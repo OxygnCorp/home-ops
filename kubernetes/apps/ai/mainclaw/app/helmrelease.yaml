@@ -171,6 +171,28 @@ spec:
                 cp -f /tmp/openclaw.json /home/node/.openclaw/openclaw.json
                 chown 1000:100 /home/node/.openclaw/openclaw.json
                 chmod 400 /home/node/.openclaw/openclaw.json
+                # Gateway lease guard: a pod killed before it can stop the
+                # gateway (e.g. its init failing on a transient read-only
+                # mount, 2026-11-20) leaves the state lease recorded against a
+                # pod name + PID namespace that no later pod can verify, so
+                # every replacement is refused ("cannot verify Gateway
+                # ownership from this process; heartbeat age does not prove
+                # that the holder stopped") and the gateway exits 1 after
+                # waiting 95 s — a crash loop only an explicit recover-lock
+                # clears. Opt-in, and still safe: recover-lock refuses a
+                # holder it can verify as alive, and this workload runs
+                # Recreate on a RWO volume, so only one pod can own the state.
+                if [ "${OPENCLAW_AUTO_RECOVER_LOCK:-false}" = "true" ]; then
+                  lock_fp="$(node /app/openclaw.mjs gateway recover-lock --json 2>/dev/null \
+                    | tr -d '\n' \
+                    | grep -oE '"confirmation"[[:space:]]*:[[:space:]]*"[0-9a-f]{64}"' \
+                    | grep -oE '[0-9a-f]{64}' || true)"
+                  if [ -n "$lock_fp" ]; then
+                    echo "Recovering unverifiable Gateway lease ($lock_fp)"
+                    node /app/openclaw.mjs gateway recover-lock --confirm "$lock_fp" \
+                      || echo "WARN: recover-lock refused; continuing with a live holder"
+                  fi
+                fi
                 # Doctor check and fix any issues with the OpenClaw installation, then start the gateway
                 node /app/openclaw.mjs doctor --fix
                 # Start gateway
@@ -178,6 +200,9 @@ spec:
                 exec node /app/openclaw.mjs gateway
             env:
               OPENCLAW_LOG_LEVEL: info
+              # Reclaim a Gateway lease left behind by a pod that died before
+              # it could stop the gateway; see the guard in the command.
+              OPENCLAW_AUTO_RECOVER_LOCK: "true"
               GOPATH: /home/node/go
               HOME: /home/node
               OPENCLAW_GATEWAY_PORT: 18789
@@ -223,6 +248,9 @@ spec:
                 memory: 1Gi
     defaultPodOptions:
       automountServiceAccountToken: true
+      # Give the gateway time to stop cleanly and release its state lease;
+      # a pod killed mid-shutdown leaves a lock the next pod cannot claim.
+      terminationGracePeriodSeconds: 60
       # Prefer the dedicated AI worker (k8s-3) but stay schedulable on any
       # node if it is unavailable; the toleration unlocks the
       # workload=ai:NoSchedule taint on k8s-3 (other nodes are untainted).
