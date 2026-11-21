@@ -15,12 +15,6 @@
       "contextPruning": {
         "mode": "off"
       },
-      "heartbeat": {
-        "directPolicy": "allow",
-        "every": "60m",
-        "isolatedSession": true,
-        "lightContext": true
-      },
       "imageModel": {
         "primary": "litellm/dsv41f",
         "fallbacks": [
@@ -273,16 +267,6 @@
             "litellm/go-minimax-m3"
           ]
         },
-        "heartbeat": {
-          "directPolicy": "allow",
-          "every": "6h",
-          "activeHours": {
-            "start": "06:00",
-            "end": "22:00"
-          },
-          "target": "discord",
-          "to": "channel:{{ .DISCORD_FINANCE_CHANNEL_ID }}"
-        },
         "identity": {
           "name": "Finance Bot",
           "emoji": "📈"
@@ -316,16 +300,6 @@
         "name": "Shopping Assistant",
         "workspace": "/home/node/.openclaw/workspace-shopping",
         "agentDir": "/home/node/.openclaw/agents/shopping/agent",
-        "heartbeat": {
-          "directPolicy": "allow",
-          "every": "6h",
-          "activeHours": {
-            "start": "06:00",
-            "end": "22:00"
-          },
-          "target": "discord",
-          "to": "channel:{{ .DISCORD_SHOPPING_CHANNEL_ID }}"
-        },
         "identity": {
           "name": "Shopping Bot",
           "emoji": "🛒"
