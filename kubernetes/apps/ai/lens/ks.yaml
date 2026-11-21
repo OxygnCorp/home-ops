@@ -1,0 +1,37 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: &app lens
+spec:
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: *app
+  dependsOn:
+    # Garantit l'existence de la StorageClass miroir-slow-local avant la
+    # création du PVC ClickHouse (cf. docling-serve/ks.yaml: le PV local est
+    # épinglé au node du premier consumer).
+    - name: miroir-config
+      namespace: miroir-system
+  interval: 1h
+  path: ./kubernetes/apps/ai/lens/app
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  # ClickHouse peut redémarrer plusieurs fois au premier démarrage
+  # (le pod Lens attend que ClickHouse réponde) : le guide upstream donne
+  # 10m pour la première installation.
+  targetNamespace: ai
+  # 15m : premier boot pire-cas = startupProbe ClickHouse (300s) puis attente
+  # ClickHouse par Lens (300s), soit ~10m. Avec wait: true, un timeout trop
+  # court rendrait la Kustomization NotReady pour un simple démarrage lent.
+  timeout: 15m
+  # wait: true is load-bearing: le HelmRelease échoue tant que l'item
+  # 1Password `lens` n'existe pas (secretKeyRef non-optionnelle) et le
+  # StatefulSet ClickHouse met plusieurs minutes à devenir Ready au premier
+  # install. Sans wait, la Kustomization resterait Ready malgré un pod Lens
+  # en CrashLoop.
+  wait: true

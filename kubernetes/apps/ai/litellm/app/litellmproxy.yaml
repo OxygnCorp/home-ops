@@ -58,6 +58,26 @@ spec:
         secretKeyRef:
           key: uri
           name: litellm-app
+    # Agent tracing store (Lens). `optional: true` : si l'item 1Password `lens`
+    # n'est pas encore créé, le gateway démarre quand même (tracing désactivé
+    # avec un log). Le podAnnotations reloader relance le pod dès que
+    # `lens-connection` apparaît ou change, donc pas besoin d'intervention.
+    - name: LITELLM_LENS_URL
+      value: http://lens.ai.svc.cluster.local:4318
+    - name: LITELLM_LENS_PUBLIC_URL
+      value: https://lens.oxygn.dev
+    - name: LITELLM_LENS_SERVICE_TOKEN
+      valueFrom:
+        secretKeyRef:
+          key: service-token
+          name: lens-connection
+          optional: true
+    - name: LENS_GATEWAY_SECRET
+      valueFrom:
+        secretKeyRef:
+          key: gateway-secret
+          name: lens-connection
+          optional: true
   envFrom:
     - secretRef:
         name: litellm-secret
@@ -197,7 +217,6 @@ spec:
       - prometheus
     failure_callback:
       - prometheus
-    prometheus_adapter: true
     require_auth_for_metrics_endpoint: false
     cache: true
     cache_params:
@@ -226,6 +245,9 @@ spec:
   generalSettings:
     health_check_endpoint: /v1/health
     store_model_in_db: false
+    tracing:
+      store:
+        type: lens
   extraConfig:
     environment:
       - OPENCODE_MATT_API_KEY

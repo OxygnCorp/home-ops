@@ -1,0 +1,58 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: lens
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: lens
+  interval: 30m
+  values:
+    # Le chart 0.1.0 épingle lui-même `image.digest` (sha256:489a007c…) dans
+    # ses values : chaque version du chart embarque le digest de son image.
+    # Ne pas surcharger `image.tag`/`image.digest` ici, sinon le pod peut
+    # tourner avec une image qui ne correspond plus au protocole du chart.
+    replicaCount: 1
+    # Origine navigateur (UI + endpoints OTLP affichés aux agents). Le chart
+    # exige une valeur non vide ; l'app valide l'URL et trim les slashs.
+    publicUrl: https://lens.oxygn.dev
+    # Pas d'ingress Ingress : le Service est exposé par ./httproute.yaml
+    # (Envoy Gateway, gateway envoy-internal du namespace network).
+    ingress:
+      enabled: false
+    # Tokens fournis par ./externalsecret.yaml (1Password item `lens`).
+    # Ne PAS laisser le chart les générer : en GitOps le rendu se fait à
+    # chaque sync et un secret généré dériverait (le chart utilise `lookup`,
+    # donc en pratique il réutiliserait l'existant, mais on veut la source
+    # de vérité dans 1Password).
+    adminTokenSecret:
+      name: lens-admin
+      key: admin-token
+    # Connexion LiteLLM <-> Lens : les DEUX services lisent le même Secret
+    # `lens-connection` (service-token ici, gateway-secret côté litellm).
+    gateway:
+      enabled: true
+      secretName: lens-connection
+      secretKey: gateway-secret
+    serviceTokenSecret:
+      name: lens-connection
+      key: service-token
+    # Traces : 14 jours de rétention. Le TTL supprime les lignes expirées,
+    # mais ClickHouse ne rend pas l'espace disque : augmenter la rétention
+    # demande d'augmenter le PVC en même temps.
+    retentionDays: 14
+    clickhouse:
+      # PV local : les traces sont assumées perdues si le node qui porte le
+      # volume disparaît (pas de composant kopiur sur ce PVC). Le PVC est
+      # épinglé au node du premier consumer — d'où le dependsOn miroir-config
+      # dans ../ks.yaml.
+      storage: 20Gi
+      storageClassName: miroir-slow-local
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        memory: 2Gi
