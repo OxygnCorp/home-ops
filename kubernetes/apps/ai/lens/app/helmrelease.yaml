@@ -13,7 +13,7 @@ spec:
   # compilées pour x86-64-v3 (AVX2) et meurent en SIGILL (exit 132,
   # "Illegal instruction") sur un vCPU sans AVX2 — le cas des VMs Proxmox
   # en type `kvm64`. k8s-3 est le seul noeud qui expose AVX2, et il est
-  # tainté `workload=ai:NoSchedule`. Le chart 0.1.0 n'expose aucun
+  # tainté `workload=ai:NoSchedule`. Le chart n'expose aucun
   # nodeSelector/tolerations pour le StatefulSet ClickHouse : on patche donc
   # le manifeste rendu. Correctif de fond côté infra : passer les VMs en CPU
   # `host` (stop/start), ce qui rendra ce patch inutile.
@@ -36,7 +36,7 @@ spec:
                     value: ai
                     effect: NoSchedule
   values:
-    # Le chart 0.1.0 épingle lui-même `image.digest` (sha256:489a007c…) dans
+    # Le chart épingle lui-même `image.digest` (sha256:489a007c…) dans
     # ses values : chaque version du chart embarque le digest de son image.
     # Ne pas surcharger `image.tag`/`image.digest` ici, sinon le pod peut
     # tourner avec une image qui ne correspond plus au protocole du chart.

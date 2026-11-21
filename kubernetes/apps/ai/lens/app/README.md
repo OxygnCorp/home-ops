@@ -139,9 +139,12 @@ kubectl rollout restart deployment -n ai -l app.kubernetes.io/name=litellm
   (issue ClickHouse #130104, not planned) ; les binaires `amd64compat` de
   builds.clickhouse.com ne sont pas packagés en conteneur.
   **Migration** : le PVC `data-lens-clickhouse-0` est un volume local lié à
-  k8s-0, il ne peut pas suivre le pod. Supprimer pod + PVC après le merge
-  (traces jetables, base jamais initialisée) pour qu'un volume neuf se lie
-  sur k8s-3.
+  k8s-0 et ne peut pas suivre le pod ; après le merge, le pod ClickHouse reste
+  donc `Pending` (volume non attachable sur k8s-3) tant que la séquence n'est
+  pas faite, dans cet ordre : `kubectl -n ai delete pod lens-clickhouse-0`
+  puis `kubectl -n ai delete pvc data-lens-clickhouse-0`. Le StatefulSet
+  recrée un PVC neuf qui se lie sur k8s-3 (traces jetables, base jamais
+  initialisée : aucune donnée à sauver).
 - **Premier démarrage** : Lens peut redémarrer plusieurs fois avec
   `Error: Storage(Storage(Transport))` tant que ClickHouse n'est pas ready
   (documenté upstream) — c'est normal, `wait: true` couvre l'attente.
@@ -163,7 +166,7 @@ kubectl rollout restart deployment -n ai -l app.kubernetes.io/name=litellm
 - **Upgrade du chart** : sauvegarder ClickHouse avant (`BACKUP TABLE ... TO
   Disk(...)`), cf. `docs/proxy/lens/deployment/storage` upstream. Un upgrade
   majeur de schéma peut rendre les anciennes traces illisibles.
-- **Image** : le chart 0.1.0 épingle lui-même `image.digest` dans ses values
+- **Image** : le chart épingle lui-même `image.digest` dans ses values
   (chaque version du chart embarque le digest de son image) — ne pas surcharger
   `image.tag`/`image.digest` ici.
 - **PVC local** : `miroir-slow-local` épingle le volume au node du premier
