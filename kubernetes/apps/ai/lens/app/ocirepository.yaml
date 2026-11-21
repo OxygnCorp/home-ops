@@ -12,5 +12,5 @@ spec:
   ref:
     # Seule version stable publiée à ce jour (les tags 1.10x-rc/dev suivent
     # les versions LiteLLM et ne sont pas des releases de chart).
-    tag: 0.1.0
+    tag: 0.2.0
   url: oci://ghcr.io/berriai/charts/lens
