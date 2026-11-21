@@ -19,6 +19,9 @@ spec:
   values:
     controllers:
       openclaw:
+        # Explicit: the lease guard below assumes no two gateways can own the
+        # state volume at once, which only holds if replacement is Recreate.
+        strategy: Recreate
         annotations:
           secret.reloader.stakater.com/reload: "devclaw-secret, devclaw-config"
         initContainers:
@@ -174,7 +177,9 @@ spec:
                 # clears. Opt-in, and still safe: recover-lock refuses a
                 # holder it can verify as alive, and this workload runs
                 # Recreate on a RWO volume, so only one pod can own the state.
-                if [ "${OPENCLAW_AUTO_RECOVER_LOCK:-false}" = "true" ]; then
+                # Unbraced on purpose: braced expansion is eaten by Flux
+                # postBuild substitution (same reason as MEMINI above).
+                if [ "$OPENCLAW_AUTO_RECOVER_LOCK" = "true" ]; then
                   lock_fp="$(node /app/openclaw.mjs gateway recover-lock --json 2>/dev/null \
                     | tr -d '\n' \
                     | grep -oE '"confirmation"[[:space:]]*:[[:space:]]*"[0-9a-f]{64}"' \
