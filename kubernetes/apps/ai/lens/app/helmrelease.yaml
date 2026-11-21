@@ -44,6 +44,13 @@ spec:
     # demande d'augmenter le PVC en même temps.
     retentionDays: 14
     clickhouse:
+      # Épinglé < 26.6 : les images amd64 de ClickHouse ≥ 26.6 sont compilées
+      # pour x86-64-v3 (AVX2) et meurent en SIGILL (exit 132, "Illegal
+      # instruction") sur les VMs dont le vCPU n'expose pas AVX2 — c'est le cas
+      # des VMs Proxmox en type `kvm64`. 26.3.62 est la LTS en x86-64-v2.
+      # Correctif systémique côté infra : passer les VMs en CPU `host`
+      # (stop/start), puis on pourra revenir au digest du chart.
+      image: clickhouse/clickhouse-server:26.3.62@sha256:de3e47c64078aa196dae2349e048fc98ba81947f651f5c20e06e46baea8ae40a
       # PV local : les traces sont assumées perdues si le node qui porte le
       # volume disparaît (pas de composant kopiur sur ce PVC). Le PVC est
       # épinglé au node du premier consumer — d'où le dependsOn miroir-config
