@@ -130,12 +130,17 @@ kubectl rollout restart deployment -n ai -l app.kubernetes.io/name=litellm
 - **ClickHouse = AVX2 obligatoire ≥ 26.6** : les images amd64 de ClickHouse
   ≥ 26.6 sont compilées pour x86-64-v3. Sur un vCPU sans AVX2 (VM Proxmox en
   `kvm64`), le conteneur meurt en `Illegal instruction` (exit 132) et Lens
-  boucle sur `Error: Storage(Storage(Transport))`. D'où le pin
-  `clickhouse.image` sur **26.3.62** (LTS, x86-64-v2) dans `helmrelease.yaml`.
-  Correctif de fond : passer les VMs en CPU `host` côté Proxmox, puis revenir
-  au digest du chart. Il n'existe **pas** d'image Docker « compat » sans AVX2
+  boucle sur `Error: Storage(Storage(Transport))`. Seul `k8s-3` expose AVX2,
+  donc un `postRenderer` dans `helmrelease.yaml` épingle le StatefulSet
+  ClickHouse sur ce noeud (+ toleration `workload=ai:NoSchedule`).
+  Correctif de fond : passer les VMs en CPU `host` côté Proxmox, ce qui rendra
+  le patch inutile. Il n'existe **pas** d'image Docker « compat » sans AVX2
   (issue ClickHouse #130104, not planned) ; les binaires `amd64compat` de
   builds.clickhouse.com ne sont pas packagés en conteneur.
+  **Migration** : le PVC `data-lens-clickhouse-0` est un volume local lié à
+  k8s-0, il ne peut pas suivre le pod. Supprimer pod + PVC après le merge
+  (traces jetables, base jamais initialisée) pour qu'un volume neuf se lie
+  sur k8s-3.
 - **Premier démarrage** : Lens peut redémarrer plusieurs fois avec
   `Error: Storage(Storage(Transport))` tant que ClickHouse n'est pas ready
   (documenté upstream) — c'est normal, `wait: true` couvre l'attente.
