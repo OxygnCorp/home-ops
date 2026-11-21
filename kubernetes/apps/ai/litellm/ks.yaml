@@ -11,10 +11,13 @@ spec:
     labels:
       app.kubernetes.io/name: litellm
   dependsOn:
+    - name: kanidm
+      namespace: security
     - name: litellm-operator
   components:
     - ../../../../components/postgres
     - ../../../../components/dragonfly
+    - ../../../../components/oidc-kanidm/in-app
   healthCheckExprs:
     - apiVersion: dragonflydb.io/v1alpha1
       kind: Dragonfly
@@ -29,6 +32,11 @@ spec:
   postBuild:
     substitute:
       APP: litellm
+      APP_NAMESPACE: ai
+      DOMAIN: oxygn.dev
+      OIDC_CALLBACK: /sso/callback
+      OIDC_DISPLAY_NAME: LiteLLM
+      SUBDOMAIN: litellm
   prune: true
   sourceRef:
     kind: GitRepository

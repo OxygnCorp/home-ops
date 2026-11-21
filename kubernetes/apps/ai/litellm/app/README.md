@@ -14,6 +14,114 @@ Two operator CRs drive the cluster (`litellm.home-operations.com/v1alpha1`):
   binds it to a team. The operator passes the binding on key create/update in
   place (no key rotation, 1Password `KEY_*` fields unchanged).
 
+## Admin UI SSO (Kanidm)
+
+The Admin UI signs in through Kanidm via LiteLLM's generic OIDC provider. The
+OAuth2 client is provisioned by `components/oidc-kanidm/in-app` (see
+`kubernetes/apps/ai/litellm/ks.yaml`): the component adds a nested Flux
+Kustomization `kanidm-litellm-oidc` (created in `ai`, `targetNamespace:
+security`) that applies the `kanidm-litellm-oidc` ConfigMap in `security`;
+`kanidm-provision` creates the Kanidm client `litellm` with redirect
+`https://litellm.oxygn.dev/sso/callback`, and writes the Secret
+`kanidm-litellm-oidc` (`client-id` / `client-secret`) in `ai`.
+`litellmproxy.yaml` consumes that Secret through the `GENERIC_*` env vars.
+The client uses the component's default scope map (`users` group), so the
+admin must be a member of Kanidm `users`, like the other OIDC apps
+(`just kanidm members users`).
+
+### First login / admin
+
+A new SSO user starts as `internal_user_viewer`. To promote the human admin,
+add a field `PROXY_ADMIN_ID` to the 1Password item `litellm`, set to the
+Kanidm account UUID (`sub`), then force-sync the secret:
+
+```bash
+kubectl annotate externalsecret litellm -n ai force-sync=$(date +%s)
+```
+
+`envFrom` injects it into the proxy and the reloader restarts the pods. The
+next SSO login promotes that user to `proxy_admin` (LiteLLM applies
+`PROXY_ADMIN_ID` after creating the user and before issuing the UI token). If
+the UUID is unknown, sign in once (view-only), copy the ID from the UI, then
+add the field and sign in again. It can also be read from Kanidm with
+`just kanidm cli person get <user>`.
+
+Do **not** put a group name here: `PROXY_ADMIN_ID` is matched against
+`GENERIC_USER_ID_ATTRIBUTE=sub`, i.e. the UUID. For multiple admins, switch to
+group mapping (`GENERIC_USER_ROLE_ATTRIBUTE=groups`, a Kanidm group named
+after a LiteLLM role, and `groups_name` in both `OIDC_SCOPES` in `ks.yaml` and
+`GENERIC_SCOPE`) instead of adding one UUID per person.
+
+### Free-tier / license conditions
+
+SSO works without a license for **up to 5 users**, but the exact rule is easy
+to misread:
+
+- the limit is checked when a **new SSO user row is inserted**; existing SSO
+  users keep signing in;
+- the count is **every row in `LiteLLM_UserTable`** (minus SCIM-deactivated
+  users), not just SSO users. Users created via `/user/new` or the UI count;
+  virtual keys do **not** create user rows;
+- the 6th new SSO user gets a `403` whose detail is
+  `SSO for more than 5 users requires a LiteLLM Enterprise license. Existing users can still sign in.`
+  (the SSO error page may wrap that detail);
+- if `LITELLM_LICENSE` is present in the 1Password item, `dataFrom.extract`
+  already puts it in `litellm-secret` and a valid license lifts the free cap;
+  an absent or invalid license keeps the free path.
+
+Check the current count before relying on a free seat:
+
+```bash
+MASTER=$(kubectl -n ai get secret litellm-secret \
+  -o jsonpath='{.data.LITELLM_MASTER_KEY}' | base64 -d)
+kubectl -n ai run litellm-users --rm -i --restart=Never \
+  --image=curlimages/curl -- \
+  curl -s 'http://litellm.ai.svc.cluster.local:4000/user/list?page=1&page_size=100' \
+  -H "Authorization: Bearer $MASTER" \
+  | jq '{total: (.total // (.users | length))}'
+```
+
+### Break-glass and logout
+
+The env login stays enabled: `UI_USERNAME` (default `admin`) plus
+`UI_PASSWORD`; if `UI_PASSWORD` is unset, the master key is accepted as the
+password. Using the env login creates a `LiteLLM_UserTable` row, so it counts
+as one of the five free seats; when `PROXY_ADMIN_ID` is set to the Kanidm
+UUID, that row is the same row the SSO login uses, otherwise it is a separate
+row. `/fallback/login` only works for a **database** user with a password, so
+it is not a fallback for SSO users. If you enable
+`disable_env_credential_login`, create a `proxy_admin` database user with a
+password first (it consumes one of the five free seats); do not enable
+`disable_password_login_when_sso_enabled` if you rely on that user.
+
+LiteLLM logout clears only the LiteLLM session. Kanidm has no RP-initiated
+logout, so the Kanidm session survives; use `https://idm.oxygn.dev/ui/logout`
+for a global logout. Setting `PROXY_LOGOUT_URL` to that URL makes the LiteLLM
+logout button end the Kanidm session too (it affects every Kanidm app).
+
+### Notes
+
+- `GENERIC_CLIENT_USE_PKCE=true` is mandatory: Kanidm enforces PKCE even for
+  confidential clients. With two LiteLLM replicas the verifier is stored in
+  Redis (`redis_usage_cache`); `PKCE_STRICT_CACHE_MISS=true` makes a cache
+  miss fail fast with a 401 instead of trying the exchange without
+  `code_verifier`, which Kanidm would reject with `invalid_grant`.
+- `PROXY_BASE_URL` must be exactly `https://litellm.oxygn.dev` (no trailing
+  slash) to match the Kanidm redirect URI.
+- `GENERIC_USER_DISPLAY_NAME_ATTRIBUTE=name` is required: Kanidm returns the
+  display name in `name`; LiteLLM's default is `sub` (the UUID).
+- The Kanidm person needs a `mail` attribute for the `email` claim; without
+  it LiteLLM creates the user with a null email (email-based invites then do
+  not work).
+- Do not set `GENERIC_CLIENT_STATE`: with PKCE a fixed state breaks concurrent
+  logins.
+- The `kanidm-litellm-oidc` Secret appears asynchronously after the ConfigMap;
+  pods may briefly be in `CreateContainerConfigError` until the provision
+  controller writes it (kubelet retries; the reloader also restarts on Secret
+  changes).
+- Removing the component/env disables SSO; the Kanidm client and the
+  `kanidm-litellm-oidc` Secret may need manual cleanup.
+
 ## MCP
 
 The MCP gateway is multiplexed by teams, mirroring the old toolhive groups:

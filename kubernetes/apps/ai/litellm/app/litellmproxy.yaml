@@ -49,6 +49,48 @@ spec:
       value: INFO
     - name: LITELLM_MODE
       value: PRODUCTION
+    # Admin UI SSO against Kanidm. The OAuth2 client + secret are
+    # provisioned by components/oidc-kanidm/in-app (ConfigMap ->
+    # kanidm-provision -> Secret kanidm-litellm-oidc). Optional
+    # PROXY_ADMIN_ID is injected by envFrom from the 1Password `litellm`
+    # item (field PROXY_ADMIN_ID = Kanidm account UUID); see README.
+    - name: PROXY_BASE_URL
+      value: https://litellm.oxygn.dev
+    - name: GENERIC_CLIENT_ID
+      valueFrom:
+        secretKeyRef:
+          name: kanidm-litellm-oidc
+          key: client-id
+    - name: GENERIC_CLIENT_SECRET
+      valueFrom:
+        secretKeyRef:
+          name: kanidm-litellm-oidc
+          key: client-secret
+    - name: GENERIC_AUTHORIZATION_ENDPOINT
+      value: https://idm.oxygn.dev/ui/oauth2
+    - name: GENERIC_TOKEN_ENDPOINT
+      value: https://idm.oxygn.dev/oauth2/token
+    - name: GENERIC_USERINFO_ENDPOINT
+      value: https://idm.oxygn.dev/oauth2/openid/litellm/userinfo
+    # Kanidm's stable subject is the account UUID; `preferred_username`
+    # can be renamed and would create a new LiteLLM user.
+    - name: GENERIC_USER_ID_ATTRIBUTE
+      value: sub
+    - name: GENERIC_USER_EMAIL_ATTRIBUTE
+      value: email
+    # Kanidm returns the display name in `name` (LiteLLM's default would
+    # fall back to the `sub` UUID).
+    - name: GENERIC_USER_DISPLAY_NAME_ATTRIBUTE
+      value: name
+    - name: GENERIC_SCOPE
+      value: openid profile email
+    # Kanidm enforces PKCE, including for confidential clients.
+    - name: GENERIC_CLIENT_USE_PKCE
+      value: "true"
+    # Fail fast (401) if a callback lands on a replica that cannot find
+    # the PKCE verifier, instead of trying the token exchange without it.
+    - name: PKCE_STRICT_CACHE_MISS
+      value: "true"
     - name: REDIS_HOST
       value: litellm-dragonfly
     - name: REDIS_PORT
