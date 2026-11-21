@@ -128,14 +128,23 @@ kubectl rollout restart deployment -n ai -l app.kubernetes.io/name=litellm
   n'apparaît pas dans la trace. En contrepartie, Lens injoignable ou disque
   plein ne bloque **jamais** les requêtes LLM.
 - **ClickHouse = AVX2 obligatoire ≥ 26.6** : les images amd64 de ClickHouse
-  ≥ 26.6 sont compilées pour x86-64-v3. Sur un vCPU sans AVX2 (VM Proxmox en
+  ≥ 26.6 sont compilées pour x86-64-v3 ; on garde donc le digest du chart
+  (pas de pin d'image). Sur un vCPU sans AVX2 (VM Proxmox en
   `kvm64`), le conteneur meurt en `Illegal instruction` (exit 132) et Lens
-  boucle sur `Error: Storage(Storage(Transport))`. D'où le pin
-  `clickhouse.image` sur **26.3.62** (LTS, x86-64-v2) dans `helmrelease.yaml`.
-  Correctif de fond : passer les VMs en CPU `host` côté Proxmox, puis revenir
-  au digest du chart. Il n'existe **pas** d'image Docker « compat » sans AVX2
+  boucle sur `Error: Storage(Storage(Transport))`. Seul `k8s-3` expose AVX2,
+  donc un `postRenderer` dans `helmrelease.yaml` épingle le StatefulSet
+  ClickHouse sur ce noeud (+ toleration `workload=ai:NoSchedule`).
+  Correctif de fond : passer les VMs en CPU `host` côté Proxmox, ce qui rendra
+  le patch inutile. Il n'existe **pas** d'image Docker « compat » sans AVX2
   (issue ClickHouse #130104, not planned) ; les binaires `amd64compat` de
   builds.clickhouse.com ne sont pas packagés en conteneur.
+  **Migration** : le PVC `data-lens-clickhouse-0` est un volume local lié à
+  k8s-0 et ne peut pas suivre le pod ; après le merge, le pod ClickHouse reste
+  donc `Pending` (volume non attachable sur k8s-3) tant que la séquence n'est
+  pas faite, dans cet ordre : `kubectl -n ai delete pod lens-clickhouse-0`
+  puis `kubectl -n ai delete pvc data-lens-clickhouse-0`. Le StatefulSet
+  recrée un PVC neuf qui se lie sur k8s-3 (traces jetables, base jamais
+  initialisée : aucune donnée à sauver).
 - **Premier démarrage** : Lens peut redémarrer plusieurs fois avec
   `Error: Storage(Storage(Transport))` tant que ClickHouse n'est pas ready
   (documenté upstream) — c'est normal, `wait: true` couvre l'attente.
@@ -157,7 +166,7 @@ kubectl rollout restart deployment -n ai -l app.kubernetes.io/name=litellm
 - **Upgrade du chart** : sauvegarder ClickHouse avant (`BACKUP TABLE ... TO
   Disk(...)`), cf. `docs/proxy/lens/deployment/storage` upstream. Un upgrade
   majeur de schéma peut rendre les anciennes traces illisibles.
-- **Image** : le chart 0.1.0 épingle lui-même `image.digest` dans ses values
+- **Image** : le chart épingle lui-même `image.digest` dans ses values
   (chaque version du chart embarque le digest de son image) — ne pas surcharger
   `image.tag`/`image.digest` ici.
 - **PVC local** : `miroir-slow-local` épingle le volume au node du premier

@@ -9,8 +9,34 @@ spec:
     kind: OCIRepository
     name: lens
   interval: 30m
+  # Placement de ClickHouse : les images amd64 de ClickHouse >= 26.6 sont
+  # compilées pour x86-64-v3 (AVX2) et meurent en SIGILL (exit 132,
+  # "Illegal instruction") sur un vCPU sans AVX2 — le cas des VMs Proxmox
+  # en type `kvm64`. k8s-3 est le seul noeud qui expose AVX2, et il est
+  # tainté `workload=ai:NoSchedule`. Le chart n'expose aucun
+  # nodeSelector/tolerations pour le StatefulSet ClickHouse : on patche donc
+  # le manifeste rendu. Correctif de fond côté infra : passer les VMs en CPU
+  # `host` (stop/start), ce qui rendra ce patch inutile.
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              kind: StatefulSet
+              name: lens-clickhouse
+            patch: |
+              - op: add
+                path: /spec/template/spec/nodeSelector
+                value:
+                  kubernetes.io/hostname: k8s-3
+              - op: add
+                path: /spec/template/spec/tolerations
+                value:
+                  - key: workload
+                    operator: Equal
+                    value: ai
+                    effect: NoSchedule
   values:
-    # Le chart 0.1.0 épingle lui-même `image.digest` (sha256:489a007c…) dans
+    # Le chart épingle lui-même `image.digest` (sha256:489a007c…) dans
     # ses values : chaque version du chart embarque le digest de son image.
     # Ne pas surcharger `image.tag`/`image.digest` ici, sinon le pod peut
     # tourner avec une image qui ne correspond plus au protocole du chart.
@@ -44,17 +70,14 @@ spec:
     # demande d'augmenter le PVC en même temps.
     retentionDays: 14
     clickhouse:
-      # Épinglé < 26.6 : les images amd64 de ClickHouse ≥ 26.6 sont compilées
-      # pour x86-64-v3 (AVX2) et meurent en SIGILL (exit 132, "Illegal
-      # instruction") sur les VMs dont le vCPU n'expose pas AVX2 — c'est le cas
-      # des VMs Proxmox en type `kvm64`. 26.3.62 est la LTS en x86-64-v2.
-      # Correctif systémique côté infra : passer les VMs en CPU `host`
-      # (stop/start), puis on pourra revenir au digest du chart.
-      image: clickhouse/clickhouse-server:26.3.62@sha256:de3e47c64078aa196dae2349e048fc98ba81947f651f5c20e06e46baea8ae40a
+      # Pas de surcharge d'image : on garde le digest du chart (26.9.6.6,
+      # x86-64-v3/AVX2) — d'où le placement sur k8s-3 via le postRenderer
+      # ci-dessus, seul node qui expose AVX2. Si les VMs Proxmox passent un jour
+      # en CPU `host`, le postRenderer peut être retiré.
       # PV local : les traces sont assumées perdues si le node qui porte le
-      # volume disparaît (pas de composant kopiur sur ce PVC). Le PVC est
-      # épinglé au node du premier consumer — d'où le dependsOn miroir-config
-      # dans ../ks.yaml.
+      # volume disparaît (pas de composant kopiur sur ce PVC). Le volume est
+      # épinglé à k8s-3 par le postRenderer ci-dessus — d'où le dependsOn
+      # miroir-config dans ../ks.yaml (l'agent miroir tourne bien sur k8s-3).
       storage: 20Gi
       storageClassName: miroir-slow-local
     resources:
