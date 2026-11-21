@@ -69,6 +69,10 @@ data:
     {
       "$schema": "https://opencode.ai/config.json",
       "model": "litellm/go-glm-5.3-flash",
+      // Emit AI SDK spans so the OTEL_* env vars exported by the deployment
+      // actually produce traces. The field is flagged deprecated in the config
+      // schema yet remains the only documented switch for experimental_telemetry.
+      "experimental": { "openTelemetry": true },
       // Every LLM must go through LiteLLM. Declaring only the litellm provider is
       // not enough: a saved OpenCode Console login (the Go subscription) or an
       // auto-detected GITHUB_TOKEN (GitHub Copilot) re-adds direct providers that
