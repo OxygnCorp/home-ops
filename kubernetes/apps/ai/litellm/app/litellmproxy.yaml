@@ -87,6 +87,10 @@ spec:
     # Kanidm enforces PKCE, including for confidential clients.
     - name: GENERIC_CLIENT_USE_PKCE
       value: "true"
+    # Fail fast (401) if a callback lands on a replica that cannot find
+    # the PKCE verifier, instead of trying the token exchange without it.
+    - name: PKCE_STRICT_CACHE_MISS
+      value: "true"
     - name: REDIS_HOST
       value: litellm-dragonfly
     - name: REDIS_PORT

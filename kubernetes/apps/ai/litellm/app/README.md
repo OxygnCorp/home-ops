@@ -18,9 +18,10 @@ Two operator CRs drive the cluster (`litellm.home-operations.com/v1alpha1`):
 
 The Admin UI signs in through Kanidm via LiteLLM's generic OIDC provider. The
 OAuth2 client is provisioned by `components/oidc-kanidm/in-app` (see
-`kubernetes/apps/ai/litellm/ks.yaml`): the component writes the
-`kanidm-litellm-oidc` ConfigMap in `security`, `kanidm-provision` creates the
-Kanidm client `litellm` with redirect
+`kubernetes/apps/ai/litellm/ks.yaml`): the component adds a nested Flux
+Kustomization `kanidm-litellm-oidc` (created in `ai`, `targetNamespace:
+security`) that applies the `kanidm-litellm-oidc` ConfigMap in `security`;
+`kanidm-provision` creates the Kanidm client `litellm` with redirect
 `https://litellm.oxygn.dev/sso/callback`, and writes the Secret
 `kanidm-litellm-oidc` (`client-id` / `client-secret`) in `ai`.
 `litellmproxy.yaml` consumes that Secret through the `GENERIC_*` env vars.
@@ -61,8 +62,9 @@ to misread:
 - the count is **every row in `LiteLLM_UserTable`** (minus SCIM-deactivated
   users), not just SSO users. Users created via `/user/new` or the UI count;
   virtual keys do **not** create user rows;
-- the 6th new SSO user gets a `403` with
-  `SSO for more than 5 users requires a LiteLLM Enterprise license. Existing users can still sign in.`;
+- the 6th new SSO user gets a `403` whose detail is
+  `SSO for more than 5 users requires a LiteLLM Enterprise license. Existing users can still sign in.`
+  (the SSO error page may wrap that detail);
 - if `LITELLM_LICENSE` is present in the 1Password item, `dataFrom.extract`
   already puts it in `litellm-secret` and a valid license lifts the free cap;
   an absent or invalid license keeps the free path.
@@ -83,8 +85,11 @@ kubectl -n ai run litellm-users --rm -i --restart=Never \
 
 The env login stays enabled: `UI_USERNAME` (default `admin`) plus
 `UI_PASSWORD`; if `UI_PASSWORD` is unset, the master key is accepted as the
-password. `/fallback/login` only works for a **database** user with a
-password, so it is not a fallback for SSO users. If you enable
+password. Using the env login creates a `LiteLLM_UserTable` row, so it counts
+as one of the five free seats; when `PROXY_ADMIN_ID` is set to the Kanidm
+UUID, that row is the same row the SSO login uses, otherwise it is a separate
+row. `/fallback/login` only works for a **database** user with a password, so
+it is not a fallback for SSO users. If you enable
 `disable_env_credential_login`, create a `proxy_admin` database user with a
 password first (it consumes one of the five free seats); do not enable
 `disable_password_login_when_sso_enabled` if you rely on that user.
@@ -98,15 +103,22 @@ logout button end the Kanidm session too (it affects every Kanidm app).
 
 - `GENERIC_CLIENT_USE_PKCE=true` is mandatory: Kanidm enforces PKCE even for
   confidential clients. With two LiteLLM replicas the verifier is stored in
-  Redis (`redis_usage_cache`); if Redis is unavailable, the SSO callback can
-  land on the other pod and fail.
+  Redis (`redis_usage_cache`); `PKCE_STRICT_CACHE_MISS=true` makes a cache
+  miss fail fast with a 401 instead of trying the exchange without
+  `code_verifier`, which Kanidm would reject with `invalid_grant`.
 - `PROXY_BASE_URL` must be exactly `https://litellm.oxygn.dev` (no trailing
   slash) to match the Kanidm redirect URI.
 - `GENERIC_USER_DISPLAY_NAME_ATTRIBUTE=name` is required: Kanidm returns the
   display name in `name`; LiteLLM's default is `sub` (the UUID).
+- The Kanidm person needs a `mail` attribute for the `email` claim; without
+  it LiteLLM creates the user with a null email (email-based invites then do
+  not work).
+- Do not set `GENERIC_CLIENT_STATE`: with PKCE a fixed state breaks concurrent
+  logins.
 - The `kanidm-litellm-oidc` Secret appears asynchronously after the ConfigMap;
   pods may briefly be in `CreateContainerConfigError` until the provision
-  controller writes it and the reloader restarts them.
+  controller writes it (kubelet retries; the reloader also restarts on Secret
+  changes).
 - Removing the component/env disables SSO; the Kanidm client and the
   `kanidm-litellm-oidc` Secret may need manual cleanup.
 
