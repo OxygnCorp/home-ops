@@ -128,7 +128,8 @@ kubectl rollout restart deployment -n ai -l app.kubernetes.io/name=litellm
   n'apparaît pas dans la trace. En contrepartie, Lens injoignable ou disque
   plein ne bloque **jamais** les requêtes LLM.
 - **ClickHouse = AVX2 obligatoire ≥ 26.6** : les images amd64 de ClickHouse
-  ≥ 26.6 sont compilées pour x86-64-v3. Sur un vCPU sans AVX2 (VM Proxmox en
+  ≥ 26.6 sont compilées pour x86-64-v3 ; on garde donc le digest du chart
+  (pas de pin d'image). Sur un vCPU sans AVX2 (VM Proxmox en
   `kvm64`), le conteneur meurt en `Illegal instruction` (exit 132) et Lens
   boucle sur `Error: Storage(Storage(Transport))`. Seul `k8s-3` expose AVX2,
   donc un `postRenderer` dans `helmrelease.yaml` épingle le StatefulSet
