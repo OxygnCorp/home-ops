@@ -20,11 +20,11 @@ Créer un item `lens` avec trois champs (valeurs générées, ex. `openssl rand 
 
 | Champ            | Usage                                                        |
 | ---------------- | ------------------------------------------------------------ |
-| `admin_token`    | Login admin de l'UI Lens (`lens-admin` Secret)                |
-| `service_token`  | Auth interne LiteLLM → Lens (`lens-connection`)               |
-| `gateway_secret` | Vérification de l'identité envoyée par LiteLLM (`lens-connection`) |
+| `ADMIN_TOKEN`    | Login admin de l'UI Lens (`lens-admin` Secret)                |
+| `SERVICE_TOKEN`  | Auth interne LiteLLM → Lens (`lens-connection`)               |
+| `GATEWAY_SECRET` | Vérification de l'identité envoyée par LiteLLM (`lens-connection`) |
 
-`service_token` et `gateway_secret` doivent être **différents** et faire
+`SERVICE_TOKEN` et `GATEWAY_SECRET` doivent être **différents** et faire
 **32 à 512 caractères** : LiteLLM ignore silencieusement un secret plus court
 (`/lens/service` → 503) et le pod Lens part en crashloop
 (`LITELLM_LENS_SERVICE_TOKEN must contain 32 and 512 characters`).
@@ -58,7 +58,7 @@ curl -s https://litellm.oxygn.dev/lens/service \
 
 ## Premier usage
 
-1. Ouvrir `https://lens.oxygn.dev/ui/` et coller `admin_token`.
+1. Ouvrir `https://lens.oxygn.dev/ui/` et coller `ADMIN_TOKEN`.
 2. **Traces > Set up tracing** → générer une tracing key, choisir un agent.
 3. Brancher un seul agent d'abord (ex. opencode) :
 
