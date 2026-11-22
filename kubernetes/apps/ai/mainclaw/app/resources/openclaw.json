@@ -1246,7 +1246,7 @@
         "config": {}
       },
       "diagnostics-otel": {
-        "enabled": false
+        "enabled": true
       },
       "brave": {
         "enabled": true
@@ -1594,7 +1594,18 @@
     "agentId": "main"
   },
   "diagnostics": {
-    "enabled": true
+    "enabled": true,
+    "otel": {
+      "enabled": true,
+      "endpoint": "http://lens.ai.svc.cluster.local:4318",
+      "protocol": "http/protobuf",
+      "serviceName": "mainclaw",
+      "headers": { "Authorization": "Bearer {{ .MAINCLAW_TRACING_KEY }}" },
+      "traces": true,
+      "metrics": false,
+      "logs": false,
+      "captureContent": true
+    }
   },
   "meta": {
     "migrations": {

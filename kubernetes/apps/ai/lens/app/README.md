@@ -28,8 +28,16 @@ Créer un item `lens` avec trois champs (valeurs générées, ex. `openssl rand 
 **32 à 512 caractères** : LiteLLM ignore silencieusement un secret plus court
 (`/lens/service` → 503) et le pod Lens part en crashloop
 (`LITELLM_LENS_SERVICE_TOKEN must contain 32 and 512 characters`).
-`openssl rand -hex 32` produit 64 caractères. Les clés de tracing des agents
-(créées dans l'UI) sont encore autre chose.
+`openssl rand -hex 32` produit 64 caractères.
+
+Les clés de tracing des agents sont encore autre chose : elles sont générées
+**une fois** dans l'UI (voir *Premier usage*), pas par `openssl`, et rangées
+dans ce même item sous `OPENCODE_TRACING_KEY`, `DEVCLAW_TRACING_KEY` et
+`MAINCLAW_TRACING_KEY`. Une clé **par agent** : réutiliser la même clé fait
+atterrir toutes les traces sur un seul agent dans Lens. Chaque champ doit
+exister **avant** le merge de la PR qui le consomme — un champ manquant fait
+échouer toute la sync de l'`ExternalSecret` (`map has no entry for key`), donc
+la configuration de l'agent n'est plus rendue et son pod ne démarre pas.
 
 ## Câblage côté LiteLLM
 
@@ -59,8 +67,22 @@ curl -s https://litellm.oxygn.dev/lens/service \
 ## Premier usage
 
 1. Ouvrir `https://lens.oxygn.dev/ui/` et coller `ADMIN_TOKEN`.
-2. **Traces > Set up tracing** → générer une tracing key, choisir un agent.
-3. Brancher un seul agent d'abord (ex. opencode) :
+2. **Traces > Connect project** → générer une tracing key **par agent**
+   (opencode, devclaw, mainclaw), pas une clé partagée : l'agent est déduit de
+   la clé dans Lens. La clé n'est affichée qu'une fois : la ranger dans l'item
+   1Password `lens` sous le champ correspondant.
+3. Les agents in-cluster sont déjà câblés : `opencode`
+   (`kubernetes/apps/ai/opencode`, variables `OTEL_*` dans son `HelmRelease`)
+   et les agents openclaw `devclaw` / `mainclaw` (plugin
+   `diagnostics-otel` activé dans `resources/openclaw.json`). Leurs clés
+   arrivent par `ExternalSecret` depuis l'item 1Password `lens`
+   (`OPENCODE_TRACING_KEY`, `DEVCLAW_TRACING_KEY`, `MAINCLAW_TRACING_KEY`) :
+   il n'y a rien à exporter à la main. Côté openclaw, l'identification passe
+   par `diagnostics.otel.serviceName` (`devclaw` / `mainclaw`) : les deux
+   configs déclarent le même id d'agent (`main` dans `agents.entries`), donc
+   filtrer par service dans Lens plutôt que par nom d'agent — à confirmer sur
+   la première trace reçue. La recette ci-dessous reste la
+   référence pour tout autre agent :
 
    ```bash
    export OTEL_EXPORTER_OTLP_ENDPOINT=https://lens.oxygn.dev
