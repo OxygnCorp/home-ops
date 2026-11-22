@@ -86,3 +86,24 @@ spec:
         memory: 256Mi
       limits:
         memory: 2Gi
+    # Model gateway for Lens' own analysis/investigations (Settings -> Analysis).
+    # Trace ingestion works without it; only analysis runs need a provider, and
+    # this is the "no model gateway configured" the UI warns about. Lens reads
+    # both at startup, asks /model_group/info which models the key may reach,
+    # and bills its own calls through that key — minted by the operator from the
+    # LensAnalysis LiteLLMVirtualKey in the litellm app, so no value in Git.
+    #
+    # `optional: true` on purpose: the operator creates the Secret moments after
+    # the CR is applied, and a missing key would otherwise park the pod in
+    # CreateContainerConfigError and fail the whole HelmRelease. If the key shows
+    # up late, roll the Deployment once (kubectl -n ai rollout restart deploy/lens):
+    # the chart exposes no pod-template annotation, so reloader cannot watch it.
+    extraEnv:
+      - name: LENS_GATEWAY_API_BASE
+        value: http://litellm.ai:4000
+      - name: LENS_GATEWAY_API_KEY
+        valueFrom:
+          secretKeyRef:
+            name: lens-analysis
+            key: api-key
+            optional: true

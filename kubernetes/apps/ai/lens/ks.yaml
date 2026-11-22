@@ -14,6 +14,12 @@ spec:
     # épinglé au node du premier consumer).
     - name: miroir-config
       namespace: miroir-system
+    # Le câblage d'analyse s'appuie sur la LiteLLMVirtualKey LensAnalysis
+    # (appliquée par la Kustomization litellm, app/virtualkeys/lens-analysis.yaml) :
+    # l'opérateur a besoin du LiteLLMProxy pour générer la clé, et Lens lit
+    # LENS_GATEWAY_API_KEY au démarrage.
+    - name: litellm
+      namespace: ai
   interval: 1h
   path: ./kubernetes/apps/ai/lens/app
   prune: true

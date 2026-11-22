@@ -64,6 +64,58 @@ curl -s https://litellm.oxygn.dev/lens/service \
 #           status.credentials_ready=true, status.public_contract=1
 ```
 
+## Analyse (Lens → gateway)
+
+Les traces s'ingèrent **sans** fournisseur de modèle : c'est l'onglet
+*Investigations* (Findings) qui en a besoin, et sans lui l'UI affiche
+« no model gateway configured ».
+
+Lens appelle le gateway avec deux variables lues **au démarrage** :
+
+- `LENS_GATEWAY_API_BASE=http://litellm.ai:4000`
+- `LENS_GATEWAY_API_KEY` ← Secret `lens-analysis` (clé `api-key`)
+
+La clé est une `LiteLLMVirtualKey` (`kubernetes/apps/ai/litellm/app/virtualkeys/lens-analysis.yaml`)
+limitée à `dsv41f`, plafonnée à 50 $/mois (Lens autorise ~10 $/mois **par
+agent**, et analyse chaque agent découvert : un plafond à 10 asphyxierait le
+second). L'opérateur la génère via l'admin API et écrit le Secret dans `ai` ;
+volontairement **pas de `PushSecret`** vers 1Password : le seul consommateur est
+le Deployment `lens` dans ce namespace.
+
+`optional: true` sur le `secretKeyRef` : au premier apply le Secret n'existe pas
+encore (l'opérateur le crée après la CR), et sans ça le pod partirait en
+`CreateContainerConfigError`. Le chart n'expose aucune annotation de pod
+template, donc pas de reloader sur ce Secret : après sa création (ou une
+rotation), relancer le Deployment à la main.
+
+```bash
+kubectl -n ai rollout restart deployment/lens
+```
+
+Vérification dans l'UI : **Settings > LiteLLM gateway** (test de connexion +
+rafraîchissement de la liste des modèles sans redémarrer), puis **Settings >
+Analysis > Check configuration** doit afficher `dsv41f` et « Analysis is
+configured ». Les appels de Lens portent `User-Agent … lens-signals` et ne sont
+pas analysés eux-mêmes.
+
+### Si le message persiste
+
+`optional: true` a un revers : si l'opérateur n'arrive pas à créer la clé
+(admin API indisponible, budget refusé…), le Secret n'existe jamais, le pod
+démarre quand même, le HelmRelease reste `Ready`, et l'UI ré-affiche exactement
+le symptôme d'origine — sans aucun signal dans Flux. Le diagnostic est donc à
+faire côté CR, pas côté pod :
+
+```bash
+kubectl -n ai get litellmvirtualkey lens-analysis -o yaml   # .status.conditions
+kubectl -n ai get secret lens-analysis                      # absent = CR en échec
+```
+
+Une rotation (ou un changement de `models` / `maxBudget` dans la CR) est
+appliquée par l'opérateur côté proxy, mais le pod a lu la clé **au démarrage** :
+un `rollout restart` reste nécessaire pour qu'il en tienne compte. Supprimer la
+CR supprime la clé côté LiteLLM.
+
 ## Premier usage
 
 1. Ouvrir `https://lens.oxygn.dev/ui/` et coller `ADMIN_TOKEN`.
@@ -143,6 +195,15 @@ kubectl rollout restart deployment -n ai -l app.kubernetes.io/name=litellm
 ```
 
 ## Limites connues
+
+- **UI 0.3.0 : la vue Traces est filtrée par défaut.** Depuis la 0.3.0 les
+  traces sans appel modèle/outil sont masquées (un bouton permet de les
+  revoir), et le sélecteur d'agent propose désormais *All agents* — sans cette
+  option on ne voit qu'un agent à la fois, et les deux configs openclaw
+  déclarent le même id `main`, donc elles se regroupent sous ce nom. L'agent
+  est désormais attribué par **la clé de tracing qui envoie** les spans.
+  Quand l'UI est montée par le gateway LiteLLM, les pages admin passent sous
+  `/lens/admin`.
 
 - **Perte silencieuse de traces sous charge** : l'exporteur LiteLLM bufferise
   1000 événements / 32 MiB puis **jette** (pas de backpressure), et tout
