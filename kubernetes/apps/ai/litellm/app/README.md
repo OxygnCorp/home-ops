@@ -96,10 +96,25 @@ to Kanidm, and `general_settings.disable_env_credential_login: true` rejects
 `UI_USERNAME`/`UI_PASSWORD` and the master key on the UI login. The master key
 still works as an API bearer token; `/fallback/login` is the UI break-glass.
 
-**Before enabling `disable_env_credential_login`**, create a `proxy_admin`
-database user with its own password (use an email that no SSO account uses),
-test `/fallback/login`, and store the credentials in 1Password. It consumes one
-of the five free seats. With the master key:
+**Chosen policy for this cluster (2026-11-22): no permanent database
+break-glass user.** `matt@oxygn.dev` is the SSO admin; the normal UI path is
+SSO. This keeps a free seat and avoids a second static admin credential, at the
+cost of relying on API/GitOps access during an SSO outage:
+
+- **Master key API**: create a temporary `proxy_admin` database user with a
+  password, then use `/fallback/login`. The master key still works as an API
+  bearer token even with `disable_env_credential_login` enabled.
+- **Git revert**: remove **both** `disable_env_credential_login` and
+  `AUTO_REDIRECT_UI_LOGIN_TO_SSO`, then reconcile. With auto-redirect still on,
+  the SPA login form is not shown and only `/fallback/login` (database users)
+  remains.
+
+Keep the master key available in 1Password (outside the cluster) and test the
+API path periodically (`GET /user/list` with the master key). If you later want
+a permanent break-glass, create a `proxy_admin` database user with its own
+password (use an email that no SSO account uses), test `/fallback/login`, and
+store the credentials in 1Password. It consumes one of the five free seats.
+With the master key:
 
 ```bash
 MASTER=$(kubectl -n ai get secret litellm-secret \
@@ -114,26 +129,18 @@ curl -s -X POST https://litellm.oxygn.dev/user/update \
   -d '{"user_id":"breakglass-admin","password":"<strong-password>"}'
 ```
 
-The password policy is 12+ characters with upper, lower, digit and special
-characters, and it must pass LiteLLM's HaveIBeenPwned check (a strong password
-found in a breach gets a 400 from `/user/update`). The inline password is for
-brevity; prefer reading it from 1Password into a variable to keep it out of
-shell history. From v1.104.0 an admin-set password must be changed at first
-sign-in: open `/fallback/login` in a private window, set the final password and
-save it in 1Password. Do not set `disable_password_login_when_sso_enabled`: it
-blocks the break-glass user too. If you get locked out, the master key still
-works on the API: if the break-glass row does not exist yet, `POST /user/new`
-then `/user/update` (a password update alone cannot create it); if the row
-exists, `/user/update` is enough. Alternatively remove **both**
-`disable_env_credential_login` and `AUTO_REDIRECT_UI_LOGIN_TO_SSO` from Git and
-reconcile: with auto-redirect still on, the SPA login form is not shown and only
-`/fallback/login` (database users) remains.
-
-If you deliberately skip the database break-glass, this Git/API path is your
-recovery: keep the master key available in 1Password and use it as an API
-bearer token to create a password user, or revert both settings. It is slower
-and depends on GitOps/API access during the outage; a database break-glass is
-independent of both.
+For that optional break-glass, the password policy is 12+ characters with
+upper, lower, digit and special characters, and it must pass LiteLLM's
+HaveIBeenPwned check (a strong password found in a breach gets a 400 from
+`/user/update`). The inline password is for brevity; prefer reading it from
+1Password into a variable to keep it out of shell history. From v1.104.0 an
+admin-set password must be changed at first sign-in: open `/fallback/login` in
+a private window, set the final password and save it in 1Password. Do not set
+`disable_password_login_when_sso_enabled`: it blocks the break-glass user too.
+If you get locked out, the master key still works on the API: if the break-glass
+row does not exist yet, `POST /user/new` then `/user/update` (a password update
+alone cannot create it); if the row exists, `/user/update` is enough. Or remove
+both settings from Git as above.
 
 The old env login (`UI_USERNAME`/`UI_PASSWORD` or the master key) created a
 `LiteLLM_UserTable` row and counted as a seat. If it was used before this
