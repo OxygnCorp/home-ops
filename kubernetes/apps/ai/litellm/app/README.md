@@ -124,8 +124,16 @@ save it in 1Password. Do not set `disable_password_login_when_sso_enabled`: it
 blocks the break-glass user too. If you get locked out, the master key still
 works on the API: if the break-glass row does not exist yet, `POST /user/new`
 then `/user/update` (a password update alone cannot create it); if the row
-exists, `/user/update` is enough. Alternatively remove
-`disable_env_credential_login` from Git and reconcile.
+exists, `/user/update` is enough. Alternatively remove **both**
+`disable_env_credential_login` and `AUTO_REDIRECT_UI_LOGIN_TO_SSO` from Git and
+reconcile: with auto-redirect still on, the SPA login form is not shown and only
+`/fallback/login` (database users) remains.
+
+If you deliberately skip the database break-glass, this Git/API path is your
+recovery: keep the master key available in 1Password and use it as an API
+bearer token to create a password user, or revert both settings. It is slower
+and depends on GitOps/API access during the outage; a database break-glass is
+independent of both.
 
 The old env login (`UI_USERNAME`/`UI_PASSWORD` or the master key) created a
 `LiteLLM_UserTable` row and counted as a seat. If it was used before this
