@@ -2,6 +2,12 @@
 
 Each file defines a LiteLLM virtual key (`LiteLLMVirtualKey`) plus the `PushSecret` that mirrors it from the cluster Secret into 1Password for consumption by other apps.
 
+**Exception — no `PushSecret` when the only consumer is in-cluster.** A key read
+directly by a workload in this namespace has nothing to mirror: the Secret the
+operator generates is already where it is needed, and every extra copy is one
+more place to leak a spend-capable credential. `lens-analysis.yaml` is the
+current example (Lens mounts it through `secretKeyRef`).
+
 ## 1Password conventions
 
 All API credentials live in the vault `home-ops`:

@@ -9,6 +9,7 @@ resources:
   - ./opencode.yaml
   - ./pr-review.yaml
   - ./memini.yaml
+  - ./lens-analysis.yaml
   - ./lightrag.yaml
   - ./radar.yaml
   - ./repo-wiki.yaml

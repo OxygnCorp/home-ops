@@ -1,0 +1,35 @@
+---
+# Lens runs its analysis/investigations by calling a model gateway: it reads
+# LENS_GATEWAY_API_BASE + LENS_GATEWAY_API_KEY, hits /model_group/info to
+# discover the models the key can reach, and bills its own calls through that
+# key. The operator mints this key through the proxy admin API, so no value
+# ever lands in Git.
+#
+# Deliberately no PushSecret: the only consumer is the lens Deployment in this
+# namespace. Nothing outside the cluster needs the value, and every mirrored
+# copy is one more place to leak a spend-capable key.
+apiVersion: litellm.home-operations.com/v1alpha1
+kind: LiteLLMVirtualKey
+metadata:
+  name: lens-analysis
+spec:
+  proxyRef: litellm
+  keyAlias: LensAnalysis
+  # Restricted to the single model the analysis is allowed to spend on.
+  # Investigations default to $10/month/agent; a short model list keeps a
+  # misconfigured investigation from quietly reaching a frontier-priced group
+  # (the groups are fallback-chain aliases, so the list also pins which family
+  # the analysis lands in).
+  models:
+    - dsv41f
+  # Lens allows ~$10/month per discovered agent and analyses each agent
+  # separately, so cap the key above a single agent's budget instead of at it:
+  # a $10 cap would silently starve the second agent Lens starts analysing.
+  maxBudget: "50"
+  # `monthly` is LiteLLM's alias for a floating 30d window, not a calendar
+  # month: the budget resets 30 days after the key was created. Use `1mo` if a
+  # calendar reset is ever wanted instead.
+  budgetDuration: monthly
+  teamID: mcp-devops
+  secretName: lens-analysis
+  secretKey: api-key
