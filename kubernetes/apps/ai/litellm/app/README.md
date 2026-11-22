@@ -42,7 +42,9 @@ kubectl annotate externalsecret litellm-admin -n ai force-sync=$(date +%s)
 ```
 
 The reloader restarts the pods; the env reference is `optional: true`, so a
-missing field does not block startup. The next SSO login promotes that user to
+missing field does not block startup. Until the field exists,
+`externalsecret litellm-admin` reports `SecretSyncedError`; that is expected
+and the proxy still starts. The next SSO login promotes that user to
 `proxy_admin` (LiteLLM applies `PROXY_ADMIN_ID` after creating the user and
 before issuing the UI token). If the UUID is unknown, sign in once (view-only),
 copy the ID from the UI, then add the field and sign in again. It can also be
@@ -69,9 +71,11 @@ to misread:
   (the SSO error page may wrap that detail);
 - a valid `LITELLM_LICENSE` lifts the free cap. The main `litellm`
   ExternalSecret uses a `Replace` template and only projects the keys listed
-  in `target.template.data`; if you have a license, add
-  `LITELLM_LICENSE: "{{ .LITELLM_LICENSE }}"` to that template (or fetch it
-  with a separate ExternalSecret) so it reaches the pod.
+  in `target.template.data`; if you have a license, fetch it with a separate
+  ExternalSecret (preferred for optional fields) or add
+  `LITELLM_LICENSE: "{{ .LITELLM_LICENSE }}"` to that template. A template
+  entry for a missing field fails rendering (`missingkey=error`) and stalls
+  the whole main sync, so only do that once the field exists.
 
 Check the current count before relying on a free seat:
 
