@@ -115,11 +115,16 @@ curl -s -X POST https://litellm.oxygn.dev/user/update \
 ```
 
 The password policy is 12+ characters with upper, lower, digit and special
-characters. From v1.104.0 an admin-set password must be changed at first
+characters, and it must pass LiteLLM's HaveIBeenPwned check (a strong password
+found in a breach gets a 400 from `/user/update`). The inline password is for
+brevity; prefer reading it from 1Password into a variable to keep it out of
+shell history. From v1.104.0 an admin-set password must be changed at first
 sign-in: open `/fallback/login` in a private window, set the final password and
 save it in 1Password. Do not set `disable_password_login_when_sso_enabled`: it
 blocks the break-glass user too. If you get locked out, the master key still
-works on the API: use `/user/update` to set a password, or remove
+works on the API: if the break-glass row does not exist yet, `POST /user/new`
+then `/user/update` (a password update alone cannot create it); if the row
+exists, `/user/update` is enough. Alternatively remove
 `disable_env_credential_login` from Git and reconcile.
 
 The old env login (`UI_USERNAME`/`UI_PASSWORD` or the master key) created a
