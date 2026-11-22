@@ -74,6 +74,17 @@ onepassword`):
 | `LITELLM_API_KEY`           | `litellm` → `KEY_DEVCLAW`   |
 | `MEMINI_API_KEY`            | `memini` → `MEMINI_API_KEY` |
 
+A second ExternalSecret, `devclaw-config` (12h), renders the `devclaw-config`
+secret from the `devclaw-configmap` ConfigMap (`resources/openclaw.json`). That
+is where `DEVCLAW_TRACING_KEY` lands: the file carries
+`"Authorization": "Bearer {{ .DEVCLAW_TRACING_KEY }}"`, resolved from the
+`lens` item, so the key is only ever present in the rendered secret — never in
+the ConfigMap, the pod env, or Git. Because of the 12h refresh, an
+`openclaw.json` change committed to Git reaches the pod at the next sync; force
+it with `kubectl annotate externalsecret devclaw-config -n ai force-sync=$(date +%s)`
+(a missing `DEVCLAW_TRACING_KEY` field fails this sync and freezes the rendered
+config).
+
 The HelmRelease carries
 `secret.reloader.stakater.com/reload: "devclaw-secret, devclaw-config"`, so a
 1Password change restarts the pod automatically. To force a refresh:

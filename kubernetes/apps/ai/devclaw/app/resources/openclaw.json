@@ -619,7 +619,7 @@
         "enabled": true
       },
       "diagnostics-otel": {
-        "enabled": false
+        "enabled": true
       },
       "litellm": {
         "enabled": true
@@ -919,7 +919,20 @@
     }
   },
   "diagnostics": {
-    "enabled": true
+    "enabled": true,
+    "otel": {
+      "enabled": true,
+      "endpoint": "http://lens.ai.svc.cluster.local:4318",
+      "protocol": "http/protobuf",
+      "serviceName": "devclaw",
+      "headers": {
+        "Authorization": "Bearer {{ .DEVCLAW_TRACING_KEY }}"
+      },
+      "traces": true,
+      "metrics": false,
+      "logs": false,
+      "captureContent": true
+    }
   },
   "meta": {
     "migrations": {
