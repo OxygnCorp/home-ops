@@ -57,6 +57,10 @@ spec:
     # PROXY_ADMIN_ID = Kanidm account UUID); see README.
     - name: PROXY_BASE_URL
       value: https://litellm.oxygn.dev
+    # Send /ui to the Kanidm SSO flow instead of showing the login form.
+    # /fallback/login remains available for the database break-glass admin.
+    - name: AUTO_REDIRECT_UI_LOGIN_TO_SSO
+      value: "true"
     - name: PROXY_ADMIN_ID
       valueFrom:
         secretKeyRef:
@@ -292,6 +296,11 @@ spec:
       object_permission:
         mcp_tool_search_enabled: true
   generalSettings:
+    # The UI normal path is SSO. This rejects UI_USERNAME/UI_PASSWORD and the
+    # master key on the UI login; the master key still works as an API bearer
+    # token. Create and test the /fallback/login database admin first (README
+    # "Break-glass and logout") before merging this.
+    disable_env_credential_login: true
     health_check_endpoint: /v1/health
     store_model_in_db: false
     tracing:

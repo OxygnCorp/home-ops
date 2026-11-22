@@ -91,16 +91,40 @@ kubectl -n ai run litellm-users --rm -i --restart=Never \
 
 ### Break-glass and logout
 
-The env login stays enabled: `UI_USERNAME` (default `admin`) plus
-`UI_PASSWORD`; if `UI_PASSWORD` is unset, the master key is accepted as the
-password. Using the env login creates a `LiteLLM_UserTable` row, so it counts
-as one of the five free seats; when `PROXY_ADMIN_ID` is set to the Kanidm
-UUID, that row is the same row the SSO login uses, otherwise it is a separate
-row. `/fallback/login` only works for a **database** user with a password, so
-it is not a fallback for SSO users. If you enable
-`disable_env_credential_login`, create a `proxy_admin` database user with a
-password first (it consumes one of the five free seats); do not enable
-`disable_password_login_when_sso_enabled` if you rely on that user.
+The UI normal path is SSO: `AUTO_REDIRECT_UI_LOGIN_TO_SSO=true` sends `/ui`
+to Kanidm, and `general_settings.disable_env_credential_login: true` rejects
+`UI_USERNAME`/`UI_PASSWORD` and the master key on the UI login. The master key
+still works as an API bearer token; `/fallback/login` is the UI break-glass.
+
+**Before enabling `disable_env_credential_login`**, create a `proxy_admin`
+database user with its own password (use an email that no SSO account uses),
+test `/fallback/login`, and store the credentials in 1Password. It consumes one
+of the five free seats. With the master key:
+
+```bash
+MASTER=$(kubectl -n ai get secret litellm-secret \
+  -o jsonpath='{.data.LITELLM_MASTER_KEY}' | base64 -d)
+
+curl -s -X POST https://litellm.oxygn.dev/user/new \
+  -H "Authorization: Bearer $MASTER" -H "Content-Type: application/json" \
+  -d '{"user_id":"breakglass-admin","user_email":"breakglass-litellm@oxygn.dev","user_role":"proxy_admin","auto_create_key":false}'
+
+curl -s -X POST https://litellm.oxygn.dev/user/update \
+  -H "Authorization: Bearer $MASTER" -H "Content-Type: application/json" \
+  -d '{"user_id":"breakglass-admin","password":"<strong-password>"}'
+```
+
+The password policy is 12+ characters with upper, lower, digit and special
+characters. From v1.104.0 an admin-set password must be changed at first
+sign-in: open `/fallback/login` in a private window, set the final password and
+save it in 1Password. Do not set `disable_password_login_when_sso_enabled`: it
+blocks the break-glass user too. If you get locked out, the master key still
+works on the API: use `/user/update` to set a password, or remove
+`disable_env_credential_login` from Git and reconcile.
+
+The old env login (`UI_USERNAME`/`UI_PASSWORD` or the master key) created a
+`LiteLLM_UserTable` row and counted as a seat. If it was used before this
+change, that row remains; it is no longer a login path.
 
 LiteLLM logout clears only the LiteLLM session. Kanidm has no RP-initiated
 logout, so the Kanidm session survives; use `https://idm.oxygn.dev/ui/logout`
