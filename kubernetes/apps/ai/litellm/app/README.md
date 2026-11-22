@@ -31,20 +31,22 @@ admin must be a member of Kanidm `users`, like the other OIDC apps
 
 ### First login / admin
 
-A new SSO user starts as `internal_user_viewer`. To promote the human admin,
-add a field `PROXY_ADMIN_ID` to the 1Password item `litellm`, set to the
-Kanidm account UUID (`sub`), then force-sync the secret:
+A new SSO user starts as `internal_user_viewer`. `PROXY_ADMIN_ID` is fetched by
+the separate `litellm-admin` ExternalSecret from the `PROXY_ADMIN_ID` field of
+the 1Password item `litellm` (the main `litellm` ExternalSecret uses the
+default `Replace` template and only projects the keys it lists). Add the field
+with the Kanidm account UUID (`sub`), then force-sync that secret:
 
 ```bash
-kubectl annotate externalsecret litellm -n ai force-sync=$(date +%s)
+kubectl annotate externalsecret litellm-admin -n ai force-sync=$(date +%s)
 ```
 
-`envFrom` injects it into the proxy and the reloader restarts the pods. The
-next SSO login promotes that user to `proxy_admin` (LiteLLM applies
-`PROXY_ADMIN_ID` after creating the user and before issuing the UI token). If
-the UUID is unknown, sign in once (view-only), copy the ID from the UI, then
-add the field and sign in again. It can also be read from Kanidm with
-`just kanidm cli person get <user>`.
+The reloader restarts the pods; the env reference is `optional: true`, so a
+missing field does not block startup. The next SSO login promotes that user to
+`proxy_admin` (LiteLLM applies `PROXY_ADMIN_ID` after creating the user and
+before issuing the UI token). If the UUID is unknown, sign in once (view-only),
+copy the ID from the UI, then add the field and sign in again. It can also be
+read from Kanidm with `just kanidm cli person get <user>`.
 
 Do **not** put a group name here: `PROXY_ADMIN_ID` is matched against
 `GENERIC_USER_ID_ATTRIBUTE=sub`, i.e. the UUID. For multiple admins, switch to
@@ -65,9 +67,11 @@ to misread:
 - the 6th new SSO user gets a `403` whose detail is
   `SSO for more than 5 users requires a LiteLLM Enterprise license. Existing users can still sign in.`
   (the SSO error page may wrap that detail);
-- if `LITELLM_LICENSE` is present in the 1Password item, `dataFrom.extract`
-  already puts it in `litellm-secret` and a valid license lifts the free cap;
-  an absent or invalid license keeps the free path.
+- a valid `LITELLM_LICENSE` lifts the free cap. The main `litellm`
+  ExternalSecret uses a `Replace` template and only projects the keys listed
+  in `target.template.data`; if you have a license, add
+  `LITELLM_LICENSE: "{{ .LITELLM_LICENSE }}"` to that template (or fetch it
+  with a separate ExternalSecret) so it reaches the pod.
 
 Check the current count before relying on a free seat:
 
@@ -119,6 +123,12 @@ logout button end the Kanidm session too (it affects every Kanidm app).
   pods may briefly be in `CreateContainerConfigError` until the provision
   controller writes it (kubelet retries; the reloader also restarts on Secret
   changes).
+- The main `litellm` ExternalSecret uses the default `Replace` template merge
+  policy: only the keys listed in `target.template.data` are written to
+  `litellm-secret`. Optional values need their own ExternalSecret (as
+  `litellm-admin` does for `PROXY_ADMIN_ID`) or an explicit template entry. Do
+  not switch it to `mergePolicy: Merge`: that would also project every `KEY_*`
+  virtual key into the proxy pod and make the pod restart on each key push.
 - Removing the component/env disables SSO; the Kanidm client and the
   `kanidm-litellm-oidc` Secret may need manual cleanup.
 

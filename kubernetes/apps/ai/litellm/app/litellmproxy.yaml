@@ -52,10 +52,17 @@ spec:
     # Admin UI SSO against Kanidm. The OAuth2 client + secret are
     # provisioned by components/oidc-kanidm/in-app (ConfigMap ->
     # kanidm-provision -> Secret kanidm-litellm-oidc). Optional
-    # PROXY_ADMIN_ID is injected by envFrom from the 1Password `litellm`
-    # item (field PROXY_ADMIN_ID = Kanidm account UUID); see README.
+    # PROXY_ADMIN_ID is fetched by the separate `litellm-admin`
+    # ExternalSecret from the 1Password `litellm` item (field
+    # PROXY_ADMIN_ID = Kanidm account UUID); see README.
     - name: PROXY_BASE_URL
       value: https://litellm.oxygn.dev
+    - name: PROXY_ADMIN_ID
+      valueFrom:
+        secretKeyRef:
+          name: litellm-admin
+          key: PROXY_ADMIN_ID
+          optional: true
     - name: GENERIC_CLIENT_ID
       valueFrom:
         secretKeyRef:
