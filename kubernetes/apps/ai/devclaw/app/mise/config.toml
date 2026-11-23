@@ -38,7 +38,7 @@ gum = "2.0.2"
 "op" = "2.41.1"
 
 # Flux Stuff
-"aqua:fluxcd/flux2" = "2.10.0"
+"aqua:fluxcd/flux2" = "2.10.1"
 "github:home-operations/flate" = "0.8.0"
 
 # Validation
