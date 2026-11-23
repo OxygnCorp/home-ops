@@ -113,9 +113,8 @@ kubectl annotate externalsecret devclaw -n ai force-sync=$(date +%s)
 
 ## Disk hygiene
 
-The state PVC is 10Gi and holds a toolchain the agent installs ad hoc (unlike
-`mainclaw`, nothing here is declared in Git). The `init` container prunes only
-what is re-downloadable or superseded, on every start:
+The state PVC is 10Gi. The `init` container prunes only what is re-downloadable
+or superseded, on every start:
 
 | Path | Rule |
 |---|---|
@@ -125,13 +124,30 @@ what is re-downloadable or superseded, on every start:
 | `~/.openclaw/agents/*/session-sqlite-import-archive/*` | files older than 30 days: the JSONL is already imported into sqlite, so the window only preserves a month-old rollback |
 | `~/.openclaw.update-captures/doctor-*` | newest kept plus the last 7 days (upstream calls these recovery artifacts, not temp files) |
 
-Mise versions are deliberately out of scope. `mise prune` does not reclaim
-versions installed without a tracked config, and the volume's `mise` binary is
-glibc, so it cannot run in the alpine init container. When the volume fills up
-(2026-11-23: 94% used, ~5G of duplicate tool versions), reclaim deliberately
-from a container that can run `mise` (for example `kubectl run` with the PVC
-mounted read-write, `HOME=/home/node`, `PATH=/home/node/.local/bin:$PATH`):
-retarget the stale pins with `mise use -g <tool>@<version>`, then `mise prune`.
+Mise tool versions are handled separately, see below.
+
+## Toolchain
+
+`mise/config.toml` (this directory) is the referential for the CLIs the agent
+uses. It is mounted read-only at `~/.config/mise/config.toml`, so an agent
+cannot drift it with `mise use -g`: a version bump is a commit. Renovate
+maintains the pins through its native mise manager — the same one that keeps the
+repo-root `.mise/config.toml` current — and opens a PR per bump.
+
+The `app` container runs `mise install` at startup (idempotent, instant once
+satisfied) so a pin bumped by Renovate is satisfied even when its tool is not
+yet on the volume, and `mise prune --tools -y` when the volume passes 80%:
+versions this config no longer pins are reclaimed, while tools an agent installs
+ad hoc survive until the room is actually needed. Both steps warn and continue
+rather than block the gateway.
+
+The list deliberately omits what an MCP server already covers — `kubescape`
+(radar: posture checks), `stern` (radar: log reading), `k9s` (a TUI, no agent
+use) — and `aws-cli` (nothing in this repo talks to AWS). Keep that in mind when
+adding a tool: a capability the gateway exposes costs no volume space.
+
+If the volume still needs room, drop a pin here (its versions are reclaimed by
+the next pressure prune) or raise the PVC.
 
 ## Related
 
