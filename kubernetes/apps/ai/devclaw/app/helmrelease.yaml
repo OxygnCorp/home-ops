@@ -262,6 +262,24 @@ spec:
                     echo "WARN: mise install failed; continuing without pruning"
                   fi
                 fi
+                # node is deliberately not mise-managed (see mise/config.toml):
+                # the image ships its own Node at /usr/local/bin/node, and
+                # MISE_DISABLE_TOOLS keeps mise from installing or shimming it.
+                # That shadowing is what crash-looped the pod in #5980: the
+                # shims directory precedes /usr/local/bin in PATH, so mise's
+                # node 26 hid the image's node, and node 26 needs
+                # libatomic.so.1, which the image does not ship, so every
+                # `node` call exited 127 (reverted in #5994). Now that node is
+                # neither pinned nor installed, shims written while the
+                # historical pin still existed remain on the volume, and an
+                # unresolvable shim fails hard ("No version is set for shim:
+                # node", exit 1) instead of falling through. Re-assert their
+                # absence on every boot: a no-op once gone, and PATH keeps
+                # resolving to the image's node.
+                rm -f "$HOME/.local/share/mise/shims/node" \
+                  "$HOME/.local/share/mise/shims/npm" \
+                  "$HOME/.local/share/mise/shims/npx" \
+                  "$HOME/.local/share/mise/shims/corepack"
                 # Install the memini memory plugin from ClawHub, version-guarded:
                 # only fetches when the pinned version differs from what's on the
                 # persistent volume, so normal restarts stay offline.
@@ -327,6 +345,9 @@ spec:
               HOMEBREW_CELLAR: /home/node/.local/homebrew/Cellar
               HOMEBREW_PREFIX: /home/node/.local/homebrew
               HOMEBREW_REPOSITORY: /home/node/.local/homebrew
+              # mise must never manage node: the image ships its own runtime
+              # (see the shim cleanup in the command and mise/config.toml).
+              MISE_DISABLE_TOOLS: node
               OPENCLAW_GATEWAY_PORT: 18789
               PATH: /home/node/.local/bin:/home/node/.local/share/mise/shims:/home/node/.local/go/bin:/home/node/.local/homebrew/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
               PIP_BREAK_SYSTEM_PACKAGES: "1"

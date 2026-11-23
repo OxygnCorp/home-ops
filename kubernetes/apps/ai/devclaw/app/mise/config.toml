@@ -20,13 +20,16 @@
 
 [tools]
 # Runtimes
-# node is held at 24.x: Node 26 official linux-x64 builds require
-# libatomic.so.1, which the openclaw image does not ship - every `node`
-# call exits 127 and the pod crash-loops (2026-11-23, #5980). A scoped
-# Renovate rule (.renovate/overrides.json5) holds bumps to the 24.x
-# line; only lift it once the image ships libatomic
-# (alpine: `apk add libatomic`, not Debian's libatomic1).
-node = "24.22.3"
+# node is deliberately NOT pinned here, and MISE_DISABLE_TOOLS=node (app
+# container env) makes mise ignore it entirely: the openclaw image already
+# ships Node 24.22.1 at /usr/local/bin/node (OCI label base
+# node:24.22.1-trixie-slim). A mise-managed node shadows it through
+# ~/.local/share/mise/shims, which comes earlier in PATH, and that is what
+# turned a routine Renovate bump into a crash-loop: node 26 needs
+# libatomic.so.1, absent from the image, so every `node` call exited 127
+# (#5980, 2026-11-23, reverted in #5994). The startup script also deletes
+# the stale shims left on the volume. The image stays the single source of
+# truth for the runtime the gateway runs on: do not add a node pin back.
 python = "3.15.2"
 uv = "0.13.9"
 go = "1.27.4"

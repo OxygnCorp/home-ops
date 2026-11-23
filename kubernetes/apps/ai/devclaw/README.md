@@ -171,6 +171,21 @@ this PVC did exactly that on 2026-11-23. Consequence for maintenance: never run
 reclaimed, do it from inside the pod or by deleting the specific install
 directories.
 
+Node, unlike the rest of the list, is not pinned at all: the openclaw image
+already ships Node 24.22.1 at `/usr/local/bin/node` (OCI label `base.name` =
+`node:24.22.1-trixie-slim`). A mise-managed node shadows it, because
+`~/.local/share/mise/shims` precedes `/usr/local/bin` in `PATH`, and that is
+what turned the routine `node` 24 -> 26 bump in #5980 into a crash-loop: v26
+needs `libatomic.so.1`, the image does not carry it, and every `node` call
+exited 127 (fixed by reverting the pin in #5994, then dropping it here). The
+startup script deletes any `shims/node` (plus the npm/npx/corepack shims mise
+writes for the node tool) left on the volume before the gateway starts, and
+`MISE_DISABLE_TOOLS=node` in the container env stops mise from installing or
+shimming node again, so `node` always resolves to the image's own runtime. Do
+not re-add a pin: the image is the single source of truth for the Node the
+gateway runs on, which also means a Node upgrade rides an image bump, not a
+Renovate mise PR.
+
 The list deliberately omits what an MCP server already covers — `kubescape`
 (radar: posture checks), `stern` (radar: log reading), `k9s` (a TUI, no agent
 use), `aws-cli` (nothing in this repo talks to AWS) and `kubectl` (no kubeconfig

@@ -31,23 +31,5 @@
       matchPackageNames: ["docker.io/searxng/searxng"],
       versioning: "loose",
     },
-    // devclaw installs its Node runtime via mise on the PVC, but the
-    // openclaw image (2026.11.7, alpine) lacks libatomic.so.1, required
-    // by Node 26 official linux-x64 builds: the node 24->26 bump in #5980
-    // crash-looped the pod (2026-11-23). Hold Renovate to the 24.x line;
-    // 24.x.y minor/patch bumps keep flowing and automerging. Renovate
-    // forbids pairing allowedVersions with matchUpdateTypes, so majors
-    // are filtered silently at extraction - delete this rule once the
-    // image ships libatomic (alpine: `apk add libatomic`, not Debian's
-    // libatomic1). mainclaw is not affected: its mise config pins no node
-    // runtime (image-bundled node) and is not managed by the mise
-    // manager anyway.
-    {
-      description: "Hold devclaw Node.js To The 24.x Line (Node 26+ Needs libatomic.so.1, Absent From The openclaw Image)",
-      matchManagers: ["mise"],
-      matchFileNames: ["kubernetes/apps/ai/devclaw/app/mise/config.toml"],
-      matchPackageNames: ["node"],
-      allowedVersions: "/^24\\./",
-    },
   ],
 }
