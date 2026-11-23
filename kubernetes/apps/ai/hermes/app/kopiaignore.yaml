@@ -1,0 +1,35 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hermes-kopiaignore
+data:
+  .kopiaignore: |
+    # rendered from the hermes ConfigMap by the init container at every start
+    /config.yaml
+
+    # media caches (24h max age, pruned hourly by the gateway)
+    /cache/images/
+    /cache/audio/
+    /cache/document/
+    /cache/video/
+    /cache/screenshot/
+    # scratch/TMP dir, pruned after 24h idle
+    # do NOT blanket-ignore /cache/: /cache/spillover (tool results tied to
+    # session retention) and terminal snapshots under /cache/ are session
+    # state — only the dirs listed here are disposable
+    /cache/scratch/
+
+    # legacy cache dir names (pre-rename hermes)
+    /image_cache/
+    /audio_cache/
+    /document_cache/
+    /video_cache/
+    /screenshot_cache/
+
+    # memini plugin: init container reinstalls it from the pinned upstream
+    # ref whenever .ref is missing or differs
+    /plugins/memini/
+
+    # pre-docker-migration config copies (superseded by the Git-managed ConfigMap)
+    /backups/config/*.pre-docker-migrate.*

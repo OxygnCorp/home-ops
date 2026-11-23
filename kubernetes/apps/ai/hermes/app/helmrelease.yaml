@@ -47,6 +47,13 @@ spec:
                 envsubst < /opt/data/config.yaml > /opt/data/config.yaml.tmp
                 mv /opt/data/config.yaml.tmp /opt/data/config.yaml
                 chown 10000:10000 /opt/data/config.yaml
+                # Keep the kopia ignore list at the PVC root so kopiur
+                # snapshots skip regenerable files (caches, rendered config).
+                # Explicit mode/ownership so the kopiur mover can always
+                # read it, whatever the init umask turns out to be.
+                cp /kopiaignore/.kopiaignore /opt/data/.kopiaignore
+                chown 10000:10000 /opt/data/.kopiaignore
+                chmod 0644 /opt/data/.kopiaignore
                 # Install the memini memory-provider plugin from the upstream
                 # standalone mirror eleboucher/memini-hermes. Pinned to a
                 # commit, guarded by a .ref marker so normal restarts stay
@@ -240,3 +247,8 @@ spec:
         globalMounts:
           - path: /tmp/config.yaml
             subPath: config.yaml
+      kopiaignore:
+        type: configMap
+        name: hermes-kopiaignore
+        globalMounts:
+          - path: /kopiaignore
