@@ -99,6 +99,12 @@ spec:
     # up late, roll the Deployment once (kubectl -n ai rollout restart deploy/lens):
     # the chart exposes no pod-template annotation, so reloader cannot watch it.
     extraEnv:
+      # Browser-facing gateway origin, distinct from the in-cluster API base
+      # below: the sign-in page only offers "Log in with LiteLLM" once Lens
+      # knows where to send the browser. Lens falls back to LENS_GATEWAY_URL,
+      # then to LENS_GATEWAY_API_BASE, which a browser cannot resolve.
+      - name: LENS_GATEWAY_PUBLIC_URL
+        value: https://litellm.oxygn.dev
       - name: LENS_GATEWAY_API_BASE
         value: http://litellm.ai:4000
       - name: LENS_GATEWAY_API_KEY
