@@ -59,17 +59,24 @@ spec:
                 cp /tmp/openclaw.json /home/node/.openclaw/openclaw.json
                 chown 1000:100 /home/node/.openclaw/openclaw.json
                 chmod 400 /home/node/.openclaw/openclaw.json
-                # Retention: doctor creates a full recovery capture (~750M of
-                # agent sqlite) on every repair run and never prunes them; with
-                # frequent pod restarts the PVC filled to 91% (2026-10-23).
-                # Always keep the newest capture (the only automatic rollback
-                # path) plus everything younger than 7 days. All globs/searches
-                # tolerate absence: kopia restores now exclude these dirs.
-                cutoff=$(( $(date +%s) - 604800 ))
+                # Retention windows, one per class of data (all globs tolerate
+                # absence: kopia restores exclude these dirs):
+                #   doctor captures       newest + any with a file touched < 3d
+                #   state db backups      newest per class + younger than 3 days
+                #   agent db backups      newest per agent + younger than 7 days
+                #   legacy .sqlite.bak-*  older than 30 days
+                # Capture age is measured on file content, never on the dir's
+                # own mtime (a capture dir stops moving once doctor is done).
+                capture_minutes=$(( 3 * 24 * 60 ))
+                bak_cutoff=$(( $(date +%s) - 604800 ))
+                state_bak_cutoff=$(( $(date +%s) - 259200 ))
                 # No `ls`/`find` with set -e + pipefail: when the glob matches
                 # nothing, ls exits 1 (stderr suppressed) and pipefail kills
                 # the whole init with no output — hang the rollout (seen on
-                # devclaw 2026-10-23 & 25). Compute newest by hand instead.
+                # devclaw 2026-10-23 & 25). Compute newest by hand instead:
+                # the capture dir with the highest mtime. doctor writes a
+                # capture once and never touches the dir again, so the root
+                # mtime only moves when a capture is created.
                 newest=""
                 for d in /home/node/.openclaw.update-captures/doctor-*; do
                     [ -d "$d" ] || continue
@@ -80,7 +87,12 @@ spec:
                 for d in /home/node/.openclaw.update-captures/doctor-*; do
                     [ -d "$d" ] || continue
                     if [ "$d" = "$newest" ]; then continue; fi
-                    if [ "$(stat -c %Y "$d")" -lt "$cutoff" ]; then rm -rf "$d"; fi
+                    # A failed traversal must never read as "nothing recent":
+                    # non-zero find keeps the capture. (2>/dev/null would merge
+                    # "clean scan" and "scan error" and feed a destructive rm.)
+                    recent=$(find "$d" -mmin "-$capture_minutes" -print -quit) || { echo "cannot scan $d, keeping it"; continue; }
+                    if [ -n "$recent" ]; then continue; fi
+                    rm -rf "$d" || true
                 done
                 # Prune startup-migration backups, keeping the NEWEST ONE
                 # overall within each agent dir (the only automatic rollback
@@ -99,12 +111,62 @@ spec:
                     [ -n "$keep" ] || continue
                     for f in "$d"/*.pre-startup-migration-*.bak; do
                         [ -e "$f" ] || continue
-                        if [ "$f" != "$keep" ] && [ "$(stat -c %Y "$f")" -lt "$cutoff" ]; then rm -f "$f"; fi
+                        if [ "$f" != "$keep" ] && [ "$(stat -c %Y "$f")" -lt "$bak_cutoff" ]; then rm -f "$f" || true; fi
                     done
                 done
+                # State-database backups: doctor cron runs once a day and each
+                # startup migration leaves a full copy of openclaw.sqlite next
+                # to the live DB (13 copies / 888M on 2026-11-23, one more per
+                # restart) and nothing pruned them. Keep the newest of each
+                # class plus 3 days: the DB is small (77M) but a daily cron
+                # would otherwise hold a week of full copies. Only the two
+                # known classes are matched; anything else stays untouched.
+                prune_state_baks() {
+                    local keep_bak=""
+                    for g in /home/node/.openclaw/state/*"$1"*.bak; do
+                        [ -e "$g" ] || continue
+                        if [ -z "$keep_bak" ] || [ "$(stat -c %Y "$g")" -gt "$(stat -c %Y "$keep_bak")" ]; then
+                            keep_bak="$g"
+                        fi
+                    done
+                    [ -n "$keep_bak" ] || return 0
+                    for g in /home/node/.openclaw/state/*"$1"*.bak; do
+                        [ -e "$g" ] || continue
+                        if [ "$g" != "$keep_bak" ] && [ "$(stat -c %Y "$g")" -lt "$state_bak_cutoff" ]; then rm -f "$g" || true; fi
+                    done
+                    return 0
+                }
+                prune_state_baks doctor-cron-
+                prune_state_baks pre-startup-migration-
+                # Legacy one-off sqlite snapshots (`.sqlite.bak-<date>`) do not
+                # match the migration glob above and used to pile up forever
+                # (one from June 2026 was still on the volume in November).
+                # Deliberately age-only: the class is retired, and unlike the
+                # classes above a 30-day-old snapshot is not the last line of
+                # defence for anything (the live DB and the state backups are).
+                find /home/node/.openclaw/agents -mindepth 1 -name '*.sqlite.bak-*' -mtime +30 -delete 2>/dev/null || true
                 # Stale sqlite readonly-check temp copies (orphaned fs-safe files)
                 if [ -d /home/node/.cache/openclaw ]; then
                     find /home/node/.cache/openclaw -name '.fs-safe-*.tmp' -mtime +1 -delete 2>/dev/null || true
+                fi
+                # Disk hygiene for everything else that grows unattended. The
+                # volume was 54% full (10.9G of 20G) on 2026-11-23 with caches
+                # that are re-downloadable and captures that are transient.
+                # Size/mtime based (nothing still in use disappears on a
+                # restart), tolerant of missing dirs, and each rule ends in
+                # `|| true` so a busybox quirk can never wedge the init under
+                # set -euo pipefail. npm's content-addressed cache is dropped
+                # whole: a per-file prune leaves dangling index entries.
+                if [ -d /home/node/.npm ]; then
+                    cache_mb=$(du -s -m /home/node/.npm/_cacache 2>/dev/null | awk 'NR==1 {print $1}') || true
+                    if [ -n "$cache_mb" ] && [ "$cache_mb" -gt 500 ]; then
+                        echo "npm cache is $cache_mb MB: dropping ~/.npm/_cacache"
+                        rm -rf /home/node/.npm/_cacache || true
+                    fi
+                    find /home/node/.npm/_logs -type f -mtime +7 -delete 2>/dev/null || true
+                fi
+                if [ -d /home/node/.openclaw/tmp/plugin-captures ]; then
+                    find /home/node/.openclaw/tmp/plugin-captures -mindepth 1 -maxdepth 1 -mtime +7 -exec rm -rf {} \; 2>/dev/null || true
                 fi
                 cp /kopiaignore/.kopiaignore /home/node/.kopiaignore
                 # Parent dir for the mise config subPath mount (install-tools needs it)
