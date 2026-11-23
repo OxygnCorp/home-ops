@@ -69,11 +69,16 @@
       automerge: true,
       automergeType: "pr",
       matchUpdateTypes: ["minor", "patch"],
+      // Soak a release before it lands in a pod that installs its whole
+      // toolchain from these pins at startup: a tag that turns out to be
+      // broken (or yanked) should not be pulled automatically.
+      minimumReleaseAge: "24 hours",
       ignoreTests: true,
     },
     {
-      description: "No automerge for the mise tools pinned in the opencode pod config (kubernetes/apps/ai/opencode) - .mise/config.toml and the mise-setup init container must be bumped in the same PR",
+      description: "No automerge for the mise tools the repo-root .mise/config.toml shares with the opencode pod - they must be bumped in the same PR as the mise-setup init container, whose pins live in a heredoc Renovate cannot see. Scoped to the root file: per-app mise configs (kubernetes/apps/ai/devclaw) are installed from their own file at startup, so those bumps automerge like any other mise bump",
       matchManagers: ["mise"],
+      matchFileNames: [".mise/config.toml"],
       matchPackageNames: [
         "github:home-operations/flate",
         "just",

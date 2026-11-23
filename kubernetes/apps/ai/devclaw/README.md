@@ -130,21 +130,38 @@ Mise tool versions are handled separately, see below.
 
 `mise/config.toml` (this directory) is the referential for the CLIs the agent
 uses. It is mounted read-only at `~/.config/mise/config.toml`, so an agent
-cannot drift it with `mise use -g`: a version bump is a commit. Renovate
+cannot edit a pin with `mise use -g`: a version bump is a commit. (`~/.config/mise/conf.d/`
+stays writable and mise loads it before `config.toml`, so an agent that really
+wanted another tool version could still add one there — the mount protects the
+pins, not the whole toolchain.) Renovate
 maintains the pins through its native mise manager — the same one that keeps the
-repo-root `.mise/config.toml` current — and opens a PR per bump.
+repo-root `.mise/config.toml` current — and opens a PR per bump. Bumps here
+automerge after a 24h soak, minor and patch only (only the root file needs a
+human, because it shares tools with the opencode pod's `mise-setup` heredoc); a
+major stays a manual PR. A merged bump reaches the pod because
+the `devclaw-mise` ConfigMap is listed in the Reloader annotation — a `subPath`
+mount is never refreshed in place, and the hash-free ConfigMap name means the
+pod template does not change on its own.
 
 The `app` container runs `mise install` at startup (idempotent, instant once
 satisfied) so a pin bumped by Renovate is satisfied even when its tool is not
 yet on the volume, and `mise prune --tools -y` when the volume passes 80%:
 versions this config no longer pins are reclaimed, while tools an agent installs
-ad hoc survive until the room is actually needed. Both steps warn and continue
-rather than block the gateway.
+ad hoc survive until the room is actually needed. The prune normally only runs
+after a successful install, so a failed download of a freshly bumped pin can
+never cost the agent the older version it was still using — but a full volume is
+itself what makes `mise install` fail, so above 95% the prune runs anyway rather
+than waiting for a human. Both steps warn and continue rather than block the
+gateway.
 
 The list deliberately omits what an MCP server already covers — `kubescape`
 (radar: posture checks), `stern` (radar: log reading), `k9s` (a TUI, no agent
-use) — and `aws-cli` (nothing in this repo talks to AWS). Keep that in mind when
-adding a tool: a capability the gateway exposes costs no volume space.
+use), `aws-cli` (nothing in this repo talks to AWS) and `kubectl` (no kubeconfig
+on the volume, and without one it falls back to `localhost:8080` instead of the
+pod's service account — verified. Making it work would mean shipping an
+in-cluster kubeconfig, which would hand this pod a second, unmetered cluster
+write path next to the MCP gateway, the only sanctioned one). Keep that in mind
+when adding a tool: a capability the gateway exposes costs no volume space.
 
 If the volume still needs room, drop a pin here (its versions are reclaimed by
 the next pressure prune) or raise the PVC.
