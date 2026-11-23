@@ -1,0 +1,157 @@
+---
+# Broad read-only ClusterRole for the in-cluster MCP servers (today: the Flux
+# MCP, bound in flux-mcp-rbac.yaml). Secrets are deliberately excluded, as are
+# the pods/exec, pods/attach and pods/proxy subresources.
+#
+# DO NOT add an `aggregationRule` to this ClusterRole. The control plane
+# overwrites `rules` on any ClusterRole that carries one — "The control plane
+# overwrites any values that you manually specify in the rules field of an
+# aggregate ClusterRole" — which is exactly how the previous
+# litellm-kubectl-mcp-readonly role silently degraded to the aggregate-to-view
+# subset: nodes, persistentvolumes, CRDs, RBAC objects, Gateway API objects and
+# most operator CRDs were Forbidden while the YAML still claimed they were
+# granted.
+#
+# RBAC has no "every API group except the core group" wildcard, so the non-core
+# apiGroups are listed explicitly: first the built-in groups, then the operator
+# CRD groups (upper list). A newly installed operator must be added by hand.
+# Regenerate the CRD half with:
+#   kubectl get crd -o jsonpath='{range .items[*]}{.spec.group}{"\n"}{end}' | sort -u
+# That command misses APIService-backed groups (e.g. custom.metrics.k8s.io served
+# by prometheus-adapter): they are not CRDs, so add them by hand if a consumer
+# ever needs them.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: litellm-mcp-readonly
+rules:
+  # Discovery + health endpoints, needed by `get_kubernetes_api_versions` and
+  # by any client that negotiates API groups before listing resources.
+  - nonResourceURLs:
+      - /api
+      - /api/*
+      - /apis
+      - /apis/*
+      - /healthz
+      - /livez
+      - /openapi
+      - /openapi/*
+      - /readyz
+      - /version
+      - /version/
+    verbs:
+      - get
+  # Core group, explicit allowlist: no secrets, no configmap-free shortcuts.
+  - apiGroups:
+      - ""
+    resources:
+      - bindings
+      - componentstatuses
+      - configmaps
+      - endpoints
+      - events
+      - limitranges
+      - namespaces
+      - namespaces/status
+      - nodes
+      - nodes/status
+      - persistentvolumeclaims
+      - persistentvolumeclaims/status
+      - persistentvolumes
+      - persistentvolumes/status
+      - podtemplates
+      - pods
+      - pods/log
+      - pods/status
+      - replicationcontrollers
+      - replicationcontrollers/scale
+      - replicationcontrollers/status
+      - resourcequotas
+      - resourcequotas/status
+      - serviceaccounts
+      - services
+      - services/status
+    verbs:
+      - get
+      - list
+      - watch
+  # Built-in API groups (everything except the core group) plus CRD/RBAC
+  # introspection: needed to list Deployments, Jobs, Ingresses, StorageClasses,
+  # HPAs, pod metrics (get_kubernetes_metrics → metrics.k8s.io), resolve kinds
+  # from CRDs and audit who can do what.
+  # authentication/authorization.k8s.io are omitted: their resources are
+  # create-only (token/subject reviews), so read verbs would grant nothing.
+  - apiGroups:
+      - admissionregistration.k8s.io
+      - apiextensions.k8s.io
+      - apiregistration.k8s.io
+      - apps
+      - autoscaling
+      - batch
+      - certificates.k8s.io
+      - coordination.k8s.io
+      - discovery.k8s.io
+      - events.k8s.io
+      - flowcontrol.apiserver.k8s.io
+      - metrics.k8s.io
+      - networking.k8s.io
+      - node.k8s.io
+      - policy
+      - rbac.authorization.k8s.io
+      - resource.k8s.io
+      - scheduling.k8s.io
+      - storage.k8s.io
+    resources:
+      - "*"
+    verbs:
+      - get
+      - list
+      - watch
+  # Operator-managed API groups (from the live cluster, see header).
+  - apiGroups:
+      - acme.cert-manager.io
+      - actions.github.com
+      - aquasecurity.github.io
+      - barmancloud.cnpg.io
+      - ceph.rook.io
+      - cert-manager.io
+      - cilium.io
+      - deviceplugin.intel.com
+      - dragonflydb.io
+      - external-secrets.io
+      - externaldns.k8s.io
+      - federation.llmkube.dev
+      - fluxcd.controlplane.io
+      - fpga.intel.com
+      - gateway.envoyproxy.io
+      - gateway.networking.k8s.io
+      - gateway.networking.x-k8s.io
+      - generators.external-secrets.io
+      - grafana.integreatly.org
+      - groupsnapshot.storage.k8s.io
+      - helm.toolkit.fluxcd.io
+      - inference.llmkube.dev
+      - k8s.cni.cncf.io
+      - kopiur.home-operations.com
+      - kustomize.toolkit.fluxcd.io
+      - litellm.home-operations.com
+      - miroir.home-operations.com
+      - monitoring.coreos.com
+      - monitoring.giantswarm.io
+      - nfd.k8s-sigs.io
+      - notification.toolkit.fluxcd.io
+      - objectbucket.io
+      - observability.giantswarm.io
+      - postgresql.cnpg.io
+      - renovate-operator.mogenius.com
+      - snapshot.storage.k8s.io
+      - source.toolkit.fluxcd.io
+      - talos.dev
+      - tuppr.home-operations.com
+      - volsync.backube
+    resources:
+      - "*"
+    verbs:
+      - get
+      - list
+      - watch

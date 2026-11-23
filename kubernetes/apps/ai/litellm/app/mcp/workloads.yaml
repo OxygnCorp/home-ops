@@ -1,8 +1,7 @@
 ---
-# Note: workload CR names carry a `litellm-` prefix so their Deployments do not
-# collide with still-deployed toolhive MCPServer Deployments (same names in the
-# ai namespace) during the coexistence window. `spec.alias` restores the
-# original server name as rendered in the litellm proxy config.
+# Note: workload CR names carry a `litellm-` prefix inherited from the toolhive
+# migration (the Deployments were originally named after the bare server name).
+# `spec.alias` is the server name as rendered in the litellm proxy config.
 # yaml-language-server: $schema=https://k8s-schemas.home-operations.com/litellm.home-operations.com/litellmmcpserver_v1alpha1.json
 apiVersion: litellm.home-operations.com/v1alpha1
 kind: LiteLLMMCPServer
@@ -151,6 +150,25 @@ spec:
   alias: flux
   proxyRef: litellm
   transport: http
+  # Read-only by policy: this cluster is GitOps (Flux), so cluster writes belong
+  # in Git and cluster-side mutation is covered by radar (manage_gitops /
+  # apply_resource / patch_resource). The flux MCP keeps only its unique
+  # read-side value: Flux docs, get_flux_instance, trace_kubernetes_resource and
+  # the read/log/metrics tools. The write tools are hidden here AND their RBAC
+  # ClusterRole was dropped (see flux-mcp-rbac.yaml) so they cannot be reached
+  # even if a caller calls them by name.
+  # diff_kubernetes_manifest is excluded too: server-side dry-run requires real
+  # create/patch grants, so keeping it would keep the write surface alive.
+  params:
+    disallowed_tools:
+      - apply_kubernetes_manifest
+      - delete_kubernetes_resource
+      - diff_kubernetes_manifest
+      - install_flux_instance
+      - patch_kubernetes_resource
+      - reconcile_flux_resource
+      - resume_flux_reconciliation
+      - suspend_flux_reconciliation
   workload:
     image: ghcr.io/controlplaneio-fluxcd/flux-operator-mcp:v0.63.1@sha256:556f9fbef8c10c6ded833463dc830708e82043cfe819296ade4fef32f87f8dd2
     port: 8000
@@ -165,41 +183,6 @@ spec:
           fieldRef:
             fieldPath: metadata.namespace
     serviceAccountName: litellm-flux-mcp
-    resources:
-      requests:
-        cpu: 100m
-        memory: 128Mi
-      limits:
-        cpu: 500m
-        memory: 512Mi
----
-# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/litellm.home-operations.com/litellmmcpserver_v1alpha1.json
-apiVersion: litellm.home-operations.com/v1alpha1
-kind: LiteLLMMCPServer
-metadata:
-  name: litellm-kubectl
-spec:
-  alias: kubectl
-  proxyRef: litellm
-  transport: http
-  workload:
-    image: docker.io/rohitghumare64/kubectl-mcp-server:2.0.0@sha256:f1f57aa5d4952f3c49e4d9bb8071a143d0812bdc8253922d51eeca8a2615ea29
-    port: 8000
-    args:
-      - --transport
-      - streamable-http
-      - --host
-      - 0.0.0.0
-      - --port
-      - "8000"
-      - --allow-unauthenticated
-      - --read-only
-    env:
-      - name: MCP_K8S_PROVIDER
-        value: in-cluster
-      - name: PYTHONUNBUFFERED
-        value: "1"
-    serviceAccountName: litellm-kubectl-mcp-readonly
     resources:
       requests:
         cpu: 100m

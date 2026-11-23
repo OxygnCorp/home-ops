@@ -63,4 +63,9 @@ spec:
           hostnames:
             - opencost.oxygn.dev
       mcp:
-        enabled: true
+        # Disabled: this is an on-prem cluster, so there is no real cloud spend
+        # to attribute — the only use was "which workload burns the most
+        # resources", which radar (top_resources / query_prometheus) and the
+        # Grafana dashboards already answer. The endpoint was never registered
+        # in the litellm gateway anyway (kubernetes/apps/ai/litellm/app/mcp/remote.yaml).
+        enabled: false

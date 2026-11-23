@@ -99,7 +99,7 @@ If the required gate check is red (or a run died on infra — cancelled conclusi
 
 ## MCP Servers (litellm)
 
-MCP servers are managed by the **litellm operator** in the `ai` namespace, defined as `LiteLLMMCPServer` CRs under `kubernetes/apps/ai/litellm/app/mcp/`. Access control is via two `LiteLLMTeam`s: `mcp-apps` (user-facing: arr, ha_mcp, seerr, teslamate, todoist, lightrag, unifi-network, …) and `mcp-devops` (DevOps: flux, github, grafana, kubectl, konflate, radar, talos, …).
+MCP servers are managed by the **litellm operator** in the `ai` namespace, defined as `LiteLLMMCPServer` CRs under `kubernetes/apps/ai/litellm/app/mcp/`. Access control is via two `LiteLLMTeam`s: `mcp-apps` (user-facing: arr, ha_mcp, seerr, teslamate, todoist, lightrag, unifi-network, …) and `mcp-devops` (DevOps: flux, github, grafana, konflate, radar, talos, …).
 
 Agents connect to `http://litellm.ai:4000/mcp` with per-agent virtual keys (`litellm-key-*`, team-bound); tool discovery uses the 4 virtual tools (`mcp_tool_search`, `mcp_tool_call`, `agent_search`, `skill_search`) instead of a full catalog. The MCP server directory (`kubernetes/apps/ai/litellm/app/mcp/`) is the source of truth for the current list.
 
@@ -357,7 +357,8 @@ The repository's `ai` namespace hosts the **Puchu** AI agent (this assistant). T
 
 - `github` — repository operations (PRs, issues, code search, releases)
 - `grafana` — dashboards, datasources, alert groups
-- `kubectl` — cluster inspection (read-only via dedicated ServiceAccount)
+- `radar` — cluster model: inspection (resources, logs, events, metrics, RBAC) **and** cluster-side mutation (apply/patch/delete, Flux reconcile/suspend/resume)
+- `flux` — Flux docs, `get_flux_instance`, `trace_kubernetes_resource` (read-only: Flux write tools are blacklisted and its write ClusterRole was removed — GitOps writes go through Git)
 - `talos` — Talos node operations
 
 Plus the user-facing team `mcp-apps` (Home Assistant, *arr stack, Seerr, memory), reachable by user-facing agents.
