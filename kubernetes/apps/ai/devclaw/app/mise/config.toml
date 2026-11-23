@@ -22,8 +22,10 @@
 # Runtimes
 # node is held at 24.x: Node 26 official linux-x64 builds require
 # libatomic.so.1, which the openclaw image does not ship - every `node`
-# call exits 127 and the pod crash-loops (2026-11-23, #5980). Only bump
-# to 26.x once the image embeds libatomic1.
+# call exits 127 and the pod crash-loops (2026-11-23, #5980). A scoped
+# Renovate rule (.renovate/overrides.json5) holds bumps to the 24.x
+# line; only lift it once the image ships libatomic
+# (alpine: `apk add libatomic`, not Debian's libatomic1).
 node = "24.22.3"
 python = "3.15.2"
 uv = "0.13.9"
