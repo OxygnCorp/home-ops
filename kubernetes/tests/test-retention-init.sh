@@ -102,6 +102,107 @@ v 'bak: alpha newest (2) kept' keep /home/node/.openclaw/agents/alpha/agent/x.pr
 v 'bak: alpha old (1) pruned' rm /home/node/.openclaw/agents/alpha/agent/x.pre-startup-migration-1.bak
 v 'bak: beta single old kept (newest of its dir)' keep /home/node/.openclaw/agents/beta/agent/x.pre-startup-migration-1.bak
 
+# ==== captures: content age beats dir age ====================================
+# A capture dir's own mtime stops moving once doctor is done writing, so
+# retention has to look at the files inside: a dir that *looks* old but holds
+# a fresh file is still a recovery artifact and must survive.
+root
+mkdir -p /home/node/.openclaw.update-captures/doctor-old
+mkdir -p /home/node/.openclaw.update-captures/doctor-mixed
+touch -d '2026-01-05 00:00:00' /home/node/.openclaw.update-captures/doctor-old/state.json
+touch -d '2026-01-05 00:00:00' /home/node/.openclaw.update-captures/doctor-mixed/state.json
+touch /home/node/.openclaw.update-captures/doctor-mixed/config.json
+# Dir mtimes last: creating a file inside refreshes the parent's mtime.
+touch -d '2026-01-05 00:00:00' /home/node/.openclaw.update-captures/doctor-old
+touch -d '2026-01-05 00:00:00' /home/node/.openclaw.update-captures/doctor-mixed
+mkdir -p /home/node/.openclaw.update-captures/doctor-fresh
+try 'captures: content age wins over dir age'
+v 'captures: old capture pruned' rm /home/node/.openclaw.update-captures/doctor-old
+v 'captures: old dir with a fresh file kept' keep /home/node/.openclaw.update-captures/doctor-mixed
+v 'captures: newest kept' keep /home/node/.openclaw.update-captures/doctor-fresh
+
+# ==== state db backups: newest per class =====================================
+# doctor cron leaves one copy a day and every startup migration leaves one
+# more next to the live DB (13 copies / 888M for a 77M DB on mainclaw,
+# 2026-11-23). Keep the newest of each known class; an unknown class must be
+# left alone — the prune only knows the two it ships.
+root
+mkdir -p /home/node/.openclaw/state
+touch -d '2026-01-05 00:00:00' /home/node/.openclaw/state/openclaw.sqlite.doctor-cron-1.bak
+touch /home/node/.openclaw/state/openclaw.sqlite.doctor-cron-2.bak
+touch -d '2026-01-05 00:00:00' /home/node/.openclaw/state/openclaw.sqlite.pre-startup-migration-aaa.bak
+touch /home/node/.openclaw/state/openclaw.sqlite.pre-startup-migration-bbb.bak
+touch -d '2026-01-05 00:00:00' /home/node/.openclaw/state/openclaw.sqlite.unknown-class.bak
+try 'state baks: per-class retention'
+v 'state bak: newest doctor-cron kept' keep /home/node/.openclaw/state/openclaw.sqlite.doctor-cron-2.bak
+v 'state bak: older doctor-cron pruned' rm /home/node/.openclaw/state/openclaw.sqlite.doctor-cron-1.bak
+v 'state bak: newest migration kept' keep /home/node/.openclaw/state/openclaw.sqlite.pre-startup-migration-bbb.bak
+v 'state bak: older migration pruned' rm /home/node/.openclaw/state/openclaw.sqlite.pre-startup-migration-aaa.bak
+v 'state bak: unknown class untouched' keep /home/node/.openclaw/state/openclaw.sqlite.unknown-class.bak
+
+# ==== legacy one-off sqlite snapshots ========================================
+root
+mkdir -p /home/node/.openclaw/agents/main/agent
+touch -d '2026-01-05 00:00:00' /home/node/.openclaw/agents/main/agent/openclaw-agent.sqlite.bak-20260105000000
+touch /home/node/.openclaw/agents/main/agent/openclaw-agent.sqlite.bak-20261123000000
+try 'legacy sqlite snapshots: 30d window'
+v 'legacy snapshot: older than 30d pruned' rm /home/node/.openclaw/agents/main/agent/openclaw-agent.sqlite.bak-20260105000000
+v 'legacy snapshot: recent kept' keep /home/node/.openclaw/agents/main/agent/openclaw-agent.sqlite.bak-20261123000000
+
+# ==== npm cache + logs =======================================================
+# The cache is dropped whole above 500M (a per-file prune leaves dangling
+# index entries), so the fixture has to cross the threshold for real.
+root
+mkdir -p /home/node/.npm/_cacache /home/node/.npm/_logs
+head -c 600000000 /dev/zero > /home/node/.npm/_cacache/blob.bin
+touch -d '2026-01-05 00:00:00' /home/node/.npm/_logs/old.log
+touch /home/node/.npm/_logs/fresh.log
+try 'npm: oversized cacache dropped whole'
+v 'npm: cacache above 500M dropped' rm /home/node/.npm/_cacache
+v 'npm: old log pruned' rm /home/node/.npm/_logs/old.log
+v 'npm: fresh log kept' keep /home/node/.npm/_logs/fresh.log
+
+root
+mkdir -p /home/node/.npm/_cacache
+head -c 1000000 /dev/zero > /home/node/.npm/_cacache/blob.bin
+try 'npm: small cacache survives'
+v 'npm: cacache below 500M kept' keep /home/node/.npm/_cacache
+
+# ==== plugin captures (7d) + import archive (30d, devclaw only) ===============
+root
+mkdir -p /home/node/.openclaw/tmp/plugin-captures/old-entry
+mkdir -p /home/node/.openclaw/tmp/plugin-captures/fresh-entry
+touch -d '2026-01-05 00:00:00' /home/node/.openclaw/tmp/plugin-captures/old-entry
+touch /home/node/.openclaw/tmp/plugin-captures/fresh-entry
+try 'plugin-captures (7d) window'
+v 'plugin-captures: old entry pruned' rm /home/node/.openclaw/tmp/plugin-captures/old-entry
+v 'plugin-captures: fresh entry kept' keep /home/node/.openclaw/tmp/plugin-captures/fresh-entry
+
+# Only devclaw ran the JSONL -> sqlite import, so only its init ships the
+# archive sweep: assert it where it exists instead of testing mainclaw for a
+# rule it does not have.
+if grep -q 'session-sqlite-import-archive' /init.sh 2>/dev/null; then
+    root
+    mkdir -p /home/node/.openclaw/agents/main/session-sqlite-import-archive
+    touch -d '2026-01-05 00:00:00' /home/node/.openclaw/agents/main/session-sqlite-import-archive/old.jsonl.imported-1788167144331
+    touch /home/node/.openclaw/agents/main/session-sqlite-import-archive/fresh.jsonl.imported-1795000000000
+    try 'import archive: 30d window'
+    v 'import archive: old file pruned' rm /home/node/.openclaw/agents/main/session-sqlite-import-archive/old.jsonl.imported-1788167144331
+    v 'import archive: fresh file kept' keep /home/node/.openclaw/agents/main/session-sqlite-import-archive/fresh.jsonl.imported-1795000000000
+else
+    echo "SKIP: import archive sweep (not shipped by this init script)" >&2
+fi
+
+# ==== idempotence ============================================================
+# The init runs on every start, so a second pass over an already-pruned tree
+# must be a no-op and still exit 0.
+root
+mkdir -p /home/node/.openclaw/agents/main/agent
+touch /home/node/.openclaw/agents/main/agent/x.pre-startup-migration-1.bak
+try 'idempotent: first run'
+try 'idempotent: second run on the same tree'
+v 'idempotent: protected backup still present' keep /home/node/.openclaw/agents/main/agent/x.pre-startup-migration-1.bak
+
 echo "TAGG:RESULT pass=${pass} fail=${fail}"
 if [ "$fail" -ne 0 ]; then echo "==== TRACE ===="; cat /trace.log 2>/dev/null | tail -80; fi
 [ "$fail" -eq 0 ]
