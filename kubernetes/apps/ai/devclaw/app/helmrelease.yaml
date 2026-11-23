@@ -230,18 +230,25 @@ spec:
                 # by Renovate before its tool is on the volume. The prune only
                 # runs under disk pressure: versions the config no longer pins
                 # are reclaimable, but tools an agent installs ad hoc survive
-                # until the room is actually needed. A prune only runs after a
-                # successful install: if Renovate bumped a pin and the download
-                # failed, prune would otherwise delete the still-working older
-                # version and leave the container without that tool entirely.
+                # until the room is actually needed. A prune normally only runs
+                # after a successful install: if Renovate bumped a pin and the
+                # download failed, prune would otherwise delete the still-working
+                # older version and leave the container without that tool.
+                # But a full volume is itself what makes install fail, so above
+                # 95% we prune anyway rather than wait for a human: that is the
+                # only in-pod lever, and the volume reaching 94% once already
+                # showed it does not recover on its own.
                 # Neither step may block the gateway, so both warn and continue.
                 if [ -x "$HOME/.local/bin/mise" ]; then
+                  used_pct=$(df -P "$HOME" 2>/dev/null | awk 'NR==2 {gsub(/%/, "", $5); print $5}')
                   if "$HOME/.local/bin/mise" install; then
-                    used_pct=$(df -P "$HOME" 2>/dev/null | awk 'NR==2 {gsub(/%/, "", $5); print $5}')
                     if [ -n "$used_pct" ] && [ "$used_pct" -ge 80 ]; then
                       echo "disk at $used_pct%: pruning mise tool versions the config no longer pins"
                       "$HOME/.local/bin/mise" prune --tools -y || echo "WARN: mise prune failed; continuing"
                     fi
+                  elif [ -n "$used_pct" ] && [ "$used_pct" -ge 95 ]; then
+                    echo "WARN: mise install failed and disk at $used_pct%: pruning anyway to break the deadlock"
+                    "$HOME/.local/bin/mise" prune --tools -y || echo "WARN: mise prune failed; continuing"
                   else
                     echo "WARN: mise install failed; continuing without pruning"
                   fi

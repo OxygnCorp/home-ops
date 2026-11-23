@@ -69,6 +69,10 @@
       automerge: true,
       automergeType: "pr",
       matchUpdateTypes: ["minor", "patch"],
+      // Soak a release before it lands in a pod that installs its whole
+      // toolchain from these pins at startup: a tag that turns out to be
+      // broken (or yanked) should not be pulled automatically.
+      minimumReleaseAge: "24 hours",
       ignoreTests: true,
     },
     {

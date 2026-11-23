@@ -12,9 +12,11 @@
 # MCP equivalent or are needed by local validation (flate, kubeconform,
 # kustomize, helm/helmfile) and secret handling.
 # kubescape, k9s, stern, aws-cli and kubectl were dropped for that reason:
-# radar covers posture/diagnostics and log reading, and there is no kubeconfig
-# on the volume for kubectl to talk to (the pod's service account token is only
-# usable through an exec credential plugin we do not ship).
+# radar covers posture/diagnostics and log reading. kubectl has no kubeconfig
+# on the volume, and under it falls back to localhost:8080 rather than to the
+# pod's service account (verified), so it needs an explicit in-cluster config
+# we deliberately do not ship: that would hand this pod a second, unmetered
+# cluster write path next to the MCP gateway, which is the only sanctioned one.
 
 [tools]
 # Runtimes
