@@ -1,0 +1,60 @@
+---
+apiVersion: litellm.home-operations.com/v1alpha1
+kind: LiteLLMModel
+metadata:
+  name: go-auto
+spec:
+  modelName: go-auto
+  proxyRef: litellm
+  params:
+    # Virtual group: no upstream call of its own. litellm classifies the
+    # request, then routes it to one of the OpenCode Go groups below as if the
+    # client had asked for that group directly (deployment selection, cooldowns
+    # and the `beam-free` fallback still apply).
+    model: auto_router/complexity_router
+    dropParams: true
+    additional:
+      complexity_router_config:
+        tiers:
+          # Free tier: the Go subscription bills nothing for hy4-flash-free,
+          # so small talk and one-shot lookups cost no quota at all.
+          SIMPLE: hy4-flash-free
+          # Everyday workhorse: DeepSeek V4.1 Flash is the cheapest paid model
+          # per request allowance on the plan (43 300 req/5h).
+          MEDIUM: dsv41f
+          # Both heavy tiers resolve to GLM-5.3 for now: its $200 monthly
+          # allowance per subscription is the largest on the plan. Kimi K3.1
+          # Pro stays a manual alias (147 req/5h) rather than a router target.
+          COMPLEX: go-glm-5.3
+          REASONING: go-glm-5.3
+        # One decision per user ask: the tier is pinned to the session and
+        # replayed for every tool call and follow-up turn that answers it, so a
+        # request that starts simple but grows complex is classified once, not
+        # on every hop.
+        classification_mode: user_turn
+        # Deliberately OFF. Pinning a whole session to one tier defeats the
+        # point here: sessions routinely open with a simple question and end up
+        # doing real analysis, and provider-side prompt caching is per (model,
+        # provider), so hopping mid-task is what costs — not what saves.
+        session_affinity: false
+        # Never hand an image request to a text-only tier (go-glm-5.3 has no
+        # vision); the classifier re-selects among the vision-capable ones.
+        modality_routing: true
+        # A prompt too large for the chosen tier escalates instead of failing.
+        enable_context_window_escalation: true
+      # Used when a resolved tier has no model mapped (and by
+      # `classifier_fallback: default_model`, which we do not set): serve the
+      # everyday workhorse instead of raising on an unresolvable tier.
+      complexity_router_default_model: dsv41f
+  info:
+    mode: chat
+    # Lowest common denominator across the tiers, so clients never assume more
+    # than the group can honour: dsv41f 1M/384k, go-glm-5.3 1M/131k,
+    # hy4-flash-free 1M/65k.
+    maxInputTokens: 1000000
+    maxOutputTokens: 65536
+    supportsFunctionCalling: true
+    # True for the group: dsv41f and hy4-flash-free see images, and
+    # `modality_routing` keeps image requests away from go-glm-5.3.
+    supportsVision: true
+    supportsPromptCaching: true

@@ -216,6 +216,12 @@ spec:
     # request that exhausts its group (dsv41f) will fail differently, which
     # still beats having no net at all.
     fallbacks:
+      # Complexity router: a safety net only — each tier it selects keeps its
+      # own beam-free fallback below. Covers the router failing before it
+      # resolves a model; as with dsv41f, a vision request that lands here
+      # fails on beam-free's missing vision rather than being served.
+      - go-auto:
+          - beam-free
       # Flash-class OpenCode Go groups
       - dsv41f:
           - beam-free
