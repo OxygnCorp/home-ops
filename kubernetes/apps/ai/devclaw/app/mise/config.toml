@@ -7,12 +7,14 @@
 # Renovate maintains these pins through its native mise manager (the same one
 # that bumps the repo-root .mise/config.toml) and opens a PR per bump.
 #
-# Cluster read/write access normally goes through the litellm MCP gateway
-# (kubectl, flux, radar, talos, github), so the CLIs kept here are the ones
-# that either have no MCP equivalent or are needed by local validation
-# (flate, kubeconform, kustomize, helm/helmfile) and secret handling.
-# kubescape, k9s, stern and aws-cli were dropped for that reason (radar covers
-# posture/diagnostics and log reading; the rest had no use here).
+# Cluster read/write access goes through the litellm MCP gateway (kubectl, flux,
+# radar, talos, github), so the CLIs kept here are the ones that either have no
+# MCP equivalent or are needed by local validation (flate, kubeconform,
+# kustomize, helm/helmfile) and secret handling.
+# kubescape, k9s, stern, aws-cli and kubectl were dropped for that reason:
+# radar covers posture/diagnostics and log reading, and there is no kubeconfig
+# on the volume for kubectl to talk to (the pod's service account token is only
+# usable through an exec credential plugin we do not ship).
 
 [tools]
 # Runtimes
@@ -37,8 +39,7 @@ gum = "2.0.2"
 "aqua:fluxcd/flux2" = "2.10.0"
 "github:home-operations/flate" = "0.7.3"
 
-# Kubectl + Plugins
-"aqua:kubernetes/kubectl" = "1.37.1"
+# Validation
 "aqua:yannh/kubeconform" = "0.8.0"
 
 # Misc K8s Tools
@@ -54,7 +55,7 @@ gum = "2.0.2"
 # Misc Tools
 "aqua:cert-manager/cmctl" = "2.6.2"
 "aqua:cloudflare/cloudflared" = "2026.11.1"
-"asdf:carnei-ro/asdf-cilium-cli" = "0.18.2"
+"aqua:cilium/cilium-cli" = "0.18.2"
 "aqua:cilium/hubble" = "1.20.4"
 
 # Linters

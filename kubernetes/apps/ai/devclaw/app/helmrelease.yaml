@@ -24,6 +24,11 @@ spec:
         strategy: Recreate
         annotations:
           secret.reloader.stakater.com/reload: "devclaw-secret, devclaw-config"
+          # The toolchain pins are a ConfigMap mounted with subPath, which the
+          # kubelet never refreshes in place, and a pin bump does not change the
+          # HelmRelease values (the ConfigMap name is hash-free). Without this
+          # the Renovate PR would merge and nothing would ever roll the pod.
+          configmap.reloader.stakater.com/reload: "devclaw-mise"
         initContainers:
           init:
             image:
@@ -192,10 +197,9 @@ spec:
                     find "$d" -type f -mtime +30 -delete 2>/dev/null || true
                     find "$d" -mindepth 1 -type d -empty -delete 2>/dev/null || true
                 done
-                # Not handled here: mise tool versions (~5G of ad hoc installs
-                # on this volume). `mise prune` is a no-op for versions whose
-                # config was never tracked, and the volume's mise binary is
-                # glibc, so it cannot run in this alpine init. See README.
+                # Mise tool versions are not touched here: the volume's mise
+                # binary is glibc and cannot run in this alpine init. The app
+                # container prunes them against the Git pins, under pressure.
                 cp /kopiaignore/.kopiaignore /home/node/.kopiaignore
 
         containers:
@@ -226,14 +230,20 @@ spec:
                 # by Renovate before its tool is on the volume. The prune only
                 # runs under disk pressure: versions the config no longer pins
                 # are reclaimable, but tools an agent installs ad hoc survive
-                # until the room is actually needed. Neither step may block the
-                # gateway, so both warn and continue.
+                # until the room is actually needed. A prune only runs after a
+                # successful install: if Renovate bumped a pin and the download
+                # failed, prune would otherwise delete the still-working older
+                # version and leave the container without that tool entirely.
+                # Neither step may block the gateway, so both warn and continue.
                 if [ -x "$HOME/.local/bin/mise" ]; then
-                  "$HOME/.local/bin/mise" install || echo "WARN: mise install failed; continuing"
-                  used_pct=$(df -P "$HOME" 2>/dev/null | awk 'NR==2 {gsub(/%/, "", $5); print $5}')
-                  if [ -n "$used_pct" ] && [ "$used_pct" -ge 80 ]; then
-                    echo "disk at $used_pct%: pruning mise tool versions the config no longer pins"
-                    "$HOME/.local/bin/mise" prune --tools -y || echo "WARN: mise prune failed; continuing"
+                  if "$HOME/.local/bin/mise" install; then
+                    used_pct=$(df -P "$HOME" 2>/dev/null | awk 'NR==2 {gsub(/%/, "", $5); print $5}')
+                    if [ -n "$used_pct" ] && [ "$used_pct" -ge 80 ]; then
+                      echo "disk at $used_pct%: pruning mise tool versions the config no longer pins"
+                      "$HOME/.local/bin/mise" prune --tools -y || echo "WARN: mise prune failed; continuing"
+                    fi
+                  else
+                    echo "WARN: mise install failed; continuing without pruning"
                   fi
                 fi
                 # Install the memini memory plugin from ClawHub, version-guarded:
@@ -527,3 +537,7 @@ spec:
         globalMounts:
           - path: /home/node/.config/mise/config.toml
             subPath: config.toml
+            # readOnly is opt-in in app-template; without it the mount is
+            # writable whenever the defaultMode/fsGroup allow it, and
+            # `mise use -g` would drift the pins back into the volume.
+            readOnly: true
