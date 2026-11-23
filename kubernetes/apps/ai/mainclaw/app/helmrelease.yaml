@@ -61,20 +61,22 @@ spec:
                 chmod 400 /home/node/.openclaw/openclaw.json
                 # Retention windows, one per class of data (all globs tolerate
                 # absence: kopia restores exclude these dirs):
-                #   doctor captures       newest + younger than 3 days
-                #   state db backups      newest per class + 3 days
-                #   agent db backups      newest per agent + 7 days
+                #   doctor captures       newest + any with a file touched < 3d
+                #   state db backups      newest per class + younger than 3 days
+                #   agent db backups      newest per agent + younger than 7 days
                 #   legacy .sqlite.bak-*  older than 30 days
-                # A backup only goes once nothing inside it was touched since
-                # the cutoff: a capture dir's mtime stops moving as soon as
-                # doctor finishes writing into it.
+                # Capture age is measured on file content, never on the dir's
+                # own mtime (a capture dir stops moving once doctor is done).
                 capture_minutes=$(( 3 * 24 * 60 ))
                 bak_cutoff=$(( $(date +%s) - 604800 ))
                 state_bak_cutoff=$(( $(date +%s) - 259200 ))
                 # No `ls`/`find` with set -e + pipefail: when the glob matches
                 # nothing, ls exits 1 (stderr suppressed) and pipefail kills
                 # the whole init with no output — hang the rollout (seen on
-                # devclaw 2026-10-23 & 25). Compute newest by hand instead.
+                # devclaw 2026-10-23 & 25). Compute newest by hand instead:
+                # the capture dir with the highest mtime. doctor writes a
+                # capture once and never touches the dir again, so the root
+                # mtime only moves when a capture is created.
                 newest=""
                 for d in /home/node/.openclaw.update-captures/doctor-*; do
                     [ -d "$d" ] || continue
@@ -85,7 +87,11 @@ spec:
                 for d in /home/node/.openclaw.update-captures/doctor-*; do
                     [ -d "$d" ] || continue
                     if [ "$d" = "$newest" ]; then continue; fi
-                    if [ -n "$(find "$d" -mmin "-$capture_minutes" -print -quit 2>/dev/null)" ]; then continue; fi
+                    # A failed traversal must never read as "nothing recent":
+                    # non-zero find keeps the capture. (2>/dev/null would merge
+                    # "clean scan" and "scan error" and feed a destructive rm.)
+                    recent=$(find "$d" -mmin "-$capture_minutes" -print -quit) || { echo "cannot scan $d, keeping it"; continue; }
+                    if [ -n "$recent" ]; then continue; fi
                     rm -rf "$d" || true
                 done
                 # Prune startup-migration backups, keeping the NEWEST ONE
@@ -105,7 +111,7 @@ spec:
                     [ -n "$keep" ] || continue
                     for f in "$d"/*.pre-startup-migration-*.bak; do
                         [ -e "$f" ] || continue
-                        if [ "$f" != "$keep" ] && [ "$(stat -c %Y "$f")" -lt "$bak_cutoff" ]; then rm -f "$f"; fi
+                        if [ "$f" != "$keep" ] && [ "$(stat -c %Y "$f")" -lt "$bak_cutoff" ]; then rm -f "$f" || true; fi
                     done
                 done
                 # State-database backups: doctor cron runs once a day and each

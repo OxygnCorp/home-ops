@@ -71,8 +71,9 @@ spec:
                 # Retention: doctor creates a full recovery capture (~750M of
                 # agent sqlite) on every repair run and never prunes them; mainclaw
                 # hit 91% PVC usage this way (2026-10-23). Always keep the newest
-                # capture (the only automatic rollback path) plus everything
-                # younger than 7 days; tolerates absent dirs (kopia restores now
+                # capture (the only automatic rollback path) plus every capture
+                # with a file modified in the last 7 days (content age, not the
+                # dir's own mtime); tolerates absent dirs (kopia restores now
                 # exclude them).
                 # No `ls`/`find` bottle-neck with set -e + pipefail: when the
                 # glob matches nothing, ls exits 1 with stderr suppressed and
@@ -80,6 +81,9 @@ spec:
                 # a kopia restore; the init crashed instantly with exit 1 and
                 # no output, hanging the rollout ~20min ×3 on 2026-10-23 & 25).
                 # Compute the newest capture by hand, tolerating an empty set.
+                # "Newest" is the capture dir with the highest mtime; doctor
+                # writes a capture once and never touches the dir again, so the
+                # root mtime only moves when a capture is created.
                 cutoff=$(( $(date +%s) - 604800 ))
                 # Minutes form of the same window, for the content check below
                 # (a capture dir's own mtime stops moving once doctor is done).
@@ -94,7 +98,11 @@ spec:
                 for d in /home/node/.openclaw.update-captures/doctor-*; do
                     [ -d "$d" ] || continue
                     if [ "$d" = "$newest" ]; then continue; fi
-                    if [ -n "$(find "$d" -mmin "-$cutoff_minutes" -print -quit 2>/dev/null)" ]; then continue; fi
+                    # A failed traversal must never read as "nothing recent":
+                    # non-zero find keeps the capture. (2>/dev/null would merge
+                    # "clean scan" and "scan error" and feed a destructive rm.)
+                    recent=$(find "$d" -mmin "-$cutoff_minutes" -print -quit) || { echo "cannot scan $d, keeping it"; continue; }
+                    if [ -n "$recent" ]; then continue; fi
                     rm -rf "$d" || true
                 done
                 # Prune startup-migration backups, keeping the NEWEST ONE
@@ -114,7 +122,7 @@ spec:
                     [ -n "$keep" ] || continue
                     for f in "$d"/*.pre-startup-migration-*.bak; do
                         [ -e "$f" ] || continue
-                        if [ "$f" != "$keep" ] && [ "$(stat -c %Y "$f")" -lt "$cutoff" ]; then rm -f "$f"; fi
+                        if [ "$f" != "$keep" ] && [ "$(stat -c %Y "$f")" -lt "$cutoff" ]; then rm -f "$f" || true; fi
                     done
                 done
                 # Stale sqlite readonly-check temp copies (orphaned fs-safe files)
