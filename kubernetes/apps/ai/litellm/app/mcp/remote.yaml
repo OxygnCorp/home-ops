@@ -25,6 +25,30 @@ spec:
 apiVersion: litellm.home-operations.com/v1alpha1
 kind: LiteLLMMCPServer
 metadata:
+  name: lens
+spec:
+  # Read-only Lens MCP endpoint served by Lens itself (nothing to install):
+  # list_agents, list_traces, get_trace, get_trace_conversation, get_span, with
+  # per-span cost in USD. Investigations/findings are NOT part of this MCP
+  # surface (they live behind the Lens REST API and the UI).
+  #
+  # Authenticated with the Lens admin token (see ./externalsecrets.yaml): the
+  # gateway-scoped alternative does not work here — a LiteLLM key only sees its
+  # own user's/teams' traces, and Lens answers 403 for a non-admin key without
+  # a user identity, while our agent keys carry no team/user attribution.
+  alias: lens
+  proxyRef: litellm
+  url: http://lens.ai.svc.cluster.local:4318/lens/mcp
+  transport: http
+  authType: bearer_token
+  authTokenRef:
+    name: litellm-lens-mcp
+    key: token
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/litellm.home-operations.com/litellmmcpserver_v1alpha1.json
+apiVersion: litellm.home-operations.com/v1alpha1
+kind: LiteLLMMCPServer
+metadata:
   name: radar
 spec:
   alias: radar

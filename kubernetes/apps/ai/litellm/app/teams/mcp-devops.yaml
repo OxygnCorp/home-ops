@@ -21,6 +21,7 @@ spec:
     - github
     - grafana
     - konflate
+    - lens
     - radar
     - talos_mcp
     - unifi_network
