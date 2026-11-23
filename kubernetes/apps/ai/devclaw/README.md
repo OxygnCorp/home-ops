@@ -154,6 +154,16 @@ itself what makes `mise install` fail, so above 95% the prune runs anyway rather
 than waiting for a human. Both steps warn and continue rather than block the
 gateway.
 
+Both steps are also skipped unless `~/.config/mise/config.toml` is readable.
+That file only exists while the ConfigMap is mounted: on the bare volume (a
+maintenance Job, a container started without the mount) `mise install` is a
+no-op and `mise prune` sees every installed version as untracked, so it deletes
+the whole toolchain. That is not theoretical — a prune run from a Job against
+this PVC did exactly that on 2026-11-23. Consequence for maintenance: never run
+`mise prune` from a Job against this volume; if the toolchain has to be
+reclaimed, do it from inside the pod or by deleting the specific install
+directories.
+
 The list deliberately omits what an MCP server already covers — `kubescape`
 (radar: posture checks), `stern` (radar: log reading), `k9s` (a TUI, no agent
 use), `aws-cli` (nothing in this repo talks to AWS) and `kubectl` (no kubeconfig

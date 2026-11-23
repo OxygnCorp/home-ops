@@ -239,9 +239,18 @@ spec:
                 # only in-pod lever, and the volume reaching 94% once already
                 # showed it does not recover on its own.
                 # Neither step may block the gateway, so both warn and continue.
+                #
+                # The config file only exists while the subPath ConfigMap is
+                # mounted. Without it `mise install` is a trivial no-op and
+                # `mise prune` treats every installed version as untracked, so
+                # it deletes the whole toolchain. That is not theoretical: a
+                # prune run against the bare PVC (2026-11-23) wiped it. Never
+                # touch the toolchain unless the Git pins are actually there.
                 if [ -x "$HOME/.local/bin/mise" ]; then
                   used_pct=$(df -P "$HOME" 2>/dev/null | awk 'NR==2 {gsub(/%/, "", $5); print $5}')
-                  if "$HOME/.local/bin/mise" install; then
+                  if [ ! -r "$HOME/.config/mise/config.toml" ]; then
+                    echo "WARN: $HOME/.config/mise/config.toml is not readable; skipping mise install and prune"
+                  elif "$HOME/.local/bin/mise" install; then
                     if [ -n "$used_pct" ] && [ "$used_pct" -ge 80 ]; then
                       echo "disk at $used_pct%: pruning mise tool versions the config no longer pins"
                       "$HOME/.local/bin/mise" prune --tools -y || echo "WARN: mise prune failed; continuing"
