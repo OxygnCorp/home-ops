@@ -27,3 +27,8 @@ data:
     # snapshots free of it. ~/.cache/mise is covered by the .cache/ rule above
     .local/bin/mise
     .local/share/mise/
+
+    # npm caches (cacache, npx installs, logs) — rebuilt on demand; without
+    # this every kopia snapshot carries ~1.7G of caches (measured: two full
+    # renovate installs in _npx plus ~960M of _cacache)
+    .npm/

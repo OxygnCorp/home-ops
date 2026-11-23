@@ -10,6 +10,7 @@ resources:
   - ./httproute-health.yaml
   - ./httproute.yaml
   - ./kopiaignore.yaml
+  - ./mise.yaml
   - ./ocirepository.yaml
 # Mover security context inherited from the PVC's consumer workload (opencode
 # pod pins pod-level runAsUser 1000 — the default 1024 mover cannot read
