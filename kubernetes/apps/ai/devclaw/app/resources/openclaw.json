@@ -132,7 +132,7 @@
       "typingIntervalSeconds": 6,
       "userTimezone": "Europe/Paris",
       "systemAgent": {
-        "agentId": "main"
+        "agentId": "devclaw"
       },
       "modelPolicy": {
         "allow": [
@@ -153,7 +153,7 @@
       }
     },
     "entries": {
-      "main": {
+      "devclaw": {
         "name": "Puchu",
         "workspace": "/home/node/.openclaw/workspace",
         "agentDir": "/home/node/.openclaw/agents/main/agent",
@@ -174,7 +174,7 @@
   },
   "bindings": [
     {
-      "agentId": "main",
+      "agentId": "devclaw",
       "match": {
         "channel": "discord",
         "peer": {
@@ -215,7 +215,7 @@
       "defaultAccount": "default",
       "execApprovals": {
         "agentFilter": [
-          "main"
+          "devclaw"
         ],
         "approvers": [
           "{{ .DISCORD_MATT_USER_ID }}"

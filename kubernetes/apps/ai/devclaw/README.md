@@ -56,6 +56,13 @@ Models come from the cluster LiteLLM proxy (`http://litellm.ai:4000/v1`).
 picker may offer; a model outside that list is refused with a *model not
 allowed* error (a different failure from the channel allowlist one).
 
+The agent id is `devclaw`, not `main`: every OTel span carries
+`openclaw.agent` with that id, and Lens groups its agent views on it — with both
+instances declaring `main`, devclaw and mainclaw collapsed into a single agent
+there. `agentDir` deliberately still points at `agents/main/agent`, so the
+workspace, memory and session files on the PVC stay in place; sessions opened
+under the old id are not resumed by the new one.
+
 ## Secrets
 
 The `devclaw` ExternalSecret (1h) produces the `devclaw-secret` secret, mounted
