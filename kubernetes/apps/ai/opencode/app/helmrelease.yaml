@@ -50,11 +50,19 @@ spec:
                 cp /kopiaignore/.kopiaignore /home/opencode/.kopiaignore
                 mkdir -p /home/opencode/.config/opencode
                 cp /etc/opencode/AGENTS.md /home/opencode/.config/opencode/AGENTS.md
+                # Make the parent dir explicit for the mise-config subPath
+                # mount (read-only ConfigMap) so a mount-point surprise is
+                # obvious; kubelet normally creates it.
+                mkdir -p /home/opencode/.config/mise
           # Installs mise + the pinned cluster tooling into the home PVC so
           # agent sessions can run GitOps validation locally (flate
           # test/diff) and the repo just recipes get past command-not-found
           # (talosctl, kubectl, yq, jq, gh, op, minijinja-cli, gum, helmfile,
           # helm).
+          # Tool pins live in the opencode-mise ConfigMap (app/mise.yaml),
+          # mounted read-only at ~/.config/mise/config.toml: keep that file
+          # in sync with the repo .mise/config.toml in the same reviewed PR
+          # (the Renovate mise manager only sees the root file).
           # Same image as the app container (shared via anchor) for
           # bash+curl; nothing is baked into the image itself. The CLIs stay
           # credentialless on purpose (no kubeconfig/talosconfig/
@@ -64,6 +72,8 @@ spec:
             image: &opencode-image
               repository: ghcr.io/joryirving/opencode
               tag: 2.4.1@sha256:d47384ed0937285300b8485ed17fbef92165c6d2b2e73cd24ab11a3d40805f9a
+            env:
+              HOME: /home/opencode
             command:
               - /bin/bash
               - -c
@@ -76,52 +86,94 @@ spec:
                   exit 0
                 fi
                 # Not first-boot-only: re-download when the pinned version
-                # changes or the binary is missing/broken.
+                # changes or the binary is missing/broken. Bounded: a stalled
+                # network must not wedge the init phase forever.
                 if [[ ! -x "$${MISE_BIN}" ]] || [[ "$("$${MISE_BIN}" --version 2>/dev/null || true)" != *"$${MISE_VERSION}"* ]]; then
-                  if ! curl -fsSL https://mise.run | MISE_INSTALL_PATH="$${MISE_BIN}" MISE_VERSION="$${MISE_VERSION}" sh; then
+                  install_script=$(mktemp)
+                  if ! timeout 120 curl -fsSL -o "$${install_script}" https://mise.run \
+                    || ! MISE_INSTALL_PATH="$${MISE_BIN}" MISE_VERSION="$${MISE_VERSION}" timeout 300 sh "$${install_script}"; then
+                    rm -f "$${install_script}"
                     echo "WARN: mise download failed; cluster tooling unavailable this boot"
                     exit 0
                   fi
+                  rm -f "$${install_script}"
                 fi
-                # Tool versions pinned to the repo .mise/config.toml. Keep
-                # auto_install=false: the repo checkout pins ~25 tools and
-                # go/node/python compile from source on Alpine, which would
-                # blow the 5Gi PVC budget. Sessions use MISE_AUTO_INSTALL=false
-                # for the same reason (see entrypoint.sh).
-                # This write is the only hard-fail step: without it, mise's
-                # auto_install defaults back to true and an in-repo exec would
-                # auto-install those ~25 tools behind the session env's back.
-                mkdir -p /home/opencode/.config/mise
-                cat > /home/opencode/.config/mise/config.toml <<'EOF'
-                # Managed by the mise-setup init container
-                # (kubernetes/apps/ai/opencode/app/helmrelease.yaml).
-                [settings]
-                auto_install = false
-                all_compile = false
-
-                [tools]
-                "github:home-operations/flate" = "0.6.5"
-                "just" = "1.59.0"
-                "rg" = "15.2.0"
-                "aqua:kubernetes-sigs/kustomize" = "5.6.0"
-                "vals" = "0.50.0"
-                # CLIs called by the repo just recipes (talos/, bootstrap/,
-                # kube/, kanidm/ modules) so they run past command-not-found
-                "talosctl" = "1.14.5"
-                "aqua:kubernetes/kubectl" = "1.37.1"
-                "yq" = "4.54.1"
-                "jq" = "1.8.2"
-                "gh" = "2.103.3"
-                "op" = "2.41.1"
-                "aqua:mitsuhiko/minijinja" = "3.0.4" # minijinja-cli, used by `just template`
-                "gum" = "2.0.2" # `just log`
-                "aqua:helmfile/helmfile" = "1.8.2" # bootstrap module
-                "aqua:helm/helm" = "4.3.1" # runtime dependency of helmfile
-                EOF
-                if ! "$${MISE_BIN}" install; then
-                  echo "WARN: mise install failed; cluster tooling unavailable this boot"
+                # Tool versions come from the opencode-mise ConfigMap
+                # (app/mise.yaml), mounted read-only at ~/.config/mise/
+                # config.toml by the mise-config volume. auto_install=false
+                # there is load-bearing: it keeps the repo checkout's ~25
+                # pins (go/node/python compile from source on Alpine) out of
+                # the 10Gi PVC budget, and a missing ConfigMap is a hard fail
+                # (the pod does not start) instead of a silent fallback to
+                # auto_install=true.
+                # Guard anyway: if this script ever runs without the mount
+                # (a Job against the bare volume), install would be a no-op
+                # and prune would see every version as untracked and wipe
+                # the toolchain (2026-11-23 devclaw incident) — leave the
+                # volume untouched in that case.
+                # Readability alone is not enough: the OLD heredoc-written
+                # config.toml still sits on the PVC under the masked mount
+                # point, so verify the file really IS a mount.
+                if ! grep -qF " /home/opencode/.config/mise/config.toml " /proc/self/mountinfo || [ ! -r /home/opencode/.config/mise/config.toml ]; then
+                  echo "WARN: ~/.config/mise/config.toml is not a mounted opencode-mise ConfigMap; leaving the toolchain untouched"
+                else
+                  used_pct=$(df -P /home/opencode 2>/dev/null | awk 'NR==2 {gsub(/%/, "", $5); print $5}' || true)
+                  if "$${MISE_BIN}" install; then
+                    # Drop tool installs no longer pinned by any tracked
+                    # mise config, so bumped pins do not leave old versions
+                    # behind. Versions still tracked by live session
+                    # worktrees survive (mise keeps every tracked config's
+                    # pins) — by design, those sessions keep their tools.
+                    # Only after a successful install: if a bumped pin
+                    # failed to download, prune must not take the
+                    # still-working older version with it.
+                    "$${MISE_BIN}" prune --tools -y || echo "WARN: mise prune failed"
+                  else
+                    echo "WARN: mise install failed; cluster tooling unavailable this boot"
+                    # Escape hatch: a full volume is exactly what makes
+                    # install fail, so above 95% prune anyway — the only
+                    # in-pod lever left (2026-11-23 devclaw lesson).
+                    if [ -n "$${used_pct}" ] && [ "$${used_pct}" -ge 95 ]; then
+                      echo "disk at $${used_pct}%: pruning mise tool versions the config no longer pins"
+                      "$${MISE_BIN}" prune --tools -y || echo "WARN: mise prune failed"
+                    fi
+                  fi
+                  "$${MISE_BIN}" reshim || echo "WARN: mise reshim failed"
                 fi
-                "$${MISE_BIN}" reshim || echo "WARN: mise reshim failed"
+          # Refresh the local home-ops main branch at every boot: worktrees
+          # carry session work, but nothing ever pulled, so the main checkout
+          # drifts behind origin (19 commits behind when this was written).
+          # Public repo: plain HTTPS pull, no token, bounded by a timeout.
+          # Non-fatal by design — worst case the session starts on the
+          # previous boot's checkout.
+          repo-refresh:
+            image: *opencode-image
+            env:
+              HOME: /home/opencode
+            command:
+              - /bin/bash
+              - -c
+              - |
+                set -euo pipefail
+                REPO="$${HOME}/projects/home-ops"
+                if [[ ! -d "$${REPO}/.git" ]]; then
+                  echo "skip: no home-ops clone on the volume"
+                  exit 0
+                fi
+                cd "$${REPO}"
+                if [[ "$(git symbolic-ref --quiet --short HEAD 2>/dev/null || true)" != "main" ]]; then
+                  echo "WARN: home-ops checkout not on main; skipping refresh"
+                  exit 0
+                fi
+                if ! git rev-parse --verify HEAD >/dev/null 2>&1; then
+                  echo "WARN: home-ops HEAD is not resolvable; skipping refresh"
+                  exit 0
+                fi
+                if ! git diff-index --quiet HEAD; then
+                  echo "WARN: home-ops working tree dirty; skipping refresh"
+                  exit 0
+                fi
+                timeout 120 git pull --ff-only origin main || echo "WARN: git pull failed; keeping the current checkout"
         containers:
           app:
             image: *opencode-image
@@ -195,3 +247,13 @@ spec:
         defaultMode: 0755
         globalMounts:
           - path: /etc/opencode
+      # Pinned mise tool config, mounted read-only. subPath: the kubelet
+      # never refreshes a subPath mount in place, so a pin bump relies on
+      # the reloader annotation above to roll the pod (the ConfigMap name
+      # is hash-free, the HelmRelease values do not change on a bump).
+      mise-config:
+        type: configMap
+        name: opencode-mise
+        globalMounts:
+          - path: /home/opencode/.config/mise/config.toml
+            subPath: config.toml
