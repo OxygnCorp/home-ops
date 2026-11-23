@@ -75,6 +75,14 @@ Lens appelle le gateway avec deux variables lues **au démarrage** :
 - `LENS_GATEWAY_API_BASE=http://litellm.ai:4000`
 - `LENS_GATEWAY_API_KEY` ← Secret `lens-analysis` (clé `api-key`)
 
+Une troisième, `LENS_GATEWAY_URL=http://litellm.ai:4000`, désigne l'endpoint
+d'analyse **en tant que gateway** : Lens y attache alors ses métadonnées
+internes (l'agent auquel appartient le run). Sans elle, tous les appels
+d'analyse arrivent non étiquetés et se confondent sous le seul alias de clé
+`LensAnalysis` — la dépense totale reste visible, la répartition par agent non.
+C'est ce qui permet de répondre à « quel agent consomme sans produire de
+Findings ».
+
 La clé est une `LiteLLMVirtualKey` (`kubernetes/apps/ai/litellm/app/virtualkeys/lens-analysis.yaml`)
 limitée à `dsv41f` et plafonnée à **1 $ par jour**. Mesuré sur 24 h de
 production : 2 288 appels de ~34 000 tokens d'input, 4,05 $ — le coût suit le
