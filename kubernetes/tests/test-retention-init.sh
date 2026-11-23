@@ -127,18 +127,32 @@ v 'captures: newest kept' keep /home/node/.openclaw.update-captures/doctor-fresh
 # 2026-11-23). Keep the newest of each known class; an unknown class must be
 # left alone — the prune only knows the two it ships.
 root
-mkdir -p /home/node/.openclaw/state
+mkdir -p /home/node/.openclaw/state /home/node/.openclaw/agents/main/sessions
 touch -d '2026-01-05 00:00:00' /home/node/.openclaw/state/openclaw.sqlite.doctor-cron-1.bak
 touch /home/node/.openclaw/state/openclaw.sqlite.doctor-cron-2.bak
 touch -d '2026-01-05 00:00:00' /home/node/.openclaw/state/openclaw.sqlite.pre-startup-migration-aaa.bak
 touch /home/node/.openclaw/state/openclaw.sqlite.pre-startup-migration-bbb.bak
 touch -d '2026-01-05 00:00:00' /home/node/.openclaw/state/openclaw.sqlite.unknown-class.bak
+touch /home/node/.openclaw/state/openclaw.sqlite
+touch /home/node/.openclaw/agents/main/sessions/session.jsonl
 try 'state baks: per-class retention'
 v 'state bak: newest doctor-cron kept' keep /home/node/.openclaw/state/openclaw.sqlite.doctor-cron-2.bak
 v 'state bak: older doctor-cron pruned' rm /home/node/.openclaw/state/openclaw.sqlite.doctor-cron-1.bak
 v 'state bak: newest migration kept' keep /home/node/.openclaw/state/openclaw.sqlite.pre-startup-migration-bbb.bak
 v 'state bak: older migration pruned' rm /home/node/.openclaw/state/openclaw.sqlite.pre-startup-migration-aaa.bak
 v 'state bak: unknown class untouched' keep /home/node/.openclaw/state/openclaw.sqlite.unknown-class.bak
+v 'live db untouched' keep /home/node/.openclaw/state/openclaw.sqlite
+v 'live session transcript untouched' keep /home/node/.openclaw/agents/main/sessions/session.jsonl
+
+# The newest of a class is the only rollback point even when it is itself old:
+# the prune must not degrade into "drop everything past the window".
+root
+mkdir -p /home/node/.openclaw/state
+touch -d '2026-01-05 00:00:00' /home/node/.openclaw/state/openclaw.sqlite.doctor-cron-only.bak
+touch -d '2026-01-05 00:00:00' /home/node/.openclaw/state/openclaw.sqlite.pre-startup-migration-only.bak
+try 'state baks: a lone old copy per class survives'
+v 'state bak: lone old doctor-cron kept' keep /home/node/.openclaw/state/openclaw.sqlite.doctor-cron-only.bak
+v 'state bak: lone old migration kept' keep /home/node/.openclaw/state/openclaw.sqlite.pre-startup-migration-only.bak
 
 # ==== legacy one-off sqlite snapshots ========================================
 root

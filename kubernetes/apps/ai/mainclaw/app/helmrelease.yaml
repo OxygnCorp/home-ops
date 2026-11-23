@@ -141,6 +141,9 @@ spec:
                 # Legacy one-off sqlite snapshots (`.sqlite.bak-<date>`) do not
                 # match the migration glob above and used to pile up forever
                 # (one from June 2026 was still on the volume in November).
+                # Deliberately age-only: the class is retired, and unlike the
+                # classes above a 30-day-old snapshot is not the last line of
+                # defence for anything (the live DB and the state backups are).
                 find /home/node/.openclaw/agents -mindepth 1 -name '*.sqlite.bak-*' -mtime +30 -delete 2>/dev/null || true
                 # Stale sqlite readonly-check temp copies (orphaned fs-safe files)
                 if [ -d /home/node/.cache/openclaw ]; then

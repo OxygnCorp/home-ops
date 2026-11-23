@@ -151,7 +151,9 @@ spec:
                 prune_state_baks doctor-cron-
                 prune_state_baks pre-startup-migration-
                 # Legacy one-off sqlite snapshots (`.sqlite.bak-<date>`) match
-                # neither migration glob and used to pile up forever.
+                # neither migration glob and used to pile up forever. Age-only
+                # on purpose: the class is retired, so a 30-day-old snapshot is
+                # not the last line of defence for anything.
                 find /home/node/.openclaw/agents -mindepth 1 -name '*.sqlite.bak-*' -mtime +30 -delete 2>/dev/null || true
                 # Stale sqlite readonly-check temp copies (orphaned fs-safe files)
                 if [ -d /home/node/.cache/openclaw ]; then
