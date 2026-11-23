@@ -11,5 +11,10 @@ configMapGenerator:
   - name: devclaw-configmap
     files:
       - openclaw.json=./resources/openclaw.json
+  # Real mise/config.toml (not inline YAML) so Renovate's mise manager picks
+  # the tool pins up like it does the repo-root .mise/config.toml.
+  - name: devclaw-mise
+    files:
+      - config.toml=./mise/config.toml
 generatorOptions:
   disableNameSuffixHash: true

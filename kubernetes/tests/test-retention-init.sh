@@ -143,6 +143,7 @@ v 'state bak: older migration pruned' rm /home/node/.openclaw/state/openclaw.sql
 v 'state bak: unknown class untouched' keep /home/node/.openclaw/state/openclaw.sqlite.unknown-class.bak
 v 'live db untouched' keep /home/node/.openclaw/state/openclaw.sqlite
 v 'live session transcript untouched' keep /home/node/.openclaw/agents/main/sessions/session.jsonl
+v 'mise config parent dir created' keep /home/node/.config/mise
 
 # The newest of a class is the only rollback point even when it is itself old:
 # the prune must not degrade into "drop everything past the window".

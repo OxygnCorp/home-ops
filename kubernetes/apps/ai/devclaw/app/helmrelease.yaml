@@ -64,6 +64,9 @@ spec:
                 mkdir -p /home/node/.cache /home/node/.openclaw/tmp
                 chown 1000:100 /home/node/.cache /home/node/.openclaw/tmp
                 chmod 1775 /home/node/.cache /home/node/.openclaw/tmp
+                # Parent dir for the read-only mise config subPath mount below
+                mkdir -p /home/node/.config/mise
+                chown 1000:100 /home/node/.config/mise
                 rm -f /home/node/.openclaw/openclaw.json
                 cp /tmp/openclaw.json /home/node/.openclaw/openclaw.json
                 chown 1000:100 /home/node/.openclaw/openclaw.json
@@ -216,6 +219,23 @@ spec:
               - /bin/sh
               - -c
               - |
+                # Toolchain: the pins live in Git (mise/config.toml, mounted
+                # read-only at ~/.config/mise/config.toml) and Renovate bumps
+                # them like the repo-root .mise/config.toml. `mise install` is
+                # idempotent (instant once satisfied) and covers a pin bumped
+                # by Renovate before its tool is on the volume. The prune only
+                # runs under disk pressure: versions the config no longer pins
+                # are reclaimable, but tools an agent installs ad hoc survive
+                # until the room is actually needed. Neither step may block the
+                # gateway, so both warn and continue.
+                if [ -x "$HOME/.local/bin/mise" ]; then
+                  "$HOME/.local/bin/mise" install || echo "WARN: mise install failed; continuing"
+                  used_pct=$(df -P "$HOME" 2>/dev/null | awk 'NR==2 {gsub(/%/, "", $5); print $5}')
+                  if [ -n "$used_pct" ] && [ "$used_pct" -ge 80 ]; then
+                    echo "disk at $used_pct%: pruning mise tool versions the config no longer pins"
+                    "$HOME/.local/bin/mise" prune --tools -y || echo "WARN: mise prune failed; continuing"
+                  fi
+                fi
                 # Install the memini memory plugin from ClawHub, version-guarded:
                 # only fetches when the pinned version differs from what's on the
                 # persistent volume, so normal restarts stay offline.
@@ -282,7 +302,7 @@ spec:
               HOMEBREW_PREFIX: /home/node/.local/homebrew
               HOMEBREW_REPOSITORY: /home/node/.local/homebrew
               OPENCLAW_GATEWAY_PORT: 18789
-              PATH: /home/node/.local/bin:/home/node/.local/go/bin:/home/node/.local/homebrew/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+              PATH: /home/node/.local/bin:/home/node/.local/share/mise/shims:/home/node/.local/go/bin:/home/node/.local/homebrew/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
               PIP_BREAK_SYSTEM_PACKAGES: "1"
               TERM: xterm-256color
               TZ: Europe/Paris
@@ -498,3 +518,12 @@ spec:
         globalMounts:
           - path: /tmp/openclaw.json
             subPath: openclaw.json
+      # Toolchain pins live in Git (mise/config.toml -> devclaw-mise) and are
+      # mounted read-only so an agent cannot drift them with `mise use -g`.
+      # Renovate bumps them through its native mise manager.
+      mise-config:
+        type: configMap
+        name: devclaw-mise
+        globalMounts:
+          - path: /home/node/.config/mise/config.toml
+            subPath: config.toml
