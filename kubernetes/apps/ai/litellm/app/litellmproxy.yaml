@@ -287,6 +287,17 @@ spec:
       embedding_model: qwen3-embedding-0.6b
       top_k: 10
       similarity_threshold: 0.3
+    # Embedding backbone for the agent_search / skill_search virtual tools
+    # (semantic ranking over the A2A agent registry and the skill registry).
+    # With these set, the two tools answer on every tool-search key — empty
+    # until agents (A2A agents: config) or skills (skill-hub) are registered;
+    # if ever unset, they 400 with agent_search_not_configured /
+    # skill_search_not_configured. Reuses the local TEI embedding model from
+    # mcp_semantic_tool_filter above — no new provider, no new cost. Unlike
+    # that filter (fails open), these fail closed: TEI down = embedding
+    # error, no empty-list or keyword fallback.
+    agent_search_embedding_model: qwen3-embedding-0.6b
+    skill_search_embedding_model: qwen3-embedding-0.6b
     callbacks:
       - prometheus
       - hooks.session_hook.service_session_injector

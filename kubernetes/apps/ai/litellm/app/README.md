@@ -289,14 +289,16 @@ toolhive `VirtualMCPServer` aggregation exclusion
 (`kubernetes/apps/ai/toolhive/config/virtualmcpserver.yaml`). A blacklist — not
 an allowlist — so tools the upstream adds stay visible without a config bump.
 
-### Footnote: `agent_search` / `skill_search`
+### `agent_search` / `skill_search` embedding models
 
 Tool search's keyword ranking needs no embedding model — for `mcp_tool_search`
-(token-overlap). The gateway also serves two other virtual tools:
-`agent_search` (A2A registry) and `skill_search` (skill registry) rank by
-embeddings and only work once `litellmSettings.agent_search_embedding_model` /
-`skill_search_embedding_model` are set. Unused here today; configure before
-relying on them.
+(token-overlap). The gateway's two other virtual tools — `agent_search` (A2A
+registry) and `skill_search` (skill registry) — rank by embeddings and need
+`litellmSettings.agent_search_embedding_model` / `skill_search_embedding_model`.
+Both are pinned to `qwen3-embedding-0.6b`, the same local TEI model as
+`mcp_semantic_tool_filter`, so the two tools answer on every key with tool
+search enabled — empty until agents (A2A `agents:`) or skills (skill-hub) are
+actually registered, but no longer 400.
 
 ### AuthZ probes
 
