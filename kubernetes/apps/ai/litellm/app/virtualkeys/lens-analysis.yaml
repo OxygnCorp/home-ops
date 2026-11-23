@@ -22,16 +22,15 @@ spec:
   # the analysis lands in).
   models:
     - dsv41f
-  # Deliberately the same order of magnitude as LiteLLM Lens' own default
-  # (~$10/month per discovered agent). The key is shared by every agent, so
-  # analysis degrades gracefully — a new agent landing mid-month hits the cap
-  # rather than silently spending more — and the cap is one number to raise if
-  # investigations turn out to be worth it.
-  maxBudget: "10"
-  # `monthly` is LiteLLM's alias for a floating 30d window, not a calendar
-  # month: the budget resets 30 days after the key was created. Use `1mo` if a
-  # calendar reset is ever wanted instead.
-  budgetDuration: monthly
+  # Measured over 24 h on 2025-11-23: 2 288 calls, ~34k input tokens each,
+  # $4.05 — the spend tracks how many calls Lens re-issues as traces grow, not
+  # the model price. A 30-day window therefore let one day burn 40% of the
+  # budget, so the window is daily and the cap is what that day should have
+  # cost. Analysis degrades gracefully at the cap: it stops instead of silently
+  # overspending. One number to raise if investigations prove worth more.
+  maxBudget: "1"
+  # `daily` is LiteLLM's alias for a floating 24h window, not a calendar day.
+  budgetDuration: daily
   teamID: mcp-devops
   secretName: lens-analysis
   secretKey: api-key

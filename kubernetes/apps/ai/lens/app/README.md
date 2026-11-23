@@ -76,13 +76,16 @@ Lens appelle le gateway avec deux variables lues **au démarrage** :
 - `LENS_GATEWAY_API_KEY` ← Secret `lens-analysis` (clé `api-key`)
 
 La clé est une `LiteLLMVirtualKey` (`kubernetes/apps/ai/litellm/app/virtualkeys/lens-analysis.yaml`)
-limitée à `dsv41f`, plafonnée à 10 $/mois — l'ordre de grandeur du défaut de
-Lens (~10 $/mois **par agent découvert**). Le plafond étant partagé par tous
-les agents, une analyse démarrée en fin de mois s'arrête au budget au lieu de
-dépasser en silence ; c'est un seul nombre à relever si les investigations
-s'avèrent rentables. L'opérateur génère la clé via l'admin API et écrit le
-Secret dans `ai` ; volontairement **pas de `PushSecret`** vers 1Password : le
-seul consommateur est le Deployment `lens` dans ce namespace.
+limitée à `dsv41f` et plafonnée à **1 $ par jour**. Mesuré sur 24 h de
+production : 2 288 appels de ~34 000 tokens d'input, 4,05 $ — le coût suit le
+**nombre d'appels** que Lens réémet à mesure que les traces grossissent, pas le
+prix du modèle (0 token caché, le prompt caching de l'upstream n'est pas
+exploité). Un plafond sur 30 jours laissait donc une seule journée en
+consommer 40 %, d'où la fenêtre journalière. Au plafond l'analyse s'arrête
+proprement au lieu de dépasser en silence ; c'est un seul nombre à relever si
+les investigations s'avèrent rentables. L'opérateur génère la clé via l'admin
+API et écrit le Secret dans `ai` ; volontairement **pas de `PushSecret`** vers
+1Password : le seul consommateur est le Deployment `lens` dans ce namespace.
 
 L'UI a besoin d'une troisième variable pour proposer **« Log in with
 LiteLLM »** sur sa page de connexion : `LENS_GATEWAY_PUBLIC_URL=https://litellm.oxygn.dev`,
