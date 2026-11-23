@@ -18,7 +18,7 @@ spec:
       cache_read_input_token_cost: 0.000000042
   info:
     mode: chat
-    maxInputTokens: 131072
+    maxInputTokens: 1024000
     maxOutputTokens: 64000
     supportsFunctionCalling: true
     supportsVision: false

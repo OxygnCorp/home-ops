@@ -13,9 +13,10 @@ spec:
     additional:
       # Real upstream pricing (USD/M ÷ 1M) — subscription only, tracking
       # purposes, no max_budget set (would block requests)
-      input_cost_per_token: 0.0000003
-      output_cost_per_token: 0.0000012
-      cache_read_input_token_cost: 0.000000006
+      # Base rates; peak hours (weekdays 01:00-04:00 and 06:00-10:00 UTC) bill x2
+      input_cost_per_token: 0.00000015
+      output_cost_per_token: 0.0000006
+      cache_read_input_token_cost: 0.000000003
   info:
     mode: chat
     maxInputTokens: 1000000

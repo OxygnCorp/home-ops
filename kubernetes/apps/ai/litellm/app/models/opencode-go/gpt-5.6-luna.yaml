@@ -1,0 +1,27 @@
+---
+apiVersion: litellm.home-operations.com/v1alpha1
+kind: LiteLLMModel
+metadata:
+  name: gpt-5.6-luna
+spec:
+  modelName: gpt-5.6-luna
+  proxyRef: litellm
+  params:
+    model: openai/gpt-5.6-luna
+    apiBase: https://opencode.ai/zen/go/v1
+    apiKey: os.environ/OPENCODE_MATT_API_KEY
+    additional:
+      # Real upstream pricing (USD/M ÷ 1M) — subscription only, tracking
+      # purposes, no max_budget set (would block requests)
+      # Prompts over 272K tokens bill 0.40/1.80/0.04 (cache write 0.50).
+      input_cost_per_token: 0.0000002
+      output_cost_per_token: 0.0000012
+      cache_read_input_token_cost: 0.00000002
+      cache_creation_input_token_cost: 0.00000025
+  info:
+    mode: chat
+    maxInputTokens: 1050000
+    maxOutputTokens: 128000
+    supportsFunctionCalling: true
+    supportsVision: true
+    supportsPromptCaching: true

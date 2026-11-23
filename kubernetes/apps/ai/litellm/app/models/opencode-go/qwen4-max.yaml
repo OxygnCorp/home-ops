@@ -1,0 +1,28 @@
+---
+apiVersion: litellm.home-operations.com/v1alpha1
+kind: LiteLLMModel
+metadata:
+  name: qwen4-max
+spec:
+  modelName: qwen4-max
+  proxyRef: litellm
+  params:
+    model: openai/qwen4-max
+    apiBase: https://opencode.ai/zen/go/v1
+    apiKey: os.environ/OPENCODE_MATT_API_KEY
+    additional:
+      # Real upstream pricing (USD/M ÷ 1M) — subscription only, tracking
+      # purposes, no max_budget set (would block requests)
+      # Anthropic-messages upstream, reached through the openai-compatible
+      # Go endpoint.
+      input_cost_per_token: 0.0000015
+      output_cost_per_token: 0.0000045
+      cache_read_input_token_cost: 0.000000075
+      cache_creation_input_token_cost: 0.000001875
+  info:
+    mode: chat
+    maxInputTokens: 1000000
+    maxOutputTokens: 262144
+    supportsFunctionCalling: true
+    supportsVision: true
+    supportsPromptCaching: true

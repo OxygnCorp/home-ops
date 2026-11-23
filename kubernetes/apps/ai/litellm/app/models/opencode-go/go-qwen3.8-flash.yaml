@@ -19,7 +19,7 @@ spec:
       cache_creation_input_token_cost: 0.0000002
   info:
     mode: chat
-    maxInputTokens: 262144
+    maxInputTokens: 1000000
     maxOutputTokens: 131072
     supportsFunctionCalling: true
     supportsVision: true

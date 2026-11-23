@@ -222,8 +222,8 @@ data:
                 ]
               },
               "limit": {
-                "context": 1000000,
-                "output": 131072
+                "context": 1048576,
+                "output": 1048576
               },
               "compatibility": {
                 "reasoningField": "reasoning_content"
@@ -361,7 +361,7 @@ data:
                 ]
               },
               "limit": {
-                "context": 262144,
+                "context": 1000000,
                 "output": 131072
               }
             },
@@ -376,7 +376,7 @@ data:
                 ]
               },
               "limit": {
-                "context": 131072,
+                "context": 1024000,
                 "output": 64000
               }
             },
@@ -409,7 +409,7 @@ data:
               },
               "limit": {
                 "context": 1048576,
-                "output": 131072
+                "output": 1048576
               },
               "compatibility": {
                 "reasoningField": "reasoning_content"
@@ -432,22 +432,6 @@ data:
               },
               "compatibility": {
                 "reasoningField": "reasoning_content"
-              }
-            },
-            "go-qwen3.7-max": {
-              "capabilities": {
-                "tools": true,
-                "input": [
-                  "text",
-                  "image"
-                ],
-                "output": [
-                  "text"
-                ]
-              },
-              "limit": {
-                "context": 1000000,
-                "output": 131072
               }
             },
             "beam-free": {
@@ -519,6 +503,175 @@ data:
               "limit": {
                 "context": 1000000,
                 "output": 65536
+              }
+            },
+            "deepseek-v4-pro": {
+              "capabilities": {
+                "tools": true,
+                "input": [
+                  "text"
+                ],
+                "output": [
+                  "text"
+                ]
+              },
+              "limit": {
+                "context": 1000000,
+                "output": 384000
+              },
+              "compatibility": {
+                "reasoningField": "reasoning_content"
+              }
+            },
+            "gemini-4-argon": {
+              "capabilities": {
+                "tools": true,
+                "input": [
+                  "text",
+                  "image"
+                ],
+                "output": [
+                  "text"
+                ]
+              },
+              "limit": {
+                "context": 1048576,
+                "output": 65536
+              },
+              "compatibility": {
+                "reasoningField": "reasoning_content"
+              }
+            },
+            "gpt-5.6-luna": {
+              "capabilities": {
+                "tools": true,
+                "input": [
+                  "text",
+                  "image"
+                ],
+                "output": [
+                  "text"
+                ]
+              },
+              "limit": {
+                "context": 1050000,
+                "output": 128000
+              },
+              "compatibility": {
+                "reasoningField": "reasoning_content"
+              }
+            },
+            "hy3": {
+              "capabilities": {
+                "tools": true,
+                "input": [
+                  "text"
+                ],
+                "output": [
+                  "text"
+                ]
+              },
+              "limit": {
+                "context": 256000,
+                "output": 128000
+              },
+              "compatibility": {
+                "reasoningField": "reasoning_content"
+              }
+            },
+            "hy4": {
+              "capabilities": {
+                "tools": true,
+                "input": [
+                  "text",
+                  "image"
+                ],
+                "output": [
+                  "text"
+                ]
+              },
+              "limit": {
+                "context": 1048576,
+                "output": 65536
+              },
+              "compatibility": {
+                "reasoningField": "reasoning_content"
+              }
+            },
+            "hy4-flash-free": {
+              "capabilities": {
+                "tools": true,
+                "input": [
+                  "text",
+                  "image"
+                ],
+                "output": [
+                  "text"
+                ]
+              },
+              "limit": {
+                "context": 1048576,
+                "output": 65536
+              },
+              "compatibility": {
+                "reasoningField": "reasoning_content"
+              }
+            },
+            "longcat-2.5": {
+              "capabilities": {
+                "tools": true,
+                "input": [
+                  "text",
+                  "image"
+                ],
+                "output": [
+                  "text"
+                ]
+              },
+              "limit": {
+                "context": 1000000,
+                "output": 262144
+              },
+              "compatibility": {
+                "reasoningField": "reasoning_content"
+              }
+            },
+            "qwen4-max": {
+              "capabilities": {
+                "tools": true,
+                "input": [
+                  "text",
+                  "image"
+                ],
+                "output": [
+                  "text"
+                ]
+              },
+              "limit": {
+                "context": 1000000,
+                "output": 262144
+              },
+              "compatibility": {
+                "reasoningField": "reasoning_content"
+              }
+            },
+            "step-5-preview": {
+              "capabilities": {
+                "tools": true,
+                "input": [
+                  "text",
+                  "image"
+                ],
+                "output": [
+                  "text"
+                ]
+              },
+              "limit": {
+                "context": 1000000,
+                "output": 65536
+              },
+              "compatibility": {
+                "reasoningField": "reasoning_content"
               }
             }
           }
