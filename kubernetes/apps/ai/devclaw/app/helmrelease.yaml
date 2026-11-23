@@ -117,6 +117,40 @@ spec:
                 if [ -d /home/node/.cache/openclaw ]; then
                     find /home/node/.cache/openclaw -name '.fs-safe-*.tmp' -mtime +1 -delete 2>/dev/null || true
                 fi
+                # Disk hygiene for everything else that grows unattended. The
+                # PVC sat at 94% (554M free) on 2026-11-23 with ~1.4G of data
+                # that is either re-downloadable or superseded. Rules are
+                # size/mtime-based (nothing still in use disappears on a
+                # restart), tolerant of missing dirs (kopia restores exclude
+                # .npm/.cache) and end in `|| true` so a busybox quirk can
+                # never wedge the init under set -euo pipefail.
+                # npm content-addressed cache: dropped whole (not by file, which
+                # would leave dangling index entries) once it exceeds 500M; it
+                # only ever costs a re-download. Logs are plain files.
+                if [ -d /home/node/.npm ]; then
+                    cache_mb=$(du -s -m /home/node/.npm/_cacache 2>/dev/null | awk 'NR==1 {print $1}') || true
+                    if [ -n "$cache_mb" ] && [ "$cache_mb" -gt 500 ]; then
+                        echo "npm cache is $cache_mb MB: dropping ~/.npm/_cacache"
+                        rm -rf /home/node/.npm/_cacache || true
+                    fi
+                    find /home/node/.npm/_logs -type f -mtime +7 -delete 2>/dev/null || true
+                fi
+                # Transient plugin capture dirs (94M on devclaw, 2026-11-23).
+                if [ -d /home/node/.openclaw/tmp/plugin-captures ]; then
+                    find /home/node/.openclaw/tmp/plugin-captures -mindepth 1 -maxdepth 1 -mtime +7 -exec rm -rf {} \; 2>/dev/null || true
+                fi
+                # Legacy jsonl->sqlite import archive (328M imported
+                # 2026-08-31): the transcripts live in sqlite now, so the raw
+                # jsonl only backs a rollback older than this 30d window.
+                for d in /home/node/.openclaw/agents/*/session-sqlite-import-archive; do
+                    [ -d "$d" ] || continue
+                    find "$d" -type f -mtime +30 -delete 2>/dev/null || true
+                    find "$d" -mindepth 1 -type d -empty -delete 2>/dev/null || true
+                done
+                # Not handled here: mise tool versions (~5G of ad hoc installs
+                # on this volume). `mise prune` is a no-op for versions whose
+                # config was never tracked, and the volume's mise binary is
+                # glibc, so it cannot run in this alpine init. See README.
                 cp /kopiaignore/.kopiaignore /home/node/.kopiaignore
 
         containers:
