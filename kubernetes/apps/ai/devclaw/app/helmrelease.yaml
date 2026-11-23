@@ -88,6 +88,8 @@ spec:
                 # Minutes form of the same window, for the content check below
                 # (a capture dir's own mtime stops moving once doctor is done).
                 cutoff_minutes=$(( 7 * 24 * 60 ))
+                # 3 days, in seconds: the state/migration backup class window.
+                state_bak_cutoff=$(( $(date +%s) - 259200 ))
                 newest=""
                 for d in /home/node/.openclaw.update-captures/doctor-*; do
                     [ -d "$d" ] || continue
@@ -125,6 +127,32 @@ spec:
                         if [ "$f" != "$keep" ] && [ "$(stat -c %Y "$f")" -lt "$cutoff" ]; then rm -f "$f" || true; fi
                     done
                 done
+                # State-database backups: doctor cron leaves one full copy a
+                # day next to the live DB and each startup migration leaves
+                # another (13 copies / 888M for a 77M DB on mainclaw,
+                # 2026-11-23) and nothing pruned them. Keep the newest of each
+                # class plus 3 days. Only the two known classes are matched;
+                # anything else stays untouched.
+                prune_state_baks() {
+                    local keep_bak=""
+                    for g in /home/node/.openclaw/state/*"$1"*.bak; do
+                        [ -e "$g" ] || continue
+                        if [ -z "$keep_bak" ] || [ "$(stat -c %Y "$g")" -gt "$(stat -c %Y "$keep_bak")" ]; then
+                            keep_bak="$g"
+                        fi
+                    done
+                    [ -n "$keep_bak" ] || return 0
+                    for g in /home/node/.openclaw/state/*"$1"*.bak; do
+                        [ -e "$g" ] || continue
+                        if [ "$g" != "$keep_bak" ] && [ "$(stat -c %Y "$g")" -lt "$state_bak_cutoff" ]; then rm -f "$g" || true; fi
+                    done
+                    return 0
+                }
+                prune_state_baks doctor-cron-
+                prune_state_baks pre-startup-migration-
+                # Legacy one-off sqlite snapshots (`.sqlite.bak-<date>`) match
+                # neither migration glob and used to pile up forever.
+                find /home/node/.openclaw/agents -mindepth 1 -name '*.sqlite.bak-*' -mtime +30 -delete 2>/dev/null || true
                 # Stale sqlite readonly-check temp copies (orphaned fs-safe files)
                 if [ -d /home/node/.cache/openclaw ]; then
                     find /home/node/.cache/openclaw -name '.fs-safe-*.tmp' -mtime +1 -delete 2>/dev/null || true
