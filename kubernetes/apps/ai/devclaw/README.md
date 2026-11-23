@@ -111,6 +111,28 @@ kubectl annotate externalsecret devclaw -n ai force-sync=$(date +%s)
 - `memini` is installed at startup by the app command, version-guarded against
   `.clawver` so normal restarts stay offline; Renovate tracks the pinned version.
 
+## Disk hygiene
+
+The state PVC is 10Gi and holds a toolchain the agent installs ad hoc (unlike
+`mainclaw`, nothing here is declared in Git). The `init` container prunes only
+what is re-downloadable or superseded, on every start:
+
+| Path | Rule |
+|---|---|
+| `~/.npm/_cacache` | dropped whole once it exceeds 500M (a per-file prune would leave dangling index entries) |
+| `~/.npm/_logs` | files older than 7 days |
+| `~/.openclaw/tmp/plugin-captures/*` | entries older than 7 days |
+| `~/.openclaw/agents/*/session-sqlite-import-archive/*` | files older than 30 days: the JSONL is already imported into sqlite, so the window only preserves a month-old rollback |
+| `~/.openclaw.update-captures/doctor-*` | newest kept plus the last 7 days (upstream calls these recovery artifacts, not temp files) |
+
+Mise versions are deliberately out of scope. `mise prune` does not reclaim
+versions installed without a tracked config, and the volume's `mise` binary is
+glibc, so it cannot run in the alpine init container. When the volume fills up
+(2026-11-23: 94% used, ~5G of duplicate tool versions), reclaim deliberately
+from a container that can run `mise` (for example `kubectl run` with the PVC
+mounted read-write, `HOME=/home/node`, `PATH=/home/node/.local/bin:$PATH`):
+retarget the stale pins with `mise use -g <tool>@<version>`, then `mise prune`.
+
 ## Related
 
 - Flux `Kustomization`: `ks.yaml` (namespace `ai`, `interval: 1h`,
