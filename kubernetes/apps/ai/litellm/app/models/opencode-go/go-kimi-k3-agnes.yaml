@@ -16,10 +16,11 @@ spec:
       input_cost_per_token: 0.000003
       output_cost_per_token: 0.000015
       cache_read_input_token_cost: 0.0000003
+      cache_creation_input_token_cost: 0.000003
   info:
     mode: chat
-    maxInputTokens: 1000000
-    maxOutputTokens: 131072
+    maxInputTokens: 1048576
+    maxOutputTokens: 1048576
     supportsFunctionCalling: true
     supportsVision: true
     supportsPromptCaching: true

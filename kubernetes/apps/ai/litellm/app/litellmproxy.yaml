@@ -168,6 +168,8 @@ spec:
           - beam-free
       - dsv41f-nothink:
           - beam-free
+      - dsv41f-max:
+          - beam-free
       - go-glm-5.3-flash:
           - beam-free
       - go-qwen3.8-flash:
@@ -176,12 +178,28 @@ spec:
           - beam-free
       - mimo-v2.6-flash:
           - beam-free
+      - gpt-5.6-luna:
+          - beam-free
+      - hy3:
+          - beam-free
+      - hy4-flash-free:
+          - beam-free
+      - longcat-2.5:
+          - beam-free
       # Pro/heavy-class OpenCode Go groups
       - go-glm-5.3:
           - beam-free
       - go-qwen3.8-max:
           - beam-free
-      - go-qwen3.7-max:
+      - deepseek-v4-pro:
+          - beam-free
+      - gemini-4-argon:
+          - beam-free
+      - hy4:
+          - beam-free
+      - qwen4-max:
+          - beam-free
+      - step-5-preview:
           - beam-free
       - go-kimi-k3:
           - beam-free

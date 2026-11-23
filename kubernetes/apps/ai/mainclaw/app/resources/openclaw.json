@@ -118,12 +118,6 @@
           "params": {
             "cache_prompt": true
           }
-        },
-        "litellm/go-qwen3.7-max": {
-          "alias": "qwen3.7-max",
-          "params": {
-            "cache_prompt": true
-          }
         }
       },
       "modelPolicy": {
@@ -135,7 +129,6 @@
           "litellm/go-kimi-k3.1-pro",
           "litellm/go-minimax-m3",
           "litellm/go-minimax-m3.1-flash",
-          "litellm/go-qwen3.7-max",
           "litellm/go-qwen3.8-flash",
           "litellm/go-qwen3.8-max",
           "litellm/qwen3.7-plus",
@@ -1055,7 +1048,7 @@
               "cacheWrite": 0
             },
             "contextWindow": 1048576,
-            "maxTokens": 131072
+            "maxTokens": 1048576
           },
           {
             "id": "go-minimax-m3.1-flash",
@@ -1073,23 +1066,6 @@
             },
             "contextWindow": 1000000,
             "maxTokens": 512000
-          },
-          {
-            "id": "go-qwen3.7-max",
-            "name": "OpenCode Go Qwen3.7 Max",
-            "reasoning": true,
-            "input": [
-              "text",
-              "image"
-            ],
-            "cost": {
-              "input": 0,
-              "output": 0,
-              "cacheRead": 0,
-              "cacheWrite": 0
-            },
-            "contextWindow": 1000000,
-            "maxTokens": 131072
           },
           {
             "id": "go-glm-5.3-flash",
@@ -1130,7 +1106,8 @@
             "name": "OpenCode Go Qwen3.8 Flash",
             "reasoning": true,
             "input": [
-              "text"
+              "text",
+              "image"
             ],
             "cost": {
               "input": 0,
@@ -1138,7 +1115,7 @@
               "cacheRead": 0,
               "cacheWrite": 0
             },
-            "contextWindow": 262144,
+            "contextWindow": 1000000,
             "maxTokens": 131072
           },
           {
@@ -1230,7 +1207,8 @@
             "name": "OpenCode Go MiMo V2.6 Pro",
             "reasoning": true,
             "input": [
-              "text"
+              "text",
+              "image"
             ],
             "cost": {
               "input": 0,

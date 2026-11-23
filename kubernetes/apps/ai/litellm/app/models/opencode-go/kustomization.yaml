@@ -58,8 +58,6 @@ resources:
   - ./go-minimax-m3-agnes.yaml
   - ./go-minimax-m3.1-flash.yaml
   - ./go-minimax-m3.1-flash-agnes.yaml
-  - ./go-qwen3.7-max.yaml
-  - ./go-qwen3.7-max-agnes.yaml
   - ./go-qwen3.8-flash.yaml
   - ./go-qwen3.8-flash-agnes.yaml
   - ./go-qwen3.8-max.yaml
@@ -70,3 +68,22 @@ resources:
   - ./mimo-v2.6-pro-agnes.yaml
   - ./qwen3.7-plus.yaml
   - ./qwen3.7-plus-agnes.yaml
+  # Added 2026-11-23 from the OpenCode Go catalog
+  - ./deepseek-v4-pro.yaml
+  - ./deepseek-v4-pro-agnes.yaml
+  - ./gemini-4-argon.yaml
+  - ./gemini-4-argon-agnes.yaml
+  - ./gpt-5.6-luna.yaml
+  - ./gpt-5.6-luna-agnes.yaml
+  - ./hy3.yaml
+  - ./hy3-agnes.yaml
+  - ./hy4.yaml
+  - ./hy4-agnes.yaml
+  - ./hy4-flash-free.yaml
+  - ./hy4-flash-free-agnes.yaml
+  - ./longcat-2.5.yaml
+  - ./longcat-2.5-agnes.yaml
+  - ./qwen4-max.yaml
+  - ./qwen4-max-agnes.yaml
+  - ./step-5-preview.yaml
+  - ./step-5-preview-agnes.yaml

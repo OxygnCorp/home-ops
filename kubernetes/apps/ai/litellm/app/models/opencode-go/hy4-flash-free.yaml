@@ -1,0 +1,26 @@
+---
+apiVersion: litellm.home-operations.com/v1alpha1
+kind: LiteLLMModel
+metadata:
+  name: hy4-flash-free
+spec:
+  modelName: hy4-flash-free
+  proxyRef: litellm
+  params:
+    model: openai/hy4-flash-free
+    apiBase: https://opencode.ai/zen/go/v1
+    apiKey: os.environ/OPENCODE_MATT_API_KEY
+    additional:
+      # Real upstream pricing (USD/M ÷ 1M) — subscription only, tracking
+      # purposes, no max_budget set (would block requests)
+      # Free for a limited time on the Go plan (no per-token billing).
+      input_cost_per_token: 0
+      output_cost_per_token: 0
+      cache_read_input_token_cost: 0
+  info:
+    mode: chat
+    maxInputTokens: 1048576
+    maxOutputTokens: 65536
+    supportsFunctionCalling: true
+    supportsVision: true
+    supportsPromptCaching: true
