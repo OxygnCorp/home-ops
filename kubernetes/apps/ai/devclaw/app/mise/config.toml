@@ -17,7 +17,7 @@
 [tools]
 # Runtimes
 node = "24.18.1"
-python = "3.14.6"
+python = "3.15.2"
 uv = "0.13.9"
 go = "1.27.4"
 gum = "2.0.2"
