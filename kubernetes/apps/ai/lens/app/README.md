@@ -76,11 +76,20 @@ Lens appelle le gateway avec deux variables lues **au démarrage** :
 - `LENS_GATEWAY_API_KEY` ← Secret `lens-analysis` (clé `api-key`)
 
 La clé est une `LiteLLMVirtualKey` (`kubernetes/apps/ai/litellm/app/virtualkeys/lens-analysis.yaml`)
-limitée à `dsv41f`, plafonnée à 50 $/mois (Lens autorise ~10 $/mois **par
-agent**, et analyse chaque agent découvert : un plafond à 10 asphyxierait le
-second). L'opérateur la génère via l'admin API et écrit le Secret dans `ai` ;
-volontairement **pas de `PushSecret`** vers 1Password : le seul consommateur est
-le Deployment `lens` dans ce namespace.
+limitée à `dsv41f`, plafonnée à 10 $/mois — l'ordre de grandeur du défaut de
+Lens (~10 $/mois **par agent découvert**). Le plafond étant partagé par tous
+les agents, une analyse démarrée en fin de mois s'arrête au budget au lieu de
+dépasser en silence ; c'est un seul nombre à relever si les investigations
+s'avèrent rentables. L'opérateur génère la clé via l'admin API et écrit le
+Secret dans `ai` ; volontairement **pas de `PushSecret`** vers 1Password : le
+seul consommateur est le Deployment `lens` dans ce namespace.
+
+L'UI a besoin d'une troisième variable pour proposer **« Log in with
+LiteLLM »** sur sa page de connexion : `LENS_GATEWAY_PUBLIC_URL=https://litellm.oxygn.dev`,
+l'origine **navigateur** du gateway (distincte de `LENS_GATEWAY_API_BASE`, qui
+est l'adresse in-cluster). Sans elle, Lens retombe sur `LENS_GATEWAY_URL` puis sur
+l'API base, qu'un navigateur ne peut pas résoudre, et seul le login par
+`ADMIN_TOKEN` reste proposé.
 
 `optional: true` sur le `secretKeyRef` : au premier apply le Secret n'existe pas
 encore (l'opérateur le crée après la CR), et sans ça le pod partirait en

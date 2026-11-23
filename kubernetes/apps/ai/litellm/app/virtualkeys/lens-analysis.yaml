@@ -22,10 +22,12 @@ spec:
   # the analysis lands in).
   models:
     - dsv41f
-  # Lens allows ~$10/month per discovered agent and analyses each agent
-  # separately, so cap the key above a single agent's budget instead of at it:
-  # a $10 cap would silently starve the second agent Lens starts analysing.
-  maxBudget: "50"
+  # Deliberately the same order of magnitude as LiteLLM Lens' own default
+  # (~$10/month per discovered agent). The key is shared by every agent, so
+  # analysis degrades gracefully — a new agent landing mid-month hits the cap
+  # rather than silently spending more — and the cap is one number to raise if
+  # investigations turn out to be worth it.
+  maxBudget: "10"
   # `monthly` is LiteLLM's alias for a floating 30d window, not a calendar
   # month: the budget resets 30 days after the key was created. Use `1mo` if a
   # calendar reset is ever wanted instead.
