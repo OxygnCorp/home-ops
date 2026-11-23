@@ -21,10 +21,25 @@ The MCP gateway is multiplexed by teams, mirroring the old toolhive groups:
 | Team (alias) | Virtual keys | MCP servers (`spec.mcpServers`) |
 | --- | --- | --- |
 | `mcp-apps` | `mainclaw` | `arr`, `ha_mcp`, `seerr_mcp`, `teslamate`, `todoist_mcp`, `lightrag_mcp` |
-| `mcp-devops` | `devclaw`, `opencode`, `hermes` | `context7`, `flux`, `github`, `grafana`, `konflate`, `kubectl`, `radar`, `talos_mcp`, `unifi_network` |
+| `mcp-devops` | `devclaw`, `opencode`, `hermes` | `context7`, `flux`, `github`, `grafana`, `konflate`, `radar`, `talos_mcp`, `unifi_network` |
 
 Notes:
 
+- **`kubectl` was removed** (2026-11): radar already exposes the read path
+  (`list_resources`, `get_resource`, `diagnose`, logs, events, metrics) plus
+  everything the kubectl MCP could not reach, and the two shared a read-only
+  ClusterRole. One read surface, one RBAC subject.
+- **`flux` is read-only**: this cluster is GitOps, so cluster writes go through
+  Git; cluster-side mutation is radar (`manage_gitops`, `apply_resource`,
+  `patch_resource`). The flux MCP keeps its unique read value (Flux docs,
+  `get_flux_instance`, `trace_kubernetes_resource`) and hides its write tools
+  via `spec.params.disallowed_tools`; the write ClusterRole is gone
+  (`mcp/flux-mcp-rbac.yaml`). `diff_kubernetes_manifest` is blocked too: its
+  server-side dry-run needs real create/patch grants.
+- **Read RBAC** is `ClusterRole/litellm-mcp-readonly`
+  (`mcp/mcp-readonly-rbac.yaml`), bound to the flux MCP service account. It must
+  not use `aggregationRule` — the control plane overwrites `rules` on aggregate
+  ClusterRoles, which silently reduced the previous role to `aggregate-to-view`.
 - **Underscore aliases** (`ha_mcp`, `seerr_mcp`, `todoist_mcp`, `lightrag_mcp`,
   `talos_mcp`, `unifi_network`): litellm proxy ≥1.75 `validate_mcp_server_name`
   rejects `-` in server names, so hyphenated aliases became underscores.

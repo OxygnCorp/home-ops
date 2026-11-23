@@ -21,7 +21,6 @@ spec:
     - github
     - grafana
     - konflate
-    - kubectl
     - radar
     - talos_mcp
     - unifi_network
