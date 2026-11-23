@@ -81,6 +81,9 @@ spec:
                 # no output, hanging the rollout ~20min ×3 on 2026-10-23 & 25).
                 # Compute the newest capture by hand, tolerating an empty set.
                 cutoff=$(( $(date +%s) - 604800 ))
+                # Minutes form of the same window, for the content check below
+                # (a capture dir's own mtime stops moving once doctor is done).
+                cutoff_minutes=$(( 7 * 24 * 60 ))
                 newest=""
                 for d in /home/node/.openclaw.update-captures/doctor-*; do
                     [ -d "$d" ] || continue
@@ -91,7 +94,8 @@ spec:
                 for d in /home/node/.openclaw.update-captures/doctor-*; do
                     [ -d "$d" ] || continue
                     if [ "$d" = "$newest" ]; then continue; fi
-                    if [ "$(stat -c %Y "$d")" -lt "$cutoff" ]; then rm -rf "$d"; fi
+                    if [ -n "$(find "$d" -mmin "-$cutoff_minutes" -print -quit 2>/dev/null)" ]; then continue; fi
+                    rm -rf "$d" || true
                 done
                 # Prune startup-migration backups, keeping the NEWEST ONE
                 # overall within each agent dir (the only automatic rollback

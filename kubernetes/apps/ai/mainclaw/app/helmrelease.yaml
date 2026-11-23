@@ -59,15 +59,16 @@ spec:
                 cp /tmp/openclaw.json /home/node/.openclaw/openclaw.json
                 chown 1000:100 /home/node/.openclaw/openclaw.json
                 chmod 400 /home/node/.openclaw/openclaw.json
-                # Retention: doctor creates a full recovery capture (~280M per
-                # run on this 11-agent volume) and never prunes them; with
-                # frequent pod restarts the PVC filled to 91% (2026-10-23) and
-                # was back up to 54% on 2026-11-23, nine captures deep. Always
-                # keep the newest capture (the only automatic rollback path)
-                # plus everything younger than 3 days; agent sqlite backups
-                # below keep their own 7-day window. All globs/searches
-                # tolerate absence: kopia restores exclude these dirs.
-                capture_cutoff=$(( $(date +%s) - 259200 ))
+                # Retention windows, one per class of data (all globs tolerate
+                # absence: kopia restores exclude these dirs):
+                #   doctor captures       newest + younger than 3 days
+                #   state db backups      newest per class + 3 days
+                #   agent db backups      newest per agent + 7 days
+                #   legacy .sqlite.bak-*  older than 30 days
+                # A backup only goes once nothing inside it was touched since
+                # the cutoff: a capture dir's mtime stops moving as soon as
+                # doctor finishes writing into it.
+                capture_minutes=$(( 3 * 24 * 60 ))
                 bak_cutoff=$(( $(date +%s) - 604800 ))
                 state_bak_cutoff=$(( $(date +%s) - 259200 ))
                 # No `ls`/`find` with set -e + pipefail: when the glob matches
@@ -84,7 +85,8 @@ spec:
                 for d in /home/node/.openclaw.update-captures/doctor-*; do
                     [ -d "$d" ] || continue
                     if [ "$d" = "$newest" ]; then continue; fi
-                    if [ "$(stat -c %Y "$d")" -lt "$capture_cutoff" ]; then rm -rf "$d"; fi
+                    if [ -n "$(find "$d" -mmin "-$capture_minutes" -print -quit 2>/dev/null)" ]; then continue; fi
+                    rm -rf "$d" || true
                 done
                 # Prune startup-migration backups, keeping the NEWEST ONE
                 # overall within each agent dir (the only automatic rollback
@@ -114,7 +116,7 @@ spec:
                 # would otherwise hold a week of full copies. Only the two
                 # known classes are matched; anything else stays untouched.
                 prune_state_baks() {
-                    keep_bak=""
+                    local keep_bak=""
                     for g in /home/node/.openclaw/state/*"$1"*.bak; do
                         [ -e "$g" ] || continue
                         if [ -z "$keep_bak" ] || [ "$(stat -c %Y "$g")" -gt "$(stat -c %Y "$keep_bak")" ]; then
@@ -124,8 +126,9 @@ spec:
                     [ -n "$keep_bak" ] || return 0
                     for g in /home/node/.openclaw/state/*"$1"*.bak; do
                         [ -e "$g" ] || continue
-                        if [ "$g" != "$keep_bak" ] && [ "$(stat -c %Y "$g")" -lt "$state_bak_cutoff" ]; then rm -f "$g"; fi
+                        if [ "$g" != "$keep_bak" ] && [ "$(stat -c %Y "$g")" -lt "$state_bak_cutoff" ]; then rm -f "$g" || true; fi
                     done
+                    return 0
                 }
                 prune_state_baks doctor-cron-
                 prune_state_baks pre-startup-migration-
