@@ -68,7 +68,11 @@ data:
   opencode.json: |
     {
       "$schema": "https://opencode.ai/config.json",
-      "model": "litellm/go-glm-5.3-flash",
+      // Default alias: litellm classifies each ask and routes it across the Go
+      // pool (hy4-flash-free -> dsv41f -> go-glm-5.3) instead of spending the
+      // expensive tiers on every turn. Switch to a concrete alias when a task
+      // deserves a specific model.
+      "model": "litellm/go-auto",
       // Emit AI SDK spans so the OTEL_* env vars exported by the deployment
       // actually produce traces. The field is flagged deprecated in the config
       // schema yet remains the only documented switch for experimental_telemetry.
@@ -205,6 +209,25 @@ data:
               "limit": {
                 "context": 1000000,
                 "output": 384000
+              },
+              "compatibility": {
+                "reasoningField": "reasoning_content"
+              }
+            },
+            "go-auto": {
+              "capabilities": {
+                "tools": true,
+                "input": [
+                  "text",
+                  "image"
+                ],
+                "output": [
+                  "text"
+                ]
+              },
+              "limit": {
+                "context": 1000000,
+                "output": 65536
               },
               "compatibility": {
                 "reasoningField": "reasoning_content"
