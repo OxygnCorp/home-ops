@@ -107,6 +107,13 @@ spec:
         value: https://litellm.oxygn.dev
       - name: LENS_GATEWAY_API_BASE
         value: http://litellm.ai:4000
+      # Tells Lens which analysis endpoint *is* the gateway, so it stamps its
+      # internal metadata (the agent the run belongs to) on the calls it sends
+      # there. Without it every analysis call reaches the gateway unlabelled and
+      # lands under the single LensAnalysis key alias: total spend is visible,
+      # per-agent spend is not.
+      - name: LENS_GATEWAY_URL
+        value: http://litellm.ai:4000
       - name: LENS_GATEWAY_API_KEY
         valueFrom:
           secretKeyRef:
