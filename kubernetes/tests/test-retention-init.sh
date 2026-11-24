@@ -6,10 +6,14 @@
 # command, then executes it inside the SAME container image as the pod
 # (extracted from the rendered spec) over synthetic /home/node trees.
 #
-# This would have caught both incidents:
+# This would have caught all three incidents:
 #   2026-10-23/25 — `$(ls ... | head -1)` under set -e + pipefail → instant
 #                   silent crash when the glob matches nothing (empty set)
 #   2026-10-27    — newest-file protection drift in the .bak keep-loop
+#   2026-11-24    — a widened ~/.openclaw/client ("Client credential directory
+#                   is unsafe.", every agent command dead) — the private-store
+#                   asserts below pin the modes and owners, which the crash-only
+#                   `try` checks could never see
 #
 # Usage: just kube test-init   (see kubernetes/mod.just)
 
@@ -46,6 +50,14 @@ try() { # try <desc> — the shipped init MUST exit 0
     else
         fail=$((fail + 1)); echo "FAIL: ${1} — init script crashed (see trace)"
     fi
+}
+assert_mode() { # assert_mode <desc> <want mode> <path>
+    got=$(stat -c %a "$3" 2>/dev/null || echo missing)
+    if [ "$got" = "$2" ]; then pass=$((pass + 1)); else fail=$((fail + 1)); echo "FAIL: ${1} — ${3} mode=${got} want=${2}"; fi
+}
+assert_owner() { # assert_owner <desc> <want uid:gid> <path>
+    got=$(stat -c %u:%g "$3" 2>/dev/null || echo missing)
+    if [ "$got" = "$2" ]; then pass=$((pass + 1)); else fail=$((fail + 1)); echo "FAIL: ${1} — ${3} owner=${got} want=${2}"; fi
 }
 
 # ==== captures loop ===========================================================
@@ -208,6 +220,49 @@ else
     echo "SKIP: import archive sweep (not shipped by this init script)" >&2
 fi
 
+# ==== private credential stores ==============================================
+# OpenClaw opens ~/.openclaw/client/credentials.sqlite before every command it
+# runs and refuses it ("Client credential directory is unsafe.") unless the
+# directory is 0700 and the files 0600, all owned by the gateway uid. Nothing
+# else on the volume enforces it (the app's own startup repair bails out on
+# foreign owners), which is how mainclaw wedged on 2026-11-24 — and the two
+# claws ship this block as a copy-paste, so these asserts are the only thing
+# stopping the copies from drifting apart.
+root
+mkdir -p /home/node/.openclaw/client
+for f in credentials.sqlite credentials.sqlite-wal credentials.sqlite-shm credentials.sqlite-journal; do
+    : > "/home/node/.openclaw/client/$f"
+done
+chown -R 0:0 /home/node/.openclaw
+chmod 2755 /home/node/.openclaw/client
+chmod 664 /home/node/.openclaw/client/credentials.sqlite*
+try 'private stores: widened root-owned store is re-privatized'
+assert_mode 'client dir is 0700' 700 /home/node/.openclaw/client
+assert_owner 'client dir owned by the gateway uid' 1000:100 /home/node/.openclaw/client
+for f in credentials.sqlite credentials.sqlite-wal credentials.sqlite-shm credentials.sqlite-journal; do
+    assert_mode "${f} is 0600" 600 "/home/node/.openclaw/client/$f"
+    assert_owner "${f} owned by the gateway uid" 1000:100 "/home/node/.openclaw/client/$f"
+done
+assert_mode 'credentials dir is 0700' 700 /home/node/.openclaw/credentials
+assert_owner 'credentials dir owned by the gateway uid' 1000:100 /home/node/.openclaw/credentials
+
+# A fresh volume (and a kopiur restore, whose mover writes with its own
+# fsGroup) comes in owned by root, so the init has to hand the tree over
+# instead of relying on an fsGroup the pod no longer runs with.
+root
+chown -R 0:0 /home/node /openclaw-home
+try 'fresh volume: root-owned tree is handed to the gateway uid'
+assert_owner 'state dir owned by the gateway uid' 1000:100 /home/node/.openclaw
+assert_owner 'home root owned by the admin group' 0:100 /home/node
+assert_mode 'home root keeps setgid + sticky + g+w' 3775 /home/node
+assert_owner 'emptyDir /openclaw-home owned by the gateway uid' 1000:100 /openclaw-home
+if grep -q 'workspace/mnt' /init.sh 2>/dev/null; then
+    assert_owner 'NFS mount parent owned by the gateway uid' 1000:100 /home/node/.openclaw/workspace/mnt
+    assert_owner 'NFS mount parent of the parents' 1000:100 /home/node/.openclaw/workspace
+else
+    echo "SKIP: NFS mount parents (this app keeps its NFS outside the state dir)" >&2
+fi
+
 # ==== idempotence ============================================================
 # The init runs on every start, so a second pass over an already-pruned tree
 # must be a no-op and still exit 0.
@@ -244,10 +299,21 @@ spec:
   containers:
   - name: t
     image: ${image}
+    # The real init container runs as root (it has to: it chowns the volume).
+    securityContext:
+      runAsUser: 0
     command:
     - sh
     - -c
     - printf '%s' '${init_b64}' | base64 -d > /init.sh; printf '%s' '${suite_b64}' | base64 -d > /suite.sh; sh /suite.sh
+    volumeMounts:
+    # The real pod mounts an emptyDir here (0777 root:root, recreated every
+    # start); the init chowns it, so the fixture needs it to exist.
+    - name: openclaw-home
+      mountPath: /openclaw-home
+  volumes:
+  - name: openclaw-home
+    emptyDir: {}
 POD
 
     # Wait for terminal phase (Succeeded only lands at rc=0).

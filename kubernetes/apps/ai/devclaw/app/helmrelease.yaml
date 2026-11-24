@@ -57,6 +57,10 @@ spec:
                 # volume, which widens OpenClaw's private stores.
                 chown 0:100 /home/node
                 chmod 3775 /home/node
+                # Kubelet recreates this emptyDir 0777 root:root on every pod
+                # start. Nothing needs it writable by others, and the pod has
+                # no fsGroup to tighten it.
+                chown 1000:100 /openclaw-home
                 # Same doctor refusal, one level down: doctor probes the
                 # temp roots themselves (.cache is the default temp root,
                 # .openclaw/tmp the state fallback). Devclaw hit this on
