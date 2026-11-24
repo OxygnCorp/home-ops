@@ -72,7 +72,15 @@ onepassword`):
 | `OPENCLAW_GATEWAY_TOKEN`    | `devclaw`                   |
 | `GH_TOKEN`                  | `devclaw`                   |
 | `LITELLM_API_KEY`           | `litellm` → `KEY_DEVCLAW`   |
+| `LITELLM_API_KEY_DEVCLAW_MAIN` | `litellm` → `KEY_DEVCLAW_MAIN` |
 | `MEMINI_API_KEY`            | `memini` → `MEMINI_API_KEY` |
+
+`LITELLM_API_KEY_DEVCLAW_MAIN` feeds the `litellm-main` provider used by the
+`main` agent (primary model, subagents and image fallback), so that traffic is
+attributed to `DevclawMain`. `LITELLM_API_KEY` remains the gateway-wide
+`litellm` provider and the fallback path. MCP tool calls
+(`mcp.servers.litellm`) still authenticate with the gateway-wide key; only
+model traffic is split per agent.
 
 A second ExternalSecret, `devclaw-config` (12h), renders the `devclaw-config`
 secret from the `devclaw-configmap` ConfigMap (`resources/openclaw.json`). That
