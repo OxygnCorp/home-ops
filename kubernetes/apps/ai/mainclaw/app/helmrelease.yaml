@@ -179,8 +179,17 @@ spec:
                     find /home/node/.openclaw/tmp/plugin-captures -mindepth 1 -maxdepth 1 -mtime +7 -exec rm -rf {} \; 2>/dev/null || true
                 fi
                 cp /kopiaignore/.kopiaignore /home/node/.kopiaignore
-                # Parent dir for the mise config subPath mount (install-tools needs it)
+                # Parent dir for the mise config subPath mount (install-tools
+                # needs it), created root:root by kubelet: give it to the app.
                 mkdir -p /home/node/.config/mise
+                chown 1000:100 /home/node/.config/mise
+                # Kubelet also creates the NFS mount parents as root:root
+                # before any container starts. Without an fsGroup nothing fixes
+                # them, and uid 1000 could not even traverse into its own
+                # workspace on a fresh volume. Only the parents here: chowning
+                # the NFS leaves themselves would hit root-squash.
+                mkdir -p /home/node/.openclaw/workspace/mnt
+                chown 1000:100 /home/node/.openclaw/workspace /home/node/.openclaw/workspace/mnt
                 # Channel credential state: keep it owner-only (audit check
                 # fs.credentials_dir.perms_readable / _writable)
                 mkdir -p /home/node/.openclaw/credentials
@@ -201,10 +210,15 @@ spec:
                 mkdir -p /home/node/.openclaw/client
                 chown 1000:100 /home/node/.openclaw/client
                 chmod 700 /home/node/.openclaw/client
-                if [ -f /home/node/.openclaw/client/credentials.sqlite ]; then
-                    chown 1000:100 /home/node/.openclaw/client/credentials.sqlite
-                    chmod 600 /home/node/.openclaw/client/credentials.sqlite
-                fi
+                # The database and whatever sqlite sidecars an unclean shutdown
+                # left behind (-wal / -shm / -journal) are part of the same
+                # private store; the directory mode is the real bound, this
+                # just keeps the files consistent with it.
+                for store in credentials.sqlite credentials.sqlite-wal credentials.sqlite-shm credentials.sqlite-journal; do
+                    [ -f "/home/node/.openclaw/client/$store" ] || continue
+                    chown 1000:100 "/home/node/.openclaw/client/$store"
+                    chmod 600 "/home/node/.openclaw/client/$store"
+                done
           install-tools:
             image:
               repository: ghcr.io/openclaw/openclaw
@@ -378,12 +392,16 @@ spec:
       # No fsGroup on purpose. Kubelet's fsGroup pass sets group rwx
       # recursively on the state volume, and an fsGroup volume remount is the
       # documented way OpenClaw's private stores get widened (upstream docs,
-      # "Private storage after a volume remount"). The client credential
-      # directory must stay 0700: the gateway throws "Client credential
-      # directory is unsafe." and, on 2026-11-24, every agent command failed
-      # until the pod was restarted. The startup repair refuses foreign owners
-      # and world-access bits, so it cannot be relied on either. The init
-      # container runs as root and sets every ownership/mode the app needs.
+      # "Private storage after a volume remount", v2026.11.7). The client
+      # credential directory must stay 0700: the gateway throws "Client
+      # credential directory is unsafe." and, on 2026-11-24, every agent
+      # command failed until the pod was restarted. The startup repair refuses
+      # foreign owners and world-access bits, so it cannot be relied on
+      # either. The root init container sets the ownership/modes instead —
+      # PVC root, state dir, the mount parents kubelet creates, and the
+      # private stores. Anything restored from a kopiur snapshot may come back
+      # group-writable (the mover mounts a staging copy with its own fsGroup);
+      # the init normalizes it on the pod start that follows the restore.
       securityContext:
         runAsUser: 1000
         runAsGroup: 100

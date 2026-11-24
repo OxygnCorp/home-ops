@@ -49,8 +49,13 @@ spec:
                 # snap pre-repair state when a staging ancestor can be
                 # replaced by another user ("Original state capture was
                 # unavailable" + no automatic restore path). g+w must stay
-                # (fsGroup children like ~/.config, ~/.local are created
-                # group-writable), so 3775 = setgid + sticky.
+                # (children like ~/.config, ~/.local are created
+                # group-writable), so 3775 = setgid + sticky. Ownership is
+                # set here because the pod no longer runs with an fsGroup
+                # (see the pod securityContext comment and mainclaw's twin
+                # change): kubelet's fsGroup pass sets group rwx on the whole
+                # volume, which widens OpenClaw's private stores.
+                chown 0:100 /home/node
                 chmod 3775 /home/node
                 # Same doctor refusal, one level down: doctor probes the
                 # temp roots themselves (.cache is the default temp root,
@@ -62,13 +67,13 @@ spec:
                 # ownership, then sticky — a failed mkdir/chown/chmod
                 # stays fatal under set -e so a real failure is visible
                 # instead of silently reproducing the crash. Sticky keeps
-                # g+w for fsGroup children: 1775 = sticky + setgid + g+w.
-                # (mainclaw only needs the root chmod today — its sticky
-                # root satisfied doctor since 933bd6ffd — but apply the
-                # same logic here defensively.)
+                # g+w for group children: 1775 = sticky + setgid + g+w.
                 mkdir -p /home/node/.cache /home/node/.openclaw/tmp
                 chown 1000:100 /home/node/.cache /home/node/.openclaw/tmp
                 chmod 1775 /home/node/.cache /home/node/.openclaw/tmp
+                # The state dir itself: created root:root by this init on a
+                # fresh volume, and nothing used to fix it.
+                chown 1000:100 /home/node/.openclaw
                 # Parent dir for the read-only mise config subPath mount below
                 mkdir -p /home/node/.config/mise
                 chown 1000:100 /home/node/.config/mise
@@ -76,6 +81,29 @@ spec:
                 cp /tmp/openclaw.json /home/node/.openclaw/openclaw.json
                 chown 1000:100 /home/node/.openclaw/openclaw.json
                 chmod 400 /home/node/.openclaw/openclaw.json
+                # Private stores. Channel credentials first (audit check
+                # fs.credentials_dir.perms_readable / _writable), then the
+                # local client credential store: device identities + keys,
+                # per-role tokens and the native exec socket token at
+                # ~/.openclaw/client/credentials.sqlite. The gateway refuses to
+                # read that one unless the DIRECTORY is owned by its uid and
+                # mode 0700 and the files 0600, and it only re-applies those
+                # modes at gateway startup — a directory recreated at runtime
+                # comes back 2755 under this setgid + g+w PVC root and stays
+                # broken until a restart, with a message that names neither the
+                # path nor a fix (mainclaw, 2026-11-24: every agent command
+                # failed with "Client credential directory is unsafe.").
+                mkdir -p /home/node/.openclaw/credentials
+                chown 1000:100 /home/node/.openclaw/credentials
+                chmod 700 /home/node/.openclaw/credentials
+                mkdir -p /home/node/.openclaw/client
+                chown 1000:100 /home/node/.openclaw/client
+                chmod 700 /home/node/.openclaw/client
+                for store in credentials.sqlite credentials.sqlite-wal credentials.sqlite-shm credentials.sqlite-journal; do
+                    [ -f "/home/node/.openclaw/client/$store" ] || continue
+                    chown 1000:100 "/home/node/.openclaw/client/$store"
+                    chmod 600 "/home/node/.openclaw/client/$store"
+                done
                 # Retention: doctor creates a full recovery capture (~750M of
                 # agent sqlite) on every repair run and never prunes them; mainclaw
                 # hit 91% PVC usage this way (2026-10-23). Always keep the newest
@@ -389,11 +417,14 @@ spec:
           operator: Equal
           value: ai
           effect: NoSchedule
+      # No fsGroup, same reasoning as mainclaw: kubelet's recursive ownership
+      # pass sets group rwx on the state volume, and an fsGroup volume remount
+      # is the documented way OpenClaw's private stores (client credential
+      # directory 0700, files 0600) get widened. The root init container sets
+      # the ownership/modes instead.
       securityContext:
         runAsUser: 1000
         runAsGroup: 100
-        fsGroup: 100
-        fsGroupChangePolicy: OnRootMismatch
     service:
       app:
         type: LoadBalancer
@@ -554,6 +585,6 @@ spec:
           - path: /home/node/.config/mise/config.toml
             subPath: config.toml
             # readOnly is opt-in in app-template; without it the mount is
-            # writable whenever the defaultMode/fsGroup allow it, and
+            # writable whenever the defaultMode allows it, and
             # `mise use -g` would drift the pins back into the volume.
             readOnly: true

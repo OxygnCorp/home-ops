@@ -126,6 +126,17 @@ or superseded, on every start:
 
 Mise tool versions are handled separately, see below.
 
+## Private stores
+
+The `init` container also normalizes the private credential stores on every
+start — `~/.openclaw/client/` (`0700`, uid 1000) with its `credentials.sqlite`
+(`0600`), and `~/.openclaw/credentials/` (`0700`). The gateway refuses to read
+them otherwise, with a message that names neither the path nor a fix. The pod
+runs without an `fsGroup` for the same reason: kubelet's recursive ownership
+pass sets group rwx on the volume. See
+[`../mainclaw/README.md#private-stores`](../mainclaw/README.md#private-stores)
+for the full explanation.
+
 ## Toolchain
 
 `mise/config.toml` (this directory) is the referential for the CLIs the agent

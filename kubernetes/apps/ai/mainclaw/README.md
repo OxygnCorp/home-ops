@@ -67,6 +67,13 @@ widening mechanism), and the `init` container normalizes `client/` and its
 database on every boot, which is the only step that always runs before the
 gateway.
 
+That init pass is also what repairs a restored volume: a kopiur restore lays
+down a staging copy produced by a mover that runs with its own `fsGroup`, so the
+restored tree can come back group-writable. The invariant is "restore, then
+start the pod" — the init normalizes every private path before the gateway can
+read it, which only holds as long as this list stays in sync with the paths the
+app treats as private.
+
 ## Related
 
 - Flux `Kustomization`: `ks.yaml` (namespace `ai`, `interval: 1h`, `postBuild`
