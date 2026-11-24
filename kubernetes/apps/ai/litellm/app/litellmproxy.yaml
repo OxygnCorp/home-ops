@@ -352,12 +352,18 @@ spec:
       - agent_name: hermes
         agent_card_params:
           name: Hermes
+          description: >-
+            NousResearch Hermes gateway running in this cluster. Answers from
+            its live session (with memini memory) over A2A JSON-RPC.
           url: http://hermes.ai.svc.cluster.local:9900
           protocolVersion: "1.0"
         litellm_params:
-          # Sent upstream as `Authorization: Bearer <token>`; A2A agents have
-          # no `auth_type` field. The token comes from the 1Password `litellm`
-          # item via the existing `litellm-secret` ExternalSecret.
+          # A2A auth is inferred from litellm_params: api_key set means
+          # `Authorization: Bearer <token>` upstream (docs auth_overview;
+          # A2A has no auth_type field). The token is the A2A_HERMES_TOKEN
+          # env var injected from the `litellm-secret` ExternalSecret — its
+          # template.data maps the field of the same name in the 1Password
+          # `litellm` item (dataFrom.extract alone would not write it).
           api_key: os.environ/A2A_HERMES_TOKEN
     environment:
       - OPENCODE_MATT_API_KEY

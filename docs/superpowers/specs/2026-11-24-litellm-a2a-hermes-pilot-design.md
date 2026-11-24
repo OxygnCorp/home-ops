@@ -22,7 +22,7 @@ Make LiteLLM the cluster's A2A broker for one agent — the existing Hermes inst
 - LiteLLM v1.110.2 > v1.96.0, so the config top-level `agents:` key is read correctly even with a database attached. Required fields are `agent_name` and `agent_card_params`; entries missing either are skipped at startup. Config-defined agents are not editable in the UI and survive DB reloads.
 - `litellm_params.api_key` with `os.environ/<VAR>` is the documented A2A outbound bearer mechanism (`Authorization: Bearer <api_key>`); no `auth_type` field exists for A2A agents.
 - Hermes v0.23.x ships `plugins/platforms/a2a` with A2A v1.0 inbound (`/.well-known/agent-card.json`, legacy `/.well-known/agent.json`, JSON-RPC `message/send` etc.) and outbound toolsets. A non-loopback bind requires both a token and explicit `A2A_HOST`; a token alone falls back to caller-IP identity and dispatch is refused for unknown identities unless `A2A_TRUSTED_PEERS` names the peer (or `A2A_ALLOW_ALL_USERS=true`, dev-only). `A2A_PEER_TOKENS=name:token` gives a stable, IP-independent identity.
-- The existing LiteLLM `ExternalSecret` uses `dataFrom.extract` on the 1Password item `litellm`, so adding a field to that item automatically lands in the `litellm-secret` Secret; `extraConfig.environment` injects same-named env vars into the proxy pods.
+- The existing LiteLLM `ExternalSecret` uses `dataFrom.extract` on the 1Password item `litellm` (so the new field is fetched automatically), but its `target.template` with the default `mergePolicy: Replace` writes **only the keys mapped in `template.data`** into `litellm-secret` — so the token needs an explicit `A2A_HERMES_TOKEN: "{{ .A2A_HERMES_TOKEN }}"` mapping there. `extraConfig.environment` then injects the same-named env var into the proxy pods.
 - The existing Secret `litellm-key-opencode` in `ai` has key `api-key` and is suitable for the Job (no new virtual key needed).
 
 ## Architecture and call flow
@@ -103,6 +103,16 @@ In `spec.extraConfig`, add `A2A_HERMES_TOKEN` to `environment` and a top-level `
 ```
 
 `extraConfig` is `x-kubernetes-preserve-unknown-fields` and merged at the top level of the rendered config.yaml, so `extraConfig.agents` becomes the top-level `agents:` block. No change to `litellmSettings`, model groups, teams, or virtual keys.
+
+### `kubernetes/apps/ai/litellm/app/externalsecret.yaml`
+
+The `dataFrom.extract` fetches the whole 1Password `litellm` item (so the new field needs no extra `data` entry), but under the default `mergePolicy: Replace` only `template.data` keys land in `litellm-secret`. Add the mapping:
+
+```yaml
+        A2A_HERMES_TOKEN: "{{ .A2A_HERMES_TOKEN }}"
+```
+
+Without it the token never reaches the proxy pods and every `/a2a/hermes` call fails upstream auth.
 
 ### `kubernetes/apps/ai/litellm/app/README.md`
 

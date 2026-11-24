@@ -158,10 +158,11 @@ git commit -m "feat(ai/hermes): expose native A2A endpoint for LiteLLM pilot"
 
 **Files:**
 - Modify: `kubernetes/apps/ai/litellm/app/litellmproxy.yaml:344-349`
+- Modify: `kubernetes/apps/ai/litellm/app/externalsecret.yaml:14-25` (reviewer fix: token must be mapped in `template.data`)
 - Test: `/tmp/opencode/check-a2a-litellm.sh` (throwaway, never committed)
 
 **Interfaces:**
-- Consumes: `A2A_HERMES_TOKEN` present in Secret `litellm-secret` (populated by the existing `dataFrom.extract` on the 1Password `litellm` item).
+- Consumes: `A2A_HERMES_TOKEN` present in Secret `litellm-secret` — the ExternalSecret's `dataFrom.extract` fetches the whole 1Password `litellm` item, but under the default `mergePolicy: Replace` only `template.data` keys are written to the Secret, so the token needs an explicit `A2A_HERMES_TOKEN: "{{ .A2A_HERMES_TOKEN }}"` mapping.
 - Produces: top-level `agents:` block in the rendered config.yaml with one entry named `hermes`, invocable at `POST /a2a/hermes`.
 
 - [ ] **Step 1: Write the failing check**
@@ -173,11 +174,13 @@ Create `/tmp/opencode/check-a2a-litellm.sh`:
 set -euo pipefail
 cd /home/opencode/projects/home-ops-litellm-agent-search
 CR=kubernetes/apps/ai/litellm/app/litellmproxy.yaml
+ES=kubernetes/apps/ai/litellm/app/externalsecret.yaml
 yq -e '.spec.extraConfig.environment[] | select(. == "A2A_HERMES_TOKEN")' "$CR" >/dev/null
 yq -e '.spec.extraConfig.agents[0].agent_name == "hermes"' "$CR" >/dev/null
 yq -e '.spec.extraConfig.agents[0].agent_card_params.url == "http://hermes.ai.svc.cluster.local:9900"' "$CR" >/dev/null
 yq -e '.spec.extraConfig.agents[0].agent_card_params.protocolVersion == "1.0"' "$CR" >/dev/null
 yq -e '.spec.extraConfig.agents[0].litellm_params.api_key == "os.environ/A2A_HERMES_TOKEN"' "$CR" >/dev/null
+yq -e '.spec.target.template.data.A2A_HERMES_TOKEN == "{{ .A2A_HERMES_TOKEN }}"' "$ES" >/dev/null
 echo "LiteLLM A2A registration checks passed"
 ```
 
@@ -213,12 +216,18 @@ with:
       - agent_name: hermes
         agent_card_params:
           name: Hermes
+          description: >-
+            NousResearch Hermes gateway running in this cluster. Answers from
+            its live session (with memini memory) over A2A JSON-RPC.
           url: http://hermes.ai.svc.cluster.local:9900
           protocolVersion: "1.0"
         litellm_params:
-          # Sent upstream as `Authorization: Bearer <token>`; A2A agents have
-          # no `auth_type` field. The token comes from the 1Password `litellm`
-          # item via the existing `litellm-secret` ExternalSecret.
+          # A2A auth is inferred from litellm_params: api_key set means
+          # `Authorization: Bearer <token>` upstream (docs auth_overview;
+          # A2A has no auth_type field). The token is the A2A_HERMES_TOKEN
+          # env var injected from the `litellm-secret` ExternalSecret — its
+          # template.data maps the field of the same name in the 1Password
+          # `litellm` item (dataFrom.extract alone would not write it).
           api_key: os.environ/A2A_HERMES_TOKEN
     environment:
       - OPENCODE_MATT_API_KEY
@@ -229,6 +238,12 @@ with:
 ```
 
 Do not add `static_headers`: it would persist the token in LiteLLM's database. Do not change `litellmSettings`, teams or virtual keys.
+
+In `kubernetes/apps/ai/litellm/app/externalsecret.yaml`, in `spec.target.template.data`, append after `OPENCODE_AGNES_API_KEY` (reviewer fix — under `mergePolicy: Replace`, `template.data` is the only thing written to `litellm-secret`):
+
+```yaml
+        A2A_HERMES_TOKEN: "{{ .A2A_HERMES_TOKEN }}"
+```
 
 - [ ] **Step 4: Re-run the check and confirm the CRD accepts the key**
 
@@ -245,7 +260,8 @@ Expected: check prints `LiteLLM A2A registration checks passed`; jq exits 0 (`tr
 - [ ] **Step 5: Commit**
 
 ```bash
-git add kubernetes/apps/ai/litellm/app/litellmproxy.yaml
+git add kubernetes/apps/ai/litellm/app/litellmproxy.yaml \
+        kubernetes/apps/ai/litellm/app/externalsecret.yaml
 git commit -m "feat(ai/litellm): register Hermes as an A2A agent"
 ```
 
