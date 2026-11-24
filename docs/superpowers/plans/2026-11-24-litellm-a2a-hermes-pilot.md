@@ -32,7 +32,7 @@
 
 **Interfaces:**
 - Consumes: existing `hermes` ExternalSecret/Secret and `envFrom` in the `app` container.
-- Produces: Service port named `a2a` on 9900 reachable at `http://hermes.ai.svc.cluster.local:9900`, card at `/.well-known/agent-card.json`, peer identity `litellm`.
+- Produces: Service port named `a2a` on 9900 reachable at `http://hermes-app.ai.svc.cluster.local:9900`, card at `/.well-known/agent-card.json`, peer identity `litellm`.
 
 - [ ] **Step 1: Write the failing check**
 
@@ -49,7 +49,7 @@ yq -p yaml '.data."config.yaml"' "$CM" | yq -e '.gateway.platforms.a2a.enabled =
 yq -p yaml '.data."config.yaml"' "$CM" | yq -e '.gateway.platforms.a2a.extra.port == 9900' >/dev/null
 yq -e '.spec.values.controllers.hermes.containers.app.ports[] | select(.name == "a2a") | .containerPort == 9900' "$HR" >/dev/null
 yq -e '.spec.values.service.app.ports.a2a | has("port")' "$HR" >/dev/null
-for pair in 'A2A_HOST 0.0.0.0' 'A2A_PORT 9900' 'A2A_AGENT_NAME hermes' 'A2A_PUBLIC_URL http://hermes.ai.svc.cluster.local:9900' 'A2A_TRUSTED_PEERS litellm'; do
+for pair in 'A2A_HOST 0.0.0.0' 'A2A_PORT 9900' 'A2A_AGENT_NAME hermes' 'A2A_PUBLIC_URL http://hermes-app.ai.svc.cluster.local:9900' 'A2A_TRUSTED_PEERS litellm'; do
   set -- $pair
   key="$1" value="$2" yq -e '.spec.values.controllers.hermes.containers.app.env[strenv(key)] == strenv(value)' "$HR" >/dev/null
 done
@@ -98,7 +98,7 @@ In `helmrelease.yaml`, in `spec.values.controllers.hermes.containers.app.env`, a
               A2A_HOST: 0.0.0.0
               A2A_PORT: "9900"
               A2A_AGENT_NAME: hermes
-              A2A_PUBLIC_URL: http://hermes.ai.svc.cluster.local:9900
+              A2A_PUBLIC_URL: http://hermes-app.ai.svc.cluster.local:9900
               A2A_TRUSTED_PEERS: litellm
 ```
 
@@ -177,7 +177,7 @@ CR=kubernetes/apps/ai/litellm/app/litellmproxy.yaml
 ES=kubernetes/apps/ai/litellm/app/externalsecret.yaml
 yq -e '.spec.extraConfig.environment[] | select(. == "A2A_HERMES_TOKEN")' "$CR" >/dev/null
 yq -e '.spec.extraConfig.agents[0].agent_name == "hermes"' "$CR" >/dev/null
-yq -e '.spec.extraConfig.agents[0].agent_card_params.url == "http://hermes.ai.svc.cluster.local:9900"' "$CR" >/dev/null
+yq -e '.spec.extraConfig.agents[0].agent_card_params.url == "http://hermes-app.ai.svc.cluster.local:9900"' "$CR" >/dev/null
 yq -e '.spec.extraConfig.agents[0].agent_card_params.protocolVersion == "1.0"' "$CR" >/dev/null
 yq -e '.spec.extraConfig.agents[0].litellm_params.api_key == "os.environ/A2A_HERMES_TOKEN"' "$CR" >/dev/null
 yq -e '.spec.target.template.data.A2A_HERMES_TOKEN == "{{ .A2A_HERMES_TOKEN }}"' "$ES" >/dev/null
@@ -219,7 +219,7 @@ with:
           description: >-
             NousResearch Hermes gateway running in this cluster. Answers from
             its live session (with memini memory) over A2A JSON-RPC.
-          url: http://hermes.ai.svc.cluster.local:9900
+          url: http://hermes-app.ai.svc.cluster.local:9900
           protocolVersion: "1.0"
         litellm_params:
           # A2A auth is inferred from litellm_params: api_key set means
@@ -320,7 +320,7 @@ search enabled — no longer 400.
 
 `agent_search` currently ranks one registered agent: `hermes`. The
 declarative `extraConfig.agents[]` entry makes LiteLLM fetch Hermes' A2A card
-from `http://hermes.ai.svc.cluster.local:9900/.well-known/agent-card.json`
+from `http://hermes-app.ai.svc.cluster.local:9900/.well-known/agent-card.json`
 at startup; invoke it with `POST /a2a/hermes` (JSON-RPC `message/send`) using
 `x-litellm-api-key: Bearer <KEY>`. LiteLLM forwards
 `Authorization: Bearer <A2A_HERMES_TOKEN>` upstream; Hermes maps that token to
