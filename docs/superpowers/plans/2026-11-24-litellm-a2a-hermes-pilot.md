@@ -283,7 +283,7 @@ Expected: non-zero exit (no `/a2a/hermes` mention).
 
 - [ ] **Step 3: Generate the peer token for the operator**
 
-Run: `openssl rand -hex 32`
+Run: `python3 -c 'import secrets; print(secrets.token_hex(32))'` (the executor's shell has no `openssl`; the README keeps the generic `openssl rand -hex 32` wording for operators).
 
 Copy the printed 64-hex-character value into the chat reply to the user with this instruction: create field `A2A_HERMES_TOKEN` in the 1Password item `litellm` (vault `home-ops`, API Credential) **before merging**, using that value. Never write it into a file or commit message.
 
@@ -295,11 +295,11 @@ In `README.md`, replace the whole `### agent_search / skill_search embedding mod
 ### `agent_search` / `skill_search` embedding models
 
 Tool search's keyword ranking needs no embedding model — for `mcp_tool_search`
-(token-overlap). gateway's two virtual tools — `agent_search` (A2A
-registry) and `skill_search` (skill registry) rank by embeddings and need
+(token-overlap). The gateway's two other virtual tools — `agent_search` (A2A
+registry) and `skill_search` (skill registry) — rank by embeddings and need
 `litellmSettings.agent_search_embedding_model` / `skill_search_embedding_model`.
-Both pinned to `qwen3-embedding-0.6b`, same local TEI model as
-`mcp_semantic_tool_filter`, so two tools answer on every key tool
+Both are pinned to `qwen3-embedding-0.6b`, the same local TEI model as
+`mcp_semantic_tool_filter`, so the two tools answer on every key with tool
 search enabled — no longer 400.
 
 `agent_search` currently ranks one registered agent: `hermes`. The

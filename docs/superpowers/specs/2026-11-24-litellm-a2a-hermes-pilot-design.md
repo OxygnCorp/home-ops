@@ -2,7 +2,7 @@
 
 **Date:** 2026-11-24
 **Status:** Approved design, pending implementation plan
-**Namespace:** `ai` · **LiteLLM:** `ghcr.io/berriai/litellm-database:1.110.2` · **Hermes:** `v0.23.3`
+**Namespace:** `ai` · **LiteLLM:** `ghcr.io/berriai/litellm-database:1.110.3` · **Hermes:** `v0.23.3`
 
 ## Goal
 

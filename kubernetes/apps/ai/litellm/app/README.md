@@ -297,8 +297,19 @@ registry) and `skill_search` (skill registry) — rank by embeddings and need
 `litellmSettings.agent_search_embedding_model` / `skill_search_embedding_model`.
 Both are pinned to `qwen3-embedding-0.6b`, the same local TEI model as
 `mcp_semantic_tool_filter`, so the two tools answer on every key with tool
-search enabled — empty until agents (A2A `agents:`) or skills (skill-hub) are
-actually registered, but no longer 400.
+search enabled — no longer 400.
+
+`agent_search` currently ranks one registered agent: `hermes`. The
+declarative `extraConfig.agents[]` entry makes LiteLLM fetch Hermes' A2A card
+from `http://hermes.ai.svc.cluster.local:9900/.well-known/agent-card.json`
+at startup; invoke it with `POST /a2a/hermes` (JSON-RPC `message/send`) using
+`x-litellm-api-key: Bearer <KEY>`. LiteLLM forwards
+`Authorization: Bearer <A2A_HERMES_TOKEN>` upstream; Hermes maps that token to
+the peer name `litellm` via `A2A_PEER_TOKENS` and accepts only that peer via
+`A2A_TRUSTED_PEERS`. The 1Password `litellm` item must contain field
+`A2A_HERMES_TOKEN` (`openssl rand -hex 32`) **before merge** — otherwise both
+ExternalSecrets stay out of sync. Rotating it requires restarting both
+workloads: the agent config and the peer token are read at startup.
 
 ### AuthZ probes
 
