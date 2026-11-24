@@ -350,6 +350,22 @@ Operational notes:
   restrictive wins); `general_settings.agent_access_default_deny: true`
   flips the no-grant default to deny. Accepted for this single-user pilot;
   revisit before federating more agents.
+- **UI discovery (SSRF allowlist):** the UI/API agent-card fetch goes
+  through LiteLLM's SSRF guard, which blocks private ClusterIPs — the
+  configured agent still loads at startup, but UI discovery fails with a
+  blocked `10.43.x.x` address. `user_url_allowed_hosts` is read from
+  `general_settings`, not `litellm_settings` (the UI error text is
+  misleading). This app sets it to
+  `hermes-app.ai.svc.cluster.local:9900`; allowlisted hosts skip only the
+  private-network check, while DNS resolution and rewriting to the resolved
+  IP still apply. The allowlist is global across the proxy: it covers every
+  `validate_url` call site (image/file URLs, client-supplied
+  `api_base`/`base_url`, guardrail HTTP primitives, A2A push notifications),
+  not just card discovery — keep entries `host:port` and minimal. Its
+  location is also version-sensitive: the pinned 1.110.x image reads
+  `general_settings`, while current upstream docs say `litellm_settings`, so
+  re-check both on a major bump — a silent move would re-break UI discovery.
+  Extend the list if another internal agent is registered.
 - **Chat bridge:** `POST /v1/chat/completions` with `model: a2a/hermes`
   returns an empty `content` against Hermes. Hermes' A2A task parts omit the
   `kind: "text"` discriminator (e.g. `{"text": "pong"}`) and LiteLLM's
