@@ -338,6 +338,17 @@ spec:
     disable_env_credential_login: true
     health_check_endpoint: /v1/health
     store_model_in_db: false
+    # The UI/API agent-card fetch runs through LiteLLM's SSRF guard, which
+    # blocks private ClusterIPs. `user_url_allowed_hosts` is read from
+    # general_settings on the pinned 1.110.x image (not litellm_settings,
+    # despite the UI error text); upstream docs now point at litellm_settings,
+    # so re-check both on a major bump. The allowlist applies to every
+    # validate_url call site (image/file URLs, client-supplied api_base,
+    # guardrail HTTP primitives, A2A push notifications), not just card
+    # discovery — keep entries host:port and minimal. Allowlisted hosts still
+    # resolve DNS and are rewritten to the resolved IP before connecting.
+    user_url_allowed_hosts:
+      - hermes-app.ai.svc.cluster.local:9900
     tracing:
       store:
         type: lens
