@@ -14,8 +14,14 @@ spec:
   # runs the startup migration). Helm's default 5m timeout made every
   # rollout exceeding it fail and remediate into a rollback (2026-10-23,
   # release stalled with pods stuck "PodInitializing"/not-Ready for ~5m).
-  # 20m covers the doctor phase + plugin install with margin under 1h.
-  timeout: 20m
+  # 40m, not 20m: from 2026.11.8 on, doctor may spend up to 20 min on its
+  # pre-repair state capture alone when storage is slow (openclaw#192406),
+  # and the gateway stays stopped for that whole time. Add the startup
+  # migration, the config copy, `mise install`, the plugin install and the
+  # gateway bootstrap and 20m no longer holds. No effect on the current
+  # 2026.11.7 pin: this is the margin the 2026.11.8+ doctor needs.
+  # Must stay well under interval: 1h.
+  timeout: 40m
   values:
     controllers:
       openclaw:
@@ -362,8 +368,13 @@ spec:
                       || echo "WARN: recover-lock refused; continuing with a live holder"
                   fi
                 fi
-                # Doctor check and fix any issues with the OpenClaw installation, then start the gateway
-                node /app/openclaw.mjs doctor --fix
+                # Doctor check and fix any issues with the OpenClaw installation, then start the gateway.
+                # `--fix` authorizes unattended repairs (since openclaw#191523 a bare doctor
+                # no longer installs the plugin packages it finds missing, so the flag is
+                # load-bearing); `--non-interactive` makes the intent explicit so no repair
+                # can block on a prompt even if the container is ever started with a TTY.
+                node /app/openclaw.mjs doctor --fix --non-interactive \
+                  || echo "WARN: doctor exited nonzero; continuing"
                 # Start gateway
                 echo "Starting OpenClaw gateway..."
                 exec node /app/openclaw.mjs gateway
