@@ -135,4 +135,12 @@ Known operational limits: A2A rate limit 60 req/min per identity; Hermes anti-lo
 
 ## Rollback
 
-Revert the PR → Flux restores the previous ConfigMap/HelmRelease/ExternalSecret and rolls both Deployments back; delete the ad-hoc Job. The 1Password field can remain (inert until re-enabled). No cluster-side direct edits are made, so rollback is purely GitOps.
+Revert the PR → Flux restores the previous ConfigMap/HelmRelease/ExternalSecret and rolls both Deployments back; delete the ad-hoc Job. The 1Password field can remain (inert until re-enabled). One DB-side delta survives a revert: the pilot key's `object_permission.agents` grant (finding 2 below) lives in LiteLLM's database, not in Git, so clear it with `POST /key/update` setting `object_permission.agents` back to `[]` if a full teardown is intended. With that caveat, no cluster-side manifests need direct edits and the GitOps rollback is complete.
+
+## Post-implementation findings (2026-11-24)
+
+The pilot merged as PR #6013 and exposed three real-world deltas from this design:
+
+1. **Service host (fixed in PR #6016):** the chart names the Service `hermes-app`, not `hermes`. The original `A2A_PUBLIC_URL`/`agent_card_params.url` pointed at a nonexistent host, so LiteLLM failed the card fetch at startup and silently skipped the agent. Live probes showed HTTP 000 for `hermes.ai.svc.cluster.local` versus HTTP 200 for `hermes-app.ai.svc.cluster.local`. Both configs and the docs now use `hermes-app`.
+2. **Discovery needs an explicit grant:** LiteLLM's `/v1/agents` and `agent_search` only list agents explicitly granted to the key or team; an empty `agents: []` is unrestricted for *direct* invocation but grants nothing for *listing*. The Opencode pilot key received a one-time, DB-only `POST /key/update` grant (`object_permission.agents = [hermes agent_id]`); after it, `agent_search` returns `hermes`, and the key's direct invocation is now scoped to that list. This cannot be expressed in `LiteLLMVirtualKey`/`LiteLLMTeam` yet, so it is documented in the app README rather than GitOps. The chat bridge can bypass this scope (upstream issue #38996, open), so the grant is discovery hygiene rather than a security boundary.
+3. **Chat bridge gap:** `model: a2a/hermes` returns HTTP 200 with empty `content`. Hermes' A2A task parts omit the `kind: "text"` discriminator (`[{"text": "pong"}]`) and LiteLLM's extractor only reads typed text parts (`kind == "text"`, still true on LiteLLM main). Direct `POST /a2a/hermes` works end-to-end (task completed with text in `status.message.parts` and `artifacts[0].parts`), so delegation uses the JSON-RPC endpoint until one side fixes serialization.

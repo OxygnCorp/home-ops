@@ -330,12 +330,35 @@ Operational notes:
 - **Rotation:** both workloads have stakater reloader annotations, so a
   1Password rotation rolls both automatically; expect a transient 401 window
   while the two rollouts complete (LiteLLM reads the token at startup).
-- **Permissions:** A2A agent access is default-open — every virtual key
-  (including `mcp-apps` keys like mainclaw) can invoke `POST /a2a/hermes`.
-  Scoping via `object_permission.agents` / `agent_access_groups` is possible
-  today through the dashboard/API, but not via Git until the operator CRs
-  (`LiteLLMTeam`/`LiteLLMVirtualKey`) grow the field. Accepted for this
-  single-user pilot; revisit before federating more agents.
+- **Permissions & discovery:** invocation and discovery read grants
+  differently. With no grant at all, direct invocation (`POST /a2a/hermes`)
+  is unrestricted, but `/v1/agents` and `agent_search` return nothing —
+  discovery only lists agents explicitly granted to the key or team. Once a
+  key lists any agent in `object_permission.agents`, that list becomes a
+  whitelist for direct invocation too, so the Opencode pilot key (granted
+  `hermes`) is now scoped to `hermes`. Grant it once through the master API
+  (`POST /key/update` with
+  `{"key": "<key>", "object_permission": {"agents": ["<agent_id>"]}}`);
+  `<agent_id>` comes from `GET /v1/agents` with the master key, which
+  bypasses the listing restriction. The update merges into the existing
+  `object_permission` row (the MCP fields and `mcp_tool_search_enabled`
+  stayed intact here), but re-check after any later permission change. This
+  is not GitOps: `LiteLLMVirtualKey` and `LiteLLMTeam` have no
+  `object_permission` field yet (nor for `agent_access_groups`), so repeat
+  the grant if the key is re-created or overwritten by the operator.
+  If team grants appear later, key and team lists intersect (most
+  restrictive wins); `general_settings.agent_access_default_deny: true`
+  flips the no-grant default to deny. Accepted for this single-user pilot;
+  revisit before federating more agents.
+- **Chat bridge:** `POST /v1/chat/completions` with `model: a2a/hermes`
+  returns an empty `content` against Hermes. Hermes' A2A task parts omit the
+  `kind: "text"` discriminator (e.g. `{"text": "pong"}`) and LiteLLM's
+  extractor ignores untyped parts. The JSON-RPC endpoint is unaffected and
+  returns the text in `result.task.status.message.parts` and
+  `result.task.artifacts[0].parts`; use `POST /a2a/hermes` for delegation
+  until either side fixes the serialization. The chat path can also bypass
+  `object_permission.agents` scope checks (upstream issue #38996, still
+  open), so treat the grant as discovery hygiene, not a security boundary.
 
 ### AuthZ probes
 
