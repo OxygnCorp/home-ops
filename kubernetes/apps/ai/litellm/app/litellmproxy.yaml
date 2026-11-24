@@ -355,7 +355,7 @@ spec:
           description: >-
             NousResearch Hermes gateway running in this cluster. Answers from
             its live session (with memini memory) over A2A JSON-RPC.
-          url: http://hermes.ai.svc.cluster.local:9900
+          url: http://hermes-app.ai.svc.cluster.local:9900
           protocolVersion: "1.0"
         litellm_params:
           # A2A auth is inferred from litellm_params: api_key set means

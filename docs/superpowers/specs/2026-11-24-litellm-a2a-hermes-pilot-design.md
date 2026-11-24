@@ -38,7 +38,7 @@ Job (ai, ephemeral) --JSON-RPC message/send--> LiteLLM /a2a/hermes
                                     live Hermes session + memini
 ```
 
-1. LiteLLM registers `hermes` from `extraConfig.agents` with `agent_card_params.url = http://hermes.ai.svc.cluster.local:9900` and `protocolVersion: "1.0"`. It fetches Hermes' card from `/.well-known/agent-card.json`; Hermes advertises the same cluster-internal URL via `A2A_PUBLIC_URL` so the card never leaks a bind address.
+1. LiteLLM registers `hermes` from `extraConfig.agents` with `agent_card_params.url = http://hermes-app.ai.svc.cluster.local:9900` and `protocolVersion: "1.0"`. It fetches Hermes' card from `/.well-known/agent-card.json`; Hermes advertises the same cluster-internal URL via `A2A_PUBLIC_URL` so the card never leaks a bind address.
 2. The Job authenticates to LiteLLM with `x-litellm-api-key: Bearer <existing virtual key>` and posts JSON-RPC `message/send` to `/a2a/hermes`. LiteLLM sends `Authorization: Bearer <A2A_HERMES_TOKEN>` upstream via `litellm_params.api_key`.
 3. Hermes maps the token to the peer name `litellm` via `A2A_PEER_TOKENS`, accepts it via `A2A_TRUSTED_PEERS=litellm`, injects the task into its live gateway session, and returns the reply over A2A. Audit goes to `a2a_audit.jsonl`; LiteLLM records the invocation in Lens.
 4. `agent_search` (already embedding-enabled) ranks the registered Hermes card for task queries; `/v1/agents` remains the authoritative discovery endpoint.
@@ -66,7 +66,7 @@ All other config (models, delegation, memini, mcp_servers, webapp) stays byte-id
 ### `kubernetes/apps/ai/hermes/app/helmrelease.yaml`
 
 - `controllers.hermes.containers[app].ports` += `{containerPort: 9900, name: a2a, protocol: TCP}`.
-- `controllers.hermes.containers[app].env` += non-secret values: `A2A_HOST: 0.0.0.0`, `A2A_PORT: "9900"`, `A2A_AGENT_NAME: hermes`, `A2A_PUBLIC_URL: http://hermes.ai.svc.cluster.local:9900`, `A2A_TRUSTED_PEERS: litellm`.
+- `controllers.hermes.containers[app].env` += non-secret values: `A2A_HOST: 0.0.0.0`, `A2A_PORT: "9900"`, `A2A_AGENT_NAME: hermes`, `A2A_PUBLIC_URL: http://hermes-app.ai.svc.cluster.local:9900`, `A2A_TRUSTED_PEERS: litellm`.
 - `service.app.ports.a2a.port: 9900` (same chart pattern as `http`/`webapp`/`codeserver`) — internal ClusterIP only.
 - No new HTTPRoute and no change to `dashboard`/`codeserver`.
 
@@ -96,7 +96,7 @@ In `spec.extraConfig`, add `A2A_HERMES_TOKEN` to `environment` and a top-level `
       - agent_name: hermes
         agent_card_params:
           name: Hermes
-          url: http://hermes.ai.svc.cluster.local:9900
+          url: http://hermes-app.ai.svc.cluster.local:9900
           protocolVersion: "1.0"
         litellm_params:
           api_key: os.environ/A2A_HERMES_TOKEN

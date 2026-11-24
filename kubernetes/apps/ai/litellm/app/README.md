@@ -301,9 +301,12 @@ search enabled — no longer 400.
 
 `agent_search` currently ranks one registered agent: `hermes`. The
 declarative `extraConfig.agents[]` entry makes LiteLLM fetch Hermes' A2A card
-from `http://hermes.ai.svc.cluster.local:9900/.well-known/agent-card.json`
+from `http://hermes-app.ai.svc.cluster.local:9900/.well-known/agent-card.json`
 at startup; invoke it with `POST /a2a/hermes` (JSON-RPC `message/send`) using
-`x-litellm-api-key: Bearer <KEY>`. LiteLLM forwards
+`x-litellm-api-key: Bearer <KEY>`. The chart names the Service `hermes-app`,
+not `hermes` — a wrong host makes the card fetch fail and LiteLLM skip the
+agent at startup (same visible symptom as a cold bootstrap, see the
+operational notes below). LiteLLM forwards
 `Authorization: Bearer <A2A_HERMES_TOKEN>` upstream (A2A auth is inferred
 from `litellm_params.api_key`; there is no `auth_type` for agents); Hermes
 maps that token to the peer name `litellm` via `A2A_PEER_TOKENS` and accepts
