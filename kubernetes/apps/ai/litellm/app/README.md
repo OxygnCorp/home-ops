@@ -297,8 +297,42 @@ registry) and `skill_search` (skill registry) — rank by embeddings and need
 `litellmSettings.agent_search_embedding_model` / `skill_search_embedding_model`.
 Both are pinned to `qwen3-embedding-0.6b`, the same local TEI model as
 `mcp_semantic_tool_filter`, so the two tools answer on every key with tool
-search enabled — empty until agents (A2A `agents:`) or skills (skill-hub) are
-actually registered, but no longer 400.
+search enabled — no longer 400.
+
+`agent_search` currently ranks one registered agent: `hermes`. The
+declarative `extraConfig.agents[]` entry makes LiteLLM fetch Hermes' A2A card
+from `http://hermes.ai.svc.cluster.local:9900/.well-known/agent-card.json`
+at startup; invoke it with `POST /a2a/hermes` (JSON-RPC `message/send`) using
+`x-litellm-api-key: Bearer <KEY>`. LiteLLM forwards
+`Authorization: Bearer <A2A_HERMES_TOKEN>` upstream (A2A auth is inferred
+from `litellm_params.api_key`; there is no `auth_type` for agents); Hermes
+maps that token to the peer name `litellm` via `A2A_PEER_TOKENS` and accepts
+only that peer via `A2A_TRUSTED_PEERS`.
+
+Operational notes:
+
+- **Token plumbing:** the 1Password `litellm` item must contain field
+  `A2A_HERMES_TOKEN` (`openssl rand -hex 32`) **before merge**. The litellm
+  ExternalSecret fetches the whole item via `dataFrom.extract`, but its
+  template (`mergePolicy: Replace`) only writes `template.data` keys — the
+  `A2A_HERMES_TOKEN` mapping there is what lands the token in
+  `litellm-secret`. If the field is missing, the `hermes` ExternalSecret
+  stays in sync-error (Hermes keeps its previous Secret, falls back to
+  binding A2A on 127.0.0.1 — fail-safe) while LiteLLM holds an empty token
+  and upstream calls 401.
+- **Cold bootstrap:** `ai/hermes` depends on `ai/litellm`, so on a fresh
+  cluster LiteLLM starts before Hermes serves :9900, the card fetch fails and
+  the agent is skipped. Restart the litellm deployment once Hermes is Ready
+  to register it.
+- **Rotation:** both workloads have stakater reloader annotations, so a
+  1Password rotation rolls both automatically; expect a transient 401 window
+  while the two rollouts complete (LiteLLM reads the token at startup).
+- **Permissions:** A2A agent access is default-open — every virtual key
+  (including `mcp-apps` keys like mainclaw) can invoke `POST /a2a/hermes`.
+  Scoping via `object_permission.agents` / `agent_access_groups` is possible
+  today through the dashboard/API, but not via Git until the operator CRs
+  (`LiteLLMTeam`/`LiteLLMVirtualKey`) grow the field. Accepted for this
+  single-user pilot; revisit before federating more agents.
 
 ### AuthZ probes
 

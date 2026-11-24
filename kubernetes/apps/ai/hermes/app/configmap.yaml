@@ -77,6 +77,11 @@ data:
       max_iterations: 250
     gateway:
       multiplex_profiles: false
+      platforms:
+        a2a:
+          enabled: true
+          extra:
+            port: 9900
     security:
       redact_secrets: true
     privacy:

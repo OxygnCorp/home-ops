@@ -342,11 +342,35 @@ spec:
       store:
         type: lens
   extraConfig:
+    # `extraConfig` is merged verbatim into the top level of config.yaml
+    # (x-kubernetes-preserve-unknown-fields). The A2A registry is a top-level
+    # `agents:` key since LiteLLM v1.96 — readable even with the attached DB.
+    # Config-defined agents are not editable in the UI; Git is the source of
+    # truth. Hermes' card is fetched at startup from the cluster-internal URL;
+    # a wrong URL means the entry is skipped, not a proxy crash.
+    agents:
+      - agent_name: hermes
+        agent_card_params:
+          name: Hermes
+          description: >-
+            NousResearch Hermes gateway running in this cluster. Answers from
+            its live session (with memini memory) over A2A JSON-RPC.
+          url: http://hermes.ai.svc.cluster.local:9900
+          protocolVersion: "1.0"
+        litellm_params:
+          # A2A auth is inferred from litellm_params: api_key set means
+          # `Authorization: Bearer <token>` upstream (docs auth_overview;
+          # A2A has no auth_type field). The token is the A2A_HERMES_TOKEN
+          # env var injected from the `litellm-secret` ExternalSecret — its
+          # template.data maps the field of the same name in the 1Password
+          # `litellm` item (dataFrom.extract alone would not write it).
+          api_key: os.environ/A2A_HERMES_TOKEN
     environment:
       - OPENCODE_MATT_API_KEY
       - OPENCODE_AGNES_API_KEY
       - REDIS_HOST
       - REDIS_PORT
+      - A2A_HERMES_TOKEN
   apiAccess:
     masterKeyRef:
       name: litellm-secret
