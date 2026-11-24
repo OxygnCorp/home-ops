@@ -40,9 +40,18 @@ spec:
                 # snap pre-repair state when a staging ancestor can be
                 # replaced by another user ("Original state capture was
                 # unavailable" + no automatic restore path). g+w must stay
-                # (fsGroup children like ~/.config, ~/.local are created
-                # group-writable), so 3775 = setgid + sticky.
+                # (children like ~/.config, ~/.local are created
+                # group-writable), so 3775 = setgid + sticky. Ownership is
+                # set here because the pod no longer runs with an fsGroup:
+                # kubelet's fsGroup pass recursively sets group rwx on the
+                # whole volume, which widens OpenClaw's private stores (see
+                # the client credential block below).
+                chown 0:100 /home/node
                 chmod 3775 /home/node
+                # Kubelet recreates this emptyDir 0777 root:root on every pod
+                # start. Nothing needs it writable by others, and the pod has
+                # no fsGroup to tighten it.
+                chown 1000:100 /openclaw-home
                 # Same doctor refusal, one level down: doctor probes the temp
                 # roots themselves (.cache is the default temp root,
                 # .openclaw/tmp the state fallback). devclaw hit this on
@@ -55,6 +64,11 @@ spec:
                 chown 1000:100 /home/node/.cache /home/node/.openclaw/tmp
                 chmod 1775 /home/node/.cache /home/node/.openclaw/tmp
                 mkdir -p /home/node/.openclaw
+                # init creates the state dir root:root on a fresh volume (kopia
+                # restores exclude it) and nothing used to fix that: the app
+                # could not write there. No fsGroup means this has to be
+                # explicit now.
+                chown 1000:100 /home/node/.openclaw
                 rm -f /home/node/.openclaw/openclaw.json
                 cp /tmp/openclaw.json /home/node/.openclaw/openclaw.json
                 chown 1000:100 /home/node/.openclaw/openclaw.json
@@ -169,13 +183,46 @@ spec:
                     find /home/node/.openclaw/tmp/plugin-captures -mindepth 1 -maxdepth 1 -mtime +7 -exec rm -rf {} \; 2>/dev/null || true
                 fi
                 cp /kopiaignore/.kopiaignore /home/node/.kopiaignore
-                # Parent dir for the mise config subPath mount (install-tools needs it)
+                # Parent dir for the mise config subPath mount (install-tools
+                # needs it), created root:root by kubelet: give it to the app.
                 mkdir -p /home/node/.config/mise
+                chown 1000:100 /home/node/.config/mise
+                # Kubelet also creates the NFS mount parents as root:root
+                # before any container starts. Without an fsGroup nothing fixes
+                # them, and uid 1000 could not even traverse into its own
+                # workspace on a fresh volume. Only the parents here: chowning
+                # the NFS leaves themselves would hit root-squash.
+                mkdir -p /home/node/.openclaw/workspace/mnt
+                chown 1000:100 /home/node/.openclaw/workspace /home/node/.openclaw/workspace/mnt
                 # Channel credential state: keep it owner-only (audit check
                 # fs.credentials_dir.perms_readable / _writable)
                 mkdir -p /home/node/.openclaw/credentials
                 chown 1000:100 /home/node/.openclaw/credentials
                 chmod 700 /home/node/.openclaw/credentials
+                # Local client credential store (device identities + keys,
+                # per-role tokens, native exec socket token) at
+                # ~/.openclaw/client/credentials.sqlite. The gateway refuses to
+                # read it unless the DIRECTORY is owned by its uid and mode
+                # 0700, and the file 0600, with a message that names neither
+                # the path nor a fix: "Client credential directory is
+                # unsafe." (mainclaw, 2026-11-24 — every agent command failed
+                # with it and a chmod on ~/.config/op could not help).
+                # OpenClaw only re-applies those modes at gateway startup, so
+                # any directory recreated at runtime comes back 2755 under this
+                # setgid + g+w PVC root and stays broken until a restart.
+                # Normalize on every boot, before the gateway reads it.
+                mkdir -p /home/node/.openclaw/client
+                chown 1000:100 /home/node/.openclaw/client
+                chmod 700 /home/node/.openclaw/client
+                # The database and whatever sqlite sidecars an unclean shutdown
+                # left behind (-wal / -shm / -journal) are part of the same
+                # private store; the directory mode is the real bound, this
+                # just keeps the files consistent with it.
+                for store in credentials.sqlite credentials.sqlite-wal credentials.sqlite-shm credentials.sqlite-journal; do
+                    [ -f "/home/node/.openclaw/client/$store" ] || continue
+                    chown 1000:100 "/home/node/.openclaw/client/$store"
+                    chmod 600 "/home/node/.openclaw/client/$store"
+                done
           install-tools:
             image:
               repository: ghcr.io/openclaw/openclaw
@@ -346,11 +393,22 @@ spec:
           operator: Equal
           value: ai
           effect: NoSchedule
+      # No fsGroup on purpose. Kubelet's fsGroup pass sets group rwx
+      # recursively on the state volume, and an fsGroup volume remount is the
+      # documented way OpenClaw's private stores get widened (upstream docs,
+      # "Private storage after a volume remount", v2026.11.7). The client
+      # credential directory must stay 0700: the gateway throws "Client
+      # credential directory is unsafe." and, on 2026-11-24, every agent
+      # command failed until the pod was restarted. The startup repair refuses
+      # foreign owners and world-access bits, so it cannot be relied on
+      # either. The root init container sets the ownership/modes instead —
+      # PVC root, state dir, the mount parents kubelet creates, and the
+      # private stores. Anything restored from a kopiur snapshot may come back
+      # group-writable (the mover mounts a staging copy with its own fsGroup);
+      # the init normalizes it on the pod start that follows the restore.
       securityContext:
         runAsUser: 1000
         runAsGroup: 100
-        fsGroup: 100
-        fsGroupChangePolicy: OnRootMismatch
     service:
       app:
         type: ClusterIP

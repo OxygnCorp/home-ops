@@ -37,6 +37,43 @@ The semantics are covered by fixtures in
 (`just kube test-init`), which runs the shipped script in the same image as the
 pod.
 
+## Private stores
+
+OpenClaw keeps its local credential stores on the state volume and refuses to
+read them when their modes drift:
+
+| Path | Required | Owner |
+|---|---|---|
+| `~/.openclaw/client/` | `0700` | uid 1000 |
+| `~/.openclaw/client/credentials.sqlite` | `0600` | uid 1000 |
+| `~/.openclaw/credentials/` | `0700` | uid 1000 |
+
+`client/credentials.sqlite` holds the device identities (private keys), the
+per-device/role bearer tokens and the native exec socket token, so the gateway
+reads it before **every** command it runs. When the directory is not private it
+fails with `Client credential directory is unsafe.` — a message that names
+neither the path nor a fix, and that a `chmod` on `~/.config/op` cannot address.
+
+Two properties make this regress silently:
+
+- the store is authorized with `mode & 0o077`, so a directory recreated at
+  runtime inherits the parent's setgid/gid and comes back `2755`;
+- the gateway only restores private modes at startup, and its repair refuses
+  foreign owners and world-access bits.
+
+Hence: no `fsGroup` on the pod (kubelet's recursive ownership pass sets group
+rwx on the whole volume — upstream names an `fsGroup` volume remount as the
+widening mechanism), and the `init` container normalizes `client/` and its
+database on every boot, which is the only step that always runs before the
+gateway.
+
+That init pass is also what repairs a restored volume: a kopiur restore lays
+down a staging copy produced by a mover that runs with its own `fsGroup`, so the
+restored tree can come back group-writable. The invariant is "restore, then
+start the pod" — the init normalizes every private path before the gateway can
+read it, which only holds as long as this list stays in sync with the paths the
+app treats as private.
+
 ## Related
 
 - Flux `Kustomization`: `ks.yaml` (namespace `ai`, `interval: 1h`, `postBuild`
