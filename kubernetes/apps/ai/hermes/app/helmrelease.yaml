@@ -109,6 +109,15 @@ spec:
                   secretKeyRef:
                     name: kanidm-hermes-oidc
                     key: client-secret
+              # Native A2A v1.0 inbound (Hermes >= v0.23). A non-loopback
+              # bind requires both a token and A2A_HOST; A2A_PEER_TOKENS in
+              # the `hermes` Secret gives LiteLLM the stable peer identity
+              # "litellm" so dispatch does not depend on the caller's IP.
+              A2A_HOST: 0.0.0.0
+              A2A_PORT: "9900"
+              A2A_AGENT_NAME: hermes
+              A2A_PUBLIC_URL: http://hermes.ai.svc.cluster.local:9900
+              A2A_TRUSTED_PEERS: litellm
             envFrom:
               - secretRef:
                   name: hermes
@@ -123,6 +132,9 @@ spec:
                 protocol: TCP
               - containerPort: &webapp_port 9120
                 name: webapp
+                protocol: TCP
+              - containerPort: &a2a_port 9900
+                name: a2a
                 protocol: TCP
           dashboard:
             image: *image
@@ -202,6 +214,8 @@ spec:
             port: *webapp_port
           codeserver:
             port: *codeserverPort
+          a2a:
+            port: *a2a_port
       dashboard:
         controller: hermes
         ports:
