@@ -12,8 +12,13 @@ spec:
   # The OpenClaw gateway only starts listening on its readiness port after
   # the slow doctor/migration phase (~8+ min on a full pod recycle). Helm's
   # default 5m timeout can fail the rollout on slow startups (devclaw got
-  # stuck+rolled back this way on 2026-10-23); 20m leaves sane margin.
-  timeout: 20m
+  # stuck+rolled back this way on 2026-10-23).
+  # 40m, not 20m: since 2026.11.8 doctor may spend up to 20 min on its
+  # pre-repair state capture alone when storage is slow (openclaw#192406),
+  # and the gateway stays stopped for that whole time. Add the startup
+  # migration, the init config copy, `mise install` and the gateway
+  # bootstrap and 20m no longer holds. Must stay well under interval: 1h.
+  timeout: 40m
   values:
     controllers:
       openclaw:
@@ -271,8 +276,12 @@ spec:
                       || echo "WARN: recover-lock refused; continuing with a live holder"
                   fi
                 fi
-                # Doctor check and fix any issues with the OpenClaw installation, then start the gateway
-                node /app/openclaw.mjs doctor --fix
+                # Doctor check and fix any issues with the OpenClaw installation, then start the gateway.
+                # `--fix` authorizes unattended repairs (since openclaw#191523 a bare doctor
+                # no longer installs the plugin packages it finds missing, so the flag is
+                # load-bearing); `--non-interactive` makes the intent explicit so no repair
+                # can block on a prompt even if the container is ever started with a TTY.
+                node /app/openclaw.mjs doctor --fix --non-interactive
                 # Start gateway
                 echo "Starting OpenClaw gateway..."
                 exec node /app/openclaw.mjs gateway
