@@ -5,6 +5,7 @@ kind: Kustomization
 resources:
   - ./mainclaw.yaml
   - ./devclaw.yaml
+  - ./devclaw-main.yaml
   - ./hermes.yaml
   - ./opencode.yaml
   - ./pr-review.yaml

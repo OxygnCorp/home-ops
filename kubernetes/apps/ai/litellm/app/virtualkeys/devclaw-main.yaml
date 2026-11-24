@@ -1,0 +1,35 @@
+---
+apiVersion: litellm.home-operations.com/v1alpha1
+kind: LiteLLMVirtualKey
+metadata:
+  name: devclaw-main
+spec:
+  proxyRef: litellm
+  keyAlias: DevclawMain
+  # Per-agent key for devclaw's "main" agent (Puchu). devclaw keeps its
+  # existing team-bound key (virtualkeys/devclaw.yaml) as the global
+  # fallback, so spend can be attributed to the agent without losing the
+  # gateway-wide credential.
+  teamID: mcp-devops
+  secretName: litellm-key-devclaw-main
+  secretKey: api-key
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/external-secrets.io/pushsecret_v1alpha1.json
+apiVersion: external-secrets.io/v1alpha1
+kind: PushSecret
+metadata:
+  name: devclaw-main
+spec:
+  refreshInterval: 1h
+  secretStoreRefs:
+    - name: onepassword
+      kind: ClusterSecretStore
+  selector:
+    secret:
+      name: litellm-key-devclaw-main
+  data:
+    - match:
+        secretKey: api-key
+        remoteRef:
+          remoteKey: litellm
+          property: KEY_DEVCLAW_MAIN
