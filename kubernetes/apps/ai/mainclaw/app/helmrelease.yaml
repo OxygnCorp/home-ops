@@ -40,8 +40,13 @@ spec:
                 # snap pre-repair state when a staging ancestor can be
                 # replaced by another user ("Original state capture was
                 # unavailable" + no automatic restore path). g+w must stay
-                # (fsGroup children like ~/.config, ~/.local are created
-                # group-writable), so 3775 = setgid + sticky.
+                # (children like ~/.config, ~/.local are created
+                # group-writable), so 3775 = setgid + sticky. Ownership is
+                # set here because the pod no longer runs with an fsGroup:
+                # kubelet's fsGroup pass recursively sets group rwx on the
+                # whole volume, which widens OpenClaw's private stores (see
+                # the client credential block below).
+                chown 0:100 /home/node
                 chmod 3775 /home/node
                 # Same doctor refusal, one level down: doctor probes the temp
                 # roots themselves (.cache is the default temp root,
@@ -55,6 +60,11 @@ spec:
                 chown 1000:100 /home/node/.cache /home/node/.openclaw/tmp
                 chmod 1775 /home/node/.cache /home/node/.openclaw/tmp
                 mkdir -p /home/node/.openclaw
+                # init creates the state dir root:root on a fresh volume (kopia
+                # restores exclude it) and nothing used to fix that: the app
+                # could not write there. No fsGroup means this has to be
+                # explicit now.
+                chown 1000:100 /home/node/.openclaw
                 rm -f /home/node/.openclaw/openclaw.json
                 cp /tmp/openclaw.json /home/node/.openclaw/openclaw.json
                 chown 1000:100 /home/node/.openclaw/openclaw.json
@@ -176,6 +186,25 @@ spec:
                 mkdir -p /home/node/.openclaw/credentials
                 chown 1000:100 /home/node/.openclaw/credentials
                 chmod 700 /home/node/.openclaw/credentials
+                # Local client credential store (device identities + keys,
+                # per-role tokens, native exec socket token) at
+                # ~/.openclaw/client/credentials.sqlite. The gateway refuses to
+                # read it unless the DIRECTORY is owned by its uid and mode
+                # 0700, and the file 0600, with a message that names neither
+                # the path nor a fix: "Client credential directory is
+                # unsafe." (mainclaw, 2026-11-24 — every agent command failed
+                # with it and a chmod on ~/.config/op could not help).
+                # OpenClaw only re-applies those modes at gateway startup, so
+                # any directory recreated at runtime comes back 2755 under this
+                # setgid + g+w PVC root and stays broken until a restart.
+                # Normalize on every boot, before the gateway reads it.
+                mkdir -p /home/node/.openclaw/client
+                chown 1000:100 /home/node/.openclaw/client
+                chmod 700 /home/node/.openclaw/client
+                if [ -f /home/node/.openclaw/client/credentials.sqlite ]; then
+                    chown 1000:100 /home/node/.openclaw/client/credentials.sqlite
+                    chmod 600 /home/node/.openclaw/client/credentials.sqlite
+                fi
           install-tools:
             image:
               repository: ghcr.io/openclaw/openclaw
@@ -346,11 +375,18 @@ spec:
           operator: Equal
           value: ai
           effect: NoSchedule
+      # No fsGroup on purpose. Kubelet's fsGroup pass sets group rwx
+      # recursively on the state volume, and an fsGroup volume remount is the
+      # documented way OpenClaw's private stores get widened (upstream docs,
+      # "Private storage after a volume remount"). The client credential
+      # directory must stay 0700: the gateway throws "Client credential
+      # directory is unsafe." and, on 2026-11-24, every agent command failed
+      # until the pod was restarted. The startup repair refuses foreign owners
+      # and world-access bits, so it cannot be relied on either. The init
+      # container runs as root and sets every ownership/mode the app needs.
       securityContext:
         runAsUser: 1000
         runAsGroup: 100
-        fsGroup: 100
-        fsGroupChangePolicy: OnRootMismatch
     service:
       app:
         type: ClusterIP
