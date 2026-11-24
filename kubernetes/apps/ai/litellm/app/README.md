@@ -327,10 +327,12 @@ Operational notes:
 - **Rotation:** both workloads have stakater reloader annotations, so a
   1Password rotation rolls both automatically; expect a transient 401 window
   while the two rollouts complete (LiteLLM reads the token at startup).
-- **Permissions:** A2A agent access is default-open — until the operator CRDs
-  grow an `agents`/`object_permission` field, every virtual key (including
-  `mcp-apps` keys like mainclaw) can invoke `POST /a2a/hermes`. Accepted for
-  this single-user pilot; revisit before federating more agents.
+- **Permissions:** A2A agent access is default-open — every virtual key
+  (including `mcp-apps` keys like mainclaw) can invoke `POST /a2a/hermes`.
+  Scoping via `object_permission.agents` / `agent_access_groups` is possible
+  today through the dashboard/API, but not via Git until the operator CRs
+  (`LiteLLMTeam`/`LiteLLMVirtualKey`) grow the field. Accepted for this
+  single-user pilot; revisit before federating more agents.
 
 ### AuthZ probes
 
