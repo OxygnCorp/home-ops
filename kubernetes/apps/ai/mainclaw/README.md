@@ -55,6 +55,31 @@ Attribution is best-effort, not a security boundary: all keys are resolved by
 the same gateway process, and the env allowlist lets any agent read another
 agent's key. The split is there to measure spend, not to isolate agents.
 
+## Agent-to-agent access
+
+Only the two orchestrators can start a cross-agent conversation: `main` and
+`nova` may send to any of the other ten agents, while the nine specialists
+(`family`, `coach`, `finance`, `shopping`, `media`, `lycos`, `legal`, `elina`,
+`elliot`) can only reply. This is enforced by three OpenClaw settings:
+
+- `tools.sessions.visibility: agent` keeps each agent's session history private;
+  a delegated call returns the reply without exposing the other agent's history.
+- `tools.agentToAgent.allow` lists all eleven agents, so the global policy does
+  not block a permitted pair.
+- each specialist has `tools.agentToAgent.send: []`; `main` and `nova` list the
+  other ten. `main` and `nova` also get `subagents.allowAgents` with all eleven
+  ids so they can spawn the specialists explicitly.
+
+This policy covers `sessions_send` and `sessions_spawn` only. It does **not**
+cover outbound A2A calls, which use the `message` tool with an `a2a:<peer>`
+target: those run at gateway level and every agent in the gateway shares the
+same outbound peer token. Use separate gateways if A2A egress must be isolated
+per agent.
+
+When adding an agent, update all five lists: the global `agentToAgent.allow`,
+the `send` lists on `main` and `nova`, and their `subagents.allowAgents`. An
+agent missing from a list is silently unreachable (fail-closed).
+
 ## Disk hygiene
 
 The state volume holds every conversation, workspace and database, so the `init`

@@ -257,6 +257,20 @@
           ],
           "exec": {
             "security": "full"
+          },
+          "agentToAgent": {
+            "send": [
+              "family",
+              "coach",
+              "finance",
+              "shopping",
+              "media",
+              "nova",
+              "lycos",
+              "legal",
+              "elina",
+              "elliot"
+            ]
           }
         },
         "model": {
@@ -273,7 +287,20 @@
               "litellm/dsv41f",
               "litellm/go-minimax-m3"
             ]
-          }
+          },
+          "allowAgents": [
+            "main",
+            "family",
+            "coach",
+            "finance",
+            "shopping",
+            "media",
+            "nova",
+            "lycos",
+            "legal",
+            "elina",
+            "elliot"
+          ]
         }
       },
       "family": {
@@ -306,6 +333,9 @@
           ],
           "exec": {
             "security": "full"
+          },
+          "agentToAgent": {
+            "send": []
           }
         },
         "model": {
@@ -355,6 +385,9 @@
           ],
           "exec": {
             "security": "full"
+          },
+          "agentToAgent": {
+            "send": []
           }
         },
         "model": {
@@ -411,6 +444,9 @@
           ],
           "exec": {
             "security": "full"
+          },
+          "agentToAgent": {
+            "send": []
           }
         },
         "subagents": {
@@ -452,6 +488,9 @@
           ],
           "exec": {
             "security": "full"
+          },
+          "agentToAgent": {
+            "send": []
           }
         },
         "model": {
@@ -495,6 +534,9 @@
           ],
           "exec": {
             "security": "full"
+          },
+          "agentToAgent": {
+            "send": []
           }
         },
         "model": {
@@ -530,14 +572,17 @@
         },
         "subagents": {
           "allowAgents": [
+            "main",
             "family",
-            "shopping",
+            "coach",
             "finance",
+            "shopping",
             "media",
+            "nova",
             "lycos",
+            "legal",
             "elina",
-            "elliot",
-            "nova"
+            "elliot"
           ],
           "model": {
             "primary": "litellm-nova/dsv41f",
@@ -558,6 +603,20 @@
           ],
           "exec": {
             "security": "full"
+          },
+          "agentToAgent": {
+            "send": [
+              "main",
+              "family",
+              "coach",
+              "finance",
+              "shopping",
+              "media",
+              "lycos",
+              "legal",
+              "elina",
+              "elliot"
+            ]
           }
         },
         "model": {
@@ -601,6 +660,9 @@
           ],
           "exec": {
             "security": "full"
+          },
+          "agentToAgent": {
+            "send": []
           }
         },
         "thinkingDefault": "medium",
@@ -651,6 +713,9 @@
           ],
           "exec": {
             "security": "full"
+          },
+          "agentToAgent": {
+            "send": []
           }
         },
         "thinkingDefault": "high",
@@ -699,6 +764,9 @@
           ],
           "exec": {
             "security": "full"
+          },
+          "agentToAgent": {
+            "send": []
           }
         },
         "model": {
@@ -746,6 +814,9 @@
           ],
           "exec": {
             "security": "full"
+          },
+          "agentToAgent": {
+            "send": []
           }
         },
         "model": {
@@ -2150,6 +2221,7 @@
         "media",
         "nova",
         "lycos",
+        "legal",
         "elina",
         "elliot"
       ],
@@ -2172,7 +2244,7 @@
     },
     "profile": "full",
     "sessions": {
-      "visibility": "all"
+      "visibility": "agent"
     },
     "web": {
       "fetch": {
@@ -2207,7 +2279,9 @@
       "endpoint": "http://lens.ai.svc.cluster.local:4318",
       "protocol": "http/protobuf",
       "serviceName": "mainclaw",
-      "headers": { "Authorization": "Bearer {{ .MAINCLAW_TRACING_KEY }}" },
+      "headers": {
+        "Authorization": "Bearer {{ .MAINCLAW_TRACING_KEY }}"
+      },
       "traces": true,
       "metrics": false,
       "logs": false,
