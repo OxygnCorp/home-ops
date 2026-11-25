@@ -27,12 +27,13 @@ spec:
               tag: "3.24"
             securityContext:
               runAsUser: 0
-            env:
-              - name: LITELLM_API_KEY
-                valueFrom:
-                  secretKeyRef:
-                    name: hermes
-                    key: LITELLM_API_KEY
+            # envFrom rather than explicit secretKeyRef: if the ExternalSecret
+            # has not seen the new 1Password field yet, the init container must
+            # still start (the foyer rewrite is guarded below), not fail on a
+            # missing secret key.
+            envFrom:
+              - secretRef:
+                  name: hermes
             command:
               - sh
               - -c
@@ -47,6 +48,24 @@ spec:
                 envsubst < /opt/data/config.yaml > /opt/data/config.yaml.tmp
                 mv /opt/data/config.yaml.tmp /opt/data/config.yaml
                 chown 10000:10000 /opt/data/config.yaml
+                # The `foyer` profile's config lives on the PVC and used to
+                # hardcode the gateway-wide LiteLLM key, so a rotation never
+                # reached it. Rewrite its provider key on every start from the
+                # profile-specific Secret entry, but only once that entry is
+                # actually present: before the PushSecret/ExternalSecret catch
+                # up, foyer keeps its previous (still valid) key instead of
+                # taking the whole gateway down. This profile currently has a
+                # single `api_key` line (its litellm provider).
+                if [ -f /opt/data/profiles/foyer/config.yaml ] && [ -n "$${LITELLM_API_KEY_FOYER:-}" ]; then
+                  sed -i 's|^\([[:space:]]*api_key:\).*|\1 $${LITELLM_API_KEY_FOYER}|' \
+                    /opt/data/profiles/foyer/config.yaml
+                  # Restrict the expansion to the one variable we own: the
+                  # foyer config lives on the PVC and may contain other
+                  # (user-edited) $VAR references that envsubst would erase.
+                  envsubst '$${LITELLM_API_KEY_FOYER}' < /opt/data/profiles/foyer/config.yaml > /opt/data/profiles/foyer/config.yaml.tmp
+                  mv /opt/data/profiles/foyer/config.yaml.tmp /opt/data/profiles/foyer/config.yaml
+                  chown 10000:10000 /opt/data/profiles/foyer/config.yaml
+                fi
                 # Keep the kopia ignore list at the PVC root so kopiur
                 # snapshots skip regenerable files (caches, rendered config).
                 # Explicit mode/ownership so the kopiur mover can always

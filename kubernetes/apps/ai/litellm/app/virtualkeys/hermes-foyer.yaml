@@ -1,0 +1,34 @@
+---
+apiVersion: litellm.home-operations.com/v1alpha1
+kind: LiteLLMVirtualKey
+metadata:
+  name: hermes-foyer
+spec:
+  proxyRef: litellm
+  keyAlias: Hermes-foyer
+  # One key per Hermes profile: the `foyer` profile gets this key, the
+  # `default` profile keeps Hermes-default. Same team binding as before so
+  # MCP access does not change.
+  teamID: mcp-devops
+  secretName: litellm-key-hermes-foyer
+  secretKey: api-key
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/external-secrets.io/pushsecret_v1alpha1.json
+apiVersion: external-secrets.io/v1alpha1
+kind: PushSecret
+metadata:
+  name: hermes-foyer
+spec:
+  refreshInterval: 1h
+  secretStoreRefs:
+    - name: onepassword
+      kind: ClusterSecretStore
+  selector:
+    secret:
+      name: litellm-key-hermes-foyer
+  data:
+    - match:
+        secretKey: api-key
+        remoteRef:
+          remoteKey: litellm
+          property: LITELLM_API_KEY_HERMES_FOYER
