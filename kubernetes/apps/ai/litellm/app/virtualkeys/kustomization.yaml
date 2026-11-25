@@ -18,6 +18,8 @@ resources:
   - ./devclaw.yaml
   - ./devclaw-main.yaml
   - ./hermes.yaml
+  - ./hermes-default.yaml
+  - ./hermes-foyer.yaml
   - ./opencode.yaml
   - ./pr-review.yaml
   - ./memini.yaml
