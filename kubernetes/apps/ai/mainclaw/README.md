@@ -5,6 +5,56 @@ several long-lived agents, each with its own workspace and sqlite database on a
 20Gi PVC. Models go through litellm, cluster access through the litellm MCP
 gateway. The DevOps-facing twin lives in [`../devclaw`](../devclaw).
 
+## Per-agent model keys
+
+Each agent has its own LiteLLM virtual key (`Mainclaw-<agent>`) so model spend
+can be attributed per agent. The `mainclaw` ExternalSecret exposes one env var
+per key; `resources/openclaw.json` defines a matching `litellm-<agent>` provider
+(same base URL and session header, dedicated key, `dsv41f` only) and points the
+agent's primary model and subagents at it. Fallbacks use the gateway-wide
+`litellm` provider, which keeps `LITELLM_API_KEY` / `KEY_MAINCLAW`.
+
+| Agent | Env var | 1Password field |
+|---|---|---|
+| `main` | `LITELLM_API_KEY_MAINCLAW_MAIN` | `KEY_MAINCLAW_MAIN` |
+| `family` | `LITELLM_API_KEY_MAINCLAW_FAMILY` | `KEY_MAINCLAW_FAMILY` |
+| `coach` | `LITELLM_API_KEY_MAINCLAW_COACH` | `KEY_MAINCLAW_COACH` |
+| `finance` | `LITELLM_API_KEY_MAINCLAW_FINANCE` | `KEY_MAINCLAW_FINANCE` |
+| `shopping` | `LITELLM_API_KEY_MAINCLAW_SHOPPING` | `KEY_MAINCLAW_SHOPPING` |
+| `media` | `LITELLM_API_KEY_MAINCLAW_MEDIA` | `KEY_MAINCLAW_MEDIA` |
+| `nova` | `LITELLM_API_KEY_MAINCLAW_NOVA` | `KEY_MAINCLAW_NOVA` |
+| `lycos` | `LITELLM_API_KEY_MAINCLAW_LYCOS` | `KEY_MAINCLAW_LYCOS` |
+| `legal` | `LITELLM_API_KEY_MAINCLAW_LEGAL` | `KEY_MAINCLAW_LEGAL` |
+| `elina` | `LITELLM_API_KEY_MAINCLAW_ELINA` | `KEY_MAINCLAW_ELINA` |
+| `elliot` | `LITELLM_API_KEY_MAINCLAW_ELLIOT` | `KEY_MAINCLAW_ELLIOT` |
+
+`agents.defaults.model`, `agents.defaults.subagents.model` and
+`agents.defaults.imageModel` stay on the global provider: agents added later,
+delegated subagents without an explicit override, and image analysis are not
+attributed per agent. MCP tool calls (`mcp.servers.litellm`) also keep the
+gateway-wide key — only model traffic is split.
+
+### Rollout ordering
+
+The `litellm` and `mainclaw` Kustomizations are applied independently, and the
+11 `PushSecret`s need up to an hour to publish `KEY_MAINCLAW_*` to 1Password.
+If `mainclaw-config` lands first, the reloader rolls the pod with the new
+providers but without their env vars, so each agent gets a 401 and falls back
+to the global key (mis-attributed spend) until the `mainclaw` ExternalSecret
+refreshes. After merging a change here:
+
+1. Wait for all 11 `LiteLLMVirtualKey` and `PushSecret` objects to be Ready.
+2. `kubectl annotate externalsecret mainclaw -n ai force-sync=$(date +%s)`
+   and confirm the new env var is present in `mainclaw-secret`. Also confirm
+   the ExternalSecret itself is `Ready`: `OP_SERVICE_ACCOUNT_TOKEN` still
+   resolves from the `mainclaw` item now that the `litellm` item is no longer
+   extracted wholesale.
+3. Only then `kubectl annotate externalsecret mainclaw-config -n ai force-sync=$(date +%s)`.
+
+Attribution is best-effort, not a security boundary: all keys are resolved by
+the same gateway process, and the env allowlist lets any agent read another
+agent's key. The split is there to measure spend, not to isolate agents.
+
 ## Disk hygiene
 
 The state volume holds every conversation, workspace and database, so the `init`

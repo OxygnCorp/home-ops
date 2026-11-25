@@ -1,0 +1,37 @@
+---
+apiVersion: litellm.home-operations.com/v1alpha1
+kind: LiteLLMVirtualKey
+metadata:
+  name: mainclaw-media
+spec:
+  proxyRef: litellm
+  keyAlias: Mainclaw-media
+  # Per-agent key for the media agent in mainclaw. The gateway-wide
+  # virtualkeys/mainclaw.yaml key stays in place as the fallback, so model
+  # spend can be attributed per agent; MCP grants are unchanged (this
+  # key still carries the mcp-apps team's MCP access).
+  teamID: mcp-apps
+  secretName: litellm-key-mainclaw-media
+  secretKey: api-key
+  models:
+    - dsv41f
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/external-secrets.io/pushsecret_v1alpha1.json
+apiVersion: external-secrets.io/v1alpha1
+kind: PushSecret
+metadata:
+  name: mainclaw-media
+spec:
+  refreshInterval: 1h
+  secretStoreRefs:
+    - name: onepassword
+      kind: ClusterSecretStore
+  selector:
+    secret:
+      name: litellm-key-mainclaw-media
+  data:
+    - match:
+        secretKey: api-key
+        remoteRef:
+          remoteKey: litellm
+          property: KEY_MAINCLAW_MEDIA

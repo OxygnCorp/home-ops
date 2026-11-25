@@ -77,7 +77,7 @@ onepassword`):
 
 `LITELLM_API_KEY_DEVCLAW_MAIN` feeds the `litellm-main` provider used by the
 `main` agent (primary model, subagents and image fallback), so that traffic is
-attributed to `DevclawMain`. `LITELLM_API_KEY` remains the gateway-wide
+attributed to `Devclaw-main`. `LITELLM_API_KEY` remains the gateway-wide
 `litellm` provider and the fallback path. MCP tool calls
 (`mcp.servers.litellm`) still authenticate with the gateway-wide key; only
 model traffic is split per agent.

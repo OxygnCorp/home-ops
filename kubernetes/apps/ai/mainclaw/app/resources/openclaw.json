@@ -112,6 +112,72 @@
           "params": {
             "cache_prompt": true
           }
+        },
+        "litellm-main/dsv41f": {
+          "alias": "dsv41f-main",
+          "params": {
+            "cache_prompt": true
+          }
+        },
+        "litellm-family/dsv41f": {
+          "alias": "dsv41f-family",
+          "params": {
+            "cache_prompt": true
+          }
+        },
+        "litellm-coach/dsv41f": {
+          "alias": "dsv41f-coach",
+          "params": {
+            "cache_prompt": true
+          }
+        },
+        "litellm-finance/dsv41f": {
+          "alias": "dsv41f-finance",
+          "params": {
+            "cache_prompt": true
+          }
+        },
+        "litellm-shopping/dsv41f": {
+          "alias": "dsv41f-shopping",
+          "params": {
+            "cache_prompt": true
+          }
+        },
+        "litellm-media/dsv41f": {
+          "alias": "dsv41f-media",
+          "params": {
+            "cache_prompt": true
+          }
+        },
+        "litellm-nova/dsv41f": {
+          "alias": "dsv41f-nova",
+          "params": {
+            "cache_prompt": true
+          }
+        },
+        "litellm-lycos/dsv41f": {
+          "alias": "dsv41f-lycos",
+          "params": {
+            "cache_prompt": true
+          }
+        },
+        "litellm-legal/dsv41f": {
+          "alias": "dsv41f-legal",
+          "params": {
+            "cache_prompt": true
+          }
+        },
+        "litellm-elina/dsv41f": {
+          "alias": "dsv41f-elina",
+          "params": {
+            "cache_prompt": true
+          }
+        },
+        "litellm-elliot/dsv41f": {
+          "alias": "dsv41f-elliot",
+          "params": {
+            "cache_prompt": true
+          }
         }
       },
       "modelPolicy": {
@@ -121,7 +187,6 @@
           "litellm/go-glm-5.3-flash",
           "litellm/go-minimax-m3",
           "litellm/go-kimi-k3.1-pro",
-          "litellm/go-minimax-m3",
           "litellm/go-minimax-m3.1-flash",
           "litellm/go-qwen3.8-flash",
           "litellm/go-qwen3.8-max",
@@ -130,7 +195,18 @@
           "litellm/go-gpt-6-luna",
           "litellm/go-claude-haiku-5-5",
           "litellm/mimo-v2.6-flash",
-          "litellm/mimo-v2.6-pro"
+          "litellm/mimo-v2.6-pro",
+          "litellm-main/dsv41f",
+          "litellm-family/dsv41f",
+          "litellm-coach/dsv41f",
+          "litellm-finance/dsv41f",
+          "litellm-shopping/dsv41f",
+          "litellm-media/dsv41f",
+          "litellm-nova/dsv41f",
+          "litellm-lycos/dsv41f",
+          "litellm-legal/dsv41f",
+          "litellm-elina/dsv41f",
+          "litellm-elliot/dsv41f"
         ]
       },
       "subagents": {
@@ -182,6 +258,22 @@
           "exec": {
             "security": "full"
           }
+        },
+        "model": {
+          "primary": "litellm-main/dsv41f",
+          "fallbacks": [
+            "litellm/dsv41f",
+            "litellm/go-minimax-m3"
+          ]
+        },
+        "subagents": {
+          "model": {
+            "primary": "litellm-main/dsv41f",
+            "fallbacks": [
+              "litellm/dsv41f",
+              "litellm/go-minimax-m3"
+            ]
+          }
         }
       },
       "family": {
@@ -214,6 +306,22 @@
           ],
           "exec": {
             "security": "full"
+          }
+        },
+        "model": {
+          "primary": "litellm-family/dsv41f",
+          "fallbacks": [
+            "litellm/dsv41f",
+            "litellm/go-minimax-m3"
+          ]
+        },
+        "subagents": {
+          "model": {
+            "primary": "litellm-family/dsv41f",
+            "fallbacks": [
+              "litellm/dsv41f",
+              "litellm/go-minimax-m3"
+            ]
           }
         }
       },
@@ -248,6 +356,22 @@
           "exec": {
             "security": "full"
           }
+        },
+        "model": {
+          "primary": "litellm-coach/dsv41f",
+          "fallbacks": [
+            "litellm/dsv41f",
+            "litellm/go-minimax-m3"
+          ]
+        },
+        "subagents": {
+          "model": {
+            "primary": "litellm-coach/dsv41f",
+            "fallbacks": [
+              "litellm/dsv41f",
+              "litellm/go-minimax-m3"
+            ]
+          }
         }
       },
       "finance": {
@@ -255,8 +379,9 @@
         "workspace": "/home/node/.openclaw/workspace-finance",
         "agentDir": "/home/node/.openclaw/agents/finance/agent",
         "model": {
-          "primary": "litellm/dsv41f",
+          "primary": "litellm-finance/dsv41f",
           "fallbacks": [
+            "litellm/dsv41f",
             "litellm/go-minimax-m3"
           ]
         },
@@ -286,6 +411,15 @@
           ],
           "exec": {
             "security": "full"
+          }
+        },
+        "subagents": {
+          "model": {
+            "primary": "litellm-finance/dsv41f",
+            "fallbacks": [
+              "litellm/dsv41f",
+              "litellm/go-minimax-m3"
+            ]
           }
         }
       },
@@ -319,6 +453,22 @@
           "exec": {
             "security": "full"
           }
+        },
+        "model": {
+          "primary": "litellm-shopping/dsv41f",
+          "fallbacks": [
+            "litellm/dsv41f",
+            "litellm/go-minimax-m3"
+          ]
+        },
+        "subagents": {
+          "model": {
+            "primary": "litellm-shopping/dsv41f",
+            "fallbacks": [
+              "litellm/dsv41f",
+              "litellm/go-minimax-m3"
+            ]
+          }
         }
       },
       "media": {
@@ -346,6 +496,22 @@
           "exec": {
             "security": "full"
           }
+        },
+        "model": {
+          "primary": "litellm-media/dsv41f",
+          "fallbacks": [
+            "litellm/dsv41f",
+            "litellm/go-minimax-m3"
+          ]
+        },
+        "subagents": {
+          "model": {
+            "primary": "litellm-media/dsv41f",
+            "fallbacks": [
+              "litellm/dsv41f",
+              "litellm/go-minimax-m3"
+            ]
+          }
         }
       },
       "nova": {
@@ -372,7 +538,14 @@
             "elina",
             "elliot",
             "nova"
-          ]
+          ],
+          "model": {
+            "primary": "litellm-nova/dsv41f",
+            "fallbacks": [
+              "litellm/dsv41f",
+              "litellm/go-minimax-m3"
+            ]
+          }
         },
         "tools": {
           "profile": "full",
@@ -386,6 +559,13 @@
           "exec": {
             "security": "full"
           }
+        },
+        "model": {
+          "primary": "litellm-nova/dsv41f",
+          "fallbacks": [
+            "litellm/dsv41f",
+            "litellm/go-minimax-m3"
+          ]
         }
       },
       "lycos": {
@@ -423,7 +603,23 @@
             "security": "full"
           }
         },
-        "thinkingDefault": "medium"
+        "thinkingDefault": "medium",
+        "model": {
+          "primary": "litellm-lycos/dsv41f",
+          "fallbacks": [
+            "litellm/dsv41f",
+            "litellm/go-minimax-m3"
+          ]
+        },
+        "subagents": {
+          "model": {
+            "primary": "litellm-lycos/dsv41f",
+            "fallbacks": [
+              "litellm/dsv41f",
+              "litellm/go-minimax-m3"
+            ]
+          }
+        }
       },
       "legal": {
         "name": "Harvey",
@@ -457,7 +653,23 @@
             "security": "full"
           }
         },
-        "thinkingDefault": "high"
+        "thinkingDefault": "high",
+        "model": {
+          "primary": "litellm-legal/dsv41f",
+          "fallbacks": [
+            "litellm/dsv41f",
+            "litellm/go-minimax-m3"
+          ]
+        },
+        "subagents": {
+          "model": {
+            "primary": "litellm-legal/dsv41f",
+            "fallbacks": [
+              "litellm/dsv41f",
+              "litellm/go-minimax-m3"
+            ]
+          }
+        }
       },
       "elina": {
         "name": "Elina",
@@ -487,6 +699,22 @@
           ],
           "exec": {
             "security": "full"
+          }
+        },
+        "model": {
+          "primary": "litellm-elina/dsv41f",
+          "fallbacks": [
+            "litellm/dsv41f",
+            "litellm/go-minimax-m3"
+          ]
+        },
+        "subagents": {
+          "model": {
+            "primary": "litellm-elina/dsv41f",
+            "fallbacks": [
+              "litellm/dsv41f",
+              "litellm/go-minimax-m3"
+            ]
           }
         }
       },
@@ -518,6 +746,22 @@
           ],
           "exec": {
             "security": "full"
+          }
+        },
+        "model": {
+          "primary": "litellm-elliot/dsv41f",
+          "fallbacks": [
+            "litellm/dsv41f",
+            "litellm/go-minimax-m3"
+          ]
+        },
+        "subagents": {
+          "model": {
+            "primary": "litellm-elliot/dsv41f",
+            "fallbacks": [
+              "litellm/dsv41f",
+              "litellm/go-minimax-m3"
+            ]
           }
         }
       }
@@ -1200,6 +1444,380 @@
             "x-opencode-session": "openclaw-mainclaw"
           }
         }
+      },
+      "litellm-main": {
+        "baseUrl": "http://litellm.ai:4000/v1",
+        "apiKey": {
+          "source": "env",
+          "provider": "default",
+          "id": "LITELLM_API_KEY_MAINCLAW_MAIN"
+        },
+        "api": "openai-completions",
+        "timeoutSeconds": 1800,
+        "request": {
+          "allowPrivateNetwork": true,
+          "headers": {
+            "x-opencode-session": "openclaw-mainclaw"
+          }
+        },
+        "models": [
+          {
+            "id": "dsv41f",
+            "name": "OpenCode Go DeepSeek V4.1 Flash",
+            "reasoning": true,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1000000,
+            "maxTokens": 384000
+          }
+        ]
+      },
+      "litellm-family": {
+        "baseUrl": "http://litellm.ai:4000/v1",
+        "apiKey": {
+          "source": "env",
+          "provider": "default",
+          "id": "LITELLM_API_KEY_MAINCLAW_FAMILY"
+        },
+        "api": "openai-completions",
+        "timeoutSeconds": 1800,
+        "request": {
+          "allowPrivateNetwork": true,
+          "headers": {
+            "x-opencode-session": "openclaw-mainclaw"
+          }
+        },
+        "models": [
+          {
+            "id": "dsv41f",
+            "name": "OpenCode Go DeepSeek V4.1 Flash",
+            "reasoning": true,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1000000,
+            "maxTokens": 384000
+          }
+        ]
+      },
+      "litellm-coach": {
+        "baseUrl": "http://litellm.ai:4000/v1",
+        "apiKey": {
+          "source": "env",
+          "provider": "default",
+          "id": "LITELLM_API_KEY_MAINCLAW_COACH"
+        },
+        "api": "openai-completions",
+        "timeoutSeconds": 1800,
+        "request": {
+          "allowPrivateNetwork": true,
+          "headers": {
+            "x-opencode-session": "openclaw-mainclaw"
+          }
+        },
+        "models": [
+          {
+            "id": "dsv41f",
+            "name": "OpenCode Go DeepSeek V4.1 Flash",
+            "reasoning": true,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1000000,
+            "maxTokens": 384000
+          }
+        ]
+      },
+      "litellm-finance": {
+        "baseUrl": "http://litellm.ai:4000/v1",
+        "apiKey": {
+          "source": "env",
+          "provider": "default",
+          "id": "LITELLM_API_KEY_MAINCLAW_FINANCE"
+        },
+        "api": "openai-completions",
+        "timeoutSeconds": 1800,
+        "request": {
+          "allowPrivateNetwork": true,
+          "headers": {
+            "x-opencode-session": "openclaw-mainclaw"
+          }
+        },
+        "models": [
+          {
+            "id": "dsv41f",
+            "name": "OpenCode Go DeepSeek V4.1 Flash",
+            "reasoning": true,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1000000,
+            "maxTokens": 384000
+          }
+        ]
+      },
+      "litellm-shopping": {
+        "baseUrl": "http://litellm.ai:4000/v1",
+        "apiKey": {
+          "source": "env",
+          "provider": "default",
+          "id": "LITELLM_API_KEY_MAINCLAW_SHOPPING"
+        },
+        "api": "openai-completions",
+        "timeoutSeconds": 1800,
+        "request": {
+          "allowPrivateNetwork": true,
+          "headers": {
+            "x-opencode-session": "openclaw-mainclaw"
+          }
+        },
+        "models": [
+          {
+            "id": "dsv41f",
+            "name": "OpenCode Go DeepSeek V4.1 Flash",
+            "reasoning": true,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1000000,
+            "maxTokens": 384000
+          }
+        ]
+      },
+      "litellm-media": {
+        "baseUrl": "http://litellm.ai:4000/v1",
+        "apiKey": {
+          "source": "env",
+          "provider": "default",
+          "id": "LITELLM_API_KEY_MAINCLAW_MEDIA"
+        },
+        "api": "openai-completions",
+        "timeoutSeconds": 1800,
+        "request": {
+          "allowPrivateNetwork": true,
+          "headers": {
+            "x-opencode-session": "openclaw-mainclaw"
+          }
+        },
+        "models": [
+          {
+            "id": "dsv41f",
+            "name": "OpenCode Go DeepSeek V4.1 Flash",
+            "reasoning": true,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1000000,
+            "maxTokens": 384000
+          }
+        ]
+      },
+      "litellm-nova": {
+        "baseUrl": "http://litellm.ai:4000/v1",
+        "apiKey": {
+          "source": "env",
+          "provider": "default",
+          "id": "LITELLM_API_KEY_MAINCLAW_NOVA"
+        },
+        "api": "openai-completions",
+        "timeoutSeconds": 1800,
+        "request": {
+          "allowPrivateNetwork": true,
+          "headers": {
+            "x-opencode-session": "openclaw-mainclaw"
+          }
+        },
+        "models": [
+          {
+            "id": "dsv41f",
+            "name": "OpenCode Go DeepSeek V4.1 Flash",
+            "reasoning": true,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1000000,
+            "maxTokens": 384000
+          }
+        ]
+      },
+      "litellm-lycos": {
+        "baseUrl": "http://litellm.ai:4000/v1",
+        "apiKey": {
+          "source": "env",
+          "provider": "default",
+          "id": "LITELLM_API_KEY_MAINCLAW_LYCOS"
+        },
+        "api": "openai-completions",
+        "timeoutSeconds": 1800,
+        "request": {
+          "allowPrivateNetwork": true,
+          "headers": {
+            "x-opencode-session": "openclaw-mainclaw"
+          }
+        },
+        "models": [
+          {
+            "id": "dsv41f",
+            "name": "OpenCode Go DeepSeek V4.1 Flash",
+            "reasoning": true,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1000000,
+            "maxTokens": 384000
+          }
+        ]
+      },
+      "litellm-legal": {
+        "baseUrl": "http://litellm.ai:4000/v1",
+        "apiKey": {
+          "source": "env",
+          "provider": "default",
+          "id": "LITELLM_API_KEY_MAINCLAW_LEGAL"
+        },
+        "api": "openai-completions",
+        "timeoutSeconds": 1800,
+        "request": {
+          "allowPrivateNetwork": true,
+          "headers": {
+            "x-opencode-session": "openclaw-mainclaw"
+          }
+        },
+        "models": [
+          {
+            "id": "dsv41f",
+            "name": "OpenCode Go DeepSeek V4.1 Flash",
+            "reasoning": true,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1000000,
+            "maxTokens": 384000
+          }
+        ]
+      },
+      "litellm-elina": {
+        "baseUrl": "http://litellm.ai:4000/v1",
+        "apiKey": {
+          "source": "env",
+          "provider": "default",
+          "id": "LITELLM_API_KEY_MAINCLAW_ELINA"
+        },
+        "api": "openai-completions",
+        "timeoutSeconds": 1800,
+        "request": {
+          "allowPrivateNetwork": true,
+          "headers": {
+            "x-opencode-session": "openclaw-mainclaw"
+          }
+        },
+        "models": [
+          {
+            "id": "dsv41f",
+            "name": "OpenCode Go DeepSeek V4.1 Flash",
+            "reasoning": true,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1000000,
+            "maxTokens": 384000
+          }
+        ]
+      },
+      "litellm-elliot": {
+        "baseUrl": "http://litellm.ai:4000/v1",
+        "apiKey": {
+          "source": "env",
+          "provider": "default",
+          "id": "LITELLM_API_KEY_MAINCLAW_ELLIOT"
+        },
+        "api": "openai-completions",
+        "timeoutSeconds": 1800,
+        "request": {
+          "allowPrivateNetwork": true,
+          "headers": {
+            "x-opencode-session": "openclaw-mainclaw"
+          }
+        },
+        "models": [
+          {
+            "id": "dsv41f",
+            "name": "OpenCode Go DeepSeek V4.1 Flash",
+            "reasoning": true,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1000000,
+            "maxTokens": 384000
+          }
+        ]
       }
     }
   },
@@ -1351,7 +1969,18 @@
           "OPENCLAW_GATEWAY_TOKEN",
           "OP_SERVICE_ACCOUNT_TOKEN",
           "DISCORD_BOT_TOKEN",
-          "LITELLM_API_KEY"
+          "LITELLM_API_KEY",
+          "LITELLM_API_KEY_MAINCLAW_MAIN",
+          "LITELLM_API_KEY_MAINCLAW_FAMILY",
+          "LITELLM_API_KEY_MAINCLAW_COACH",
+          "LITELLM_API_KEY_MAINCLAW_FINANCE",
+          "LITELLM_API_KEY_MAINCLAW_SHOPPING",
+          "LITELLM_API_KEY_MAINCLAW_MEDIA",
+          "LITELLM_API_KEY_MAINCLAW_NOVA",
+          "LITELLM_API_KEY_MAINCLAW_LYCOS",
+          "LITELLM_API_KEY_MAINCLAW_LEGAL",
+          "LITELLM_API_KEY_MAINCLAW_ELINA",
+          "LITELLM_API_KEY_MAINCLAW_ELLIOT"
         ]
       }
     }
