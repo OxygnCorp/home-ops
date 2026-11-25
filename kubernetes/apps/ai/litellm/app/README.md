@@ -228,7 +228,7 @@ explicitly keep their value; nothing else in key generation changes.
 ### One-time patch for EXISTING keys
 
 The tool-search default only reaches `/key/generate`, so the four keys that
-existed before this change (`Mainclaw`, `Devclaw`, `Opencode`, `Hermes`) must be
+existed before this change (`Mainclaw`, `Devclaw`, `Opencode`, `Hermes-main`) must be
 patched once. It is one-time because the value is persisted on the key's
 `object_permission` in the litellm database: from then on the *stored* state
 wins and the generate-time default is irrelevant for those keys — they never
