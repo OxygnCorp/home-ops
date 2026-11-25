@@ -989,6 +989,116 @@
         "channel": "discord",
         "accountId": "*"
       }
+    },
+    {
+      "agentId": "main",
+      "match": {
+        "channel": "a2a",
+        "peer": {
+          "kind": "direct",
+          "id": "litellm-main"
+        }
+      }
+    },
+    {
+      "agentId": "family",
+      "match": {
+        "channel": "a2a",
+        "peer": {
+          "kind": "direct",
+          "id": "litellm-family"
+        }
+      }
+    },
+    {
+      "agentId": "coach",
+      "match": {
+        "channel": "a2a",
+        "peer": {
+          "kind": "direct",
+          "id": "litellm-coach"
+        }
+      }
+    },
+    {
+      "agentId": "finance",
+      "match": {
+        "channel": "a2a",
+        "peer": {
+          "kind": "direct",
+          "id": "litellm-finance"
+        }
+      }
+    },
+    {
+      "agentId": "shopping",
+      "match": {
+        "channel": "a2a",
+        "peer": {
+          "kind": "direct",
+          "id": "litellm-shopping"
+        }
+      }
+    },
+    {
+      "agentId": "media",
+      "match": {
+        "channel": "a2a",
+        "peer": {
+          "kind": "direct",
+          "id": "litellm-media"
+        }
+      }
+    },
+    {
+      "agentId": "nova",
+      "match": {
+        "channel": "a2a",
+        "peer": {
+          "kind": "direct",
+          "id": "litellm-nova"
+        }
+      }
+    },
+    {
+      "agentId": "lycos",
+      "match": {
+        "channel": "a2a",
+        "peer": {
+          "kind": "direct",
+          "id": "litellm-lycos"
+        }
+      }
+    },
+    {
+      "agentId": "legal",
+      "match": {
+        "channel": "a2a",
+        "peer": {
+          "kind": "direct",
+          "id": "litellm-legal"
+        }
+      }
+    },
+    {
+      "agentId": "elina",
+      "match": {
+        "channel": "a2a",
+        "peer": {
+          "kind": "direct",
+          "id": "litellm-elina"
+        }
+      }
+    },
+    {
+      "agentId": "elliot",
+      "match": {
+        "channel": "a2a",
+        "peer": {
+          "kind": "direct",
+          "id": "litellm-elliot"
+        }
+      }
     }
   ],
   "channels": {
@@ -1183,6 +1293,69 @@
         "source": "env",
         "provider": "default",
         "id": "DISCORD_BOT_TOKEN"
+      }
+    },
+    "a2a": {
+      "enabled": true,
+      "advertisedUrl": "http://mainclaw-app.ai.svc.cluster.local:18789",
+      "replyTimeoutMs": 600000,
+      "exposeAgents": [
+        "main",
+        "family",
+        "coach",
+        "finance",
+        "shopping",
+        "media",
+        "nova",
+        "lycos",
+        "legal",
+        "elina",
+        "elliot"
+      ],
+      "peers": {
+        "litellm-main": {
+          "token": "$${A2A_MAINCLAW_MAIN_TOKEN}"
+        },
+        "litellm-family": {
+          "token": "$${A2A_MAINCLAW_FAMILY_TOKEN}"
+        },
+        "litellm-coach": {
+          "token": "$${A2A_MAINCLAW_COACH_TOKEN}"
+        },
+        "litellm-finance": {
+          "token": "$${A2A_MAINCLAW_FINANCE_TOKEN}"
+        },
+        "litellm-shopping": {
+          "token": "$${A2A_MAINCLAW_SHOPPING_TOKEN}"
+        },
+        "litellm-media": {
+          "token": "$${A2A_MAINCLAW_MEDIA_TOKEN}"
+        },
+        "litellm-nova": {
+          "token": "$${A2A_MAINCLAW_NOVA_TOKEN}"
+        },
+        "litellm-lycos": {
+          "token": "$${A2A_MAINCLAW_LYCOS_TOKEN}"
+        },
+        "litellm-legal": {
+          "token": "$${A2A_MAINCLAW_LEGAL_TOKEN}"
+        },
+        "litellm-elina": {
+          "token": "$${A2A_MAINCLAW_ELINA_TOKEN}"
+        },
+        "litellm-elliot": {
+          "token": "$${A2A_MAINCLAW_ELLIOT_TOKEN}"
+        },
+        "hermes": {
+          "token": "$${A2A_MAINCLAW_HERMES_TOKEN}",
+          "url": "http://litellm.ai:4000/a2a/hermes-default",
+          "outboundToken": "$${LITELLM_API_KEY}"
+        },
+        "hermes-foyer": {
+          "token": "$${A2A_MAINCLAW_HERMES_FOYER_TOKEN}",
+          "url": "http://litellm.ai:4000/a2a/hermes-foyer",
+          "outboundToken": "$${LITELLM_API_KEY}"
+        }
       }
     }
   },
@@ -1894,6 +2067,7 @@
   },
   "plugins": {
     "allow": [
+      "a2a",
       "brave",
       "browser",
       "device-pair",
@@ -1908,6 +2082,9 @@
       "workboard"
     ],
     "entries": {
+      "a2a": {
+        "enabled": true
+      },
       "browser": {
         "enabled": true,
         "config": {}
@@ -2051,7 +2228,20 @@
           "LITELLM_API_KEY_MAINCLAW_LYCOS",
           "LITELLM_API_KEY_MAINCLAW_LEGAL",
           "LITELLM_API_KEY_MAINCLAW_ELINA",
-          "LITELLM_API_KEY_MAINCLAW_ELLIOT"
+          "LITELLM_API_KEY_MAINCLAW_ELLIOT",
+          "A2A_MAINCLAW_MAIN_TOKEN",
+          "A2A_MAINCLAW_FAMILY_TOKEN",
+          "A2A_MAINCLAW_COACH_TOKEN",
+          "A2A_MAINCLAW_FINANCE_TOKEN",
+          "A2A_MAINCLAW_SHOPPING_TOKEN",
+          "A2A_MAINCLAW_MEDIA_TOKEN",
+          "A2A_MAINCLAW_NOVA_TOKEN",
+          "A2A_MAINCLAW_LYCOS_TOKEN",
+          "A2A_MAINCLAW_LEGAL_TOKEN",
+          "A2A_MAINCLAW_ELINA_TOKEN",
+          "A2A_MAINCLAW_ELLIOT_TOKEN",
+          "A2A_MAINCLAW_HERMES_TOKEN",
+          "A2A_MAINCLAW_HERMES_FOYER_TOKEN"
         ]
       }
     }

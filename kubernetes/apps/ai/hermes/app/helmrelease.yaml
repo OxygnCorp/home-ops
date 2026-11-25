@@ -134,9 +134,9 @@ spec:
               # "litellm" so dispatch does not depend on the caller's IP.
               A2A_HOST: 0.0.0.0
               A2A_PORT: "9900"
-              A2A_AGENT_NAME: hermes
+              A2A_AGENT_NAME: hermes-default
               A2A_PUBLIC_URL: http://hermes-app.ai.svc.cluster.local:9900
-              A2A_TRUSTED_PEERS: litellm
+              A2A_TRUSTED_PEERS: litellm,litellm-foyer
             envFrom:
               - secretRef:
                   name: hermes

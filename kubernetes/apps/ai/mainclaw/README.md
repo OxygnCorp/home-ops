@@ -80,6 +80,39 @@ When adding an agent, update all five lists: the global `agentToAgent.allow`,
 the `send` lists on `main` and `nova`, and their `subagents.allowAgents`. An
 agent missing from a list is silently unreachable (fail-closed).
 
+## A2A exposure
+
+The gateway exposes every agent over A2A on the gateway port. The bundled `a2a` channel plugin is enabled in `plugins.allow` and
+`plugins.entries`. The public card
+is served at `/.well-known/agent-card.json`; JSON-RPC calls go to
+`POST /a2a/v1` with the peer token as a bearer token. Replies may take up to
+ten minutes (`replyTimeoutMs: 600000`). `channels.a2a` maps one peer to one
+agent, and a matching binding routes that peer to the agent:
+
+- peer `litellm-main` → `main`, `litellm-family` → `family`, and so on for the
+  eleven agents;
+- each peer token is read from `A2A_MAINCLAW_<AGENT>_TOKEN`, which the
+  `mainclaw` ExternalSecret maps from the 1Password `litellm` item;
+- `exposeAgents` lists all eleven agents on the card.
+
+LiteLLM registers the same agents as `mainclaw-<agent>` and probes the
+gateway origin `http://mainclaw-app.ai.svc.cluster.local:18789` for the card,
+which advertises `/a2a/v1`. The peer token selects the route, not the card
+skill, so adding an agent means updating seven touchpoints: the peer, its
+token, the ExternalSecret entry, the binding, `channels.a2a.exposeAgents`,
+`secrets.providers.default.allowlist`, and the LiteLLM registry entry.
+
+Outbound peers `hermes` and `hermes-foyer` point at the LiteLLM broker
+(`http://litellm.ai:4000/a2a/hermes-default` and `/a2a/hermes-foyer`). Agents
+use them with the `message` tool and target `a2a:hermes` or
+`a2a:hermes-foyer`; the outbound token is the gateway-wide `LITELLM_API_KEY`,
+so outbound delegation is attributed to the global key, not to the calling
+agent. Every agent shares that egress identity. The peer `token` on those
+outbound entries is a dedicated random value, not the gateway token: it is
+required by the schema but never used as an ingress credential.
+
+Inbound A2A runs with the routed agent's normal tools and permissions. LiteLLM's A2A access control is default-open unless the calling key or team has an explicit `object_permission.agents` grant.
+
 ## Disk hygiene
 
 The state volume holds every conversation, workspace and database, so the `init`

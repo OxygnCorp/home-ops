@@ -214,6 +214,16 @@
         },
         "guildId": "{{ .DISCORD_GUILD_ID }}"
       }
+    },
+    {
+      "agentId": "main",
+      "match": {
+        "channel": "a2a",
+        "peer": {
+          "kind": "direct",
+          "id": "litellm-main"
+        }
+      }
     }
   ],
   "channels": {
@@ -281,6 +291,29 @@
         "source": "env",
         "provider": "default",
         "id": "DISCORD_BOT_TOKEN"
+      }
+    },
+    "a2a": {
+      "enabled": true,
+      "advertisedUrl": "http://devclaw-app.ai.svc.cluster.local:18789",
+      "replyTimeoutMs": 600000,
+      "exposeAgents": [
+        "main"
+      ],
+      "peers": {
+        "litellm-main": {
+          "token": "$${A2A_DEVCLAW_MAIN_TOKEN}"
+        },
+        "hermes": {
+          "token": "$${A2A_DEVCLAW_HERMES_TOKEN}",
+          "url": "http://litellm.ai:4000/a2a/hermes-default",
+          "outboundToken": "$${LITELLM_API_KEY}"
+        },
+        "hermes-foyer": {
+          "token": "$${A2A_DEVCLAW_HERMES_FOYER_TOKEN}",
+          "url": "http://litellm.ai:4000/a2a/hermes-foyer",
+          "outboundToken": "$${LITELLM_API_KEY}"
+        }
       }
     }
   },
@@ -659,6 +692,7 @@
   },
   "plugins": {
     "allow": [
+      "a2a",
       "brave",
       "browser",
       "diagnostics-otel",
@@ -671,6 +705,9 @@
       "memini"
     ],
     "entries": {
+      "a2a": {
+        "enabled": true
+      },
       "brave": {
         "enabled": true
       },
@@ -968,7 +1005,10 @@
           "OPENCLAW_GATEWAY_TOKEN",
           "DISCORD_BOT_TOKEN",
           "LITELLM_API_KEY",
-          "LITELLM_API_KEY_DEVCLAW_MAIN"
+          "LITELLM_API_KEY_DEVCLAW_MAIN",
+          "A2A_DEVCLAW_MAIN_TOKEN",
+          "A2A_DEVCLAW_HERMES_TOKEN",
+          "A2A_DEVCLAW_HERMES_FOYER_TOKEN"
         ]
       }
     }

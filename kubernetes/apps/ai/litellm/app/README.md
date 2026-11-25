@@ -289,7 +289,7 @@ toolhive `VirtualMCPServer` aggregation exclusion
 (`kubernetes/apps/ai/toolhive/config/virtualmcpserver.yaml`). A blacklist — not
 an allowlist — so tools the upstream adds stay visible without a config bump.
 
-### `agent_search` / `skill_search` embedding models
+### `agent_search` / `skill_search` and the A2A registry
 
 Tool search's keyword ranking needs no embedding model — for `mcp_tool_search`
 (token-overlap). The gateway's two other virtual tools — `agent_search` (A2A
@@ -297,46 +297,65 @@ registry) and `skill_search` (skill registry) — rank by embeddings and need
 `litellmSettings.agent_search_embedding_model` / `skill_search_embedding_model`.
 Both are pinned to `qwen3-embedding-0.6b`, the same local TEI model as
 `mcp_semantic_tool_filter`, so the two tools answer on every key with tool
-search enabled — no longer 400.
+search enabled.
 
-`agent_search` currently ranks one registered agent: `hermes`. The
-declarative `extraConfig.agents[]` entry makes LiteLLM fetch Hermes' A2A card
-from `http://hermes-app.ai.svc.cluster.local:9900/.well-known/agent-card.json`
-at startup; invoke it with `POST /a2a/hermes` (JSON-RPC `message/send`) using
-`x-litellm-api-key: Bearer <KEY>`. The chart names the Service `hermes-app`,
-not `hermes` — a wrong host makes the card fetch fail and LiteLLM skip the
-agent at startup (same visible symptom as a cold bootstrap, see the
-operational notes below). LiteLLM forwards
-`Authorization: Bearer <A2A_HERMES_TOKEN>` upstream (A2A auth is inferred
-from `litellm_params.api_key`; there is no `auth_type` for agents); Hermes
-maps that token to the peer name `litellm` via `A2A_PEER_TOKENS` and accepts
-only that peer via `A2A_TRUSTED_PEERS`.
+`extraConfig.agents[]` registers 14 A2A agents, all named
+`<gateway>-<agent>` so an agent is identifiable across gateways:
+
+| Agent | Gateway | Endpoint |
+|---|---|---|
+| `hermes-default` | Hermes | `http://hermes-app.ai.svc.cluster.local:9900` |
+| `hermes-foyer` | Hermes | `http://hermes-app.ai.svc.cluster.local:9900/foyer` |
+| `mainclaw-main`, `mainclaw-family`, `mainclaw-coach`, `mainclaw-finance`, `mainclaw-shopping`, `mainclaw-media`, `mainclaw-nova`, `mainclaw-lycos`, `mainclaw-legal`, `mainclaw-elina`, `mainclaw-elliot` | Mainclaw | `http://mainclaw-app.ai.svc.cluster.local:18789` (card advertises `/a2a/v1`) |
+| `devclaw-main` | Devclaw | `http://devclaw-app.ai.svc.cluster.local:18789` (card advertises `/a2a/v1`) |
+
+Invoke an agent with `POST /a2a/<agent_name>` (JSON-RPC `message/send`) and
+`x-litellm-api-key: Bearer <KEY>`. `agent_card_params.url` is the base
+LiteLLM probes for the remote agent card on every invocation
+(`<url>/.well-known/agent-card.json`); the card's advertised interface URL is
+then used for JSON-RPC. For OpenClaw the base is the gateway origin — the card
+lives at `/.well-known/agent-card.json` and advertises `/a2a/v1`. Appending
+`/a2a/v1` to `url` makes card discovery 404 on each call. Hermes serves the
+default card at `/` and the foyer card under `/foyer`. Registration itself is
+a pure config load; a wrong or unreachable URL fails the invocation, it does
+not remove the agent from `/v1/agents`. The Hermes chart names the Service
+`hermes-app`, not `hermes`.
+
+Hermes exposes two served agents from one gateway: the default profile at
+`/` and the foyer profile at `/foyer` (configured under
+`gateway.platforms.a2a.extra.agents`). Each OpenClaw gateway exposes every
+agent through a dedicated peer token; the peer token selects the route, not
+the card skill, so one peer is required per agent.
 
 Operational notes:
 
-- **Token plumbing:** the 1Password `litellm` item must contain field
-  `A2A_HERMES_TOKEN` (`openssl rand -hex 32`) **before merge**. The litellm
+- **Token plumbing:** the 1Password `litellm` item must contain one field per
+  peer before merge: `A2A_HERMES_TOKEN`, `A2A_HERMES_FOYER_TOKEN`, the 11
+  `A2A_MAINCLAW_<AGENT>_TOKEN`, `A2A_DEVCLAW_MAIN_TOKEN`, and the four inert
+  inbound tokens for the OpenClaw outbound peers
+  (`A2A_MAINCLAW_HERMES_TOKEN`, `A2A_MAINCLAW_HERMES_FOYER_TOKEN`,
+  `A2A_DEVCLAW_HERMES_TOKEN`, `A2A_DEVCLAW_HERMES_FOYER_TOKEN`). The litellm
   ExternalSecret fetches the whole item via `dataFrom.extract`, but its
   template (`mergePolicy: Replace`) only writes `template.data` keys — the
-  `A2A_HERMES_TOKEN` mapping there is what lands the token in
-  `litellm-secret`. If the field is missing, the `hermes` ExternalSecret
-  stays in sync-error (Hermes keeps its previous Secret, falls back to
-  binding A2A on 127.0.0.1 — fail-safe) while LiteLLM holds an empty token
-  and upstream calls 401.
-- **Cold bootstrap:** `ai/hermes` depends on `ai/litellm`, so on a fresh
-  cluster LiteLLM starts before Hermes serves :9900, the card fetch fails and
-  the agent is skipped. Restart the litellm deployment once Hermes is Ready
-  to register it.
-- **Rotation:** both workloads have stakater reloader annotations, so a
-  1Password rotation rolls both automatically; expect a transient 401 window
-  while the two rollouts complete (LiteLLM reads the token at startup).
+  explicit mappings there are what land the tokens in `litellm-secret`. The
+  Hermes, Mainclaw and Devclaw ExternalSecrets map the same fields into their
+  pods. A missing field leaves the consumer in sync-error; OpenClaw keeps its
+  previous Secret, Hermes falls back to binding A2A on 127.0.0.1, and LiteLLM
+  sends an empty token upstream (401).
+- **Availability:** registration is a config load, so the agents are listed
+  in `/v1/agents` even when a gateway is down. The remote card is resolved at
+  invocation time; a wrong URL or an unavailable gateway fails that call with
+  an A2A discovery error. No LitellM restart is needed after the gateways
+  come up — only after changing this file.
+- **Rotation:** all three workloads have stakater reloader annotations, so a
+  1Password rotation rolls them automatically; expect a transient 401 window
+  while the rollouts complete.
 - **Permissions & discovery:** invocation and discovery read grants
-  differently. With no grant at all, direct invocation (`POST /a2a/hermes`)
+  differently. With no grant at all, direct invocation (`POST /a2a/<agent>`)
   is unrestricted, but `/v1/agents` and `agent_search` return nothing —
   discovery only lists agents explicitly granted to the key or team. Once a
   key lists any agent in `object_permission.agents`, that list becomes a
-  whitelist for direct invocation too, so the Opencode pilot key (granted
-  `hermes`) is now scoped to `hermes`. Grant it once through the master API
+  whitelist for direct invocation too. Grant through the master API
   (`POST /key/update` with
   `{"key": "<key>", "object_permission": {"agents": ["<agent_id>"]}}`);
   `<agent_id>` comes from `GET /v1/agents` with the master key, which
@@ -348,15 +367,17 @@ Operational notes:
   the grant if the key is re-created or overwritten by the operator.
   If team grants appear later, key and team lists intersect (most
   restrictive wins); `general_settings.agent_access_default_deny: true`
-  flips the no-grant default to deny. Accepted for this single-user pilot;
-  revisit before federating more agents.
+  flips the no-grant default to deny. The existing Opencode grant still
+  points at the old `hermes` agent id; after this rename, re-grant the new
+  `hermes-default` id if discovery through that key is needed.
 - **UI discovery (SSRF allowlist):** the UI/API agent-card fetch goes
-  through LiteLLM's SSRF guard, which blocks private ClusterIPs — the
-  configured agent still loads at startup, but UI discovery fails with a
-  blocked `10.43.x.x` address. `user_url_allowed_hosts` is read from
+  through LiteLLM's SSRF guard, which blocks private ClusterIPs. The
+  configured agents still load from Git and invoke, but UI discovery fails
+  with a blocked `10.43.x.x` address. `user_url_allowed_hosts` is read from
   `general_settings`, not `litellm_settings` (the UI error text is
-  misleading). This app sets it to
-  `hermes-app.ai.svc.cluster.local:9900`; allowlisted hosts skip only the
+  misleading). This app allows `hermes-app.ai.svc.cluster.local:9900`,
+  `mainclaw-app.ai.svc.cluster.local:18789`, and
+  `devclaw-app.ai.svc.cluster.local:18789`; allowlisted hosts skip only the
   private-network check, while DNS resolution and rewriting to the resolved
   IP still apply. The allowlist is global across the proxy: it covers every
   `validate_url` call site (image/file URLs, client-supplied
@@ -364,14 +385,13 @@ Operational notes:
   not just card discovery — keep entries `host:port` and minimal. Its
   location is also version-sensitive: the pinned 1.110.x image reads
   `general_settings`, while current upstream docs say `litellm_settings`, so
-  re-check both on a major bump — a silent move would re-break UI discovery.
-  Extend the list if another internal agent is registered.
-- **Chat bridge:** `POST /v1/chat/completions` with `model: a2a/hermes`
+  re-check both on a major bump. Extend the list for any new internal agent.
+- **Chat bridge:** `POST /v1/chat/completions` with `model: a2a/<agent>`
   returns an empty `content` against Hermes. Hermes' A2A task parts omit the
   `kind: "text"` discriminator (e.g. `{"text": "pong"}`) and LiteLLM's
   extractor ignores untyped parts. The JSON-RPC endpoint is unaffected and
   returns the text in `result.task.status.message.parts` and
-  `result.task.artifacts[0].parts`; use `POST /a2a/hermes` for delegation
+  `result.task.artifacts[0].parts`; use `POST /a2a/<agent>` for delegation
   until either side fixes the serialization. The chat path can also bypass
   `object_permission.agents` scope checks (upstream issue #38996, still
   open), so treat the grant as discovery hygiene, not a security boundary.

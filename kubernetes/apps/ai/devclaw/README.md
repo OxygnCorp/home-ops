@@ -56,12 +56,36 @@ Models come from the cluster LiteLLM proxy (`http://litellm.ai:4000/v1`).
 picker may offer; a model outside that list is refused with a *model not
 allowed* error (a different failure from the channel allowlist one).
 
+## A2A exposure
+
+The gateway exposes the `main` agent over A2A on the gateway port. The bundled `a2a` channel plugin is enabled in `plugins.allow` and
+`plugins.entries`. The card is
+served at `/.well-known/agent-card.json`; JSON-RPC calls go to
+`POST /a2a/v1` with the peer token as a bearer token. Replies may take up to
+ten minutes (`replyTimeoutMs: 600000`). Peer `litellm-main` maps
+to `main` through the binding in `resources/openclaw.json`; its token is read
+from `A2A_DEVCLAW_MAIN_TOKEN`, mapped by the `devclaw` ExternalSecret from the
+1Password `litellm` item.
+
+LiteLLM registers the agent as `devclaw-main` and calls
+the gateway origin `http://devclaw-app.ai.svc.cluster.local:18789` for the
+card, which advertises `/a2a/v1`; the matching token selects the route. The
+gateway also defines outbound peers `hermes` and `hermes-foyer` pointing at the
+LiteLLM broker (`http://litellm.ai:4000/a2a/hermes-default` and
+`/a2a/hermes-foyer`); use the `message` tool with target `a2a:hermes` or
+`a2a:hermes-foyer`. The outbound token is the gateway-wide `LITELLM_API_KEY`,
+so outbound delegation is attributed globally. The peer `token` on those
+entries is a dedicated random value, not the gateway token: the schema
+requires it, but it is never used as an ingress credential.
+
+Inbound A2A runs with the routed agent's normal tools and permissions. LiteLLM's A2A access control is default-open unless the calling key or team has an explicit `object_permission.agents` grant.
+
 ## Secrets
 
 The `devclaw` ExternalSecret (1h) produces the `devclaw-secret` secret, mounted
-into the pod through `envFrom`. Values are extracted from the 1Password items
-`devclaw`, `litellm` and `memini` (vault `home-ops`, `ClusterSecretStore
-onepassword`):
+into the pod through `envFrom`. Channel values are extracted from the 1Password
+items `devclaw` and `memini`; LiteLLM values are explicit mappings from the
+`litellm` item (vault `home-ops`, `ClusterSecretStore onepassword`):
 
 | Secret key                  | 1Password item / field      |
 |-----------------------------|-----------------------------|
@@ -73,6 +97,7 @@ onepassword`):
 | `GH_TOKEN`                  | `devclaw`                   |
 | `LITELLM_API_KEY`           | `litellm` → `KEY_DEVCLAW`   |
 | `LITELLM_API_KEY_DEVCLAW_MAIN` | `litellm` → `KEY_DEVCLAW_MAIN` |
+| `A2A_DEVCLAW_MAIN_TOKEN` | `litellm` → `A2A_DEVCLAW_MAIN_TOKEN` |
 | `MEMINI_API_KEY`            | `memini` → `MEMINI_API_KEY` |
 
 `LITELLM_API_KEY_DEVCLAW_MAIN` feeds the `litellm-main` provider used by the
