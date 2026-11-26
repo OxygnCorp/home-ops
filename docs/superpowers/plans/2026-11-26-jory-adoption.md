@@ -19,7 +19,7 @@
 - `metadata.namespace` jamais inline sur `HelmRelease`/`Kustomization` : injecté par le `kustomization.yaml` de l'app (`namespace:`).
 - Images en `tag@sha256:` (digest pinné) ; les charts OCI restent pinnés par tag.
 - Aucun `flux reconcile` / `just kube sync` forcé après un push : le repo est webhooké et Flux réconcilie seul (voir Task 2).
-- Secrets : jamais de valeur en clair ; 1Password via `ExternalSecret`/`PushSecret`, item `home-ops`.
+- Secrets : jamais de valeur en clair ; 1Password via `ExternalSecret`/`PushSecret`. Les clés LiteLLM sont des *properties* de l'item `litellm` (une par agent) ; les secrets propres à une app vivent sur un item dédié à son nom (ici `alert-triage`).
 - Quality pass obligatoire : un subagent `reviewer` fresh-context sur le diff final avant d'ouvrir la PR.
 
 ### Phase 0 — livré
@@ -96,7 +96,7 @@ spec:
           app:
             image:
               repository: docker.io/library/debian
-              tag: 13-slim
+              tag: 13-slim@sha256:8aa5a7bf5a1955bddbe7d74fcdd0b91ab30e74362a8b73af672b0481b35b44a0
             env:
               NVIDIA_VISIBLE_DEVICES: all
               NVIDIA_DRIVER_CAPABILITIES: utility
@@ -110,8 +110,17 @@ spec:
               - |
                 set -euo pipefail
                 nvidia-smi -pm 1
-                nvidia-smi -pl "$${POWER_LIMIT_WATTS}"
-                nvidia-smi --query-gpu=name,power.limit,power.max_limit --format=csv
+                # Clamp : certaines cartes (ou un vGPU) exposent un
+                # power.max_limit < 300 W ; sans ça `-pl` échoue et le
+                # conteneur part en CrashLoop.
+                MAX=$(nvidia-smi --query-gpu=power.max_limit --format=csv,noheader,nounits \
+                  | head -n1 | cut -d. -f1 | tr -d ' ')
+                if [ "$MAX" -lt "$${POWER_LIMIT_WATTS}" ]; then
+                  echo "power.max_limit=${MAX}W < POWER_LIMIT_WATTS=$${POWER_LIMIT_WATTS}W, clamping" >&2
+                  POWER_LIMIT_WATTS="$MAX"
+                fi
+                nvidia-smi -pl "$POWER_LIMIT_WATTS"
+                nvidia-smi -q -d POWER | grep -E "Power Limit|Default Power Limit|Max Power Limit"
                 exec sleep infinity
             resources:
               requests:
@@ -149,6 +158,11 @@ kind: Kustomization
 metadata:
   name: nvidia-power-limit
 spec:
+  # La RuntimeClass `nvidia` est créée par nvidia-device-plugin : sans elle
+  # les pods du DaemonSet restent en erreur (runtime handler absent).
+  dependsOn:
+    - name: nvidia-device-plugin
+      namespace: kube-system
   commonMetadata:
     labels:
       app.kubernetes.io/name: nvidia-power-limit
@@ -271,7 +285,20 @@ spec:
 
 - [ ] **Step 3: Valider** — `mise exec -- flate test ks --path ./kubernetes/apps/ai/litellm`
 
-- [ ] **Step 4: Commit** (`feat(litellm): add alert-triage virtual key`)
+- [ ] **Step 4: Vérifier que la clé a bien été poussée dans 1Password**
+
+Sans cette vérification, l'`ExternalSecret` de Task 4 rendra `LITELLM_API_KEY: ""` **sans aucune erreur** (l'extract réussit même si la property manque), et la panne ne sortira qu'au premier appel LiteLLM (401 silencieux).
+
+```bash
+# valeur non vide côté Kubernetes
+kubectl -n ai get secret litellm-key-alert-triage -o jsonpath='{.data.api-key}' | base64 -d | wc -c
+# property présente sur l'item 1Password
+kubectl -n ai get pushsecret alert-triage -o jsonpath='{.status.conditions[?(@.type=="Ready")].message}'
+```
+
+Expected: un nombre > 0, et une condition `Ready` sans erreur.
+
+- [ ] **Step 5: Commit** (`feat(litellm): add alert-triage virtual key`)
 
 ### Task 4: app `alert-triage` dans `observability`
 
@@ -285,8 +312,8 @@ spec:
 - Modify: `kubernetes/apps/observability/kustomization.yaml`
 
 **Interfaces:**
-- Consumes: `litellm` service `http://litellm.ai:4000/v1`, secret `alert-triage` (Task 4 Step 3) et `litellm-key-alert-triage` (Task 3).
-- Produces: `Service alert-triage:8080/webhook` + `/healthz`, `ClusterRole alert-triage` en lecture seule (pods, events, nodes, pods/log, helmreleases, kustomizations).
+- Consumes: `litellm` service `http://litellm.ai:4000/v1`, secret `alert-triage` (produit par **Step 2**, `externalsecret.yaml`) et `litellm-key-alert-triage` (Task 3).
+- Produces: `Service alert-triage:8080/webhook` + `/healthz`, `ClusterRole alert-triage` en lecture seule (nodes, pods, pods/log, events, jobs, helmreleases, helmcharts, kustomizations, sources Flux).
 
 - [ ] **Step 1: `app/ocirepository.yaml`**
 
@@ -323,6 +350,7 @@ spec:
   target:
     name: *name
     template:
+      engineVersion: v2
       data:
         DISCORD_WEBHOOK_URL: "{{ .DISCORD_TRIAGE_WEBHOOK_URL }}"
         WEBHOOK_TOKEN: "{{ .WEBHOOK_TOKEN }}"
@@ -392,7 +420,12 @@ spec:
               repository: ghcr.io/misospace/alert-triage
               tag: 0.3.0@sha256:fe3e6b6ae6a23aa9449f1d8d0f48330dcd387a85629c286bf0365d1b5b9c8822
             env:
-              CLUSTER: main
+              # `CLUSTER` matche le label `cluster` des alertes. Ce cluster
+              # n'a pas d'`externalLabels.cluster` sur kube-prometheus-stack :
+              # avec `CLUSTER: main` aucun groupe ne serait reconnu, donc
+              # l'enrichissement serait systématiquement vide (sans erreur).
+              # Laisser vide = enrichit tous les groupes. Si un jour
+              # `externalLabels.cluster: main` est ajouté, remettre `main`.
               LITELLM_URL: http://litellm.ai:4000/v1
               MODEL: dsv41f
               HISTORY_PATH: /data/history.jsonl
@@ -434,12 +467,28 @@ spec:
             - apiGroups: [""]
               resources: ["pods/log"]
               verbs: ["get"]
+            # Résolution des alertes `KubeJobFailed` (l'alerte nomme le Job,
+            # pas le pod : sans ça le pod en échec n'apparaît pas).
+            - apiGroups: ["batch"]
+              resources: ["jobs"]
+              verbs: ["get", "list"]
             - apiGroups: ["helm.toolkit.fluxcd.io"]
               resources: ["helmreleases"]
               verbs: ["get", "list"]
+            # `HelmChart` est resté dans le groupe helm (servi en v2beta1)
+            # même après le passage du kind dans le groupe source.
+            - apiGroups: ["helm.toolkit.fluxcd.io"]
+              resources: ["helmcharts"]
+              verbs: ["get"]
             - apiGroups: ["kustomize.toolkit.fluxcd.io"]
               resources: ["kustomizations"]
               verbs: ["get", "list"]
+            # Déréférencement des `sourceRef` : c'est ce qui alimente le
+            # verdict `git` / `partial`. Sans ces règles, l'enrichissement
+            # se dégrade en silence ("not checked"), pas en 403.
+            - apiGroups: ["source.toolkit.fluxcd.io"]
+              resources: ["gitrepositories", "ocirepositories", "buckets", "helmcharts"]
+              verbs: ["get"]
       bindings:
         alert-triage:
           type: ClusterRoleBinding
@@ -527,7 +576,22 @@ mise exec -- flate test ks --path ./kubernetes/apps/observability
 
 Expected: `✓ HelmRelease alert-triage`. Si flate signale le secret `alert-triage` manquant, c'est le même warning bénin que `cloudflare-tunnel` (ExternalSecret pas encore synchronisé) — vérifier que l'item 1Password existe.
 
-- [ ] **Step 9: Commit** (`feat(observability): add alert-triage`)
+- [ ] **Step 9: Vérifier que le secret rendu n'est pas vide**
+
+ESO ne signale pas une property absente : `extract` réussit et le template rend une chaîne vide.
+
+```bash
+kubectl -n observability get secret alert-triage \
+  -o jsonpath='{.data.LITELLM_API_KEY}' | base64 -d | wc -c
+kubectl -n observability get secret alert-triage \
+  -o jsonpath='{.data.WEBHOOK_TOKEN}' | base64 -d | wc -c
+```
+
+Expected: deux valeurs > 0. Sinon, revenir à Task 3 Step 4 (PushSecret pas encore réconcilié).
+
+- [ ] **Step 10: Commit** (`feat(observability): add alert-triage`)
+
+> Hors scope volontaire : la `NetworkPolicy` recommandée par l'amont (n'admettre que l'Alertmanager sur le port 8080). Le token partagé couvre l'authentification ; la policy reste à ajouter si le besoin de cloisonnement réseau se présente, en cohérence avec le reste du cluster qui n'en pose pas sur les apps.
 
 ### Task 5: brancher Alertmanager
 
@@ -538,7 +602,9 @@ Expected: `✓ HelmRelease alert-triage`. Si flate signale le secret `alert-tria
 - Consumes: `Service alert-triage:8080/webhook`, secret `alert-triage` (clé `WEBHOOK_TOKEN`).
 - Produces: route `triage` en `continue: true` → les alertes partent à la fois au triage LLM et à Discord (comportement inchangé côté Discord).
 
-- [ ] **Step 1: Insérer la route** dans `spec.route.routes`, **après** les routes `InfoInhibitor` et `Watchdog` (qui terminent le parcours) et **avant** la route `severity: critical` :
+- [ ] **Step 1: Insérer la route** dans `spec.route.routes`, **après** les routes `InfoInhibitor` et `Watchdog` (qui sortent du parcours : ces deux alertes ne doivent jamais être triées) et **avant** la route `severity: critical` :
+
+Périmètre volontairement large au départ (toute alerte qui arrive là part au triage, comme chez jory) : c'est le seul moyen d'évaluer la qualité des corrélations sur le trafic réel. Le levier de réduction, si le volume ou le coût gêne, est l'opt-in par label recommandé par l'amont — dans cet ordre : 1) déployer sans `TRIAGE_LABEL`, 2) poser `triage: "true"` sur les PrometheusRules utiles, 3) ajouter `matchLabels: {triage: "true"}` sur la route, 4) poser `TRIAGE_LABEL: triage` sur l'app (le webhook re-filtre en filet de sécurité).
 
 ```yaml
       # Triage LLM : corrèle et enrichit les alertes, puis poste un embed
@@ -569,7 +635,7 @@ Expected: `✓ HelmRelease alert-triage`. Si flate signale le secret `alert-tria
 
 - [ ] **Step 4: Commit + PR** (`feat(observability): route alerts through alert-triage`) et quality pass `reviewer` sur l'ensemble du diff Phase 2.
 
-**Critère de succès :** à la prochaine alerte réelle (ou une alerte de test injectée via `amtool`/un pod qui crash-loop), un embed Discord arrive avec la narration LLM et le verdict, et `kubectl -n observability logs deploy/alert-triage` ne montre ni 401 LiteLLM ni 403 RBAC.
+**Critère de succès :** à la prochaine alerte réelle (ou une alerte de test injectée via `amtool`/un pod qui crash-loop), un embed Discord arrive avec la narration LLM **et** l'enrichissement (pods/events/Flux) n'est pas vide ; `kubectl -n observability logs deploy/alert-triage` ne montre ni 401 LiteLLM ni erreur de lecture API. Contrôle complémentaire : `curl -s -H "Authorization: Bearer $WEBHOOK_TOKEN" localhost:8080/recent | jq '.[0].evidence'` (via port-forward) montre bien `unhealthyPods`/`warningEvents`/Flux renseignés — un RBAC incomplet dégrade en silence ("not checked"), il ne produit pas de 403.
 
 ---
 
