@@ -4,7 +4,7 @@
   "tags": ["ai", "litellm"],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 4,
+  "version": 5,
   "refresh": "30s",
   "panels": [
     {
@@ -579,6 +579,92 @@
       ],
       "title": "Prompt Cache: Cached vs Uncached Input Tokens",
       "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 54 },
+      "id": 31,
+      "panels": [],
+      "title": "Agent Consumption",
+      "type": "row"
+    },
+
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "description": "LiteLLM-calculated spend per virtual key in the selected range. Subscription and local models can be $0; use tokens for volume. The global Mainclaw/Devclaw keys are fallbacks (images, MCP), not agents.",
+      "fieldConfig": { "defaults": { "custom": { "align": "auto", "filterable": true }, "decimals": 2, "unit": "currencyUSD" }, "overrides": [] },
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 55 },
+      "id": 32,
+      "options": { "footer": { "show": false }, "showHeader": true },
+      "targets": [
+
+{"datasource":{"type":"prometheus","uid":"${datasource}"},"expr":"sum by (api_key_alias) (increase(litellm_spend_metric_total{api_key_alias=~\"$agent\", api_key_alias!=\"None\"}[$__range])) > 0","format":"table","instant":true,"refId":"A"}
+
+      ],
+      "title": "Spend by Agent",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": { "excludeByName": { "Time": true }, "renameByName": { "Value": "Spend", "api_key_alias": "Agent" } }
+        },
+        { "id": "sortBy", "options": { "fields": "", "sort": [{ "desc": true, "field": "Spend" }] } }
+      ],
+      "type": "table"
+    },
+
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "description": "Total prompt + completion tokens per virtual key in the selected range.",
+      "fieldConfig": { "defaults": { "custom": { "align": "auto", "filterable": true }, "decimals": 0, "unit": "short" }, "overrides": [] },
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 55 },
+      "id": 33,
+      "options": { "footer": { "show": false }, "showHeader": true },
+      "targets": [
+
+{"datasource":{"type":"prometheus","uid":"${datasource}"},"expr":"sum by (api_key_alias) (increase(litellm_total_tokens_metric_total{api_key_alias=~\"$agent\", api_key_alias!=\"None\"}[$__range])) > 0","format":"table","instant":true,"refId":"A"}
+
+      ],
+      "title": "Tokens by Agent",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": { "excludeByName": { "Time": true }, "renameByName": { "Value": "Tokens", "api_key_alias": "Agent" } }
+        },
+        { "id": "sortBy", "options": { "fields": "", "sort": [{ "desc": true, "field": "Tokens" }] } }
+      ],
+      "type": "table"
+    },
+
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "description": "LiteLLM-calculated hourly spend rate per virtual key.",
+      "fieldConfig": { "defaults": { "unit": "currencyUSD" }, "overrides": [] },
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 64 },
+      "id": 34,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+
+{"datasource":{"type":"prometheus","uid":"${datasource}"},"expr":"sum by (api_key_alias) (rate(litellm_spend_metric_total{api_key_alias=~\"$agent\", api_key_alias!=\"None\"}[$__rate_interval])) * 3600 > 0","legendFormat":"{{api_key_alias}}","refId":"A"}
+
+      ],
+      "title": "Spend Rate by Agent ($/h)",
+      "type": "timeseries"
+    },
+
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "description": "Token rate per virtual key, in tokens per minute.",
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 64 },
+      "id": 35,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+
+{"datasource":{"type":"prometheus","uid":"${datasource}"},"expr":"sum by (api_key_alias) (rate(litellm_total_tokens_metric_total{api_key_alias=~\"$agent\", api_key_alias!=\"None\"}[$__rate_interval])) * 60 > 0","legendFormat":"{{api_key_alias}}","refId":"A"}
+
+      ],
+      "title": "Token Rate by Agent (tokens/min)",
+      "type": "timeseries"
     }
   ],
   "templating": {
@@ -591,6 +677,24 @@
         "query": "prometheus",
         "refresh": 1,
         "type": "datasource"
+      },
+      {
+        "allValue": ".+",
+        "current": { "selected": true, "text": "All", "value": "$__all" },
+        "datasource": { "type": "prometheus", "uid": "${datasource}" },
+        "definition": "label_values(litellm_spend_metric_total{api_key_alias!=\"None\"}, api_key_alias)",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Agent",
+        "multi": true,
+        "name": "agent",
+        "options": [],
+        "query": { "query": "label_values(litellm_spend_metric_total{api_key_alias!=\"None\"}, api_key_alias)", "refId": "PrometheusVariableQueryEditor-VariableQuery" },
+        "refresh": 2,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
       }
     ]
   },
