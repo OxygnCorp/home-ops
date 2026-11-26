@@ -214,6 +214,16 @@
         },
         "guildId": "{{ .DISCORD_GUILD_ID }}"
       }
+    },
+    {
+      "agentId": "main",
+      "match": {
+        "channel": "a2a",
+        "peer": {
+          "kind": "direct",
+          "id": "litellm-main"
+        }
+      }
     }
   ],
   "channels": {
@@ -282,6 +292,39 @@
         "provider": "default",
         "id": "DISCORD_BOT_TOKEN"
       }
+    },
+    "a2a": {
+      "enabled": true,
+      "advertisedUrl": "http://devclaw.ai.svc.cluster.local:18789",
+      "replyTimeoutMs": 600000,
+      "exposeAgents": [
+        "main"
+      ],
+      "peers": {
+        "litellm-main": {
+          "token": "$${LITELLM_API_KEY_DEVCLAW_MAIN}"
+        },
+        "hermes": {
+          "token": "$${OPENCLAW_GATEWAY_TOKEN}",
+          "url": "http://litellm.ai:4000/a2a/hermes-default",
+          "outboundToken": "$${LITELLM_API_KEY}"
+        },
+        "hermes-foyer": {
+          "token": "$${OPENCLAW_GATEWAY_TOKEN}",
+          "url": "http://litellm.ai:4000/a2a/hermes-foyer",
+          "outboundToken": "$${LITELLM_API_KEY}"
+        },
+        "mainclaw-main": {
+          "token": "$${OPENCLAW_GATEWAY_TOKEN}",
+          "url": "http://litellm.ai:4000/a2a/mainclaw-main",
+          "outboundToken": "$${LITELLM_API_KEY}"
+        },
+        "mainclaw-nova": {
+          "token": "$${OPENCLAW_GATEWAY_TOKEN}",
+          "url": "http://litellm.ai:4000/a2a/mainclaw-nova",
+          "outboundToken": "$${LITELLM_API_KEY}"
+        }
+      }
     }
   },
   "commands": {
@@ -327,10 +370,7 @@
       "allow": [
         "sessions_send"
       ]
-    },
-    "trustedProxies": [
-      "10.42.0.0/16"
-    ]
+    }
   },
   "messages": {
     "ackReactionScope": "group-mentions",
@@ -659,6 +699,7 @@
   },
   "plugins": {
     "allow": [
+      "a2a",
       "brave",
       "browser",
       "diagnostics-otel",
@@ -671,6 +712,9 @@
       "memini"
     ],
     "entries": {
+      "a2a": {
+        "enabled": true
+      },
       "brave": {
         "enabled": true
       },

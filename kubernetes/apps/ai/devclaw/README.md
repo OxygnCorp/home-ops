@@ -56,12 +56,46 @@ Models come from the cluster LiteLLM proxy (`http://litellm.ai:4000/v1`).
 picker may offer; a model outside that list is refused with a *model not
 allowed* error (a different failure from the channel allowlist one).
 
+## A2A exposure
+
+The gateway exposes its single `main` agent over A2A. The bundled `a2a`
+channel plugin is enabled in `plugins.allow` and `plugins.entries`. The public
+card is served at `/.well-known/agent-card.json`; JSON-RPC calls go to
+`POST /a2a/v1` with a peer bearer token. Replies may take up to ten minutes
+(`replyTimeoutMs: 600000`).
+
+Peer `litellm-main` routes to `main` through the binding in
+`resources/openclaw.json`; its token is the existing per-agent env
+`LITELLM_API_KEY_DEVCLAW_MAIN` (the LiteLLM virtual key, reused as the A2A
+credential). LiteLLM registers the agent as `devclaw-main` and probes the
+gateway origin `http://devclaw.ai.svc.cluster.local:18789` for the card,
+which advertises `/a2a/v1`.
+
+The gateway also defines outbound peers pointing at the LiteLLM broker:
+`hermes`/`hermes-foyer` (`/a2a/hermes-default`, `/a2a/hermes-foyer`) and
+`mainclaw-main`/`mainclaw-nova` (`/a2a/mainclaw-main`, `/a2a/mainclaw-nova`).
+Use the `message` tool with the matching target, e.g. `a2a:hermes` or
+`a2a:mainclaw-nova`. The outbound token is the gateway-wide
+`LITELLM_API_KEY`, so outbound delegation is attributed globally. The `token`
+field on outbound entries is an inert inbound stub required by the schema; it
+is never used as an ingress credential.
+
+Inbound A2A runs with the routed agent's normal tools and permissions.
+LiteLLM's A2A access control is default-open unless the calling key or team
+has an explicit `object_permission.agents` grant.
+
+`gateway.trustedProxies` is intentionally unset. Trusting the whole pod CIDR
+made LiteLLM's direct card fetch look like an unattributable proxy and it
+returned `403 proxy_attribution_required`. The gateway token still
+authenticates both Envoy and in-cluster callers; forwarded client addresses
+are ignored for rate limiting.
+
 ## Secrets
 
 The `devclaw` ExternalSecret (1h) produces the `devclaw-secret` secret, mounted
-into the pod through `envFrom`. Values are extracted from the 1Password items
-`devclaw`, `litellm` and `memini` (vault `home-ops`, `ClusterSecretStore
-onepassword`):
+into the pod through `envFrom`. Channel values are extracted from the 1Password
+items `devclaw` and `memini`; LiteLLM values are explicit mappings from the
+`litellm` item (vault `home-ops`, `ClusterSecretStore onepassword`):
 
 | Secret key                  | 1Password item / field      |
 |-----------------------------|-----------------------------|

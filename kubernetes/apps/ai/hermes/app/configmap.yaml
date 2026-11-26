@@ -82,6 +82,16 @@ data:
           enabled: true
           extra:
             port: 9900
+            # Expose the foyer profile as a distinct A2A agent at /foyer.
+            # The root card/JSON-RPC endpoint remains the default profile.
+            agents:
+              foyer:
+                profile: foyer
+                path: /foyer
+                name: hermes-foyer
+                description: >-
+                  Hermes foyer profile: household assistant with its own
+                  sessions and memini namespace.
     security:
       redact_secrets: true
     privacy:

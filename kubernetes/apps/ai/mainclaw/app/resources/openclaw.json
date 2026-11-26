@@ -989,6 +989,26 @@
         "channel": "discord",
         "accountId": "*"
       }
+    },
+    {
+      "agentId": "main",
+      "match": {
+        "channel": "a2a",
+        "peer": {
+          "kind": "direct",
+          "id": "litellm-main"
+        }
+      }
+    },
+    {
+      "agentId": "nova",
+      "match": {
+        "channel": "a2a",
+        "peer": {
+          "kind": "direct",
+          "id": "litellm-nova"
+        }
+      }
     }
   ],
   "channels": {
@@ -1184,6 +1204,38 @@
         "provider": "default",
         "id": "DISCORD_BOT_TOKEN"
       }
+    },
+    "a2a": {
+      "enabled": true,
+      "advertisedUrl": "http://mainclaw.ai.svc.cluster.local:18789",
+      "replyTimeoutMs": 600000,
+      "exposeAgents": [
+        "main",
+        "nova"
+      ],
+      "peers": {
+        "litellm-main": {
+          "token": "$${LITELLM_API_KEY_MAINCLAW_MAIN}"
+        },
+        "litellm-nova": {
+          "token": "$${LITELLM_API_KEY_MAINCLAW_NOVA}"
+        },
+        "hermes": {
+          "token": "$${OPENCLAW_GATEWAY_TOKEN}",
+          "url": "http://litellm.ai:4000/a2a/hermes-default",
+          "outboundToken": "$${LITELLM_API_KEY}"
+        },
+        "hermes-foyer": {
+          "token": "$${OPENCLAW_GATEWAY_TOKEN}",
+          "url": "http://litellm.ai:4000/a2a/hermes-foyer",
+          "outboundToken": "$${LITELLM_API_KEY}"
+        },
+        "devclaw": {
+          "token": "$${OPENCLAW_GATEWAY_TOKEN}",
+          "url": "http://litellm.ai:4000/a2a/devclaw-main",
+          "outboundToken": "$${LITELLM_API_KEY}"
+        }
+      }
     }
   },
   "commands": {
@@ -1232,10 +1284,7 @@
     "publicOrigin": "https://mainclaw.oxygn.dev",
     "remote": {
       "url": "https://mainclaw.oxygn.dev"
-    },
-    "trustedProxies": [
-      "10.42.0.0/16"
-    ]
+    }
   },
   "logging": {
     "level": "info",
@@ -1894,6 +1943,7 @@
   },
   "plugins": {
     "allow": [
+      "a2a",
       "brave",
       "browser",
       "device-pair",
@@ -1908,6 +1958,9 @@
       "workboard"
     ],
     "entries": {
+      "a2a": {
+        "enabled": true
+      },
       "browser": {
         "enabled": true,
         "config": {}
