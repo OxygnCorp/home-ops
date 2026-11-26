@@ -103,3 +103,8 @@ mirror-sync org:
 [script]
 test-init:
     bash -euo pipefail "{{ justfile_directory() }}/kubernetes/tests/test-retention-init.sh"
+
+[doc('Run the claws app-startup doctor-fallback fixture tests (devclaw + mainclaw)')]
+[script]
+test-fallback:
+    bash -euo pipefail "{{ justfile_directory() }}/kubernetes/tests/test-doctor-fallback.sh"
