@@ -12,14 +12,6 @@ spec:
   values:
     controllers:
       home-assistant:
-        # Paused 2026-11-26: not used yet, so it should not hold CPU/RAM.
-        # Scaling the controller to 0 stops both the app and the code-server
-        # sidecar; the Service/HTTPRoutes, the PVCs (config + cache), the
-        # lbipam/iot-net IP reservations and the kopiur chain stay in place.
-        # kopiur snapshots drop to a daily cron while paused (see
-        # kustomization.yaml, the data is frozen). Set back to 1 and restore
-        # the hourly cron to resume.
-        replicas: 0
         annotations:
           reloader.stakater.com/auto: "true"
         containers:

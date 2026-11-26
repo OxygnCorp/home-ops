@@ -7,6 +7,13 @@ components:
 
 resources:
   - ./namespace.yaml
-  - ./home-assistant/ks.yaml
+  # Removed from the cluster 2026-11-26: home-assistant holds no data or config
+  # yet, so the whole stack (HelmRelease, PVCs, Service, HTTPRoutes, kopiur CRs)
+  # is deleted and stops consuming storage. Only the manifests are kept.
+  # Redeploy: uncomment this line, then re-enable ha_mcp in
+  # kubernetes/apps/ai/litellm/app/mcp/workloads.yaml (+ its ExternalSecret in
+  # mcp/externalsecrets.yaml with a fresh token, and `- ha_mcp` in
+  # teams/mcp-apps.yaml).
+  # - ./home-assistant/ks.yaml
   - ./teslamate/ks.yaml
   - ./mosquitto/ks.yaml
