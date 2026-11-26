@@ -1,0 +1,94 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: fluent-bit
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: fluent-bit
+  interval: 1h
+  values:
+    kind: DaemonSet
+    fullnameOverride: fluent-bit
+    image:
+      repository: ghcr.io/fluent/fluent-bit
+      tag: 5.1.3
+      digest: sha256:c5542543523c9678398dd78d927c05e8425ec15b038f226b67b3b019b1a70845
+    # Talos ships its service logs to 127.0.0.1:5171 (machine.logging in
+    # talos/main/cluster.yaml.j2), which only exists in the host network
+    # namespace.
+    hostNetwork: true
+    dnsPolicy: ClusterFirstWithHostNet
+    tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+        effect: NoSchedule
+      - key: workload
+        operator: Equal
+        value: ai
+        effect: NoSchedule
+    resources:
+      requests:
+        cpu: 25m
+        memory: 32Mi
+      limits:
+        memory: 128Mi
+    env:
+      - name: NODE_NAME
+        valueFrom:
+          fieldRef:
+            fieldPath: spec.nodeName
+    config:
+      service: |-
+        [SERVICE]
+            daemon off
+            flush {{ .Values.flush }}
+            log_level warn
+            parsers_file /fluent-bit/etc/parsers.conf
+            parsers_file /fluent-bit/etc/conf/custom_parsers.conf
+            http_server on
+            http_listen 0.0.0.0
+            http_port {{ .Values.metricsPort }}
+            health_check on
+      inputs: |-
+        [INPUT]
+            name tcp
+            alias talos_service
+            listen 127.0.0.1
+            port 5171
+            tag talos.service
+            format json
+            chunk_size 64
+            buffer_size 256
+      filters: |-
+        # dns-resolve-cache logs every host DNS query; kernel lines duplicate
+        # what KmsgLogConfig would ship if it is ever enabled.
+        [FILTER]
+            name grep
+            match talos.service
+            exclude $talos-service ^(kernel|dns-resolve-cache)$
+        [FILTER]
+            name modify
+            match talos.service
+            add node ${NODE_NAME}
+            rename talos-level level
+            rename talos-time talos_time
+      outputs: |-
+        [OUTPUT]
+            name http
+            match talos.service
+            host victoria-logs.observability.svc.cluster.local
+            port 9428
+            uri /insert/jsonline?_stream_fields=node,talos-service&_msg_field=msg,content&_time_field=talos_time
+            format json_lines
+            json_date_key false
+            compress gzip
+            log_response_payload false
+    dashboards:
+      # Grafana is operated by grafana-operator and does not discover the
+      # chart's label-based ConfigMaps.
+      enabled: false
+    serviceMonitor:
+      enabled: true
