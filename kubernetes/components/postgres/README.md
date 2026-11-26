@@ -123,3 +123,7 @@ healthCheckExprs:
     failed: status.conditions.filter(e, e.type == 'Ready').all(e, e.status == 'False')
     current: status.conditions.filter(e, e.type == 'Ready').all(e, e.status == 'True')
 ```
+
+## Image tag automation
+
+CNPG pins `spec.imageName`, which Renovate's `kubernetes` manager does not read. A scoped regex custom manager (`.renovate/customManagers.json5`, "Track the CloudNativePG PostgreSQL image tag") tracks `cluster.yaml` only, and only plain `major.minor` tags: flavoured (`18.4-standard-bookworm`) and dated rolling builds are rejected by its newline anchor. The `database/cloudnative-pg/cluster` verification cluster is deliberately out of scope — it pins a dated rolling build. Updates always open a manual PR (`/cloudnative-pg/` is in the never-automerge list, see AGENTS.md).
