@@ -43,6 +43,7 @@ spec:
               memory: 256Mi
       envoyService:
         externalTrafficPolicy: Local
+        allocateLoadBalancerNodePorts: false
   shutdown:
     drainTimeout: 180s
   telemetry:
