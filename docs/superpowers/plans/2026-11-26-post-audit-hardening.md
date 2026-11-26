@@ -61,7 +61,7 @@ Merge before or independently of phases 1-4; each is a one-line diff:
 - Modify: `kubernetes/apps/kopiur-system/kopiur/repository/clusterrepository.yaml` (freeze `nas`, task 1.5)
 
 **Interfaces:**
-- Produces: `ClusterRepository/offsite` in namespace `kopiur-system`; secret `kopiur-offsite-secret` (keys `KOPIA_PASSWORD`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `S3_ENDPOINT`, `S3_BUCKET`).
+- Produces: `ClusterRepository/offsite` in namespace `kopiur-system`; secret `kopiur-offsite-secret` (keys `KOPIA_PASSWORD`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` — the operator reads only the two AWS keys; endpoint/bucket live in the ClusterRepository, so no `S3_ENDPOINT`/`S3_BUCKET` entries).
 - Consumes: nothing from other phases.
 
 ### Task 1.1 — 1Password item + ExternalSecret
@@ -75,7 +75,7 @@ Cloudflare dashboard → R2 → Create bucket `kopiur-backup` (location: automat
 - [ ] **Step 2: Create the 1Password item**
 
 Item `kopiur-offsite` in the vault used by the `onepassword` ClusterSecretStore, with fields:
-`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `S3_ENDPOINT` = `https://d1403fac4607ccda8f0f9d8153b6c03f.eu.r2.cloudflarestorage.com`, `S3_BUCKET` = `kopiur-backup`.
+`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`. Nothing else: the operator reads only these two keys from the S3 secret — endpoint and bucket live in the ClusterRepository, so `S3_ENDPOINT`/`S3_BUCKET` entries would be dead weight that only *looks* configurable.
 
 Do **not** put a KOPIA_PASSWORD in this item, and never rotate the existing one: the seed copies the `nas` repository's already-encrypted config, so the offsite repository must use the exact same password. The ExternalSecret below therefore extracts `KOPIA_PASSWORD` from the existing `kopiur` item.
 
@@ -95,21 +95,23 @@ spec:
     name: onepassword
   target:
     name: kopiur-offsite-secret
-    template:
-      engineVersion: v2
-      data:
-        KOPIA_PASSWORD: "{{ .KOPIA_PASSWORD }}"
-        AWS_ACCESS_KEY_ID: "{{ .AWS_ACCESS_KEY_ID }}"
-        AWS_SECRET_ACCESS_KEY: "{{ .AWS_SECRET_ACCESS_KEY }}"
-        S3_ENDPOINT: "{{ .S3_ENDPOINT }}"
-        S3_BUCKET: "{{ .S3_BUCKET }}"
-  dataFrom:
-    # KOPIA_PASSWORD comes from the existing item: it must equal the `nas`
-    # repository password, otherwise the seeded blobs cannot be decrypted.
-    - extract:
+  # Keyed explicitly (spec.data, not dataFrom+template) so that a stray
+  # KOPIA_PASSWORD in the `kopiur-offsite` item can never shadow the one
+  # from `kopiur` — the seed inherits the `nas` password verbatim and a
+  # different value would break the connect after seeding.
+  data:
+    - secretKey: KOPIA_PASSWORD
+      remoteRef:
         key: kopiur
-    - extract:
+        property: KOPIA_PASSWORD
+    - secretKey: AWS_ACCESS_KEY_ID
+      remoteRef:
         key: kopiur-offsite
+        property: AWS_ACCESS_KEY_ID
+    - secretKey: AWS_SECRET_ACCESS_KEY
+      remoteRef:
+        key: kopiur-offsite
+        property: AWS_SECRET_ACCESS_KEY
 ```
 
 - [ ] **Step 4: Register the file**
@@ -153,7 +155,8 @@ spec:
           name: kopiur-offsite-secret
           namespace: kopiur-system
       bucket: kopiur-backup
-      endpoint: https://d1403fac4607ccda8f0f9d8153b6c03f.eu.r2.cloudflarestorage.com
+      # bare host[:port], no scheme — kopia's S3 client (minio-go) builds the URL itself
+      endpoint: d1403fac4607ccda8f0f9d8153b6c03f.eu.r2.cloudflarestorage.com
       prefix: kopiur/
       region: auto
   concurrency:
@@ -190,7 +193,7 @@ spec:
     timezone: Europe/Paris
   parameters:
     epoch:
-      minDuration: 6h # S3: fewer, larger index blobs than the 2h used for NFS
+      minDuration: 2h # same as nas: the seed inherits its whole index history; slow epochs are what pile up uncompacted index blobs
   maintenance:
     enabled: true
     namespace: kopiur-system
