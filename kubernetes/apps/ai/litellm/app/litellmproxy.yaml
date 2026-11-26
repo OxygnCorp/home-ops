@@ -204,7 +204,10 @@ spec:
     #
     # Failover is unaffected: the pin only ever narrows the candidate list to
     # deployments that are currently healthy, so a benched (429/5xx) deployment
-    # is skipped and the request is served by the other subscription.
+    # is skipped and the request is served by the group's other deployment
+    # when it has one (only the free models do while the Matt subscription is
+    # parked — see models/opencode-go/kustomization.yaml), otherwise by the
+    # tier-2 free-tier list below (`default_fallbacks`).
     optional_pre_call_checks:
       - session_affinity
     # Two-tier fallback policy: tier 1 is implicit (each group's matt/agnes
@@ -213,6 +216,11 @@ spec:
     # `fallbacks` — one list to maintain, new groups covered automatically.
     # The free groups themselves inherit it too, so one free model hands over
     # to the other.
+    #
+    # TEMPORARY (2026-11-26): the 27 paid Matt deployments are parked until
+    # Agnès's Go renewal on 2026-11-29 (see models/opencode-go/kustomization.yaml),
+    # so paid groups run a single deployment and tier 1 is inoperative for them:
+    # their 429/5xx degrades straight to the tier-2 free list.
     #
     # Ordered: hy4-flash-free first (vision-capable + prompt caching, $0 on
     # the Go plan), then beam-free (text-only, 1M/131k) when it fails or is in

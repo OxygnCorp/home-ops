@@ -3,7 +3,10 @@
 # Grouped by upstream provider:
 #   - opencode-go/ : 29 OpenCode Go models x 2 subscriptions (58 CRs sharing
 #                    29 modelNames, so litellm load-balances and fails over
-#                    between the two keys — see opencode-go/kustomization.yaml)
+#                    between the two keys — see opencode-go/kustomization.yaml).
+#                    TEMPORARY (2026-11-26): the 27 paid Matt-side deployments
+#                    are parked, leaving 31 CRs — the 2 free models stay on
+#                    both keys for failover.
 #   - internal/    : 2 in-cluster services (embedding + reranker)
 #   - go-auto.yaml : complexity router in front of the opencode-go groups. It
 #                    calls no upstream itself, so it lives outside opencode-go/.
