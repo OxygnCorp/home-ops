@@ -373,8 +373,52 @@ spec:
                 # no longer installs the plugin packages it finds missing, so the flag is
                 # load-bearing); `--non-interactive` makes the intent explicit so no repair
                 # can block on a prompt even if the container is ever started with a TTY.
-                node /app/openclaw.mjs doctor --fix --non-interactive \
-                  || echo "WARN: doctor exited nonzero; continuing"
+                # Keep doctor output both live in the pod log and on disk, so the
+                # SQLite corruption signature below can be acted on. The `||` stays
+                # inside the group: sh has no pipefail, so the pipe status is tee's,
+                # and a doctor failure must warn rather than abort startup.
+                { node /app/openclaw.mjs doctor --fix --non-interactive 2>&1 \
+                  || echo "WARN: doctor exited nonzero; continuing"; } | tee /tmp/doctor.log
+                #
+                # Self-heal for the 2026-11-26 crashloop: a Gateway killed mid-migration
+                # (Recreate strategy + RWO PVC, image bump landing while the previous
+                # rollout was still migrating) left openclaw.sqlite malformed. Doctor
+                # then refused maintenance with "database disk image is malformed" and,
+                # because startup deliberately continues on doctor failure, the Gateway
+                # died on its own integrity check in an endless CrashLoopBackOff. The
+                # migration guard copies the DB to openclaw.sqlite.pre-startup-migration-*.bak
+                # *before* touching it, so on that exact signature ONLY (a perms/plugin
+                # doctor failure must never cost DB state) restore the newest valid
+                # backup. The corrupt DB is kept as openclaw.sqlite.corrupt-<epoch> for
+                # forensics; if the restored point turns out to be corrupt too, retire
+                # that backup as *.corrupt-<epoch> so a following boot tries the next one.
+                if grep -Eq 'database disk image (is )?malformed|ERR_SQLITE_ERROR|integrity_check failed|SQLITE_CORRUPT' /tmp/doctor.log; then
+                  BAK=""
+                  for f in /home/node/.openclaw/state/openclaw.sqlite.pre-startup-migration-*.bak /home/node/.openclaw/state/openclaw.sqlite.doctor-cron-*.bak; do
+                    [ -f "$f" ] || continue
+                    head -c 16 "$f" | grep -q 'SQLite format 3' || continue
+                    if [ -z "$BAK" ] || [ "$(stat -c %Y "$f")" -gt "$(stat -c %Y "$BAK")" ]; then BAK="$f"; fi
+                  done
+                  if [ -n "$BAK" ]; then
+                    echo "state DB corrupt: restoring $BAK (corrupt copy kept)"
+                    TS=$(date +%s)
+                    if cp -p "$BAK" /home/node/.openclaw/state/openclaw.sqlite.incoming; then
+                      mv /home/node/.openclaw/state/openclaw.sqlite /home/node/.openclaw/state/openclaw.sqlite.corrupt-$TS
+                      mv /home/node/.openclaw/state/openclaw.sqlite.incoming /home/node/.openclaw/state/openclaw.sqlite
+                      chmod 600 /home/node/.openclaw/state/openclaw.sqlite
+                      rm -f /home/node/.openclaw/state/openclaw.sqlite-wal /home/node/.openclaw/state/openclaw.sqlite-shm
+                      { node /app/openclaw.mjs doctor --fix --non-interactive 2>&1 \
+                        || echo "WARN: doctor still failing after state DB fallback; continuing"; } | tee /tmp/doctor-retry.log
+                      if grep -Eq 'database disk image (is )?malformed|ERR_SQLITE_ERROR|integrity_check failed|SQLITE_CORRUPT' /tmp/doctor-retry.log; then
+                        mv "$BAK" /home/node/.openclaw/state/$(basename "$BAK" .bak).corrupt-$TS
+                      fi
+                    else
+                      echo "WARN: could not stage state DB backup; leaving live DB untouched"
+                    fi
+                  else
+                    echo "WARN: no valid state backup to restore from; continuing"
+                  fi
+                fi
                 # Start gateway
                 echo "Starting OpenClaw gateway..."
                 exec node /app/openclaw.mjs gateway
