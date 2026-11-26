@@ -196,6 +196,13 @@ jobs:
           ai-smart-model: ${{ vars.SMART_MODEL }}
           ai-smart-api-key: ${{ secrets.LITELLM_API_KEY }}
           allowed-source-hosts: "github.com,api.github.com,gitlab.com,registry.terraform.io,artifacthub.io,talos.dev,www.talos.dev,docs.siderolabs.com,api.osv.dev,osv.dev,nvd.nist.gov,www.cve.org"
+          claim-falsification: "true"
+          upstream-link-mode: togithub
+          # Per-run LiteLLM session: groups every model call of this review in
+          # the cost log. The action treats *-session-id headers as name-only
+          # in its review fingerprint, so retries never bust the review cache.
+          ai-extra-headers: |
+            x-litellm-session-id: prreview-${{ github.run_id }}-${{ github.run_attempt }}
           context-limit-mode: normal
           ci-status-check: "true"
           # 10 min: multi-chart PRs routinely exceed 600s of CI. Beyond the
