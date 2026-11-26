@@ -18,72 +18,96 @@
 # This is what makes the pool resilient: when one subscription returns 429 or
 # 5xx, the group has an alternative deployment, so the router benches the
 # failing one (`cooldown_time: 30`) and serves the request from the other.
-# With one deployment per modelName instead, a 429 has nowhere to go — the
-# request is retried and then fails.
+# With one deployment per modelName instead, a 429 has no sibling to go to —
+# the request falls through to the router's free-tier `default_fallbacks`.
+# (See the TEMPORARY block below: parking Matt's paid deployments puts every
+# paid group in that single-deployment shape for now.)
 #
 # Do NOT give the two files of a pair different `modelName`s: that splits them
 # into two single-deployment groups and removes all failover.
 #
 # When adding a model, add BOTH files of the pair.
+#
+# TEMPORARY — Matt subscription parked (2026-11-26 → 2026-11-29)
+# -----------------------------------------------------------------
+# Agnès's Go subscription renews on 2026-11-29 with ~74% of its monthly
+# allowance already used, and unused allowance does not roll over. To burn
+# that remainder instead of splitting traffic 50/50, the Matt-side
+# deployments of every PAID model are commented out below: each paid model
+# group keeps a single deployment (Agnès) and gets 100% of the traffic.
+#
+# Free models (beam-free, hy4-flash-free) stay on BOTH keys — they bill no
+# allowance and keep the failover that go-auto's SIMPLE tier relies on.
+#
+# Consequence: a 429 from Agnès's subscription is no longer failed over to
+# Matt. `routerSettings.default_fallbacks` (app/litellmproxy.yaml) applies
+# `hy4-flash-free` then `beam-free` to every chat group without an explicit
+# `fallbacks` entry, so the request is SILENTLY served by a free model — a
+# quota-exhausted paid group degrades to the free tier instead of erroring,
+# and no paid group hard-fails. (Embeddings/reranker keep explicit empty
+# chains and are unaffected.)
+#
+# Restore after Agnès renews: uncomment the 27 `# - ./<model>.yaml` lines
+# below, or `git revert` the commit that parked them.
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-  - ./dsv41f.yaml
+  # - ./dsv41f.yaml
   - ./dsv41f-agnes.yaml
-  - ./dsv41f-max.yaml
+  # - ./dsv41f-max.yaml
   - ./dsv41f-max-agnes.yaml
-  - ./dsv41f-nothink.yaml
+  # - ./dsv41f-nothink.yaml
   - ./dsv41f-nothink-agnes.yaml
-  - ./go-claude-haiku-5-5.yaml
+  # - ./go-claude-haiku-5-5.yaml
   - ./go-claude-haiku-5-5-agnes.yaml
   - ./beam-free.yaml
   - ./beam-free-agnes.yaml
-  - ./go-glm-5.3.yaml
+  # - ./go-glm-5.3.yaml
   - ./go-glm-5.3-agnes.yaml
-  - ./go-gpt-6-luna.yaml
+  # - ./go-gpt-6-luna.yaml
   - ./go-gpt-6-luna-agnes.yaml
-  - ./go-grok-4.7.yaml
+  # - ./go-grok-4.7.yaml
   - ./go-grok-4.7-agnes.yaml
-  - ./go-glm-5.3-flash.yaml
+  # - ./go-glm-5.3-flash.yaml
   - ./go-glm-5.3-flash-agnes.yaml
-  - ./go-hy4-preview.yaml
+  # - ./go-hy4-preview.yaml
   - ./go-hy4-preview-agnes.yaml
-  - ./go-kimi-k2.7-code.yaml
+  # - ./go-kimi-k2.7-code.yaml
   - ./go-kimi-k2.7-code-agnes.yaml
-  - ./go-kimi-k3.yaml
+  # - ./go-kimi-k3.yaml
   - ./go-kimi-k3-agnes.yaml
-  - ./go-kimi-k3.1-pro.yaml
+  # - ./go-kimi-k3.1-pro.yaml
   - ./go-kimi-k3.1-pro-agnes.yaml
-  - ./go-minimax-m3.yaml
+  # - ./go-minimax-m3.yaml
   - ./go-minimax-m3-agnes.yaml
-  - ./go-minimax-m3.1-flash.yaml
+  # - ./go-minimax-m3.1-flash.yaml
   - ./go-minimax-m3.1-flash-agnes.yaml
-  - ./go-qwen3.8-flash.yaml
+  # - ./go-qwen3.8-flash.yaml
   - ./go-qwen3.8-flash-agnes.yaml
-  - ./go-qwen3.8-max.yaml
+  # - ./go-qwen3.8-max.yaml
   - ./go-qwen3.8-max-agnes.yaml
-  - ./mimo-v2.6-flash.yaml
+  # - ./mimo-v2.6-flash.yaml
   - ./mimo-v2.6-flash-agnes.yaml
-  - ./mimo-v2.6-pro.yaml
+  # - ./mimo-v2.6-pro.yaml
   - ./mimo-v2.6-pro-agnes.yaml
-  - ./qwen3.7-plus.yaml
+  # - ./qwen3.7-plus.yaml
   - ./qwen3.7-plus-agnes.yaml
   # Added 2026-11-23 from the OpenCode Go catalog
-  - ./deepseek-v4-pro.yaml
+  # - ./deepseek-v4-pro.yaml
   - ./deepseek-v4-pro-agnes.yaml
-  - ./gemini-4-argon.yaml
+  # - ./gemini-4-argon.yaml
   - ./gemini-4-argon-agnes.yaml
-  - ./gpt-5.6-luna.yaml
+  # - ./gpt-5.6-luna.yaml
   - ./gpt-5.6-luna-agnes.yaml
-  - ./hy3.yaml
+  # - ./hy3.yaml
   - ./hy3-agnes.yaml
-  - ./hy4.yaml
+  # - ./hy4.yaml
   - ./hy4-agnes.yaml
   - ./hy4-flash-free.yaml
   - ./hy4-flash-free-agnes.yaml
-  - ./longcat-2.5.yaml
+  # - ./longcat-2.5.yaml
   - ./longcat-2.5-agnes.yaml
-  - ./qwen4-max.yaml
+  # - ./qwen4-max.yaml
   - ./qwen4-max-agnes.yaml
-  - ./step-5-preview.yaml
+  # - ./step-5-preview.yaml
   - ./step-5-preview-agnes.yaml
