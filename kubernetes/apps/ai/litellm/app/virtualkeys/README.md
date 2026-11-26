@@ -8,6 +8,8 @@ operator generates is already where it is needed, and every extra copy is one
 more place to leak a spend-capable credential. `lens-analysis.yaml` is the
 current example (Lens mounts it through `secretKeyRef`).
 
+Per-key consumption is visualized in the `LiteLLM — Virtual Keys` Grafana dashboard (uid `llm-routing`).
+
 ## 1Password conventions
 
 All API credentials live in the vault `home-ops`:
