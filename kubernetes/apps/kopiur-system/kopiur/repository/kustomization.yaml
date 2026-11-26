@@ -5,3 +5,5 @@ kind: Kustomization
 resources:
   - ./clusterrepository.yaml
   - ./httproute.yaml
+  - ./offsite-clusterrepository.yaml
+  - ./offsite-externalsecret.yaml
