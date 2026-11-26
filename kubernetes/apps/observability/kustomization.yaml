@@ -10,6 +10,7 @@ resources:
   - ./namespace.yaml
   - ./arc-control/ks.yaml
   - ./blackbox-exporter/ks.yaml
+  - ./fluent-bit/ks.yaml
   - ./gatus-sidecar/ks.yaml
   - ./grafana/ks.yaml
   - ./kube-prometheus-stack/ks.yaml
