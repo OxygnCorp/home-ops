@@ -11,9 +11,10 @@ spec:
     apiBase: https://opencode.ai/zen/go/v1
     apiKey: os.environ/OPENCODE_AGNES_API_KEY
     additional:
-      # Tier-2 emergency fallback for every chat model group: free and
-      # unmetered while the OpenCode Go promo lasts ("limited time" — if the
-      # promo ends, repoint the tier-2 fallbacks at go-glm-5.3-flash).
+      # Second (Agnes) deployment of the tier-2 free fallback #2 group: free
+      # and unmetered while the OpenCode Go promo lasts ("limited time" — if
+      # the promo ends, drop the group from `default_fallbacks` in
+      # litellmproxy.yaml and point it at go-glm-5.3-flash instead).
       # Replaces longcat-2.5-free (upstream longcat-2.5-preview-free retired).
       input_cost_per_token: 0
       output_cost_per_token: 0

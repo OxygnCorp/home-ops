@@ -10,7 +10,7 @@ spec:
     # Virtual group: no upstream call of its own. litellm classifies the
     # request, then routes it to one of the OpenCode Go groups below as if the
     # client had asked for that group directly (deployment selection, cooldowns
-    # and the `beam-free` fallback still apply).
+    # and the free-tier `default_fallbacks` chain still apply).
     model: auto_router/complexity_router
     dropParams: true
     additional:
