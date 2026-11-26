@@ -52,6 +52,12 @@ machine:
     modules:
       - name: nbd
       - name: dm_thin_pool
+  logging:
+    destinations:
+      # fluent-bit in observability/ listens on the host network namespace
+      # (kubernetes/apps/observability/fluent-bit)
+      - endpoint: tcp://127.0.0.1:5171/
+        format: json_lines
   kubelet:
     defaultRuntimeSeccompProfileEnabled: true
     disableManifestsDirectory: true
