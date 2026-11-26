@@ -195,7 +195,7 @@ jobs:
           ai-smart-api-format: openai
           ai-smart-model: ${{ vars.SMART_MODEL }}
           ai-smart-api-key: ${{ secrets.LITELLM_API_KEY }}
-          allowed-source-hosts: "github.com,api.github.com,gitlab.com,registry.terraform.io,artifacthub.io,talos.dev,www.talos.dev,docs.siderolabs.com"
+          allowed-source-hosts: "github.com,api.github.com,gitlab.com,registry.terraform.io,artifacthub.io,talos.dev,www.talos.dev,docs.siderolabs.com,api.osv.dev,osv.dev,nvd.nist.gov,www.cve.org"
           context-limit-mode: normal
           ci-status-check: "true"
           # 10 min: multi-chart PRs routinely exceed 600s of CI. Beyond the
