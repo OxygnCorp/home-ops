@@ -201,12 +201,15 @@ The MCP gateway is multiplexed by teams, mirroring the old toolhive groups:
 
 Notes:
 
-- **`ha_mcp` is paused** (2026-11-26) with the home-assistant deployment it
-  fronts (`kubernetes/apps/automation/home-assistant`, `replicas: 0`): the CR
-  stays in `mcp/workloads.yaml` with `workload.replicas: 0` and its grant is
-  commented out in `teams/mcp-apps.yaml`, so team keys do not see it. Resume
-  both together (workload `replicas: 1`, re-add `- ha_mcp`, app
-  `replicas: 1`).
+- **`ha_mcp` removed** (2026-11-26) together with the home-assistant stack it
+  fronts (`kubernetes/apps/automation/home-assistant`, ks include commented
+  out — HA held no data or config yet). Nothing of either runs in the cluster
+  and their PVCs are gone; the manifests are kept verbatim, so restoring is
+  four uncomments: `- ./home-assistant/ks.yaml` in
+  `kubernetes/apps/automation/kustomization.yaml`, the `litellm-ha-mcp` CR in
+  `mcp/workloads.yaml`, the `toolhive-home-assistant` ExternalSecret in
+  `mcp/externalsecrets.yaml`, and `- ha_mcp` in `teams/mcp-apps.yaml` (with a
+  fresh HA token in 1Password).
 - **`kubectl` was removed** (2026-11): radar already exposes the read path
   (`list_resources`, `get_resource`, `diagnose`, logs, events, metrics) plus
   everything the kubectl MCP could not reach, and the two shared a read-only

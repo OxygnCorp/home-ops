@@ -2,44 +2,44 @@
 # Note: workload CR names carry a `litellm-` prefix inherited from the toolhive
 # migration (the Deployments were originally named after the bare server name).
 # `spec.alias` is the server name as rendered in the litellm proxy config.
-# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/litellm.home-operations.com/litellmmcpserver_v1alpha1.json
-apiVersion: litellm.home-operations.com/v1alpha1
-kind: LiteLLMMCPServer
-metadata:
-  name: litellm-ha-mcp
-spec:
-  # Underscore (not dash): litellm server-name validation forbids '-' (render:
-  # "Server name cannot contain '-' Found: ha-mcp"). Only spec.alias changes —
-  # metadata.name stays dash-qualified for workload name-collision avoidance.
-  alias: ha_mcp
-  proxyRef: litellm
-  transport: http
-  workload:
-    # Paused 2026-11-26 along with the home-assistant deployment it talks to
-    # (kubernetes/apps/automation/home-assistant): kept declared for a later
-    # resume, scaled to 0 so it holds no resources. The server stays in the
-    # proxy's mcp_servers map (the CR still renders) but its team grant is
-    # commented out in teams/mcp-apps.yaml, so agents do not see it. Set back
-    # to 1 and re-add the grant to resume.
-    replicas: 0
-    image: ghcr.io/homeassistant-ai/ha-mcp:9.3.0
-    port: 8086
-    command:
-      - ha-mcp-web
-    env:
-      - name: HOMEASSISTANT_URL
-        value: http://home-assistant.automation:8123
-      - name: HOMEASSISTANT_TOKEN
-        valueFrom:
-          secretKeyRef:
-            name: toolhive-home-assistant
-            key: HOMEASSISTANT_TOKEN
-    volumeMounts:
-      - name: tmp
-        mountPath: /tmp
-    volumes:
-      - name: tmp
-        emptyDir: {}
+# Disabled 2026-11-26: home-assistant and its MCP server were removed from the
+# cluster (no HA data/config yet), see kubernetes/apps/automation/kustomization.yaml.
+# The CR is kept commented for a quick restore: uncomment it, re-add
+# `- ha_mcp` in teams/mcp-apps.yaml, and restore the toolhive-home-assistant
+# ExternalSecret in mcp/externalsecrets.yaml (the 1Password item still holds
+# the old token; generate a fresh one after redeploying HA).
+#
+# # yaml-language-server: $schema=https://k8s-schemas.home-operations.com/litellm.home-operations.com/litellmmcpserver_v1alpha1.json
+# apiVersion: litellm.home-operations.com/v1alpha1
+# kind: LiteLLMMCPServer
+# metadata:
+#   name: litellm-ha-mcp
+# spec:
+#   # Underscore (not dash): litellm server-name validation forbids '-' (render:
+#   # "Server name cannot contain '-' Found: ha-mcp"). Only spec.alias changes —
+#   # metadata.name stays dash-qualified for workload name-collision avoidance.
+#   alias: ha_mcp
+#   proxyRef: litellm
+#   transport: http
+#   workload:
+#     image: ghcr.io/homeassistant-ai/ha-mcp:9.3.0
+#     port: 8086
+#     command:
+#       - ha-mcp-web
+#     env:
+#       - name: HOMEASSISTANT_URL
+#         value: http://home-assistant.automation:8123
+#       - name: HOMEASSISTANT_TOKEN
+#         valueFrom:
+#           secretKeyRef:
+#             name: toolhive-home-assistant
+#             key: HOMEASSISTANT_TOKEN
+#     volumeMounts:
+#       - name: tmp
+#         mountPath: /tmp
+#     volumes:
+#       - name: tmp
+#         emptyDir: {}
 ---
 # yaml-language-server: $schema=https://k8s-schemas.home-operations.com/litellm.home-operations.com/litellmmcpserver_v1alpha1.json
 apiVersion: litellm.home-operations.com/v1alpha1

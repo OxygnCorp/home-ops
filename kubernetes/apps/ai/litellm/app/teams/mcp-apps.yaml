@@ -18,10 +18,9 @@ spec:
   models: []
   mcpServers:
     - arr
-    # Paused 2026-11-26: ha-mcp is scaled to 0 with its home-assistant backend
-    # (see kubernetes/apps/ai/litellm/app/mcp/workloads.yaml). Leaving the
-    # grant would advertise a dead server to team keys; re-add `- ha_mcp`
-    # and set workload.replicas back to 1 to resume.
+    # Disabled 2026-11-26: ha-mcp and its home-assistant backend were removed
+    # from the cluster (the CR is commented out in mcp/workloads.yaml).
+    # Re-add `- ha_mcp` together with that CR to resume.
     # - ha_mcp
     - seerr_mcp
     - teslamate
