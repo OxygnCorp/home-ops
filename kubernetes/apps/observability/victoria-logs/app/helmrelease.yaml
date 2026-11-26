@@ -22,7 +22,7 @@ spec:
       persistentVolume:
         enabled: true
         storageClassName: miroir-slow
-        size: 30Gi
+        size: 20Gi
       retentionPeriod: 14d
       route:
         enabled: true
