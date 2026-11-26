@@ -133,6 +133,15 @@ kind: ResolverConfig
 searchDomains:
   domains: []
 ---
+# Kernel logs (kmsg) ship to the same fluent-bit relay as service logs, but
+# need their own config document: machine.logging only covers service logs.
+# Sample record: {facility: user, msg: "...", priority: warning,
+# talos-level: warn, talos-time: "..." }.
+apiVersion: v1alpha1
+kind: KmsgLogConfig
+name: talos-logs-relay
+url: tcp://127.0.0.1:5171/
+---
 # Weekly XFS metadata scrubbing; runs are hash-staggered across volumes and
 # nodes (ref onedr0p/home-ops#11438)
 apiVersion: v1alpha1

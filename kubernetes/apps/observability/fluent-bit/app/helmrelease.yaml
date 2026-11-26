@@ -26,9 +26,15 @@ spec:
       automountServiceAccountToken: false
     rbac:
       create: false
+    # Runs as root (explicitly below the chart's default non-root 65532)
+    # because the hostPath buffer is created root:root 0755 and must stay
+    # writable; every other surface stays locked down.
     securityContext:
       allowPrivilegeEscalation: false
       readOnlyRootFilesystem: true
+      runAsNonRoot: false
+      runAsUser: 0
+      runAsGroup: 0
       capabilities:
         drop:
           - ALL
@@ -88,9 +94,8 @@ spec:
             buffer_size 256
             storage.type filesystem
       filters: |-
-        # dns-resolve-cache logs every host DNS query. kernel is kept on purpose:
-        # no KmsgLogConfig is enabled here, so it is the only source of OOM and
-        # kernel errors.
+        # dns-resolve-cache logs every host DNS query; kernel (kmsg) logs are
+        # deliberately kept and arrive through their own KmsgLogConfig doc.
         [FILTER]
             name grep
             match talos.service
@@ -122,7 +127,7 @@ spec:
     luaScripts:
       strip_newline.lua: |-
         function strip_newline(tag, timestamp, record)
-          if record.msg ~= nil then
+          if type(record.msg) == "string" then
             record.msg = record.msg:gsub("\n+$", "")
           end
           return 1, timestamp, record
