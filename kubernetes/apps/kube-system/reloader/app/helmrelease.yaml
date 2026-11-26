@@ -21,6 +21,7 @@ spec:
     fullnameOverride: reloader
     reloader:
       enableHA: true
+      reloadStrategy: annotations
       deployment:
         replicas: 2
       readOnlyRootFileSystem: true
