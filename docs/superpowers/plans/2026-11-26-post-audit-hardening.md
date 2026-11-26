@@ -72,12 +72,11 @@ Merge before or independently of phases 1-4; each is a one-line diff:
 
 Cloudflare dashboard → R2 → Create bucket `kopiur-backup` (location: automatic, EU). Then R2 → Manage API tokens → Create token, permission **Object Read & Write**, scoped to `kopiur-backup` only. Record Access Key ID / Secret Access Key.
 
-- [ ] **Step 2: Create the 1Password item**
+- [ ] **Step 2: Reuse the existing 1Password item `kopiur`**
 
-Item `kopiur-offsite` in the vault used by the `onepassword` ClusterSecretStore, with fields:
-`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`. Nothing else: the operator reads only these two keys from the S3 secret — endpoint and bucket live in the ClusterRepository, so `S3_ENDPOINT`/`S3_BUCKET` entries would be dead weight that only *looks* configurable.
+No new item is needed: add `CLOUDFLARE_R2_ACCESS_KEY_ID` and `CLOUDFLARE_R2_SECRET_ACCESS_KEY` to the existing `kopiur` item (already home to `KOPIA_PASSWORD`). A `CLOUDFLARE_R2_TOKEN`, if present (Cloudflare API token), is ignored by kopiur. The operator reads only the two AWS keys from the projected Secret — endpoint and bucket live in the ClusterRepository, so `S3_ENDPOINT`/`S3_BUCKET` entries would be dead weight that only *looks* configurable.
 
-Do **not** put a KOPIA_PASSWORD in this item, and never rotate the existing one: the seed copies the `nas` repository's already-encrypted config, so the offsite repository must use the exact same password. The ExternalSecret below therefore extracts `KOPIA_PASSWORD` from the existing `kopiur` item.
+Never rotate `KOPIA_PASSWORD`: the seed copies the `nas` repository's already-encrypted config, so offsite must use the exact same password, sourced from that same `kopiur` item.
 
 - [ ] **Step 3: Write the ExternalSecret**
 
@@ -95,9 +94,8 @@ spec:
     name: onepassword
   target:
     name: kopiur-offsite-secret
-  # Keyed explicitly (spec.data, not dataFrom+template) so that a stray
-  # KOPIA_PASSWORD in the `kopiur-offsite` item can never shadow the one
-  # from `kopiur` — the seed inherits the `nas` password verbatim and a
+  # Keyed explicitly (spec.data, not dataFrom+template) so each source field
+  # stays pinned. The seed inherits the `nas` password verbatim, so a
   # different value would break the connect after seeding.
   data:
     - secretKey: KOPIA_PASSWORD
@@ -106,12 +104,12 @@ spec:
         property: KOPIA_PASSWORD
     - secretKey: AWS_ACCESS_KEY_ID
       remoteRef:
-        key: kopiur-offsite
-        property: AWS_ACCESS_KEY_ID
+        key: kopiur
+        property: CLOUDFLARE_R2_ACCESS_KEY_ID
     - secretKey: AWS_SECRET_ACCESS_KEY
       remoteRef:
-        key: kopiur-offsite
-        property: AWS_SECRET_ACCESS_KEY
+        key: kopiur
+        property: CLOUDFLARE_R2_SECRET_ACCESS_KEY
 ```
 
 - [ ] **Step 4: Register the file**
