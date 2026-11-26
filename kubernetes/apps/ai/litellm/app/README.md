@@ -299,15 +299,28 @@ Both are pinned to `qwen3-embedding-0.6b`, the same local TEI model as
 `mcp_semantic_tool_filter`, so the two tools answer on every key with tool
 search enabled.
 
-`extraConfig.agents[]` registers 14 A2A agents, all named
+`extraConfig.agents[]` registers the **orchestrators only**, all named
 `<gateway>-<agent>` so an agent is identifiable across gateways:
 
 | Agent | Gateway | Endpoint |
 |---|---|---|
 | `hermes-default` | Hermes | `http://hermes-app.ai.svc.cluster.local:9900` |
 | `hermes-foyer` | Hermes | `http://hermes-app.ai.svc.cluster.local:9900/foyer` |
-| `mainclaw-main`, `mainclaw-family`, `mainclaw-coach`, `mainclaw-finance`, `mainclaw-shopping`, `mainclaw-media`, `mainclaw-nova`, `mainclaw-lycos`, `mainclaw-legal`, `mainclaw-elina`, `mainclaw-elliot` | Mainclaw | `http://mainclaw-app.ai.svc.cluster.local:18789` (card advertises `/a2a/v1`) |
-| `devclaw-main` | Devclaw | `http://devclaw-app.ai.svc.cluster.local:18789` (card advertises `/a2a/v1`) |
+| `mainclaw-main`, `mainclaw-nova` | Mainclaw | `http://mainclaw.ai.svc.cluster.local:18789` (card advertises `/a2a/v1`) |
+| `devclaw-main` | Devclaw | `http://devclaw.ai.svc.cluster.local:18789` (card advertises `/a2a/v1`) |
+
+Hermes names its Service `hermes-app`; the OpenClaw charts produce `mainclaw`
+and `devclaw` with no `-app` suffix. A wrong host makes card discovery fail at
+invocation, not at registration.
+
+The mainclaw specialists (`family`, `coach`, `finance`, `shopping`, `media`,
+`lycos`, `legal`, `elina`, `elliot`) are deliberately **not** registered.
+`mainclaw-main` and `mainclaw-nova` already hold the internal agent-to-agent
+ACL that lets them delegate to those specialists, so exposing each one would
+multiply A2A plumbing without adding reach. Expose a specialist directly only
+when a specific cross-gateway caller needs it; that is an explicit
+peer/binding plus registry entry. This keeps the A2A surface stable while the
+agent organisation is still moving.
 
 Invoke an agent with `POST /a2a/<agent_name>` (JSON-RPC `message/send`) and
 `x-litellm-api-key: Bearer <KEY>`. `agent_card_params.url` is the base
@@ -323,30 +336,51 @@ not remove the agent from `/v1/agents`. The Hermes chart names the Service
 
 Hermes exposes two served agents from one gateway: the default profile at
 `/` and the foyer profile at `/foyer` (configured under
-`gateway.platforms.a2a.extra.agents`). Each OpenClaw gateway exposes every
-agent through a dedicated peer token; the peer token selects the route, not
-the card skill, so one peer is required per agent.
+`gateway.platforms.a2a.extra.agents`). Each OpenClaw gateway exposes only its
+orchestrators; the peer token selects the route, not the card skill. Each
+peer token is that agent's existing LiteLLM virtual key, reused as the shared
+A2A credential: `LITELLM_API_KEY_MAINCLAW_MAIN`,
+`LITELLM_API_KEY_MAINCLAW_NOVA`, `LITELLM_API_KEY_DEVCLAW_MAIN`; Hermes uses
+its per-profile keys (`LITELLM_API_KEY` and `LITELLM_API_KEY_FOYER`). There is
+no separate A2A token set to create or rotate.
 
 Operational notes:
 
-- **Token plumbing:** the 1Password `litellm` item must contain one field per
-  peer before merge: `A2A_HERMES_TOKEN`, `A2A_HERMES_FOYER_TOKEN`, the 11
-  `A2A_MAINCLAW_<AGENT>_TOKEN`, `A2A_DEVCLAW_MAIN_TOKEN`, and the four inert
-  inbound tokens for the OpenClaw outbound peers
-  (`A2A_MAINCLAW_HERMES_TOKEN`, `A2A_MAINCLAW_HERMES_FOYER_TOKEN`,
-  `A2A_DEVCLAW_HERMES_TOKEN`, `A2A_DEVCLAW_HERMES_FOYER_TOKEN`). The litellm
-  ExternalSecret fetches the whole item via `dataFrom.extract`, but its
-  template (`mergePolicy: Replace`) only writes `template.data` keys — the
-  explicit mappings there are what land the tokens in `litellm-secret`. The
-  Hermes, Mainclaw and Devclaw ExternalSecrets map the same fields into their
-  pods. A missing field leaves the consumer in sync-error; OpenClaw keeps its
-  previous Secret, Hermes falls back to binding A2A on 127.0.0.1, and LiteLLM
-  sends an empty token upstream (401).
+- **Token plumbing:** no new 1Password fields. The LiteLLM ExternalSecret
+  maps the five existing virtual-key fields (`KEY_MAINCLAW_MAIN`,
+  `KEY_MAINCLAW_NOVA`, `KEY_DEVCLAW_MAIN`,
+  `LITELLM_API_KEY_HERMES_DEFAULT`, `LITELLM_API_KEY_HERMES_FOYER`) into the
+  `A2A_*` env names consumed by `extraConfig.agents`. Hermes derives
+  `A2A_PEER_TOKENS` from its own two profile keys; OpenClaw inbound peers read
+  the per-agent envs already injected for model traffic. OpenClaw outbound
+  peers reach Hermes (`hermes`, `hermes-foyer`) and the other OpenClaw
+  orchestrators (`devclaw` from mainclaw; `mainclaw-main`/`mainclaw-nova`
+  from devclaw). Each outbound entry still needs a `token` field by schema,
+  but it is an inert inbound stub taken from an existing pod env; only
+  `outboundToken` (the gateway-wide `LITELLM_API_KEY`) is sent to LiteLLM.
+  A missing key still
+  leaves the consumer in sync-error; OpenClaw keeps its previous Secret,
+  Hermes falls back to binding A2A on 127.0.0.1, and LiteLLM sends an empty
+  token upstream (401).
 - **Availability:** registration is a config load, so the agents are listed
   in `/v1/agents` even when a gateway is down. The remote card is resolved at
   invocation time; a wrong URL or an unavailable gateway fails that call with
   an A2A discovery error. No LitellM restart is needed after the gateways
   come up — only after changing this file.
+- **Gateway attribution:** the OpenClaw gateways intentionally have no
+  `gateway.trustedProxies` entry for the pod CIDR. When the whole `10.42.0.0/16`
+  range was trusted, LiteLLM's direct card fetch arrived without
+  `X-Forwarded-For` and was rejected as an unattributable proxy with HTTP 403
+  `proxy_attribution_required`. Gateway token auth still covers Envoy and
+  in-cluster callers; forwarded client IPs are ignored for rate limiting. If a
+  proxy is added later, trust only its source and make it overwrite
+  `X-Forwarded-For`.
+- **Changing the exposed set:** adding a specialist inside an existing
+  gateway needs no A2A change; only the internal ACL changes. Exposing an
+  agent directly means adding one peer/binding in its gateway, one
+  `exposeAgents` entry, one virtual key, and one `extraConfig.agents` entry.
+  Removing an agent is the reverse; leave its virtual key in place if it
+  still needs per-agent spend tracking.
 - **Rotation:** all three workloads have stakater reloader annotations, so a
   1Password rotation rolls them automatically; expect a transient 401 window
   while the rollouts complete.
@@ -369,15 +403,16 @@ Operational notes:
   restrictive wins); `general_settings.agent_access_default_deny: true`
   flips the no-grant default to deny. The existing Opencode grant still
   points at the old `hermes` agent id; after this rename, re-grant the new
-  `hermes-default` id if discovery through that key is needed.
+  `hermes-default` id (and any mainclaw orchestrator) if discovery through
+  that key is needed.
 - **UI discovery (SSRF allowlist):** the UI/API agent-card fetch goes
   through LiteLLM's SSRF guard, which blocks private ClusterIPs. The
   configured agents still load from Git and invoke, but UI discovery fails
   with a blocked `10.43.x.x` address. `user_url_allowed_hosts` is read from
   `general_settings`, not `litellm_settings` (the UI error text is
   misleading). This app allows `hermes-app.ai.svc.cluster.local:9900`,
-  `mainclaw-app.ai.svc.cluster.local:18789`, and
-  `devclaw-app.ai.svc.cluster.local:18789`; allowlisted hosts skip only the
+  `mainclaw.ai.svc.cluster.local:18789`, and
+  `devclaw.ai.svc.cluster.local:18789`; allowlisted hosts skip only the
   private-network check, while DNS resolution and rewriting to the resolved
   IP still apply. The allowlist is global across the proxy: it covers every
   `validate_url` call site (image/file URLs, client-supplied

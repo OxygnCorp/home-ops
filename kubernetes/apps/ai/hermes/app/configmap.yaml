@@ -87,6 +87,7 @@ data:
             agents:
               foyer:
                 profile: foyer
+                path: /foyer
                 name: hermes-foyer
                 description: >-
                   Hermes foyer profile: household assistant with its own

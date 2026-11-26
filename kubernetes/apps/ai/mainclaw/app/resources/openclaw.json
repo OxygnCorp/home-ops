@@ -1001,102 +1001,12 @@
       }
     },
     {
-      "agentId": "family",
-      "match": {
-        "channel": "a2a",
-        "peer": {
-          "kind": "direct",
-          "id": "litellm-family"
-        }
-      }
-    },
-    {
-      "agentId": "coach",
-      "match": {
-        "channel": "a2a",
-        "peer": {
-          "kind": "direct",
-          "id": "litellm-coach"
-        }
-      }
-    },
-    {
-      "agentId": "finance",
-      "match": {
-        "channel": "a2a",
-        "peer": {
-          "kind": "direct",
-          "id": "litellm-finance"
-        }
-      }
-    },
-    {
-      "agentId": "shopping",
-      "match": {
-        "channel": "a2a",
-        "peer": {
-          "kind": "direct",
-          "id": "litellm-shopping"
-        }
-      }
-    },
-    {
-      "agentId": "media",
-      "match": {
-        "channel": "a2a",
-        "peer": {
-          "kind": "direct",
-          "id": "litellm-media"
-        }
-      }
-    },
-    {
       "agentId": "nova",
       "match": {
         "channel": "a2a",
         "peer": {
           "kind": "direct",
           "id": "litellm-nova"
-        }
-      }
-    },
-    {
-      "agentId": "lycos",
-      "match": {
-        "channel": "a2a",
-        "peer": {
-          "kind": "direct",
-          "id": "litellm-lycos"
-        }
-      }
-    },
-    {
-      "agentId": "legal",
-      "match": {
-        "channel": "a2a",
-        "peer": {
-          "kind": "direct",
-          "id": "litellm-legal"
-        }
-      }
-    },
-    {
-      "agentId": "elina",
-      "match": {
-        "channel": "a2a",
-        "peer": {
-          "kind": "direct",
-          "id": "litellm-elina"
-        }
-      }
-    },
-    {
-      "agentId": "elliot",
-      "match": {
-        "channel": "a2a",
-        "peer": {
-          "kind": "direct",
-          "id": "litellm-elliot"
         }
       }
     }
@@ -1297,63 +1207,32 @@
     },
     "a2a": {
       "enabled": true,
-      "advertisedUrl": "http://mainclaw-app.ai.svc.cluster.local:18789",
+      "advertisedUrl": "http://mainclaw.ai.svc.cluster.local:18789",
       "replyTimeoutMs": 600000,
       "exposeAgents": [
         "main",
-        "family",
-        "coach",
-        "finance",
-        "shopping",
-        "media",
-        "nova",
-        "lycos",
-        "legal",
-        "elina",
-        "elliot"
+        "nova"
       ],
       "peers": {
         "litellm-main": {
-          "token": "$${A2A_MAINCLAW_MAIN_TOKEN}"
-        },
-        "litellm-family": {
-          "token": "$${A2A_MAINCLAW_FAMILY_TOKEN}"
-        },
-        "litellm-coach": {
-          "token": "$${A2A_MAINCLAW_COACH_TOKEN}"
-        },
-        "litellm-finance": {
-          "token": "$${A2A_MAINCLAW_FINANCE_TOKEN}"
-        },
-        "litellm-shopping": {
-          "token": "$${A2A_MAINCLAW_SHOPPING_TOKEN}"
-        },
-        "litellm-media": {
-          "token": "$${A2A_MAINCLAW_MEDIA_TOKEN}"
+          "token": "$${LITELLM_API_KEY_MAINCLAW_MAIN}"
         },
         "litellm-nova": {
-          "token": "$${A2A_MAINCLAW_NOVA_TOKEN}"
-        },
-        "litellm-lycos": {
-          "token": "$${A2A_MAINCLAW_LYCOS_TOKEN}"
-        },
-        "litellm-legal": {
-          "token": "$${A2A_MAINCLAW_LEGAL_TOKEN}"
-        },
-        "litellm-elina": {
-          "token": "$${A2A_MAINCLAW_ELINA_TOKEN}"
-        },
-        "litellm-elliot": {
-          "token": "$${A2A_MAINCLAW_ELLIOT_TOKEN}"
+          "token": "$${LITELLM_API_KEY_MAINCLAW_NOVA}"
         },
         "hermes": {
-          "token": "$${A2A_MAINCLAW_HERMES_TOKEN}",
+          "token": "$${OPENCLAW_GATEWAY_TOKEN}",
           "url": "http://litellm.ai:4000/a2a/hermes-default",
           "outboundToken": "$${LITELLM_API_KEY}"
         },
         "hermes-foyer": {
-          "token": "$${A2A_MAINCLAW_HERMES_FOYER_TOKEN}",
+          "token": "$${OPENCLAW_GATEWAY_TOKEN}",
           "url": "http://litellm.ai:4000/a2a/hermes-foyer",
+          "outboundToken": "$${LITELLM_API_KEY}"
+        },
+        "devclaw": {
+          "token": "$${OPENCLAW_GATEWAY_TOKEN}",
+          "url": "http://litellm.ai:4000/a2a/devclaw-main",
           "outboundToken": "$${LITELLM_API_KEY}"
         }
       }
@@ -1405,10 +1284,7 @@
     "publicOrigin": "https://mainclaw.oxygn.dev",
     "remote": {
       "url": "https://mainclaw.oxygn.dev"
-    },
-    "trustedProxies": [
-      "10.42.0.0/16"
-    ]
+    }
   },
   "logging": {
     "level": "info",
@@ -2228,20 +2104,7 @@
           "LITELLM_API_KEY_MAINCLAW_LYCOS",
           "LITELLM_API_KEY_MAINCLAW_LEGAL",
           "LITELLM_API_KEY_MAINCLAW_ELINA",
-          "LITELLM_API_KEY_MAINCLAW_ELLIOT",
-          "A2A_MAINCLAW_MAIN_TOKEN",
-          "A2A_MAINCLAW_FAMILY_TOKEN",
-          "A2A_MAINCLAW_COACH_TOKEN",
-          "A2A_MAINCLAW_FINANCE_TOKEN",
-          "A2A_MAINCLAW_SHOPPING_TOKEN",
-          "A2A_MAINCLAW_MEDIA_TOKEN",
-          "A2A_MAINCLAW_NOVA_TOKEN",
-          "A2A_MAINCLAW_LYCOS_TOKEN",
-          "A2A_MAINCLAW_LEGAL_TOKEN",
-          "A2A_MAINCLAW_ELINA_TOKEN",
-          "A2A_MAINCLAW_ELLIOT_TOKEN",
-          "A2A_MAINCLAW_HERMES_TOKEN",
-          "A2A_MAINCLAW_HERMES_FOYER_TOKEN"
+          "LITELLM_API_KEY_MAINCLAW_ELLIOT"
         ]
       }
     }

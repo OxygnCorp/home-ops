@@ -82,36 +82,53 @@ agent missing from a list is silently unreachable (fail-closed).
 
 ## A2A exposure
 
-The gateway exposes every agent over A2A on the gateway port. The bundled `a2a` channel plugin is enabled in `plugins.allow` and
-`plugins.entries`. The public card
-is served at `/.well-known/agent-card.json`; JSON-RPC calls go to
-`POST /a2a/v1` with the peer token as a bearer token. Replies may take up to
-ten minutes (`replyTimeoutMs: 600000`). `channels.a2a` maps one peer to one
-agent, and a matching binding routes that peer to the agent:
+The gateway exposes only its two orchestrators, `main` and `nova`, over A2A.
+The bundled `a2a` channel plugin is enabled in `plugins.allow` and
+`plugins.entries`. The public card is served at
+`/.well-known/agent-card.json`; JSON-RPC calls go to `POST /a2a/v1` with a
+peer bearer token. Replies may take up to ten minutes (`replyTimeoutMs:
+600000`).
 
-- peer `litellm-main` → `main`, `litellm-family` → `family`, and so on for the
-  eleven agents;
-- each peer token is read from `A2A_MAINCLAW_<AGENT>_TOKEN`, which the
-  `mainclaw` ExternalSecret maps from the 1Password `litellm` item;
-- `exposeAgents` lists all eleven agents on the card.
+- peer `litellm-main` routes to agent `main`; peer `litellm-nova` routes to
+  agent `nova`;
+- each peer token is read from the matching per-agent env already injected
+  for model traffic (`LITELLM_API_KEY_MAINCLAW_MAIN`,
+  `LITELLM_API_KEY_MAINCLAW_NOVA`), so A2A reuses the LiteLLM virtual key
+  instead of introducing a second credential;
+- `exposeAgents` lists only `main` and `nova`.
 
-LiteLLM registers the same agents as `mainclaw-<agent>` and probes the
-gateway origin `http://mainclaw-app.ai.svc.cluster.local:18789` for the card,
-which advertises `/a2a/v1`. The peer token selects the route, not the card
-skill, so adding an agent means updating seven touchpoints: the peer, its
-token, the ExternalSecret entry, the binding, `channels.a2a.exposeAgents`,
-`secrets.providers.default.allowlist`, and the LiteLLM registry entry.
+The nine specialists (`family`, `coach`, `finance`, `shopping`, `media`,
+`lycos`, `legal`, `elina`, `elliot`) are deliberately not A2A peers.
+`main` and `nova` reach them through the internal agent-to-agent ACL
+(`sessions_send`/`subagents`) and return the result over A2A. Adding or
+removing a specialist therefore needs no A2A plumbing; exposing one directly
+would add a peer, a binding, an `exposeAgents` entry, a virtual key and a
+LiteLLM registry entry.
 
-Outbound peers `hermes` and `hermes-foyer` point at the LiteLLM broker
-(`http://litellm.ai:4000/a2a/hermes-default` and `/a2a/hermes-foyer`). Agents
-use them with the `message` tool and target `a2a:hermes` or
-`a2a:hermes-foyer`; the outbound token is the gateway-wide `LITELLM_API_KEY`,
-so outbound delegation is attributed to the global key, not to the calling
-agent. Every agent shares that egress identity. The peer `token` on those
-outbound entries is a dedicated random value, not the gateway token: it is
-required by the schema but never used as an ingress credential.
+LiteLLM registers the same two agents as `mainclaw-main` and `mainclaw-nova`,
+probing the gateway origin `http://mainclaw.ai.svc.cluster.local:18789`
+for the card, which advertises `/a2a/v1`. The peer token selects the route,
+not the card skill.
 
-Inbound A2A runs with the routed agent's normal tools and permissions. LiteLLM's A2A access control is default-open unless the calling key or team has an explicit `object_permission.agents` grant.
+Outbound peers point at the LiteLLM broker: `hermes` and `hermes-foyer`
+(`/a2a/hermes-default`, `/a2a/hermes-foyer`) plus `devclaw`
+(`/a2a/devclaw-main`). Agents use the `message` tool with target
+`a2a:hermes`, `a2a:hermes-foyer` or `a2a:devclaw`; the outbound token is the
+gateway-wide `LITELLM_API_KEY`, so outbound delegation is attributed to the
+global key, not the calling agent. Every agent shares that egress identity.
+The `token` field on outbound entries is an inert inbound stub required by
+the schema, taken from an existing pod env; it is never used as an ingress
+credential.
+
+Inbound A2A runs the routed agent's normal tools and permissions. LiteLLM's
+A2A access control is default-open unless the calling key or team has an
+explicit `object_permission.agents` grant.
+
+`gateway.trustedProxies` is intentionally unset. Trusting the whole pod CIDR
+made LiteLLM's direct card fetch look like an unattributable proxy and it
+returned `403 proxy_attribution_required`. The gateway token still
+authenticates both Envoy and in-cluster callers; forwarded client addresses
+are ignored for rate limiting.
 
 ## Disk hygiene
 

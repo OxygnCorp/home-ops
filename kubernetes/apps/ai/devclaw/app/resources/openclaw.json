@@ -295,23 +295,33 @@
     },
     "a2a": {
       "enabled": true,
-      "advertisedUrl": "http://devclaw-app.ai.svc.cluster.local:18789",
+      "advertisedUrl": "http://devclaw.ai.svc.cluster.local:18789",
       "replyTimeoutMs": 600000,
       "exposeAgents": [
         "main"
       ],
       "peers": {
         "litellm-main": {
-          "token": "$${A2A_DEVCLAW_MAIN_TOKEN}"
+          "token": "$${LITELLM_API_KEY_DEVCLAW_MAIN}"
         },
         "hermes": {
-          "token": "$${A2A_DEVCLAW_HERMES_TOKEN}",
+          "token": "$${OPENCLAW_GATEWAY_TOKEN}",
           "url": "http://litellm.ai:4000/a2a/hermes-default",
           "outboundToken": "$${LITELLM_API_KEY}"
         },
         "hermes-foyer": {
-          "token": "$${A2A_DEVCLAW_HERMES_FOYER_TOKEN}",
+          "token": "$${OPENCLAW_GATEWAY_TOKEN}",
           "url": "http://litellm.ai:4000/a2a/hermes-foyer",
+          "outboundToken": "$${LITELLM_API_KEY}"
+        },
+        "mainclaw-main": {
+          "token": "$${OPENCLAW_GATEWAY_TOKEN}",
+          "url": "http://litellm.ai:4000/a2a/mainclaw-main",
+          "outboundToken": "$${LITELLM_API_KEY}"
+        },
+        "mainclaw-nova": {
+          "token": "$${OPENCLAW_GATEWAY_TOKEN}",
+          "url": "http://litellm.ai:4000/a2a/mainclaw-nova",
           "outboundToken": "$${LITELLM_API_KEY}"
         }
       }
@@ -360,10 +370,7 @@
       "allow": [
         "sessions_send"
       ]
-    },
-    "trustedProxies": [
-      "10.42.0.0/16"
-    ]
+    }
   },
   "messages": {
     "ackReactionScope": "group-mentions",
@@ -1005,10 +1012,7 @@
           "OPENCLAW_GATEWAY_TOKEN",
           "DISCORD_BOT_TOKEN",
           "LITELLM_API_KEY",
-          "LITELLM_API_KEY_DEVCLAW_MAIN",
-          "A2A_DEVCLAW_MAIN_TOKEN",
-          "A2A_DEVCLAW_HERMES_TOKEN",
-          "A2A_DEVCLAW_HERMES_FOYER_TOKEN"
+          "LITELLM_API_KEY_DEVCLAW_MAIN"
         ]
       }
     }

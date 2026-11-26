@@ -349,8 +349,8 @@ spec:
     # resolve DNS and are rewritten to the resolved IP before connecting.
     user_url_allowed_hosts:
       - hermes-app.ai.svc.cluster.local:9900
-      - mainclaw-app.ai.svc.cluster.local:18789
-      - devclaw-app.ai.svc.cluster.local:18789
+      - mainclaw.ai.svc.cluster.local:18789
+      - devclaw.ai.svc.cluster.local:18789
     tracing:
       store:
         type: lens
@@ -359,7 +359,12 @@ spec:
     # (x-kubernetes-preserve-unknown-fields). The A2A registry is a top-level
     # `agents:` key since LiteLLM v1.96 — readable even with the attached DB.
     # Config-defined agents are not editable in the UI; Git is the source of
-    # truth. `url` is the base LiteLLM probes for the remote agent card at each
+    # truth. Only the orchestrators are exposed: main/nova delegate to their
+    # own specialists inside their gateway, so adding a specialist does not
+    # need A2A plumbing. Each OpenClaw peer token is the agent's existing
+    # LiteLLM virtual key (reused, not a second credential). Hermes uses each
+    # profile's own key as that profile's peer token.
+    # `url` is the base LiteLLM probes for the remote agent card at each
     # invocation (`<url>/.well-known/agent-card.json`); the card's advertised
     # interface URL is then used for JSON-RPC. For OpenClaw the base is the
     # gateway origin because the card lives there and advertises `/a2a/v1`;
@@ -371,161 +376,64 @@ spec:
         agent_card_params:
           name: Hermes Default
           description: >-
-            NousResearch Hermes gateway, default profile. Answers from its live session with memini memory over A2A JSON-RPC.
+            NousResearch Hermes gateway, default profile. Answers from its live
+            session with memini memory over A2A JSON-RPC.
           url: http://hermes-app.ai.svc.cluster.local:9900
           protocolVersion: "1.0"
         litellm_params:
-          # Outbound A2A auth: api_key becomes Authorization: Bearer <token>.
-          api_key: os.environ/A2A_HERMES_TOKEN
+          # Hermes trusts the profile's own LiteLLM key as its peer token.
+          api_key: os.environ/A2A_HERMES_DEFAULT
       - agent_name: hermes-foyer
         agent_card_params:
           name: Hermes Foyer
           description: >-
-            NousResearch Hermes gateway, foyer profile. Household assistant with its own sessions and memini namespace.
+            NousResearch Hermes gateway, foyer profile. Household assistant
+            with its own sessions and memini namespace.
           url: http://hermes-app.ai.svc.cluster.local:9900/foyer
           protocolVersion: "1.0"
         litellm_params:
-          # Outbound A2A auth: api_key becomes Authorization: Bearer <token>.
-          api_key: os.environ/A2A_HERMES_FOYER_TOKEN
+          api_key: os.environ/A2A_HERMES_FOYER
       - agent_name: mainclaw-main
         agent_card_params:
           name: Mainclaw Claw
           description: >-
-            Main mainclaw orchestrator for general requests and cross-agent delegation.
-          url: http://mainclaw-app.ai.svc.cluster.local:18789
+            Mainclaw orchestrator for general requests and cross-agent
+            delegation to the mainclaw specialists.
+          url: http://mainclaw.ai.svc.cluster.local:18789
           protocolVersion: "1.0"
         litellm_params:
-          # Outbound A2A auth: api_key becomes Authorization: Bearer <token>.
-          api_key: os.environ/A2A_MAINCLAW_MAIN_TOKEN
-      - agent_name: mainclaw-family
-        agent_card_params:
-          name: Mainclaw Family
-          description: >-
-            Family assistant for household and family planning.
-          url: http://mainclaw-app.ai.svc.cluster.local:18789
-          protocolVersion: "1.0"
-        litellm_params:
-          # Outbound A2A auth: api_key becomes Authorization: Bearer <token>.
-          api_key: os.environ/A2A_MAINCLAW_FAMILY_TOKEN
-      - agent_name: mainclaw-coach
-        agent_card_params:
-          name: Mainclaw Mentor
-          description: >-
-            Personal coach for goals, learning and motivation.
-          url: http://mainclaw-app.ai.svc.cluster.local:18789
-          protocolVersion: "1.0"
-        litellm_params:
-          # Outbound A2A auth: api_key becomes Authorization: Bearer <token>.
-          api_key: os.environ/A2A_MAINCLAW_COACH_TOKEN
-      - agent_name: mainclaw-finance
-        agent_card_params:
-          name: Mainclaw Finance Expert
-          description: >-
-            Personal finance assistant for budgets, expenses and investments.
-          url: http://mainclaw-app.ai.svc.cluster.local:18789
-          protocolVersion: "1.0"
-        litellm_params:
-          # Outbound A2A auth: api_key becomes Authorization: Bearer <token>.
-          api_key: os.environ/A2A_MAINCLAW_FINANCE_TOKEN
-      - agent_name: mainclaw-shopping
-        agent_card_params:
-          name: Mainclaw Shopping Assistant
-          description: >-
-            Shopping assistant for purchases, wishlists and product research.
-          url: http://mainclaw-app.ai.svc.cluster.local:18789
-          protocolVersion: "1.0"
-        litellm_params:
-          # Outbound A2A auth: api_key becomes Authorization: Bearer <token>.
-          api_key: os.environ/A2A_MAINCLAW_SHOPPING_TOKEN
-      - agent_name: mainclaw-media
-        agent_card_params:
-          name: Mainclaw Media
-          description: >-
-            Media assistant for films, series, music and recommendations.
-          url: http://mainclaw-app.ai.svc.cluster.local:18789
-          protocolVersion: "1.0"
-        litellm_params:
-          # Outbound A2A auth: api_key becomes Authorization: Bearer <token>.
-          api_key: os.environ/A2A_MAINCLAW_MEDIA_TOKEN
+          # OpenClaw peer token = this agent's existing LiteLLM virtual key.
+          api_key: os.environ/A2A_MAINCLAW_MAIN
       - agent_name: mainclaw-nova
         agent_card_params:
           name: Mainclaw Nova
           description: >-
-            Nova mainclaw orchestrator for projects, research and delegation.
-          url: http://mainclaw-app.ai.svc.cluster.local:18789
+            Mainclaw orchestrator for projects and research; delegates to the
+            mainclaw specialists.
+          url: http://mainclaw.ai.svc.cluster.local:18789
           protocolVersion: "1.0"
         litellm_params:
-          # Outbound A2A auth: api_key becomes Authorization: Bearer <token>.
-          api_key: os.environ/A2A_MAINCLAW_NOVA_TOKEN
-      - agent_name: mainclaw-lycos
-        agent_card_params:
-          name: Mainclaw Lycos
-          description: >-
-            Research and web knowledge assistant.
-          url: http://mainclaw-app.ai.svc.cluster.local:18789
-          protocolVersion: "1.0"
-        litellm_params:
-          # Outbound A2A auth: api_key becomes Authorization: Bearer <token>.
-          api_key: os.environ/A2A_MAINCLAW_LYCOS_TOKEN
-      - agent_name: mainclaw-legal
-        agent_card_params:
-          name: Mainclaw Harvey
-          description: >-
-            Legal assistant for contracts and legal questions.
-          url: http://mainclaw-app.ai.svc.cluster.local:18789
-          protocolVersion: "1.0"
-        litellm_params:
-          # Outbound A2A auth: api_key becomes Authorization: Bearer <token>.
-          api_key: os.environ/A2A_MAINCLAW_LEGAL_TOKEN
-      - agent_name: mainclaw-elina
-        agent_card_params:
-          name: Mainclaw Elina
-          description: >-
-            Elina personal assistant.
-          url: http://mainclaw-app.ai.svc.cluster.local:18789
-          protocolVersion: "1.0"
-        litellm_params:
-          # Outbound A2A auth: api_key becomes Authorization: Bearer <token>.
-          api_key: os.environ/A2A_MAINCLAW_ELINA_TOKEN
-      - agent_name: mainclaw-elliot
-        agent_card_params:
-          name: Mainclaw Elliot
-          description: >-
-            Elliot personal assistant.
-          url: http://mainclaw-app.ai.svc.cluster.local:18789
-          protocolVersion: "1.0"
-        litellm_params:
-          # Outbound A2A auth: api_key becomes Authorization: Bearer <token>.
-          api_key: os.environ/A2A_MAINCLAW_ELLIOT_TOKEN
+          api_key: os.environ/A2A_MAINCLAW_NOVA
       - agent_name: devclaw-main
         agent_card_params:
           name: Devclaw Puchu
           description: >-
-            Devclaw DevOps assistant for cluster, GitOps and infrastructure tasks.
-          url: http://devclaw-app.ai.svc.cluster.local:18789
+            Devclaw DevOps assistant for cluster, GitOps and infrastructure
+            tasks.
+          url: http://devclaw.ai.svc.cluster.local:18789
           protocolVersion: "1.0"
         litellm_params:
-          # Outbound A2A auth: api_key becomes Authorization: Bearer <token>.
-          api_key: os.environ/A2A_DEVCLAW_MAIN_TOKEN
+          api_key: os.environ/A2A_DEVCLAW_MAIN
     environment:
       - OPENCODE_MATT_API_KEY
       - OPENCODE_AGNES_API_KEY
       - REDIS_HOST
       - REDIS_PORT
-      - A2A_HERMES_TOKEN
-      - A2A_HERMES_FOYER_TOKEN
-      - A2A_MAINCLAW_MAIN_TOKEN
-      - A2A_MAINCLAW_FAMILY_TOKEN
-      - A2A_MAINCLAW_COACH_TOKEN
-      - A2A_MAINCLAW_FINANCE_TOKEN
-      - A2A_MAINCLAW_SHOPPING_TOKEN
-      - A2A_MAINCLAW_MEDIA_TOKEN
-      - A2A_MAINCLAW_NOVA_TOKEN
-      - A2A_MAINCLAW_LYCOS_TOKEN
-      - A2A_MAINCLAW_LEGAL_TOKEN
-      - A2A_MAINCLAW_ELINA_TOKEN
-      - A2A_MAINCLAW_ELLIOT_TOKEN
-      - A2A_DEVCLAW_MAIN_TOKEN
+      - A2A_HERMES_DEFAULT
+      - A2A_HERMES_FOYER
+      - A2A_MAINCLAW_MAIN
+      - A2A_MAINCLAW_NOVA
+      - A2A_DEVCLAW_MAIN
   apiAccess:
     masterKeyRef:
       name: litellm-secret
