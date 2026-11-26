@@ -1,59 +1,1147 @@
 {
   "id": null,
   "uid": "llm-routing",
-  "title": "LLM Routing (Consumer -> Model)",
-  "tags": ["llm", "litellm", "routing"],
-  "schemaVersion": 39,
+  "title": "LiteLLM — Virtual Keys",
+  "description": "Per-virtual-key consumption, reliability and routing.",
+  "tags": [
+    "llm",
+    "litellm",
+    "virtual-keys"
+  ],
   "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
   "refresh": "30s",
-  "time": { "from": "now-24h", "to": "now" },
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
   "templating": {
     "list": [
-      { "name": "datasource", "type": "datasource", "query": "prometheus", "current": {}, "hide": 0, "label": "Datasource" }
+      {
+        "name": "datasource",
+        "type": "datasource",
+        "query": "prometheus",
+        "current": {},
+        "hide": 0,
+        "label": "Datasource"
+      },
+      {
+        "allValue": ".+",
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
+        "definition": "label_values(litellm_proxy_total_requests_metric_total{api_key_alias!=\"None\"}, api_key_alias)",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Virtual key",
+        "multi": true,
+        "name": "consumer",
+        "options": [],
+        "query": {
+          "query": "label_values(litellm_proxy_total_requests_metric_total{api_key_alias!=\"None\"}, api_key_alias)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 2,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "allValue": ".*",
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
+        "definition": "label_values(litellm_proxy_total_requests_metric_total{api_key_alias=~\"$consumer\", api_key_alias!=\"None\", requested_model!=\"\"}, requested_model)",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Model",
+        "multi": true,
+        "name": "model",
+        "options": [],
+        "query": {
+          "query": "label_values(litellm_proxy_total_requests_metric_total{api_key_alias=~\"$consumer\", api_key_alias!=\"None\", requested_model!=\"\"}, requested_model)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 2,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      }
     ]
   },
   "panels": [
     {
-      "type": "table",
-      "title": "Consumer -> Model (requests over range)",
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "gridPos": { "h": 12, "w": 12, "x": 0, "y": 0 },
-      "targets": [
-        {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum by (api_key_alias, requested_model) (increase(litellm_requests_metric_total[$__range]))",
-          "format": "table",
-          "instant": true,
-          "refId": "A"
-        }
-      ],
-      "transformations": [
-        { "id": "organize", "options": { "excludeByName": { "Time": true }, "renameByName": { "api_key_alias": "Consumer", "requested_model": "Model", "Value": "Requests" } } },
-        { "id": "sortBy", "options": { "fields": "", "sort": [ { "field": "Requests", "desc": true } ] } }
-      ],
-      "fieldConfig": { "defaults": { "custom": { "align": "auto", "filterable": true }, "decimals": 0 }, "overrides": [] },
-      "options": { "showHeader": true, "footer": { "show": false } }
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "panels": [],
+      "title": "Overview",
+      "type": "row"
     },
     {
-      "type": "table",
-      "title": "Live (req/min, last 5m)",
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "gridPos": { "h": 12, "w": 12, "x": 12, "y": 0 },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "LiteLLM-calculated spend in the selected range. Subscription/local models can be $0.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 1
+      },
+      "id": 2,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum by (api_key_alias, requested_model) (rate(litellm_requests_metric_total[5m])) * 60 > 0",
-          "format": "table",
-          "instant": true,
-          "refId": "A"
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "sum(increase(litellm_spend_metric_total{api_key_alias=~\"$consumer\", api_key_alias!=\"None\", requested_model=~\"$model\"}[$__range])) or vector(0)",
+          "refId": "A",
+          "instant": true
         }
       ],
-      "transformations": [
-        { "id": "organize", "options": { "excludeByName": { "Time": true }, "renameByName": { "api_key_alias": "Consumer", "requested_model": "Model", "Value": "req/min" } } },
-        { "id": "sortBy", "options": { "fields": "", "sort": [ { "field": "req/min", "desc": true } ] } }
+      "title": "Spend",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "Prompt + completion tokens in the selected range.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 1
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "sum(increase(litellm_total_tokens_metric_total{api_key_alias=~\"$consumer\", api_key_alias!=\"None\", requested_model=~\"$model\"}[$__range])) or vector(0)",
+          "refId": "A",
+          "instant": true
+        }
       ],
-      "fieldConfig": { "defaults": { "custom": { "align": "auto", "filterable": true }, "decimals": 1 }, "overrides": [] },
-      "options": { "showHeader": true, "footer": { "show": false } }
+      "title": "Tokens",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "Total proxy requests, success and failures.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 8,
+        "y": 1
+      },
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "sum(increase(litellm_proxy_total_requests_metric_total{api_key_alias=~\"$consumer\", api_key_alias!=\"None\", requested_model=~\"$model\"}[$__range])) or vector(0)",
+          "refId": "A",
+          "instant": true
+        }
+      ],
+      "title": "Requests",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "Failed proxy requests divided by total requests.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 12,
+        "y": 1
+      },
+      "id": 5,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "100 * (sum(increase(litellm_proxy_failed_requests_metric_total{api_key_alias=~\"$consumer\", api_key_alias!=\"None\", requested_model=~\"$model\"}[$__range])) or vector(0)) / clamp_min((sum(increase(litellm_proxy_total_requests_metric_total{api_key_alias=~\"$consumer\", api_key_alias!=\"None\", requested_model=~\"$model\"}[$__range])) or vector(0)), 1)",
+          "refId": "A",
+          "instant": true
+        }
+      ],
+      "title": "Error Rate",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "95th percentile end-to-end request latency.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 16,
+        "y": 1
+      },
+      "id": 6,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(litellm_request_total_latency_metric_bucket{api_key_alias=~\"$consumer\", api_key_alias!=\"None\", requested_model=~\"$model\"}[$__rate_interval]))) or vector(0)",
+          "refId": "A",
+          "instant": true
+        }
+      ],
+      "title": "p95 Latency",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "Average total tokens per proxy request; the numerator counts successful requests only, so failures are not included.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 20,
+        "y": 1
+      },
+      "id": 7,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "(sum(increase(litellm_total_tokens_metric_total{api_key_alias=~\"$consumer\", api_key_alias!=\"None\", requested_model=~\"$model\"}[$__range])) or vector(0)) / clamp_min((sum(increase(litellm_proxy_total_requests_metric_total{api_key_alias=~\"$consumer\", api_key_alias!=\"None\", requested_model=~\"$model\"}[$__range])) or vector(0)), 1)",
+          "refId": "A",
+          "instant": true
+        }
+      ],
+      "title": "Tokens / Request",
+      "type": "stat"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 5
+      },
+      "id": 8,
+      "panels": [],
+      "title": "Consumption by Virtual Key",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "Requests, spend, tokens, errors and latency per virtual key. The global Mainclaw/Devclaw keys aggregate fallback traffic (images, MCP), not a single workload.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "filterable": true
+          },
+          "unit": "short",
+          "decimals": 0
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Spend"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyUSD"
+              },
+              {
+                "id": "decimals",
+                "value": 4
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "$ / 1k tokens"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyUSD"
+              },
+              {
+                "id": "decimals",
+                "value": 6
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Error rate"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "p95 latency"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 24,
+        "x": 0,
+        "y": 6
+      },
+      "id": 9,
+      "options": {
+        "footer": {
+          "show": false
+        },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "sum by (api_key_alias) (increase(litellm_proxy_total_requests_metric_total{api_key_alias=~\"$consumer\", api_key_alias!=\"None\", requested_model=~\"$model\"}[$__range]))",
+          "refId": "A",
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "sum by (api_key_alias) (increase(litellm_spend_metric_total{api_key_alias=~\"$consumer\", api_key_alias!=\"None\", requested_model=~\"$model\"}[$__range]))",
+          "refId": "B",
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "sum by (api_key_alias) (increase(litellm_total_tokens_metric_total{api_key_alias=~\"$consumer\", api_key_alias!=\"None\", requested_model=~\"$model\"}[$__range]))",
+          "refId": "C",
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "sum by (api_key_alias) (increase(litellm_input_tokens_metric_total{api_key_alias=~\"$consumer\", api_key_alias!=\"None\", requested_model=~\"$model\"}[$__range]))",
+          "refId": "D",
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "sum by (api_key_alias) (increase(litellm_output_tokens_metric_total{api_key_alias=~\"$consumer\", api_key_alias!=\"None\", requested_model=~\"$model\"}[$__range]))",
+          "refId": "E",
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "sum by (api_key_alias) (increase(litellm_input_cached_tokens_metric_total{api_key_alias=~\"$consumer\", api_key_alias!=\"None\", requested_model=~\"$model\"}[$__range]))",
+          "refId": "F",
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "sum by (api_key_alias) (increase(litellm_output_reasoning_tokens_metric_total{api_key_alias=~\"$consumer\", api_key_alias!=\"None\", requested_model=~\"$model\"}[$__range]))",
+          "refId": "G",
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "sum by (api_key_alias) (increase(litellm_proxy_failed_requests_metric_total{api_key_alias=~\"$consumer\", api_key_alias!=\"None\", requested_model=~\"$model\"}[$__range]))",
+          "refId": "H",
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "100 * sum by (api_key_alias) (increase(litellm_proxy_failed_requests_metric_total{api_key_alias=~\"$consumer\", api_key_alias!=\"None\", requested_model=~\"$model\"}[$__range])) / clamp_min(sum by (api_key_alias) (increase(litellm_proxy_total_requests_metric_total{api_key_alias=~\"$consumer\", api_key_alias!=\"None\", requested_model=~\"$model\"}[$__range])), 1)",
+          "refId": "I",
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "histogram_quantile(0.95, sum by (le, api_key_alias) (rate(litellm_request_total_latency_metric_bucket{api_key_alias=~\"$consumer\", api_key_alias!=\"None\", requested_model=~\"$model\"}[$__rate_interval])))",
+          "refId": "J",
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "sum by (api_key_alias) (increase(litellm_spend_metric_total{api_key_alias=~\"$consumer\", api_key_alias!=\"None\", requested_model=~\"$model\"}[$__range])) / clamp_min(sum by (api_key_alias) (increase(litellm_total_tokens_metric_total{api_key_alias=~\"$consumer\", api_key_alias!=\"None\", requested_model=~\"$model\"}[$__range])), 1) * 1000",
+          "refId": "K",
+          "instant": true,
+          "format": "table"
+        }
+      ],
+      "title": "Consumption by Virtual Key",
+      "transformations": [
+        {
+          "id": "joinByField",
+          "options": {
+            "byField": "api_key_alias",
+            "mode": "outerTabular"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "Time 1": true,
+              "Time 2": true,
+              "Time 3": true,
+              "Time 4": true,
+              "Time 5": true,
+              "Time 6": true,
+              "Time 7": true,
+              "Time 8": true,
+              "Time 9": true,
+              "Time 10": true
+            },
+            "renameByName": {
+              "api_key_alias": "Virtual key",
+              "Value #A": "Requests",
+              "Value #B": "Spend",
+              "Value #C": "Total tokens",
+              "Value #D": "Input tokens",
+              "Value #E": "Output tokens",
+              "Value #F": "Cached input",
+              "Value #G": "Reasoning tokens",
+              "Value #H": "Errors",
+              "Value #I": "Error rate",
+              "Value #J": "p95 latency",
+              "Value #K": "$ / 1k tokens"
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": "",
+            "sort": [
+              {
+                "field": "Requests",
+                "desc": true
+              }
+            ]
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 17
+      },
+      "id": 10,
+      "panels": [],
+      "title": "Trends",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "LiteLLM-calculated hourly spend rate per virtual key.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 18
+      },
+      "id": 11,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "sum by (api_key_alias) (rate(litellm_spend_metric_total{api_key_alias=~\"$consumer\", api_key_alias!=\"None\", requested_model=~\"$model\"}[$__rate_interval])) * 3600 > 0",
+          "refId": "A",
+          "legendFormat": "{{api_key_alias}}"
+        }
+      ],
+      "title": "Spend Rate by Virtual Key ($/h)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "Prompt + completion token rate per virtual key.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 18
+      },
+      "id": 12,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "sum by (api_key_alias) (rate(litellm_total_tokens_metric_total{api_key_alias=~\"$consumer\", api_key_alias!=\"None\", requested_model=~\"$model\"}[$__rate_interval])) * 60 > 0",
+          "refId": "A",
+          "legendFormat": "{{api_key_alias}}"
+        }
+      ],
+      "title": "Token Rate by Virtual Key (tokens/min)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "Proxy request rate, success and failures.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 25
+      },
+      "id": 13,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "sum by (api_key_alias) (rate(litellm_proxy_total_requests_metric_total{api_key_alias=~\"$consumer\", api_key_alias!=\"None\", requested_model=~\"$model\"}[$__rate_interval])) * 60 > 0",
+          "refId": "A",
+          "legendFormat": "{{api_key_alias}}"
+        }
+      ],
+      "title": "Request Rate by Virtual Key (req/min)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "Failed requests as a percentage of total requests per virtual key.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 25
+      },
+      "id": 14,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "100 * sum by (api_key_alias) (rate(litellm_proxy_failed_requests_metric_total{api_key_alias=~\"$consumer\", api_key_alias!=\"None\", requested_model=~\"$model\"}[$__rate_interval])) / clamp_min(sum by (api_key_alias) (rate(litellm_proxy_total_requests_metric_total{api_key_alias=~\"$consumer\", api_key_alias!=\"None\", requested_model=~\"$model\"}[$__rate_interval])), 1)",
+          "refId": "A",
+          "legendFormat": "{{api_key_alias}}"
+        }
+      ],
+      "title": "Error Rate by Virtual Key",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 32
+      },
+      "id": 15,
+      "panels": [],
+      "title": "Reliability",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "Failures grouped by status, exception class and route.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "filterable": true
+          },
+          "unit": "short",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 33
+      },
+      "id": 16,
+      "options": {
+        "footer": {
+          "show": false
+        },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "sum by (api_key_alias, exception_status, exception_class, route) (increase(litellm_proxy_failed_requests_metric_total{api_key_alias=~\"$consumer\", api_key_alias!=\"None\", requested_model=~\"$model\"}[$__range])) > 0",
+          "refId": "A",
+          "instant": true,
+          "format": "table"
+        }
+      ],
+      "title": "Errors by Virtual Key",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "renameByName": {
+              "api_key_alias": "Virtual key",
+              "exception_status": "Status",
+              "exception_class": "Error",
+              "route": "Route",
+              "Value": "Failures"
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": "",
+            "sort": [
+              {
+                "field": "Failures",
+                "desc": true
+              }
+            ]
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "95th percentile request latency per virtual key.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 33
+      },
+      "id": 17,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "histogram_quantile(0.95, sum by (le, api_key_alias) (rate(litellm_request_total_latency_metric_bucket{api_key_alias=~\"$consumer\", api_key_alias!=\"None\", requested_model=~\"$model\"}[$__rate_interval])))",
+          "refId": "A",
+          "legendFormat": "{{api_key_alias}}"
+        }
+      ],
+      "title": "p95 Latency by Virtual Key",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 41
+      },
+      "id": 18,
+      "panels": [],
+      "title": "Routing detail",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "Requests routed from each virtual key to each requested model.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "filterable": true
+          },
+          "unit": "short",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 12,
+        "x": 0,
+        "y": 42
+      },
+      "id": 19,
+      "options": {
+        "footer": {
+          "show": false
+        },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "sum by (api_key_alias, requested_model) (increase(litellm_proxy_total_requests_metric_total{api_key_alias=~\"$consumer\", api_key_alias!=\"None\", requested_model=~\"$model\"}[$__range])) > 0",
+          "refId": "A",
+          "instant": true,
+          "format": "table"
+        }
+      ],
+      "title": "Virtual Key -> Model (requests over range)",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "renameByName": {
+              "api_key_alias": "Virtual key",
+              "requested_model": "Model",
+              "Value": "Requests"
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": "",
+            "sort": [
+              {
+                "field": "Requests",
+                "desc": true
+              }
+            ]
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "Short-window request rate per virtual key and model.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "filterable": true
+          },
+          "unit": "short",
+          "decimals": 1
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "req/min"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 1
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 12,
+        "x": 12,
+        "y": 42
+      },
+      "id": 20,
+      "options": {
+        "footer": {
+          "show": false
+        },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "sum by (api_key_alias, requested_model) (rate(litellm_proxy_total_requests_metric_total{api_key_alias=~\"$consumer\", api_key_alias!=\"None\", requested_model=~\"$model\"}[5m])) * 60 > 0",
+          "refId": "A",
+          "instant": true,
+          "format": "table"
+        }
+      ],
+      "title": "Live (req/min, last 5m)",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "renameByName": {
+              "api_key_alias": "Virtual key",
+              "requested_model": "Model",
+              "Value": "req/min"
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": "",
+            "sort": [
+              {
+                "field": "req/min",
+                "desc": true
+              }
+            ]
+          }
+        }
+      ],
+      "type": "table"
     }
   ]
 }
