@@ -75,7 +75,9 @@ Cloudflare dashboard → R2 → Create bucket `kopiur-backup` (location: automat
 - [ ] **Step 2: Create the 1Password item**
 
 Item `kopiur-offsite` in the vault used by the `onepassword` ClusterSecretStore, with fields:
-`KOPIA_PASSWORD` (generate a **new** 32+ char password — do not reuse the `kopiur` item's), `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `S3_ENDPOINT` = `https://d1403fac4607ccda8f0f9d8153b6c03f.eu.r2.cloudflarestorage.com`, `S3_BUCKET` = `kopiur-backup`.
+`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `S3_ENDPOINT` = `https://d1403fac4607ccda8f0f9d8153b6c03f.eu.r2.cloudflarestorage.com`, `S3_BUCKET` = `kopiur-backup`.
+
+Do **not** put a KOPIA_PASSWORD in this item, and never rotate the existing one: the seed copies the `nas` repository's already-encrypted config, so the offsite repository must use the exact same password. The ExternalSecret below therefore extracts `KOPIA_PASSWORD` from the existing `kopiur` item.
 
 - [ ] **Step 3: Write the ExternalSecret**
 
@@ -102,6 +104,10 @@ spec:
         S3_ENDPOINT: "{{ .S3_ENDPOINT }}"
         S3_BUCKET: "{{ .S3_BUCKET }}"
   dataFrom:
+    # KOPIA_PASSWORD comes from the existing item: it must equal the `nas`
+    # repository password, otherwise the seeded blobs cannot be decrypted.
+    - extract:
+        key: kopiur
     - extract:
         key: kopiur-offsite
 ```
