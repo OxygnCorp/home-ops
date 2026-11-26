@@ -207,73 +207,26 @@ spec:
     # is skipped and the request is served by the other subscription.
     optional_pre_call_checks:
       - session_affinity
-    # Two-tier fallback policy: tier 1 is implicit (every group's matt/agnes
-    # pair load-balances within the group itself), tier 2 is beam-free, free
-    # and unmetered on the current OpenCode Go promo (repoint at
-    # go-glm-5.3-flash if the promo ends).
+    # Two-tier fallback policy: tier 1 is implicit (each group's matt/agnes
+    # pair load-balances and retries within the group itself), tier 2 is the
+    # free tier below, applied to every group without an explicit entry in
+    # `fallbacks` — one list to maintain, new groups covered automatically.
+    # The free groups themselves inherit it too, so one free model hands over
+    # to the other.
     #
-    # Caveat: beam-free (the tier-2 fallback) is not vision-capable — a vision
-    # request that exhausts its group (dsv41f) will fail differently, which
-    # still beats having no net at all.
+    # Ordered: hy4-flash-free first (vision-capable + prompt caching, $0 on
+    # the Go plan), then beam-free (text-only, 1M/131k) when it fails or is in
+    # cooldown. Both are free only for a limited time: add, drop or reorder a
+    # line here rather than in one entry per model group.
+    default_fallbacks:
+      - hy4-flash-free
+      - beam-free
+    # Embeddings and rerank are not chat and must never fall back to a chat
+    # model: a keyed entry with an empty chain wins over `default_fallbacks`
+    # (router-core `regular_targets` short-circuits on `Some([])`). Keep both.
     fallbacks:
-      # Complexity router: a safety net only — each tier it selects keeps its
-      # own beam-free fallback below. Covers the router failing before it
-      # resolves a model; as with dsv41f, a vision request that lands here
-      # fails on beam-free's missing vision rather than being served.
-      - go-auto:
-          - beam-free
-      # Flash-class OpenCode Go groups
-      - dsv41f:
-          - beam-free
-      - dsv41f-nothink:
-          - beam-free
-      - dsv41f-max:
-          - beam-free
-      - go-glm-5.3-flash:
-          - beam-free
-      - go-qwen3.8-flash:
-          - beam-free
-      - go-minimax-m3.1-flash:
-          - beam-free
-      - mimo-v2.6-flash:
-          - beam-free
-      - gpt-5.6-luna:
-          - beam-free
-      - hy3:
-          - beam-free
-      - hy4-flash-free:
-          - beam-free
-      - longcat-2.5:
-          - beam-free
-      # Pro/heavy-class OpenCode Go groups
-      - go-glm-5.3:
-          - beam-free
-      - go-qwen3.8-max:
-          - beam-free
-      - deepseek-v4-pro:
-          - beam-free
-      - gemini-4-argon:
-          - beam-free
-      - hy4:
-          - beam-free
-      - qwen4-max:
-          - beam-free
-      - step-5-preview:
-          - beam-free
-      - go-kimi-k3:
-          - beam-free
-      - go-kimi-k3.1-pro:
-          - beam-free
-      - go-kimi-k2.7-code:
-          - beam-free
-      - go-minimax-m3:
-          - beam-free
-      - qwen3.7-plus:
-          - beam-free
-      - go-hy4-preview:
-          - beam-free
-      - mimo-v2.6-pro:
-          - beam-free
+      - qwen3-embedding-0.6b: []
+      - qwen3-reranker-0.6b: []
   litellmSettings:
     # Semantic MCP tool filter: for /v1/responses and /v1/chat/completions
     # requests carrying MCP tools, narrow the per-request tool list to the

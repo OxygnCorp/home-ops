@@ -14,6 +14,16 @@ Two operator CRs drive the cluster (`litellm.home-operations.com/v1alpha1`):
   binds it to a team. The operator passes the binding on key create/update in
   place (no key rotation, 1Password `KEY_*` fields unchanged).
 
+## Model fallbacks
+
+Chat model groups share one free tier via `routerSettings.default_fallbacks` in
+`litellmproxy.yaml`: `hy4-flash-free` first (vision + prompt caching), then
+`beam-free`. Add, drop or reorder a line there to follow the free-model churn,
+instead of editing one fallback per model group. The `fallbacks` key only pins
+the embedding/rerank groups (`qwen3-embedding-0.6b`, `qwen3-reranker-0.6b`) to
+an empty chain: an explicit empty list wins over `default_fallbacks` in the
+router, so a failed embedding or rerank never lands on a chat model.
+
 ## Admin UI SSO (Kanidm)
 
 The Admin UI signs in through Kanidm via LiteLLM's generic OIDC provider. The
