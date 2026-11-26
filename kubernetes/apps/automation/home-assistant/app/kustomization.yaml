@@ -7,3 +7,19 @@ resources:
   - ./externalsecret.yaml
   - ./helmrelease.yaml
   - ./pvc.yaml
+# Paused 2026-11-26 (see the `replicas: 0` comment in helmrelease.yaml): the
+# app data is frozen, so the kopiur hourly snapshot chain injected by the
+# Kustomization's spec.components is slowed to a daily run instead of
+# snapshotting + pushing an unchanged 5Gi PVC every hour. Targeted by kind
+# only, like memini's mover patch: the component resource is named ${APP} at
+# build time, so a name selector cannot match. Restore `H * * * *` when the
+# app resumes.
+patches:
+  - target:
+      group: kopiur.home-operations.com
+      kind: SnapshotSchedule
+      version: v1alpha1
+    patch: |-
+      - op: replace
+        path: /spec/schedule/cron
+        value: H 3 * * *
