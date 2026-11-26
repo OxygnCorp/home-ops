@@ -85,6 +85,7 @@ spec:
             format json_lines
             json_date_key false
             compress gzip
+            retry_limit false
             log_response_payload false
     dashboards:
       # Grafana is operated by grafana-operator and does not discover the
