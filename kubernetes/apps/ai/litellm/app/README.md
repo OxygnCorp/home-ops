@@ -196,11 +196,17 @@ The MCP gateway is multiplexed by teams, mirroring the old toolhive groups:
 
 | Team (alias) | Virtual keys | MCP servers (`spec.mcpServers`) |
 | --- | --- | --- |
-| `mcp-apps` | `mainclaw` | `arr`, `ha_mcp`, `seerr_mcp`, `teslamate`, `todoist_mcp`, `lightrag_mcp` |
+| `mcp-apps` | `mainclaw` | `arr`, `seerr_mcp`, `teslamate`, `todoist_mcp`, `lightrag_mcp` (see note below) |
 | `mcp-devops` | `devclaw`, `opencode`, `hermes` | `context7`, `flux`, `github`, `grafana`, `konflate`, `radar`, `talos_mcp`, `unifi_network` |
 
 Notes:
 
+- **`ha_mcp` is paused** (2026-11-26) with the home-assistant deployment it
+  fronts (`kubernetes/apps/automation/home-assistant`, `replicas: 0`): the CR
+  stays in `mcp/workloads.yaml` with `workload.replicas: 0` and its grant is
+  commented out in `teams/mcp-apps.yaml`, so team keys do not see it. Resume
+  both together (workload `replicas: 1`, re-add `- ha_mcp`, app
+  `replicas: 1`).
 - **`kubectl` was removed** (2026-11): radar already exposes the read path
   (`list_resources`, `get_resource`, `diagnose`, logs, events, metrics) plus
   everything the kubectl MCP could not reach, and the two shared a read-only
