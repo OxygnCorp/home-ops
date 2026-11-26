@@ -170,7 +170,7 @@ spec:
       - resume_flux_reconciliation
       - suspend_flux_reconciliation
   workload:
-    image: ghcr.io/controlplaneio-fluxcd/flux-operator-mcp:v0.63.1@sha256:556f9fbef8c10c6ded833463dc830708e82043cfe819296ade4fef32f87f8dd2
+    image: ghcr.io/controlplaneio-fluxcd/flux-operator-mcp:v0.64.0@sha256:b46002c29618df79b708872c9380129481afd17ad1423940cc3b16b81f4282fe
     port: 8000
     args:
       - serve
