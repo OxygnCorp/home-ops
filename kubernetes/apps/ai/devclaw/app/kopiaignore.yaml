@@ -33,6 +33,9 @@ data:
     *.sqlite.bak-*
     .openclaw/.repair-backup-*/
 
+    # corruption forensics kept by the sqlite fallback (capped at 2 newest on the PVC)
+    *.corrupt-*
+
     # logs
     .openclaw/logs/
 

@@ -14,8 +14,9 @@
 # continued, and the gateway died on its own integrity check ~14 s in;
 # only a state-mounting one-off Job could clear it. This suite pins the
 # in-pod self-heal that replaces that manual recovery:
-#   - corruption gate keys on the SQLite signature, NOT doctor's exit
-#     code (a plugin/perms failure must never cost DB state)
+#   - corruption gate fires only when doctor FAILS with the exact
+#     SQLite signature (a plugin/perms failure must never cost DB
+#     state, and doctor exiting 0 may have repaired what it printed)
 #   - newest valid .bak wins; non-SQLite captures are never swapped in
 #   - corrupt live DB and proven-bad restore points kept as
 #     .corrupt-<ts> for forensics, retired so next boot tries the next
@@ -41,9 +42,15 @@ first() { # first <glob> — first existing match, or nothing
   return 1
 }
 root() {
-  rm -rf /home/node /stub
-  mkdir -p /home/node/.openclaw/state /stub/bin
+  rm -rf /home/node
+  mkdir -p /home/node/.openclaw/state
+  # Keep /stub/bin/node (written once by the preamble): wiping /stub here would
+  # silently send the region's doctor calls to the REAL node and hang S1
+  # (bit twice on 2026-11-26 — the pod#2 and green3 incidents).
+  rm -f /stub/node-calls /stub/doctor-out-retry /stub/doctor-rc-retry
   rm -f /tmp/doctor.log /tmp/doctor-retry.log /tmp/region.out
+  rm -f /tmp/doctor.rc /tmp/doctor-retry.rc
+  : > /trace.log
 }
 bak() { # bak <file> <healthy|garbage> <marker> [date]
   if [ "$2" = healthy ]; then printf 'SQLite format 3\0%s\n' "$3" > "$1"; else printf '%s\n' "$3" > "$1"; fi
@@ -88,10 +95,16 @@ Doctor: archive preparation
 Doctor: complete'
 plugin_sig='Doctor: startup
 WARN: plugin marketplace unreachable (fixture: doctor failure without corruption markers)'
+busy_sig='Doctor: startup
+WARN: sqlite database is locked (code=ERR_SQLITE_ERROR, errcode=5)'
 
 # stub node — counts every call, dispatches doctor args to scripted
 # fixtures; an optional /stub/doctor-out-retry scripts the second call
-# (the post-restore doctor retry).
+# (the post-restore doctor retry). Write it BEFORE any scenario runs:
+# root() resets per-scenario state but never wipes /stub, so a missing
+# directory here would silently fall through to the REAL node binary
+# and hang the fixture pod on a live doctor run (incident 2026-11-26).
+mkdir -p /stub/bin
 cat > /stub/bin/node <<'STUB'
 #!/bin/sh
 echo "$*" >> /stub/node-calls
@@ -155,8 +168,8 @@ v 'S3 bak untouched' keep /home/node/.openclaw/state/openclaw.sqlite.pre-startup
 [ -f /tmp/doctor.log ] && pass=$((pass + 1)) || { fail=$((fail + 1)); echo 'FAIL: S3 doctor log missing'; }
 calls 'S3 single doctor call' 1
 
-# ==== S4: doctor fails without markers: no swap (gate is on ========
-# ==== the signature, not the exit code) ==============================
+# ==== S4: doctor fails without the signature: no swap (gate = ======
+# ==== failure AND signature together, never either alone) ============
 root
 printf 'LIVE-OK\n' > /home/node/.openclaw/state/openclaw.sqlite
 doctor_out "$plugin_sig" 1
@@ -212,6 +225,57 @@ v 'S7 other bak still a candidate next boot' keep /home/node/.openclaw/state/ope
 has 'S7 still-failing warn' 'doctor still failing' /tmp/doctor-retry.log
 calls 'S7 retry doctor happened' 2
 
+# ==== S8: transient SQLITE_BUSY (errcode=5) is never a ==============
+# ==== corruption event: a stale swap would lose live state ===========
+root
+printf 'LIVE-OK\n' > /home/node/.openclaw/state/openclaw.sqlite
+bak /home/node/.openclaw/state/openclaw.sqlite.pre-startup-migration-1.bak healthy HEALTHY-OLD '2026-01-05 00:00:00'
+doctor_out "$busy_sig" 1
+try 'S8 transient busy: no swap'
+has 'S8 live db untouched' LIVE-OK /home/node/.openclaw/state/openclaw.sqlite
+cf=$(first '/home/node/.openclaw/state/openclaw.sqlite.corrupt-*')
+if [ -z "$cf" ]; then pass=$((pass + 1)); else fail=$((fail + 1)); echo 'FAIL: S8 transient busy moved live db'; fi
+lacks 'S8 no announce' 'state DB corrupt' /tmp/region.out
+calls 'S8 single doctor call' 1
+
+# ==== S9: doctor repaired the DB and exited 0: a printed ============
+# ==== signature is then stale — never swap a repaired DB away =======
+root
+printf 'LIVE-OK\n' > /home/node/.openclaw/state/openclaw.sqlite
+bak /home/node/.openclaw/state/openclaw.sqlite.pre-startup-migration-1.bak healthy HEALTHY-OLD '2026-01-05 00:00:00'
+doctor_out "$corrupt_sig" 0
+try 'S9 doctor success after repair: no swap'
+has 'S9 live db untouched' LIVE-OK /home/node/.openclaw/state/openclaw.sqlite
+lacks 'S9 no announce' 'state DB corrupt' /tmp/region.out
+lacks 'S9 no doctor warn' 'WARN: doctor exited nonzero' /tmp/doctor.log
+calls 'S9 single doctor call' 1
+
+# ==== S10: forensics are capped at the two newest copies ============
+root
+printf 'CORRUPT-DATA\n' > /home/node/.openclaw/state/openclaw.sqlite
+printf 'OLD-101\n' > /home/node/.openclaw/state/openclaw.sqlite.corrupt-101
+touch -d '2026-01-01 00:00:00' /home/node/.openclaw/state/openclaw.sqlite.corrupt-101
+printf 'OLD-102\n' > /home/node/.openclaw/state/openclaw.sqlite.corrupt-102
+touch -d '2026-01-02 00:00:00' /home/node/.openclaw/state/openclaw.sqlite.corrupt-102
+printf 'OLD-103\n' > /home/node/.openclaw/state/openclaw.sqlite.corrupt-103
+touch -d '2026-01-03 00:00:00' /home/node/.openclaw/state/openclaw.sqlite.corrupt-103
+bak /home/node/.openclaw/state/openclaw.sqlite.pre-startup-migration-1.bak healthy HEALTHY-NEW
+doctor_out "$corrupt_sig" 1
+printf 'Doctor: complete\n' > /stub/doctor-out-retry
+printf '0' > /stub/doctor-rc-retry
+try 'S10 forensics cap: two newest kept'
+has 'S10 live db restored' HEALTHY-NEW /home/node/.openclaw/state/openclaw.sqlite
+v 'S10 oldest forensics evicted' rm /home/node/.openclaw/state/openclaw.sqlite.corrupt-101
+v 'S10 second-oldest forensics evicted' rm /home/node/.openclaw/state/openclaw.sqlite.corrupt-102
+v 'S10 newest pre-existing forensics kept' keep /home/node/.openclaw/state/openclaw.sqlite.corrupt-103
+n=0
+for f in /home/node/.openclaw/state/openclaw.sqlite.corrupt-*; do [ -f "$f" ] && n=$((n + 1)); done
+if [ "$n" = 2 ]; then pass=$((pass + 1)); else fail=$((fail + 1)); echo "FAIL: S10 corrupt copies=${n} want=2"; fi
+newok=0
+for f in /home/node/.openclaw/state/openclaw.sqlite.corrupt-*; do [ -f "$f" ] && grep -q 'CORRUPT-DATA' "$f" && newok=1; done
+if [ "$newok" = 1 ]; then pass=$((pass + 1)); else fail=$((fail + 1)); echo 'FAIL: S10 fresh corrupt copy missing'; fi
+calls 'S10 retry doctor after restore' 2
+
 echo "TAGG:RESULT pass=${pass} fail=${fail}"
 if [ "$fail" -ne 0 ]; then echo "==== TRACE ===="; tail -80 /trace.log 2>/dev/null; fi
 [ "$fail" -eq 0 ]
@@ -235,6 +299,7 @@ metadata:
   name: ${name}
 spec:
   restartPolicy: Never
+  automountServiceAccountToken: false
   containers:
     - name: t
       image: ${image}
@@ -250,13 +315,19 @@ spec:
         - printf '%s' '${region_b64}' | base64 -d > /region.sh; printf '%s' '${suite_b64}' | base64 -d > /suite.sh; sh /suite.sh
 POD
 
-  # Wait for terminal phase (Succeeded only lands at rc=0).
+  # Wait for terminal phase (Succeeded only lands at rc=0). The doctor
+  # retry plus the suite itself can take ~3 min on a cold image pull.
   local phase=""
-  for _ in $(seq 1 60); do
+  for _ in $(seq 1 90); do
     phase=$(kubectl get pod -n ai "${name}" -o jsonpath='{.status.phase}')
     { [ "$phase" = "Succeeded" ] || [ "$phase" = "Failed" ]; } && break
     sleep 2
   done
+  if [ "$phase" != "Succeeded" ] && [ "$phase" != "Failed" ]; then
+    echo "FAIL: ${app}: fixture pod did not reach a terminal phase in 180 s (last: ${phase:-none})" >&2
+    kubectl delete pod -n ai "${name}" --wait=false --ignore-not-found >/dev/null 2>&1 || true
+    return 1
+  fi
 
   local rc
   rc=$(kubectl get pod -n ai "${name}" -o jsonpath='{.status.containerStatuses[0].state.terminated.exitCode}' 2>/dev/null || true)

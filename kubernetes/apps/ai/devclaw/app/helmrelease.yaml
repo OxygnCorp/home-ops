@@ -374,11 +374,22 @@ spec:
                 # load-bearing); `--non-interactive` makes the intent explicit so no repair
                 # can block on a prompt even if the container is ever started with a TTY.
                 # Keep doctor output both live in the pod log and on disk, so the
-                # SQLite corruption signature below can be acted on. The `||` stays
-                # inside the group: sh has no pipefail, so the pipe status is tee's,
-                # and a doctor failure must warn rather than abort startup.
-                { node /app/openclaw.mjs doctor --fix --non-interactive 2>&1 \
-                  || echo "WARN: doctor exited nonzero; continuing"; } | tee /tmp/doctor.log
+                # SQLite corruption signature below can be acted on. The group keeps
+                # the `||` inside the pipe: sh has no pipefail, so the pipe status is
+                # tee's, and a doctor failure must warn rather than abort startup.
+                # The exit code is dropped to a file inside the group for the same
+                # reason — $? outside a pipe would be tee's, and the gate below
+                # needs the real one.
+                # SQLite corruption signature: the two literal doctor messages, the
+                # SQLITE_CORRUPT code name, or errcode=11 specifically — NOT bare
+                # ERR_SQLITE_ERROR, which transient SQLITE_BUSY (errcode=5) or
+                # SQLITE_READONLY errors report too, and those must never cost DB
+                # state.
+                sig_re='database disk image (is )?malformed|integrity_check failed|SQLITE_CORRUPT|errcode=11[ )]'
+                { node /app/openclaw.mjs doctor --fix --non-interactive 2>&1; rc=$?
+                  [ "$rc" -eq 0 ] || echo "WARN: doctor exited nonzero; continuing"
+                  echo "$rc" > /tmp/doctor.rc
+                } | tee /tmp/doctor.log
                 #
                 # Self-heal for the 2026-11-26 crashloop: a Gateway killed mid-migration
                 # (Recreate strategy + RWO PVC, image bump landing while the previous
@@ -387,13 +398,17 @@ spec:
                 # because startup deliberately continues on doctor failure, the Gateway
                 # died on its own integrity check in an endless CrashLoopBackOff. The
                 # migration guard copies the DB to openclaw.sqlite.pre-startup-migration-*.bak
-                # *before* touching it, so on that exact signature ONLY (a perms/plugin
-                # doctor failure must never cost DB state) restore the newest valid
-                # backup. The corrupt DB is kept as openclaw.sqlite.corrupt-<epoch> for
-                # forensics; if the restored point turns out to be corrupt too, retire
-                # that backup as *.corrupt-<epoch> so a following boot tries the next one.
-                if grep -Eq 'database disk image (is )?malformed|ERR_SQLITE_ERROR|integrity_check failed|SQLITE_CORRUPT' /tmp/doctor.log; then
+                # *before* touching it, so when doctor FAILS with that exact signature
+                # ONLY — a perms/plugin doctor failure must never cost DB state, and a
+                # doctor exiting 0 may have already repaired the corruption it printed —
+                # restore the newest valid backup. The corrupt DB is kept as
+                # openclaw.sqlite.corrupt-<epoch> for forensics; if the restored point
+                # turns out to be corrupt too, retire that backup as *.corrupt-<epoch>
+                # so a following boot tries the next one.
+                if [ "$(cat /tmp/doctor.rc 2>/dev/null || echo 1)" -ne 0 ] && grep -Eq "$sig_re" /tmp/doctor.log; then
                   BAK=""
+                  # newest valid backup wins; on equal mtimes the pre-startup-migration
+                  # class wins by glob order (deliberate: freshest known-good point)
                   for f in /home/node/.openclaw/state/openclaw.sqlite.pre-startup-migration-*.bak /home/node/.openclaw/state/openclaw.sqlite.doctor-cron-*.bak; do
                     [ -f "$f" ] || continue
                     head -c 16 "$f" | grep -q 'SQLite format 3' || continue
@@ -403,13 +418,37 @@ spec:
                     echo "state DB corrupt: restoring $BAK (corrupt copy kept)"
                     TS=$(date +%s)
                     if cp -p "$BAK" /home/node/.openclaw/state/openclaw.sqlite.incoming; then
-                      mv /home/node/.openclaw/state/openclaw.sqlite /home/node/.openclaw/state/openclaw.sqlite.corrupt-$TS
-                      mv /home/node/.openclaw/state/openclaw.sqlite.incoming /home/node/.openclaw/state/openclaw.sqlite
+                      # Keep the corrupt DB for forensics, then a single atomic rename.
+                      # A pod killed between two mv would leave no live DB at all: the
+                      # next boot's doctor would find nothing corrupt to heal and the
+                      # Gateway would silently start on a fresh DB instead.
+                      cp -p /home/node/.openclaw/state/openclaw.sqlite /home/node/.openclaw/state/openclaw.sqlite.corrupt-$TS \
+                        || echo "WARN: could not keep a corrupt copy; continuing"
+                      # Bound the forensics this fallback leaves behind (18+ MiB each,
+                      # up to two per corruption event) to the two newest files.
+                      c1=""; c2=""
+                      for c in /home/node/.openclaw/state/openclaw.sqlite.corrupt-* /home/node/.openclaw/state/openclaw.sqlite.*.corrupt-*; do
+                        [ -f "$c" ] || continue
+                        if [ -z "$c1" ] || [ "$(stat -c %Y "$c")" -gt "$(stat -c %Y "$c1")" ]; then
+                          c2="$c1"; c1="$c"
+                        elif [ -z "$c2" ] || [ "$(stat -c %Y "$c")" -gt "$(stat -c %Y "$c2")" ]; then
+                          c2="$c"
+                        fi
+                      done
+                      for c in /home/node/.openclaw/state/openclaw.sqlite.corrupt-* /home/node/.openclaw/state/openclaw.sqlite.*.corrupt-*; do
+                        [ -f "$c" ] || continue
+                        if [ "$c" != "$c1" ] && [ "$c" != "$c2" ]; then rm -f "$c"; fi
+                      done
+                      mv -f /home/node/.openclaw/state/openclaw.sqlite.incoming /home/node/.openclaw/state/openclaw.sqlite
                       chmod 600 /home/node/.openclaw/state/openclaw.sqlite
                       rm -f /home/node/.openclaw/state/openclaw.sqlite-wal /home/node/.openclaw/state/openclaw.sqlite-shm
-                      { node /app/openclaw.mjs doctor --fix --non-interactive 2>&1 \
-                        || echo "WARN: doctor still failing after state DB fallback; continuing"; } | tee /tmp/doctor-retry.log
-                      if grep -Eq 'database disk image (is )?malformed|ERR_SQLITE_ERROR|integrity_check failed|SQLITE_CORRUPT' /tmp/doctor-retry.log; then
+                      { node /app/openclaw.mjs doctor --fix --non-interactive 2>&1; rc=$?
+                        [ "$rc" -eq 0 ] || echo "WARN: doctor still failing after state DB fallback; continuing"
+                        echo "$rc" > /tmp/doctor-retry.rc
+                      } | tee /tmp/doctor-retry.log
+                      # The restored point itself is corrupt: retire it so a following
+                      # boot restores the next candidate instead of looping on it.
+                      if [ "$(cat /tmp/doctor-retry.rc 2>/dev/null || echo 1)" -ne 0 ] && grep -Eq "$sig_re" /tmp/doctor-retry.log; then
                         mv "$BAK" /home/node/.openclaw/state/$(basename "$BAK" .bak).corrupt-$TS
                       fi
                     else
