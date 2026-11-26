@@ -14,10 +14,14 @@ spec:
           name: kopiur-offsite-secret
           namespace: kopiur-system
       bucket: kopiur-backup
-      endpoint: https://d1403fac4607ccda8f0f9d8153b6c03f.eu.r2.cloudflarestorage.com
+      # Bare host[:port], no scheme: kopia's S3 client (minio-go) builds the
+      # URL itself and chokes on "https://https://..." (kopiur docs: strip
+      # the scheme the provider console shows you).
+      endpoint: d1403fac4607ccda8f0f9d8153b6c03f.eu.r2.cloudflarestorage.com
       prefix: kopiur/
       region: auto
   concurrency:
+    # Cap concurrent movers against R2 rate limits, unlike the unlimited `nas`
     maxConcurrentJobs: 4
   credentialProjection:
     allowed: true
@@ -56,7 +60,11 @@ spec:
     timezone: Europe/Paris
   parameters:
     epoch:
-      minDuration: 6h # S3: fewer, larger index blobs than the 2h used for the NFS repository
+      # Same 2h as `nas`: the seed inherits its whole index history (2200+
+      # content-index blobs at last check), and slow epochs on hourly snapshot
+      # schedules are exactly what piled those up — no reason to compact 3x
+      # slower than the setting that already struggles.
+      minDuration: 2h
   maintenance:
     enabled: true
     namespace: kopiur-system
