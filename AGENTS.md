@@ -58,7 +58,7 @@ Flux recursively searches `kubernetes/apps/` for `kustomization.yaml` files. Eac
 Renovate updates are auto-merged (traceable `renovate/am-*` branches, PRs ready) with these guarantees:
 
 - **Auto-merged without manual review**: trusted rules (home-operations container digests/patches, kube-prometheus-stack, renovate image updates, GH actions) + a broad rule for docker-chart minor/patch/digest updates with 24-hour `minimumReleaseAge` (see `.renovate/autoMerge.json5`).
-- **Emergency security patch fast-path**: `minimumReleaseAge` only delays PR creation — it never blocks a manual merge. For a zero-day patch, edit the image directly in Git (pin the digest), merge, and `just kube sync`; don't wait on Renovate.
+- **Emergency security patch fast-path**: `minimumReleaseAge` only delays PR creation — it never blocks a manual merge. For a zero-day patch, edit the image directly in Git (pin the digest), merge, and let the Flux webhook reconcile; don't wait on Renovate.
 - **Caveat**: `minimumReleaseAgeBehaviour: "timestamp-optional"` (`.renovaterc.json5`) means the age gate only applies where a release timestamp exists — and even Docker Hub digest updates lack one (see the comment in `.renovaterc.json5`). The real supply-chain defenses are the always-manual core exclusions and digest pinning.
 - **Branches `renovate/am-*` are AI-gated, not skipped**: `.github/workflows/ai-pr-review.yaml` runs an LLM review whose `AI PR Review (automerge gate)` check blocks automerge on open blocker findings. The gate waits (bounded, ≤ 2700 s) for the first verdict after a PR opens — burst `labeled` events no longer wedge red pre-verdict, and a green is only ever published from a landed clean verdict at the head SHA. **Exception**: digest-only bumps (label `type/digest` + bot authorship) are exempt from AI gating by policy. The decision table lives in the workflow file's header comments — keep prose out of sync with it at your peril:
   - The `skipped` gate branch must never fail-closed while the first review run is still producing its verdict, and never pass before a verdict exists (both wedge automerge differently — red is terminal because branch protection resolves against the LAST run *started* for the head SHA).
@@ -194,7 +194,7 @@ just talos upgrade-k8s 1.32.6     # Upgrade Kubernetes to a specific version
 just talos download-image <node> v1.14.0 # Download the Talos ISO with the node's schematic
 
 # Kubernetes day-2 operations (kubernetes/mod.just)
-just kube sync                    # Force reconcile HR/KS/sources/ExternalSecrets
+just kube sync                    # Force reconcile HR/KS/sources/ExternalSecrets (only if the webhook missed it)
 just kube browse-pvc <pvc> <ns>   # Browse a PVC contents
 just kube debug-node <node>       # Debug a node
 just kube view-secret <s> <ns>    # Decode a Secret
@@ -231,6 +231,8 @@ flux resume kustomization <name> -n <ns>     # Resume
 ```
 
 For deeper cluster-side investigation, see the `flux-debugger` skill in the agent workspace.
+
+**Every push to `main` is webhooked into Flux and reconciles automatically — do not force reconciles (`just kube sync`, `flux reconcile`) after pushing.** Forced reconciles defeat the webhook path, cause duplicate rollouts, and make it impossible to tell whether a change actually deployed on its own. The `just` recipes stay for *diagnosis* (a stuck resource that the webhook did not pick up), never as a reflex after a merge.
 
 ## Radar Issues Noise Filter
 
