@@ -26,6 +26,11 @@ spec:
       name: kopiur-offsite-secret
       namespace: kopiur-system
       key: KOPIA_PASSWORD
+  # Never silently re-initialise an empty repository (e.g. after a bucket is
+  # purged): a missing repo must fail loudly instead of quietly starting over
+  # and leaving the offsite copy empty. An armed `seed` still bootstraps.
+  create:
+    enabled: false
   catalog:
     fallbackNamespace: kopiur-system
     periodicRefresh: true
@@ -80,7 +85,8 @@ spec:
       fsGroup: 100
       fsGroupChangePolicy: OnRootMismatch
   # One-shot bootstrap: copies the deduplicated/encrypted repository from the
-  # NFS `nas` repository. Remove this block once the seed reports success.
+  # NFS `nas` repository. Harmless once the destination is initialised (a seed
+  # against an existing repository is a no-op), so it can stay in Git.
   seed:
     from:
       backend:
