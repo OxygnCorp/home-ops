@@ -57,8 +57,6 @@ spec:
       # churn is negligible. See docs/maintenance.md ("index-blob health") in
       # the kopiur repo.
       minDuration: 2h
-  health:
-    indexBlobWarnThreshold: 0 # frozen archive: the index-blob count (~1072) is static and upstream marks it NON-BLOCKING for restores; the condition would otherwise stay False for the life of the archive
   maintenance:
     # ReadOnly repositories run no maintenance at all (upstream: "serves
     # restores only" — the operator drops the managed Maintenance), so this is
