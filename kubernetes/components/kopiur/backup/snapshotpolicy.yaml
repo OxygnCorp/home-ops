@@ -26,7 +26,9 @@ spec:
       storageClassName: ${KOPIUR_CACHE_STORAGECLASS:=miroir-slow}
   repository:
     kind: ClusterRepository
-    name: ${KOPIUR_REPOSITORY:=nas}
+    # Seeded R2 repository (900 snapshots as of 2026-11-26). `nas` stays
+    # available as a ReadWrite archive until the cutover is verified.
+    name: ${KOPIUR_REPOSITORY:=offsite}
   retention:
     keepLatest: 3
     keepHourly: 24

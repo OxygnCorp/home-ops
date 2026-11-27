@@ -32,7 +32,7 @@ Adding `components/kopiur/backup` to an app's Flux Kustomization creates, in the
 | `KOPIUR_CACHE_STORAGECLASS`    | `miroir-slow`      | Cache PVC StorageClass (must be replicated — see below).  |
 | `KOPIUR_STAGING_STORAGECLASS`  | `miroir-slow-local`| Staging PVC StorageClass (must be unreplicated).          |
 | `KOPIUR_SNAPSHOTCLASS`         | `miroir`           | VolumeSnapshotClass used for backups.                     |
-| `KOPIUR_REPOSITORY`            | `nas`              | Target `ClusterRepository`.                               |
+| `KOPIUR_REPOSITORY`            | `offsite`          | Target `ClusterRepository` (R2, seeded from `nas`). Override per app to use `nas`. |
 
 ## Design notes
 
