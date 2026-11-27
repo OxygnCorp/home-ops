@@ -29,7 +29,11 @@ spec:
   # cost. Analysis degrades gracefully at the cap: it stops instead of silently
   # overspending. One number to raise if investigations prove worth more.
   maxBudget: "1"
-  # `daily` is LiteLLM's alias for a floating 24h window, not a calendar day.
+  # `daily` used to be a floating 24h window. The proxy now sets
+  # litellm_settings.budget_reset_time to 07:00 Europe/Paris, which turns it
+  # into a calendar-style day resetting every morning at 07:00 local time —
+  # before the agents' day, instead of at midnight UTC where the night's
+  # analyses left the key empty all day.
   budgetDuration: daily
   teamID: mcp-devops
   secretName: lens-analysis
