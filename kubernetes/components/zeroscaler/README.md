@@ -7,7 +7,7 @@ Scale-to-zero on idle for low-traffic workloads, via a single `HorizontalPodAuto
 - **Metric**: `External` metric `${ZEROSCALER_METRIC_NAME:=probe_success}` from Prometheus job `${ZEROSCALER_JOB_NAME:=nfs_probe}` (exposed through the prometheus-adapter). The probe tracks the app's backing storage availability — when the NFS export is unreachable, `probe_success` drops to `0` and the HPA scales the workload to zero instead of letting it crash-loop against dead storage.
 - **Scale down**: to `0` replicas as soon as the probe fails (no stabilization window).
 - **Scale up**: back to `1` replica when the probe recovers (15s periods, no stabilization window).
-- HPAScaleToZero is enabled cluster-wide (see the `HPAScaleToZero=true` feature gate in the Talos control-plane config).
+- Scale-to-zero uses the HPA `minReplicas: 0` behavior supported by the cluster's Kubernetes version; no Talos feature gate is configured.
 
 ## Substitution variables
 
