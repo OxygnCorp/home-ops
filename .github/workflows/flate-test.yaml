@@ -8,6 +8,7 @@ on:
       - main
     paths:
       - "kubernetes/**"
+      - ".mise/config.toml"
       - ".github/workflows/flate-test.yaml"
 
 concurrency:
@@ -35,6 +36,13 @@ jobs:
           version: v2026.11.14
           # Only install what this job needs (version pinned in .mise/config.toml).
           install_args: github:home-operations/flate
+          cache: true
+          # Distinct key suffix: image-pull.yaml is the sole writer of
+          # `mise-pull-...`; this workflow caches under its own key to avoid
+          # post-save reservation conflicts between concurrent PR runs.
+          cache_key: mise-flate-test-linux-x64-{{version}}-p{{cache_period}}
+          cache_save_post: true
+          cache_save_retry_budget: 60s
 
       - name: Write Cloudflare Tunnel Secret stub
         run: |
@@ -50,11 +58,7 @@ jobs:
           YAML
 
       - name: Run flate ks
-        env:
-          MISE_GITHUB_TOKEN: ${{ github.token }}
-        run: flate test ks --path ./kubernetes/apps --supply "$RUNNER_TEMP/cloudflare-tunnel-id-stub.yaml"
+        run: flate test ks --path ./kubernetes/apps --supply "$RUNNER_TEMP/cloudflare-tunnel-id-stub.yaml" --cache-dir "$RUNNER_TEMP/flate-cache"
 
       - name: Run flate hr
-        env:
-          MISE_GITHUB_TOKEN: ${{ github.token }}
-        run: flate test hr --path ./kubernetes/apps --supply "$RUNNER_TEMP/cloudflare-tunnel-id-stub.yaml"
+        run: flate test hr --path ./kubernetes/apps --supply "$RUNNER_TEMP/cloudflare-tunnel-id-stub.yaml" --cache-dir "$RUNNER_TEMP/flate-cache"
