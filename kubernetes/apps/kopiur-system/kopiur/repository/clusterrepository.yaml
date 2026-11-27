@@ -30,7 +30,7 @@ spec:
     auth:
       generate:
         username: admin
-    readOnly: false # server-level only; mode: ReadOnly below forces the UI read-only regardless (upstream), left false so a rollback restores the old behaviour
+    readOnly: true # required by admission when mode: ReadOnly — the kopia UI would otherwise connect read-write
     service:
       type: ClusterIP
       port: 51515
@@ -46,17 +46,9 @@ spec:
     usernameExpr: "namespace + '-' + policyName"
   scheduleDefaults:
     timezone: Europe/Paris
-  parameters:
-    epoch:
-      # kopia default is 24h: an epoch cannot close before it is older than
-      # minDuration and compaction trails two epochs behind, so hourly snapshot
-      # schedules accumulate thousands of uncompacted index blobs (6180 and
-      # climbing) no matter how often maintenance runs. 2h lets epochs close
-      # three times faster than 6h and full maintenance compact them; with a
-      # single serialized writer (kopiur movers) the extra epoch-advance
-      # churn is negligible. See docs/maintenance.md ("index-blob health") in
-      # the kopiur repo.
-      minDuration: 2h
+  # No spec.parameters block: set-parameters writes to the repository, which
+  # admission forbids in ReadOnly mode. The archive is already compacted
+  # (498 index blobs before freezing); re-add epoch settings only if unfrozen.
   maintenance:
     # ReadOnly repositories run no maintenance at all (upstream: "serves
     # restores only" — the operator drops the managed Maintenance), so this is
