@@ -9,14 +9,32 @@ spec:
     kind: OCIRepository
     name: lens
   interval: 30m
-  # Placement de ClickHouse : les images amd64 de ClickHouse >= 26.6 sont
-  # compilées pour x86-64-v3 (AVX2) et meurent en SIGILL (exit 132,
-  # "Illegal instruction") sur un vCPU sans AVX2 — le cas des VMs Proxmox
-  # en type `kvm64`. k8s-3 est le seul noeud qui expose AVX2, et il est
-  # tainté `workload=ai:NoSchedule`. Le chart n'expose aucun
-  # nodeSelector/tolerations pour le StatefulSet ClickHouse : on patche donc
-  # le manifeste rendu. Correctif de fond côté infra : passer les VMs en CPU
-  # `host` (stop/start), ce qui rendra ce patch inutile.
+  # Deux patchs postRenderer, un par ressource ciblée :
+  #
+  # 1. Placement de ClickHouse : les images amd64 de ClickHouse >= 26.6 sont
+  #    compilées pour x86-64-v3 (AVX2) et meurent en SIGILL (exit 132,
+  #    "Illegal instruction") sur un vCPU sans AVX2 — le cas des VMs Proxmox
+  #    en type `kvm64`. k8s-3 est le seul noeud qui expose AVX2, et il est
+  #    tainté `workload=ai:NoSchedule`. Le chart n'expose aucun
+  #    nodeSelector/tolerations pour le StatefulSet ClickHouse. Correctif de
+  #    fond côté infra : passer les VMs en CPU `host` (stop/start), ce qui
+  #    rendra ce patch inutile.
+  #
+  # 2. DNS : le chart injecte CLICKHOUSE_HOST=<release>-clickhouse (nom
+  #    court) dans les DEUX conteneurs du Deployment (app `lens` + init
+  #    `wait-for-clickhouse`). Quand ClickHouse est injoignable, les retries
+  #    de l'app épuisent les search domains (NXDOMAIN) puis interrogent le
+  #    nom court tel quel, que CoreDNS forwarde vers l'upstream (hostDNS
+  #    Talos → routeur) : ~5 h de SERVFAIL amplifiés pendant la coupure
+  #    WAN du 27/11/2026 (détails et chronologie : ./README.md). Le FQDN
+  #    garde la résolution locale au plugin kubernetes (NODATA quand le
+  #    pod est down), zéro requête vers l'upstream. NB :
+  #    `clickhouse.nameOverride` n'est PAS la bonne porte — cette value
+  #    sert aussi de nom au Service/Secret/PVC et aux selectors du
+  #    StatefulSet (immuables). Le patch suppose le ClickHouse bundlé du
+  #    chart 0.5.x : il casserait le rendu si `clickhouse.enabled: false`
+  #    (le chart bascule sur CLICKHOUSE_URL, sans init container) ou si
+  #    une future version du chart renomme les conteneurs.
   postRenderers:
     - kustomize:
         patches:
@@ -35,6 +53,27 @@ spec:
                     operator: Equal
                     value: ai
                     effect: NoSchedule
+          - target:
+              kind: Deployment
+              name: lens
+            patch: |
+              apiVersion: apps/v1
+              kind: Deployment
+              metadata:
+                name: lens
+              spec:
+                template:
+                  spec:
+                    initContainers:
+                      - name: wait-for-clickhouse
+                        env:
+                          - name: CLICKHOUSE_HOST
+                            value: lens-clickhouse.ai.svc.cluster.local
+                    containers:
+                      - name: lens
+                        env:
+                          - name: CLICKHOUSE_HOST
+                            value: lens-clickhouse.ai.svc.cluster.local
   values:
     # Le chart épingle lui-même `image.digest` (sha256:489a007c…) dans
     # ses values : chaque version du chart embarque le digest de son image.

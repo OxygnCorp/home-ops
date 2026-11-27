@@ -251,6 +251,22 @@ kubectl rollout restart deployment -n ai -l app.kubernetes.io/name=litellm
 - **Premier démarrage** : Lens peut redémarrer plusieurs fois avec
   `Error: Storage(Storage(Transport))` tant que ClickHouse n'est pas ready
   (documenté upstream) — c'est normal, `wait: true` couvre l'attente.
+- **CLICKHOUSE_HOST en FQDN (postRenderer)** : le chart injecte
+  `CLICKHOUSE_HOST=<release>-clickhouse` (nom court) dans les deux conteneurs
+  du Deployment (app + init `wait-for-clickhouse`). Si ClickHouse devient
+  injoignable (nœud down), les retries de l'app épuisent les search domains
+  (NXDOMAIN) puis interrogent le nom court `lens-clickhouse` tel quel, que
+  CoreDNS **forwarde vers l'upstream** (hostDNS Talos → routeur). Pendant la
+  coupure WAN du 27/11/2026, ça a produit ~5 h de SERVFAIL amplifiés
+  (retry toutes les 1–3 s par le pod Lens). Un patch strategic-merge force
+  donc le FQDN `lens-clickhouse.ai.svc.cluster.local` : la résolution
+  redevient purement locale au plugin kubernetes (NODATA si le pod est
+  down), zéro requête vers l'upstream. À noter : `clickhouse.nameOverride`
+  n'est **pas** la bonne porte — cette value sert aussi de nom au
+  Service/Secret/PVC et aux selectors (immuables) du StatefulSet. Le patch
+  suppose le ClickHouse bundlé du chart 0.5.x : il casserait le rendu si
+  `clickhouse.enabled: false` (le chart bascule sur `CLICKHOUSE_URL`, sans
+  init container) ou si une future version renomme les conteneurs.
 - **Spend logs** : le tracing Lens exporte un enregistrement par requête du
   gateway (métadonnées de coût). Les corps de requête ne sont inclus que si
   `general_settings.store_prompts_in_spend_logs` est activé — ce n'est pas le
