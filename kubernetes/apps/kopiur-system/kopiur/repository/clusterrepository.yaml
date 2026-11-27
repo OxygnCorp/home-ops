@@ -30,7 +30,7 @@ spec:
     auth:
       generate:
         username: admin
-    readOnly: false # allow snapshot deletion/maintenance from the kopia web UI
+    readOnly: false # server-level only; mode: ReadOnly below forces the UI read-only regardless (upstream), left false so a rollback restores the old behaviour
     service:
       type: ClusterIP
       port: 51515
@@ -58,17 +58,11 @@ spec:
       # the kopiur repo.
       minDuration: 2h
   maintenance:
-    enabled: true
-    namespace: kopiur-system
-    schedule:
-      full:
-        cron: "0 3 * * *"
-        jitter: 1h
-      quick:
-        cron: "0 */6 * * *"
-        jitter: 30m
-      timezone: Europe/Paris
-  mode: ReadWrite
+    # ReadOnly repositories run no maintenance at all (upstream: "serves
+    # restores only" — the operator drops the managed Maintenance), so this is
+    # disabled to keep the config truthful. Re-enable when unfreezing.
+    enabled: false
+  mode: ReadOnly # frozen archive: restores only, no new snapshots after the cutover
   moverDefaults:
     tolerations:
       # Movers are pinned by their staging PVC's node affinity
