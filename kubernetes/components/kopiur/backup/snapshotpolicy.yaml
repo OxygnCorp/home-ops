@@ -26,8 +26,8 @@ spec:
       storageClassName: ${KOPIUR_CACHE_STORAGECLASS:=miroir-slow}
   repository:
     kind: ClusterRepository
-    # Seeded R2 repository (900 snapshots as of 2026-11-26). `nas` stays
-    # available as a ReadWrite archive until the cutover is verified.
+    # Seeded R2 repository; `nas` stays ReadWrite until the cutover is
+    # verified. Per-app fallback: set KOPIUR_REPOSITORY=nas in a ks.yaml.
     name: ${KOPIUR_REPOSITORY:=offsite}
   retention:
     keepLatest: 3

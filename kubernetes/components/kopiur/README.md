@@ -1,6 +1,6 @@
 # kopiur
 
-Per-app PVC backup via [kopiur](https://github.com/home-operations/kopiur) — a volsync fork using Kopia as the mover backend. Replaced volsync on this cluster (see `docs/superpowers/plans/2026-07-18-kopiur-migration.md`). Backups land on a shared `ClusterRepository/nas` (Kopia filesystem backend over NFS at `funkstation.internal:/volume1/Volsync`, adopting the pre-existing volsync repository — `create.enabled: false`), operated by the kopiur controller in `kopiur-system`.
+Per-app PVC backup via [kopiur](https://github.com/home-operations/kopiur) — a volsync fork using Kopia as the mover backend. Replaced volsync on this cluster (see `docs/superpowers/plans/2026-07-18-kopiur-migration.md`). Backups land on the shared `ClusterRepository/offsite` (Kopia S3 backend on Cloudflare R2, seeded from the former `nas` repository — `create.enabled: false`), operated by the kopiur controller in `kopiur-system`. `ClusterRepository/nas` (filesystem backend over NFS at `funkstation.internal:/volume1/Volsync`) remains available as a ReadWrite archive until the cutover is fully retired.
 
 Two sub-components:
 
