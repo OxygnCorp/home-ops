@@ -277,6 +277,14 @@ spec:
     request_timeout: 3600
     num_retries: 1
     set_verbose: false
+    # Reset daily key budgets at 07:00 Europe/Paris instead of midnight UTC.
+    # Without this, the LensAnalysis $1/day window refills in the middle of the
+    # night: it is exhausted by the night's analyses and the gateway answers
+    # 422 (budget exceeded) during the working day. LiteLLM recomputes the next
+    # reset on every cycle of its budget job, so existing keys pick this up
+    # without being recreated.
+    timezone: Europe/Paris
+    budget_reset_time: "07:00"
     model_group_settings:
       # Forward client x-* session headers for every model group (see old
       # config.yaml comment: fallback chains must not lose the session header).
