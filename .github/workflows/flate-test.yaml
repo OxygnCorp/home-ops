@@ -1,0 +1,64 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: Flate Validate
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "kubernetes/**"
+      - ".mise/config.toml"
+      - ".github/workflows/flate-test.yaml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  flate:
+    name: Flate Validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Setup Mise
+        uses: jdx/mise-action@924e7c586e33d7d4bae9c14e26c5d22e2beb6e78 # v5.3.0
+        with:
+          # renovate: datasource=github-releases depName=jdx/mise
+          version: v2026.11.14
+          # Only install what this job needs (version pinned in .mise/config.toml).
+          install_args: github:home-operations/flate
+          cache: true
+          # Distinct key suffix: image-pull.yaml is the sole writer of
+          # `mise-pull-...`; this workflow caches under its own key to avoid
+          # post-save reservation conflicts between concurrent PR runs.
+          cache_key: mise-flate-test-linux-x64-{{version}}-p{{cache_period}}
+          cache_save_post: true
+          cache_save_retry_budget: 60s
+
+      - name: Write Cloudflare Tunnel Secret stub
+        run: |
+          cat <<'YAML' > "$RUNNER_TEMP/cloudflare-tunnel-id-stub.yaml"
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: cloudflare-tunnel-id-secret
+            namespace: network
+          type: Opaque
+          data:
+            CLOUDFLARE_TUNNEL_ID: REVNTw==
+          YAML
+
+      - name: Run flate ks
+        run: flate test ks --path ./kubernetes/apps --supply "$RUNNER_TEMP/cloudflare-tunnel-id-stub.yaml" --cache-dir "$RUNNER_TEMP/flate-cache"
+
+      - name: Run flate hr
+        run: flate test hr --path ./kubernetes/apps --supply "$RUNNER_TEMP/cloudflare-tunnel-id-stub.yaml" --cache-dir "$RUNNER_TEMP/flate-cache"
