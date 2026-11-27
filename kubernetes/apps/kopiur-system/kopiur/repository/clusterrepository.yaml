@@ -19,11 +19,6 @@ spec:
       name: kopiur-repository-secret
       namespace: kopiur-system
       key: KOPIA_PASSWORD
-  bootstrap:
-    failurePolicy:
-      # Cold-cache connect on the aged NFS repository can exceed the 120s
-      # default (the operator escalates after consecutive deadline kills).
-      activeDeadlineSeconds: 3600
   catalog:
     fallbackNamespace: kopiur-system
     periodicRefresh: true
@@ -35,7 +30,7 @@ spec:
     auth:
       generate:
         username: admin
-    readOnly: false # allow snapshot deletion/maintenance from the kopia web UI
+    readOnly: false # server-level only; mode: ReadOnly below forces the UI read-only regardless (upstream), left false so a rollback restores the old behaviour
     service:
       type: ClusterIP
       port: 51515
@@ -62,17 +57,13 @@ spec:
       # churn is negligible. See docs/maintenance.md ("index-blob health") in
       # the kopiur repo.
       minDuration: 2h
+  health:
+    indexBlobWarnThreshold: 0 # frozen archive: the index-blob count (~1072) is static and upstream marks it NON-BLOCKING for restores; the condition would otherwise stay False for the life of the archive
   maintenance:
-    enabled: true
-    namespace: kopiur-system
-    schedule:
-      full:
-        cron: "0 3 * * 0" # weekly: the archive no longer receives writes
-        jitter: 1h
-      quick:
-        cron: "0 */6 * * *"
-        jitter: 30m
-      timezone: Europe/Paris
+    # ReadOnly repositories run no maintenance at all (upstream: "serves
+    # restores only" — the operator drops the managed Maintenance), so this is
+    # disabled to keep the config truthful. Re-enable when unfreezing.
+    enabled: false
   mode: ReadOnly # frozen archive: restores only, no new snapshots after the cutover
   moverDefaults:
     tolerations:
