@@ -7,7 +7,8 @@ app-template`):
 - `kanidm` — StatefulSet running `docker.io/kanidm/server` on its own TLS
   (`Certificate` `idm-oxygn-dev` via `letsencrypt-production`, validated
   upstream by `BackendTLSPolicy` `kanidm-upstream`). Data on the
-  `components/kopiur/backup` PVC (hourly Kopia snapshots to NFS).
+  `components/kopiur/backup` PVC (hourly Kopia snapshots to the `offsite`
+repository).
 - `provision` — [`ghcr.io/m00nwtchr/kanidm-provision`](https://github.com/m00nwtchr/kanidm-provision):
   watches ConfigMaps labeled `kanidm_config: "1"` in namespace `security`
   (created per-app by `components/oidc-kanidm/base`), applies the declarative

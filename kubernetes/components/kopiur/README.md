@@ -1,6 +1,6 @@
 # kopiur
 
-Per-app PVC backup via [kopiur](https://github.com/home-operations/kopiur) — a volsync fork using Kopia as the mover backend. Replaced volsync on this cluster (see `docs/superpowers/plans/2026-07-18-kopiur-migration.md`). Backups land on a shared `ClusterRepository/nas` (Kopia filesystem backend over NFS at `funkstation.internal:/volume1/Volsync`, adopting the pre-existing volsync repository — `create.enabled: false`), operated by the kopiur controller in `kopiur-system`.
+Per-app PVC backup via [kopiur](https://github.com/home-operations/kopiur) — a volsync fork using Kopia as the mover backend. Replaced volsync on this cluster (see `docs/superpowers/plans/2026-07-18-kopiur-migration.md`). Backups land on the shared `ClusterRepository/offsite` (Kopia S3 backend on Cloudflare R2, seeded from the former `nas` repository — `create.enabled: false`), operated by the kopiur controller in `kopiur-system`. `ClusterRepository/nas` (filesystem backend over NFS at `funkstation.internal:/volume1/Volsync`) remains available as a ReadWrite archive until the cutover is fully retired.
 
 Two sub-components:
 
@@ -32,7 +32,7 @@ Adding `components/kopiur/backup` to an app's Flux Kustomization creates, in the
 | `KOPIUR_CACHE_STORAGECLASS`    | `miroir-slow`      | Cache PVC StorageClass (must be replicated — see below).  |
 | `KOPIUR_STAGING_STORAGECLASS`  | `miroir-slow-local`| Staging PVC StorageClass (must be unreplicated).          |
 | `KOPIUR_SNAPSHOTCLASS`         | `miroir`           | VolumeSnapshotClass used for backups.                     |
-| `KOPIUR_REPOSITORY`            | `nas`              | Target `ClusterRepository`.                               |
+| `KOPIUR_REPOSITORY`            | `offsite`          | Target `ClusterRepository` (R2, seeded from `nas`). Override per app to use `nas`. |
 
 ## Design notes
 
