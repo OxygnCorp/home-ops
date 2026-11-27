@@ -6,8 +6,10 @@ metadata:
 spec:
   proxyRef: litellm
   keyAlias: PrReview
-  # Spend cap for the GitHub Actions PR-review workflows (ai-pr-review*.yaml
-  # authenticate with this key). A busy automerge day chains many
+  # Spend cap for the GitHub Actions PR-review workflows. NOTE: they
+  # authenticate with this key only once the Actions secret
+  # LITELLM_API_KEY is rotated off the litellm master key (manual step,
+  # runbook on PR #6146). A busy automerge day chains many
   # multi-round reviews through the primary/smart/fallback routes; the cap
   # keeps a runaway tool loop from quietly billing the gateway. When it
   # trips, litellm rejects the call and the action's `on-model-failure:

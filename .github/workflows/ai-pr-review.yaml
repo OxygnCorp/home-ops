@@ -209,14 +209,21 @@ jobs:
           # tool-max-requests / tool-max-rounds deliberately unset: since the
           # action's v3.9 "authority" contract, required-check obligations
           # (upstream provenance, old→new release delta, security advisories)
-          # must be discharged by admissible tool calls — the pinned 4-call
-          # budget stopped the loop before they were covered
-          # (tool_stop_reason: tool-call-budget-exhausted → review_result:
-          # partial, see #6137/#6138/#6139). Unset resolves tier-aware
-          # defaults (40 primary / 45 smart / 50 escalated, hard ceiling 50)
-          # with the action's built-in 6..12 low-risk envelope and
-          # obligations-settled early stop. Spend stays bounded by the wall
-          # clock below and the $1/day cap on the PrReview litellm key.
+          # must be discharged by admissible tool calls — the former pins
+          # (tool-max-requests: "4" / tool-max-rounds: "2") stopped the loop
+          # before they were covered (tool_stop_reason:
+          # tool-call-budget-exhausted → review_result: partial, see
+          # #6137/#6138/#6139). Unset resolves tier-aware defaults (40
+          # primary / 45 smart / 50 escalated, ceiling 50) with the built-in
+          # 6..12 low-risk envelope and obligations-settled early stop; in
+          # practice the 600s wall clock below binds long before the ceiling.
+          # Spend is also capped at $1/day on the PrReview litellm virtual
+          # key — that cap takes effect only once the Actions secret
+          # LITELLM_API_KEY is rotated from the litellm master key to the
+          # PrReview key (manual, runbook on PR #6146). Until that rotation,
+          # and whenever the cap trips, reviews fail open via
+          # on-model-failure: notice — advisory for the rest of the floating
+          # 24h window, never blocking.
           tool-loop-wall-clock-sec: "600"
           tool-max-response-bytes: "12000"
           tool-allowed-gh-api-repos: "OxygnCorp/home-ops"
