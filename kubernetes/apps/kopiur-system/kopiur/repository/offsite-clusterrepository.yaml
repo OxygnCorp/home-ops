@@ -73,7 +73,9 @@ spec:
         cron: "0 3 * * *"
         jitter: 1h
       quick:
-        cron: "0 */6 * * *"
+        # Snapshot policies run hourly; compact at the same cadence so index
+        # blobs do not accumulate past the health threshold between full runs.
+        cron: "0 * * * *"
         jitter: 30m
       timezone: Europe/Paris
   moverDefaults:
