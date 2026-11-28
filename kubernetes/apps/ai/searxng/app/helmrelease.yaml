@@ -24,7 +24,7 @@ spec:
           main:
             image:
               repository: docker.io/searxng/searxng
-              tag: 2026.11.28-b98615a25
+              tag: 2026.11.28-d96f0ec9b
             env:
               SEARXNG_BASE_URL: https://search.oxygn.dev
               SEARXNG_PORT: &port 8080
